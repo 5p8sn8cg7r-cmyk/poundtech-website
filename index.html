@@ -574,10 +574,14 @@ function searchProducts() {
     alert("Search functionality will be connected soon!");
 }
 
+
 function addCart(name, price) {
+
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
-    let existingProduct = cart.find(item => item.name === name);
+    let existingProduct = cart.find(function(item) {
+        return item.name === name;
+    });
 
     if (existingProduct) {
         existingProduct.quantity += 1;
@@ -591,14 +595,18 @@ function addCart(name, price) {
 
     localStorage.setItem("poundtechCart", JSON.stringify(cart));
 
-    let totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+    let totalItems = cart.reduce(function(total, item) {
+        return total + item.quantity;
+    }, 0);
 
     document.getElementById("cart-count").innerText = totalItems;
 
     alert(name + " added to your cart!");
 }
-    
+
+
 function showCart() {
+
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
     let cartItems = document.getElementById("cart-items");
@@ -615,6 +623,7 @@ function showCart() {
     cart.forEach(function(item, index) {
 
         let quantity = item.quantity || 1;
+
         let itemTotal = item.price * quantity;
 
         total += itemTotal;
@@ -651,95 +660,49 @@ function showCart() {
 
     document.getElementById("cart-panel").style.display = "block";
 }
-    function closeCart() {
+
+
+function closeCart() {
+
     document.getElementById("cart-panel").style.display = "none";
+
 }
-    function removeFromCart(index) {
+
+
+function removeFromCart(index) {
+
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
     cart.splice(index, 1);
 
     localStorage.setItem("poundtechCart", JSON.stringify(cart));
 
-    document.getElementById("cart-count").innerText = cart.length;
+    let totalItems = cart.reduce(function(total, item) {
+        return total + (item.quantity || 1);
+    }, 0);
+
+    document.getElementById("cart-count").innerText = totalItems;
 
     showCart();
+
 }
-    cart.push({
-        name: name,
-        price: price
-    });
 
-    localStorage.setItem("poundtechCart", JSON.stringify(cart));
 
-    document.getElementById("cart-count").innerText = cart.length;
+function findMechanic() {
 
-    alert(name + " added to your cart!");
-}
-    function showCart() {
-    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
-
-    let cartItems = document.getElementById("cart-items");
-    let cartTotal = document.getElementById("cart-total");
-
-    cartItems.innerHTML = "";
-
-    let total = 0;
-
-    if (cart.length === 0) {
-        cartItems.innerHTML = "<p>Your cart is empty.</p>";
-    }
-
-    cart.forEach(function(item, index) {
-        total += item.price;
-
-        cartItems.innerHTML += `
-            <div style="padding:15px 0; border-bottom:1px solid #ddd;">
-                <strong>${item.name}</strong>
-                <p>R${item.price}</p>
-
-                <button onclick="removeFromCart(${index})" style="
-                    background:#e00000;
-                    color:white;
-                    border:none;
-                    padding:6px 10px;
-                    border-radius:4px;
-                    cursor:pointer;
-                ">
-                    Remove
-                </button>
-            </div>
-        `;
-    });
-
-    cartTotal.innerText = "Total: R" + total;
-
-    document.getElementById("cart-panel").style.display = "block";
-}
-    function closeCart() {
-    document.getElementById("cart-panel").style.display = "none";
-}
-    function removeFromCart(index) {
-    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
-
-    cart.splice(index, 1);
-
-    localStorage.setItem("poundtechCart", JSON.stringify(cart));
-
-    document.getElementById("cart-count").innerText = cart.length;
-
-    showCart();
-}
-    function findMechanic() {
     alert("The mechanic marketplace is coming soon!");
+
 }
+
 
 function sellOnPoundTech() {
+
     alert("Supplier registration will be available soon!");
+
 }
 
 </script>
-
+ 
 </body>
 </html>
 ```
