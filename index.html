@@ -1,321 +1,552 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PoundTech | Automotive Marketplace</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<title>PoundTech | South Africa's Automotive Marketplace</title>
 
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f6f8;
-            color: #111;
-        }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        header {
-            background: #0b0d10;
-            color: white;
-            padding: 20px 6%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f5f7;
+    color: #111;
+}
 
-        .logo {
-            font-size: 28px;
-            font-weight: 800;
-        }
+/* HEADER */
 
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 25px;
-            font-size: 15px;
-        }
+header {
+    background: #08090b;
+    color: white;
+    padding: 18px 6%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        .hero {
-            background: #11151a;
-            color: white;
-            padding: 80px 6%;
-            text-align: center;
-        }
+.logo {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
 
-        .hero h1 {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
+.logo span {
+    color: #e00000;
+}
 
-        .hero p {
-            font-size: 19px;
-            color: #c9c9c9;
-            margin-bottom: 30px;
-        }
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 25px;
+    font-size: 15px;
+}
 
-        .search {
-            max-width: 700px;
-            margin: auto;
-            display: flex;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+nav a:hover {
+    color: #e00000;
+}
 
-        .search input {
-            flex: 1;
-            padding: 18px;
-            border: none;
-            font-size: 16px;
-            outline: none;
-        }
+/* HERO */
 
-        .search button {
-            padding: 18px 28px;
-            border: none;
-            background: #e00000;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
+.hero {
+    background: linear-gradient(135deg, #090b0e, #1b1e23);
+    color: white;
+    padding: 90px 6%;
+    text-align: center;
+}
 
-        .section {
-            padding: 50px 6%;
-        }
+.hero h1 {
+    font-size: 52px;
+    max-width: 850px;
+    margin: auto;
+    line-height: 1.1;
+}
 
-        .section h2 {
-            margin-bottom: 25px;
-            font-size: 30px;
-        }
+.hero h1 span {
+    color: #e00000;
+}
 
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 18px;
-        }
+.hero p {
+    margin: 22px auto 32px;
+    max-width: 650px;
+    color: #c7c7c7;
+    font-size: 18px;
+    line-height: 1.6;
+}
 
-        .category {
-            background: white;
-            padding: 30px 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-            font-weight: bold;
-            cursor: pointer;
-        }
+.search {
+    max-width: 750px;
+    margin: auto;
+    display: flex;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
 
-        .products {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-        }
+.search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 20px;
+    font-size: 16px;
+}
 
-        .product {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-        }
+.search button {
+    background: #e00000;
+    color: white;
+    border: none;
+    padding: 0 30px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
-        .product-image {
-            height: 150px;
-            background: #ddd;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            color: #666;
-        }
+/* SECTIONS */
 
-        .product h3 {
-            margin-bottom: 8px;
-        }
+.section {
+    padding: 55px 6%;
+}
 
-        .price {
-            font-size: 20px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
+.section h2 {
+    font-size: 30px;
+    margin-bottom: 25px;
+}
 
-        .product button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            background: #111;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+/* CATEGORIES */
 
-        .mechanic {
-            background: #e00000;
-            color: white;
-            padding: 45px;
-            border-radius: 12px;
-            text-align: center;
-        }
+.categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 18px;
+}
 
-        .mechanic h2 {
-            margin-bottom: 12px;
-        }
+.category {
+    background: white;
+    padding: 28px 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: 0.2s;
+}
 
-        .mechanic button {
-            margin-top: 20px;
-            padding: 13px 25px;
-            border: none;
-            border-radius: 5px;
-            background: white;
-            color: #111;
-            font-weight: bold;
-            cursor: pointer;
-        }
+.category:hover {
+    transform: translateY(-4px);
+}
 
-        footer {
-            background: #0b0d10;
-            color: #aaa;
-            text-align: center;
-            padding: 30px;
-            margin-top: 30px;
-        }
+/* PRODUCTS */
 
-        @media (max-width: 700px) {
-            header {
-                flex-direction: column;
-                gap: 15px;
-            }
+.products {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+}
 
-            nav a {
-                margin: 0 8px;
-            }
+.product {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+}
 
-            .hero h1 {
-                font-size: 36px;
-            }
+.product-image {
+    height: 170px;
+    background: #ddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    font-weight: bold;
+}
 
-            .search {
-                flex-direction: column;
-            }
+.product-info {
+    padding: 20px;
+}
 
-            .search button {
-                width: 100%;
-            }
-        }
-    </style>
+.product h3 {
+    margin-bottom: 8px;
+}
+
+.product p {
+    color: #777;
+    font-size: 14px;
+}
+
+.price {
+    font-size: 21px;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+.product button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background: #111;
+    color: white;
+    cursor: pointer;
+}
+
+/* MECHANIC */
+
+.mechanic {
+    background: #e00000;
+    color: white;
+    padding: 50px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.mechanic h2 {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.mechanic p {
+    font-size: 17px;
+}
+
+.mechanic button {
+    margin-top: 22px;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 5px;
+    background: white;
+    color: #111;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* SELL */
+
+.sell {
+    background: white;
+    text-align: center;
+    padding: 55px 20px;
+}
+
+.sell h2 {
+    margin-bottom: 12px;
+}
+
+.sell p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.sell button {
+    background: #111;
+    color: white;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+/* FOOTER */
+
+footer {
+    background: #08090b;
+    color: #aaa;
+    text-align: center;
+    padding: 35px;
+}
+
+footer strong {
+    color: white;
+}
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    nav a {
+        margin: 0 7px;
+    }
+
+    .hero h1 {
+        font-size: 38px;
+    }
+
+    .search {
+        flex-direction: column;
+    }
+
+    .search button {
+        padding: 17px;
+    }
+
+    .mechanic {
+        padding: 35px 20px;
+    }
+}
+</style>
 </head>
 
 <body>
 
 <header>
-    <div class="logo">POUNDTECH</div>
 
-    <nav>
-        <a href="#">Home</a>
-        <a href="#">Parts</a>
-        <a href="#">Mechanics</a>
-        <a href="#">Sell</a>
-    </nav>
+<div class="logo">
+POUND<span>TECH</span>
+</div>
+
+<nav>
+<a href="#">Home</a>
+<a href="#">Parts</a>
+<a href="#">Accessories</a>
+<a href="#">Mechanics</a>
+<a href="#">Sell</a>
+</nav>
+
 </header>
 
+
 <section class="hero">
-    <h1>Everything Automotive. One Place.</h1>
 
-    <p>
-        Find car parts, accessories, services and mechanics across South Africa.
-    </p>
+<h1>
+South Africa's <span>Automotive Marketplace</span>
+</h1>
 
-    <div class="search">
-        <input type="text" placeholder="Search for a part, accessory or service...">
-        <button onclick="searchParts()">Search</button>
-    </div>
+<p>
+Find car parts, accessories and automotive services from businesses across South Africa.
+</p>
+
+<div class="search">
+
+<input
+type="text"
+placeholder="Search for parts, accessories or services..."
+>
+
+<button onclick="searchProducts()">
+Search
+</button>
+
+</div>
+
 </section>
+
 
 <section class="section">
-    <h2>Shop by Category</h2>
 
-    <div class="categories">
-        <div class="category">🔧 Engine Parts</div>
-        <div class="category">🚗 Exterior</div>
-        <div class="category">💡 Lights</div>
-        <div class="category">🛞 Wheels & Tyres</div>
-        <div class="category">🔊 Audio</div>
-        <div class="category">🪑 Interior</div>
-    </div>
+<h2>Shop by Category</h2>
+
+<div class="categories">
+
+<div class="category">🔧 Engine Parts</div>
+
+<div class="category">🛞 Wheels & Tyres</div>
+
+<div class="category">💡 Lighting</div>
+
+<div class="category">🚗 Exterior</div>
+
+<div class="category">🔊 Car Audio</div>
+
+<div class="category">🪑 Interior</div>
+
+</div>
+
 </section>
+
 
 <section class="section">
-    <h2>Popular Products</h2>
 
-    <div class="products">
+<h2>Featured Products</h2>
 
-        <div class="product">
-            <div class="product-image">Product Image</div>
-            <h3>LED Headlight Kit</h3>
-            <p>Automotive lighting</p>
-            <div class="price">R899</div>
-            <button onclick="addToCart()">Add to Cart</button>
-        </div>
+<div class="products">
 
-        <div class="product">
-            <div class="product-image">Product Image</div>
-            <h3>Performance Air Filter</h3>
-            <p>Engine & performance</p>
-            <div class="price">R650</div>
-            <button onclick="addToCart()">Add to Cart</button>
-        </div>
 
-        <div class="product">
-            <div class="product-image">Product Image</div>
-            <h3>Premium Floor Mats</h3>
-            <p>Interior accessories</p>
-            <div class="price">R499</div>
-            <button onclick="addToCart()">Add to Cart</button>
-        </div>
+<div class="product">
 
-        <div class="product">
-            <div class="product-image">Product Image</div>
-            <h3>Car Phone Mount</h3>
-            <p>Interior accessories</p>
-            <div class="price">R299</div>
-            <button onclick="addToCart()">Add to Cart</button>
-        </div>
+<div class="product-image">
+Product Image
+</div>
 
-    </div>
+<div class="product-info">
+
+<h3>LED Headlight Kit</h3>
+
+<p>Automotive lighting</p>
+
+<div class="price">
+R899
+</div>
+
+<button onclick="addCart()">
+Add to Cart
+</button>
+
+</div>
+
+</div>
+
+
+<div class="product">
+
+<div class="product-image">
+Product Image
+</div>
+
+<div class="product-info">
+
+<h3>Performance Air Filter</h3>
+
+<p>Engine performance</p>
+
+<div class="price">
+R650
+</div>
+
+<button onclick="addCart()">
+Add to Cart
+</button>
+
+</div>
+
+</div>
+
+
+<div class="product">
+
+<div class="product-image">
+Product Image
+</div>
+
+<div class="product-info">
+
+<h3>Premium Floor Mats</h3>
+
+<p>Interior accessories</p>
+
+<div class="price">
+R499
+</div>
+
+<button onclick="addCart()">
+Add to Cart
+</button>
+
+</div>
+
+</div>
+
+
+<div class="product">
+
+<div class="product-image">
+Product Image
+</div>
+
+<div class="product-info">
+
+<h3>Car Phone Mount</h3>
+
+<p>Interior accessories</p>
+
+<div class="price">
+R299
+</div>
+
+<button onclick="addCart()">
+Add to Cart
+</button>
+
+</div>
+
+</div>
+
+</div>
+
 </section>
+
 
 <section class="section">
-    <div class="mechanic">
-        <h2>Need a Mechanic?</h2>
 
-        <p>
-            Connect with automotive professionals near you.
-        </p>
+<div class="mechanic">
 
-        <button onclick="findMechanic()">Find a Mechanic</button>
-    </div>
+<h2>Need a Mechanic?</h2>
+
+<p>
+Connect with automotive professionals and find the right service for your vehicle.
+</p>
+
+<button onclick="findMechanic()">
+Find a Mechanic
+</button>
+
+</div>
+
 </section>
+
+
+<section class="sell">
+
+<h2>Are you an automotive business?</h2>
+
+<p>
+Join PoundTech and reach customers looking for automotive products and services.
+</p>
+
+<button onclick="sellOnPoundTech()">
+Sell on PoundTech
+</button>
+
+</section>
+
 
 <footer>
-    <p>© 2026 PoundTech. Automotive marketplace built for South Africa.</p>
+
+<p>
+<strong>POUNDTECH</strong>
+</p>
+
+<p>
+South Africa's automotive marketplace
+</p>
+
+<br>
+
+<p>
+© 2026 PoundTech. All rights reserved.
+</p>
+
 </footer>
 
+
 <script>
-    function searchParts() {
-        alert("Search functionality coming soon!");
-    }
 
-    function addToCart() {
-        alert("Product added to your cart!");
-    }
+function searchProducts() {
+    alert("Search functionality will be connected soon!");
+}
 
-    function findMechanic() {
-        alert("Mechanic marketplace coming soon!");
-    }
+function addCart() {
+    alert("Your cart will be available soon!");
+}
+
+function findMechanic() {
+    alert("The mechanic marketplace is coming soon!");
+}
+
+function sellOnPoundTech() {
+    alert("Supplier registration will be available soon!");
+}
+
 </script>
 
 </body>
 </html>
+```
