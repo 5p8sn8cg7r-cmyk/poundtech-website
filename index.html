@@ -580,7 +580,7 @@ function addCart(name, price) {
     function showCart() {
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
-    let cartItems = document.getElementById("cart-items");
+    let cartItems = document.getElementById("cart-items"); 
     let cartTotal = document.getElementById("cart-total");
 
     cartItems.innerHTML = "";
