@@ -309,8 +309,9 @@ POUND<span>TECH</span>
 <a href="#">Accessories</a>
 <a href="#">Mechanics</a>
 <a href="#">Sell</a>
+<a href="#" onclick="showCart()">🛒 Cart (<span id="cart-count">0</span>)</a>
 </nav>
-
+    
 </header>
 
 
@@ -388,10 +389,9 @@ Search
 R899
 </div>
 
-<button onclick="addCart()">
+<button onclick="addCart('LED Headlight Kit', 899)">
 Add to Cart
 </button>
-
 </div>
 
 </div>
@@ -413,10 +413,10 @@ Add to Cart
 R650
 </div>
 
-<button onclick="addCart()">
+<button onclick="addCart('Performance Air Filter', 650)">
 Add to Cart
 </button>
-
+    
 </div>
 
 </div>
@@ -439,10 +439,10 @@ Add to Cart
 R499
 </div>
 
-<button onclick="addCart()">
+<button onclick="addCart('Premium Floor Mats', 499)">
 Add to Cart
 </button>
-
+    
 </div>
 
 </div>
@@ -465,10 +465,10 @@ Add to Cart
 R299
 </div>
 
-<button onclick="addCart()">
+<button onclick="addCart('Car Phone Mount', 299)">
 Add to Cart
 </button>
-
+    
 </div>
 
 </div>
@@ -537,11 +537,21 @@ function searchProducts() {
     alert("Search functionality will be connected soon!");
 }
 
-function addCart() {
-    alert("Your cart will be available soon!");
-}
+function addCart(name, price) {
+    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
-function findMechanic() {
+    cart.push({
+        name: name,
+        price: price
+    });
+
+    localStorage.setItem("poundtechCart", JSON.stringify(cart));
+
+    document.getElementById("cart-count").innerText = cart.length;
+
+    alert(name + " added to your cart!");
+}
+    function findMechanic() {
     alert("The mechanic marketplace is coming soon!");
 }
 
