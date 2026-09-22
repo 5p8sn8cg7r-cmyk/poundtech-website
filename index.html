@@ -598,10 +598,10 @@ function addCart(name, price) {
     alert(name + " added to your cart!");
 }
     
-    function showCart() {
+function showCart() {
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
-    let cartItems = document.getElementById("cart-items"); 
+    let cartItems = document.getElementById("cart-items");
     let cartTotal = document.getElementById("cart-total");
 
     cartItems.innerHTML = "";
@@ -614,17 +614,22 @@ function addCart(name, price) {
 
     cart.forEach(function(item, index) {
 
-        total += item.price;
+        let quantity = item.quantity || 1;
+        let itemTotal = item.price * quantity;
+
+        total += itemTotal;
 
         cartItems.innerHTML += `
-            <div style="
-                padding:15px 0;
-                border-bottom:1px solid #ddd;
-            ">
+            <div style="padding:15px 0; border-bottom:1px solid #ddd;">
+
                 <strong>${item.name}</strong>
 
                 <p style="margin:5px 0;">
-                    R${item.price}
+                    R${item.price} × ${quantity}
+                </p>
+
+                <p style="font-weight:bold;">
+                    R${itemTotal}
                 </p>
 
                 <button onclick="removeFromCart(${index})" style="
@@ -637,6 +642,7 @@ function addCart(name, price) {
                 ">
                     Remove
                 </button>
+
             </div>
         `;
     });
