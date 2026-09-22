@@ -527,7 +527,44 @@ South Africa's automotive marketplace
 <p>
 © 2026 PoundTech. All rights reserved.
 </p>
+    
+<div id="cart-panel" style="
+    display:none;
+    position:fixed;
+    top:0;
+    right:0;
+    width:380px;
+    max-width:90%;
+    height:100%;
+    background:white;
+    z-index:1000;
+    box-shadow:-5px 0 20px rgba(0,0,0,0.2);
+    padding:30px;
+    overflow-y:auto;
+">
 
+    <h2>Your Cart</h2>
+
+    <div id="cart-items"></div>
+
+    <h3 id="cart-total" style="margin-top:20px;">
+        Total: R0
+    </h3>
+
+    <button onclick="closeCart()" style="
+        margin-top:20px;
+        padding:12px 20px;
+        background:#111;
+        color:white;
+        border:none;
+        border-radius:5px;
+        cursor:pointer;
+    ">
+        Continue Shopping
+    </button>
+
+</div>
+    
 </footer>
 
 
@@ -540,6 +577,67 @@ function searchProducts() {
 function addCart(name, price) {
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
+    function showCart() {
+    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+
+    let cartItems = document.getElementById("cart-items");
+    let cartTotal = document.getElementById("cart-total");
+
+    cartItems.innerHTML = "";
+
+    let total = 0;
+
+    if (cart.length === 0) {
+        cartItems.innerHTML = "<p>Your cart is empty.</p>";
+    }
+
+    cart.forEach(function(item, index) {
+
+        total += item.price;
+
+        cartItems.innerHTML += `
+            <div style="
+                padding:15px 0;
+                border-bottom:1px solid #ddd;
+            ">
+                <strong>${item.name}</strong>
+
+                <p style="margin:5px 0;">
+                    R${item.price}
+                </p>
+
+                <button onclick="removeFromCart(${index})" style="
+                    background:#e00000;
+                    color:white;
+                    border:none;
+                    padding:6px 10px;
+                    border-radius:4px;
+                    cursor:pointer;
+                ">
+                    Remove
+                </button>
+            </div>
+        `;
+    });
+
+    cartTotal.innerText = "Total: R" + total;
+
+    document.getElementById("cart-panel").style.display = "block";
+}
+    function closeCart() {
+    document.getElementById("cart-panel").style.display = "none";
+}
+    function removeFromCart(index) {
+    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+
+    cart.splice(index, 1);
+
+    localStorage.setItem("poundtechCart", JSON.stringify(cart));
+
+    document.getElementById("cart-count").innerText = cart.length;
+
+    showCart();
+}
     cart.push({
         name: name,
         price: price
