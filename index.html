@@ -577,6 +577,27 @@ function searchProducts() {
 function addCart(name, price) {
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
+    let existingProduct = cart.find(item => item.name === name);
+
+    if (existingProduct) {
+        existingProduct.quantity += 1;
+    } else {
+        cart.push({
+            name: name,
+            price: price,
+            quantity: 1
+        });
+    }
+
+    localStorage.setItem("poundtechCart", JSON.stringify(cart));
+
+    let totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+
+    document.getElementById("cart-count").innerText = totalItems;
+
+    alert(name + " added to your cart!");
+}
+    
     function showCart() {
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
