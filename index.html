@@ -993,48 +993,6 @@ async function placeOrder() {
     location.reload();
 }
  
-    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
-
-    if (cart.length === 0) {
-        alert("Your cart is empty!");
-        return;
-    }
-
-    let total = 0;
-
-    cart.forEach(function(item) {
-        total += item.price * (item.quantity || 1);
-    });
-
-    let order = {
-        orderNumber: "PT" + Date.now(),
-        customerName: name,
-        phone: phone,
-        email: email,
-        address: address,
-        items: cart,
-        total: total,
-        status: "Pending",
-        date: new Date().toLocaleString()
-    };
-
-    let orders = JSON.parse(localStorage.getItem("poundtechOrders")) || [];
-
-    orders.push(order);
-
-    localStorage.setItem("poundtechOrders", JSON.stringify(orders));
-
-    alert(
-        "Order placed successfully!\n\n" +
-        "Order Number: " + order.orderNumber + "\n\n" +
-        "Thank you, " + name + "!"
-    );
-
-    localStorage.removeItem("poundtechCart");
-
-    location.reload();
-} 
-
 </script>
 
 </body>
