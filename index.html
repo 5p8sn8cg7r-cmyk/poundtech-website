@@ -977,8 +977,8 @@ async function placeOrder() {
         .select();
 
     if (error) {
-        console.error(error);
-        alert("There was a problem placing your order. Please try again.");
+  console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
+     alert("There was a problem placing your order. Please try again.");
         return;
     }
 
