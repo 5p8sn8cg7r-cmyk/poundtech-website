@@ -925,6 +925,28 @@ function closeCheckout() {
     document.getElementById("cart-panel").style.display = "block";
 
 }
+ function placeOrder() {
+
+    let name = document.getElementById("customer-name").value;
+    let phone = document.getElementById("customer-phone").value;
+    let email = document.getElementById("customer-email").value;
+    let address = document.getElementById("customer-address").value;
+
+    if (name === "" || phone === "" || email === "" || address === "") {
+        alert("Please complete all your details before placing the order.");
+        return;
+    }
+
+    alert(
+        "Order placed successfully!\n\n" +
+        "Thank you, " + name + "!\n\n" +
+        "PoundTech will process your order and contact you shortly."
+    );
+
+    localStorage.removeItem("poundtechCart");
+
+    location.reload();
+}
 </script>
  
 </body>
