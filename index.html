@@ -551,6 +551,21 @@ South Africa's automotive marketplace
         Total: R0
     </h3>
 
+ <button onclick="checkout()" style="
+    margin-top:20px;
+    width:100%;
+    padding:14px;
+    background:#e00000;
+    color:white;
+    border:none;
+    border-radius:5px;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+">
+    Proceed to Checkout
+</button>
+ 
     <button onclick="closeCart()" style="
         margin-top:20px;
         padding:12px 20px;
@@ -723,6 +738,16 @@ function closeCart() {
 
 }
 
+ function checkout() {
+    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+
+    if (cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+    }
+
+    alert("Checkout is coming next!");
+}
 
 function removeFromCart(index) {
 
