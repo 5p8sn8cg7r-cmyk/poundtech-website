@@ -511,8 +511,114 @@ Sell on PoundTech
 
 </section>
 
+<div id="checkout-panel" style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#f4f5f7;
+    z-index:2000;
+    overflow-y:auto;
+    padding:40px 20px;
+">
 
-<footer>
+    <div style="
+        max-width:700px;
+        margin:auto;
+        background:white;
+        padding:30px;
+        border-radius:10px;
+        box-shadow:0 3px 20px rgba(0,0,0,0.1);
+    ">
+
+        <h2 style="margin-bottom:25px;">
+            PoundTech Checkout
+        </h2>
+
+        <label>Full Name</label>
+
+        <input id="customer-name" type="text" placeholder="Your full name" style="
+            width:100%;
+            padding:14px;
+            margin:8px 0 18px;
+            border:1px solid #ddd;
+            border-radius:5px;
+        ">
+
+        <label>Phone Number</label>
+
+        <input id="customer-phone" type="tel" placeholder="Your phone number" style="
+            width:100%;
+            padding:14px;
+            margin:8px 0 18px;
+            border:1px solid #ddd;
+            border-radius:5px;
+        ">
+
+        <label>Email Address</label>
+
+        <input id="customer-email" type="email" placeholder="Your email address" style="
+            width:100%;
+            padding:14px;
+            margin:8px 0 18px;
+            border:1px solid #ddd;
+            border-radius:5px;
+        ">
+
+        <label>Delivery Address</label>
+
+        <textarea id="customer-address" placeholder="Enter your delivery address" style="
+            width:100%;
+            padding:14px;
+            margin:8px 0 18px;
+            border:1px solid #ddd;
+            border-radius:5px;
+            min-height:100px;
+        "></textarea>
+
+        <h3>Order Summary</h3>
+
+        <div id="checkout-items" style="margin-top:15px;"></div>
+
+        <h3 id="checkout-total" style="margin-top:20px;">
+            Total: R0
+        </h3>
+
+        <button onclick="placeOrder()" style="
+            margin-top:25px;
+            width:100%;
+            padding:15px;
+            background:#e00000;
+            color:white;
+            border:none;
+            border-radius:5px;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+        ">
+            Place Order
+        </button>
+
+        <button onclick="closeCheckout()" style="
+            margin-top:12px;
+            width:100%;
+            padding:12px;
+            background:#111;
+            color:white;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+        ">
+            Back to Cart
+        </button>
+
+    </div>
+
+</div>
+ 
+ <footer>
 
 <p>
 <strong>POUNDTECH</strong>
@@ -738,7 +844,8 @@ function closeCart() {
 
 }
 
- function checkout() {
+function checkout() {
+
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
     if (cart.length === 0) {
@@ -746,9 +853,37 @@ function closeCart() {
         return;
     }
 
-    alert("Checkout is coming next!");
-}
+    let checkoutItems = document.getElementById("checkout-items");
+    let checkoutTotal = document.getElementById("checkout-total");
 
+    checkoutItems.innerHTML = "";
+
+    let total = 0;
+
+    cart.forEach(function(item) {
+
+        let quantity = item.quantity || 1;
+        let itemTotal = item.price * quantity;
+
+        total += itemTotal;
+
+        checkoutItems.innerHTML += `
+            <div style="
+                padding:12px 0;
+                border-bottom:1px solid #ddd;
+            ">
+                <strong>${item.name}</strong>
+                <p>R${item.price} × ${quantity} = R${itemTotal}</p>
+            </div>
+        `;
+    });
+
+    checkoutTotal.innerText = "Total: R" + total;
+
+    document.getElementById("cart-panel").style.display = "none";
+    document.getElementById("checkout-panel").style.display = "block";
+}
+ 
 function removeFromCart(index) {
 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
