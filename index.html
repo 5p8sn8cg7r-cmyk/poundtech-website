@@ -934,7 +934,8 @@ function closeCheckout() {
     document.getElementById("cart-panel").style.display = "block";
 
 }
-function placeOrder() {
+ 
+async function placeOrder() {
 
     let name = document.getElementById("customer-name").value;
     let phone = document.getElementById("customer-phone").value;
@@ -946,6 +947,52 @@ function placeOrder() {
         return;
     }
 
+    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+
+    if (cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+    }
+
+    let total = 0;
+
+    cart.forEach(function(item) {
+        total += item.price * (item.quantity || 1);
+    });
+
+    let order = {
+        order_number: "PT" + Date.now(),
+        customer_name: name,
+        phone: phone,
+        email: email,
+        address: address,
+        items: cart,
+        total: total,
+        status: "Pending"
+    };
+
+    const { data, error } = await supabaseClient
+        .from("orders")
+        .insert([order])
+        .select();
+
+    if (error) {
+        console.error(error);
+        alert("There was a problem placing your order. Please try again.");
+        return;
+    }
+
+    alert(
+        "Order placed successfully!\n\n" +
+        "Order Number: " + order.order_number + "\n\n" +
+        "Thank you, " + name + "!"
+    );
+
+    localStorage.removeItem("poundtechCart");
+
+    location.reload();
+}
+ 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
     if (cart.length === 0) {
