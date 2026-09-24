@@ -128,7 +128,20 @@ const supabaseClient = supabase.createClient(
     SUPABASE_KEY
 );
 
+async function adminLogout() {
 
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+        console.log("LOGOUT ERROR:", error);
+        return;
+    }
+
+    document.getElementById("login").style.display = "block";
+    document.getElementById("orders").style.display = "none";
+
+}
+    
 async function adminLogin() {
 
     const email = document.getElementById("admin-email").value;
