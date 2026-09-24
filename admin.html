@@ -86,10 +86,34 @@
 
 <div class="container">
 
-    <div id="orders"></div>
+    <div id="login">
+
+        <h2>Admin Login</h2>
+
+        <input
+            id="admin-email"
+            type="email"
+            placeholder="Admin email"
+        >
+
+        <input
+            id="admin-password"
+            type="password"
+            placeholder="Password"
+        >
+
+        <button onclick="adminLogin()">
+            Login
+        </button>
+
+        <p id="login-error"></p>
+
+    </div>
+
+    <div id="orders" style="display:none;"></div>
 
 </div>
-
+    
 <script>
 
 const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
