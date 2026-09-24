@@ -92,27 +92,46 @@
 
 <script>
 
-function loadOrders() {
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
-    let orders = JSON.parse(localStorage.getItem("poundtechOrders")) || [];
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+async function loadOrders() {
+
+    const { data: orders, error } = await supabaseClient
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.log("SUPABASE ERROR:", error);
+        alert("Could not load orders.");
+        return;
+    }
 
     let container = document.getElementById("orders");
 
     container.innerHTML = "";
 
-    if (orders.length === 0) {
+    if (!orders || orders.length === 0) {
 
         container.innerHTML = `
             <div class="empty">
                 <h2>No orders yet</h2>
-                <p>Orders placed on this browser will appear here.</p>
+                <p>Orders will appear here when customers place them.</p>
             </div>
         `;
 
         return;
     }
-
-    orders.reverse();
 
     orders.forEach(function(order) {
 
@@ -142,11 +161,11 @@ function loadOrders() {
 
             <div class="order">
 
-                <h2>Order #${order.orderNumber}</h2>
+                <h2>Order #${order.order_number}</h2>
 
                 <p>
                     <strong>Date:</strong>
-                    ${order.date}
+                    ${order.created_at}
                 </p>
 
                 <p>
@@ -160,7 +179,7 @@ function loadOrders() {
 
                 <p>
                     <strong>Name:</strong>
-                    ${order.customerName}
+                    ${order.customer_name}
                     <br>
 
                     <strong>Phone:</strong>
@@ -191,6 +210,7 @@ function loadOrders() {
 
 }
 
+loadOrders();
 loadOrders();
 
 </script>
