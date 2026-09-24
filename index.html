@@ -971,10 +971,9 @@ async function placeOrder() {
         status: "Pending"
     };
 
-    const { data, error } = await supabaseClient
-        .from("orders")
-        .insert([order])
-        .select();
+   const { data, error } = await supabaseClient
+    .from("orders")
+    .insert([order]);
 
     if (error) {
   console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
