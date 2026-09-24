@@ -116,15 +116,18 @@
     
 <script>
 
+<script>
+
 const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
-const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybU";
 
 const supabaseClient = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
 
-    async function adminLogin() {
+
+async function adminLogin() {
 
     const email = document.getElementById("admin-email").value;
     const password = document.getElementById("admin-password").value;
@@ -139,6 +142,8 @@ const supabaseClient = supabase.createClient(
         document.getElementById("login-error").textContent =
             "Login failed. Please check your email and password.";
 
+        console.log("LOGIN ERROR:", error);
+
         return;
     }
 
@@ -147,7 +152,9 @@ const supabaseClient = supabase.createClient(
 
     loadOrders();
 }
-    async function loadOrders() {
+
+
+async function loadOrders() {
 
     const { data: orders, error } = await supabaseClient
         .from("orders")
@@ -155,8 +162,11 @@ const supabaseClient = supabase.createClient(
         .order("created_at", { ascending: false });
 
     if (error) {
+
         console.log("SUPABASE ERROR:", error);
+
         alert("Could not load orders.");
+
         return;
     }
 
@@ -175,6 +185,7 @@ const supabaseClient = supabase.createClient(
 
         return;
     }
+
 
     orders.forEach(function(order) {
 
@@ -199,6 +210,7 @@ const supabaseClient = supabase.createClient(
             `;
 
         });
+
 
         container.innerHTML += `
 
@@ -253,6 +265,7 @@ const supabaseClient = supabase.createClient(
 
 }
 
+</script>
 
 </script>
 
