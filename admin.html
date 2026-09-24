@@ -161,8 +161,8 @@ async function loadOrders() {
 
     if (error) {
 
-        console.log("SUPABASE ERROR:", error);
-
+       console.log("SUPABASE ERROR:", error.message, error.details, error.hint, error.code);
+        
         alert("Could not load orders.");
 
         return;
