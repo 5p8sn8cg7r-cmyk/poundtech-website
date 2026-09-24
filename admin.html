@@ -124,7 +124,30 @@ const supabaseClient = supabase.createClient(
     SUPABASE_KEY
 );
 
-async function loadOrders() {
+    async function adminLogin() {
+
+    const email = document.getElementById("admin-email").value;
+    const password = document.getElementById("admin-password").value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+
+        document.getElementById("login-error").textContent =
+            "Login failed. Please check your email and password.";
+
+        return;
+    }
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("orders").style.display = "block";
+
+    loadOrders();
+}
+    async function loadOrders() {
 
     const { data: orders, error } = await supabaseClient
         .from("orders")
@@ -230,8 +253,6 @@ async function loadOrders() {
 
 }
 
-loadOrders();
-loadOrders();
 
 </script>
 
