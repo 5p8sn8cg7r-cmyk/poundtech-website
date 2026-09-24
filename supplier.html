@@ -1,1 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PoundTech Supplier Registration</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f5f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        header span {
+            color: #e00000;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 7px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 100px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 25px;
+            padding: 14px;
+            background: #e00000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #c00000;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>POUND<span>TECH</span></h1>
+
+    <p>Supplier Registration</p>
+
+</header>
+
+
+<div class="container">
+
+    <h2>Become a PoundTech Supplier</h2>
+
+    <p>
+        Register your automotive business to sell products
+        through the PoundTech marketplace.
+    </p>
+
+
+    <label>Business Name</label>
+
+    <input
+        id="business-name"
+        type="text"
+        placeholder="Your business name"
+    >
+
+
+    <label>Contact Person</label>
+
+    <input
+        id="contact-name"
+        type="text"
+        placeholder="Full name"
+    >
+
+
+    <label>Phone Number</label>
+
+    <input
+        id="phone"
+        type="tel"
+        placeholder="Business phone number"
+    >
+
+
+    <label>Email Address</label>
+
+    <input
+        id="email"
+        type="email"
+        placeholder="Business email"
+    >
+
+
+    <label>Business Type</label>
+
+    <select id="business-type">
+
+        <option value="">Select business type</option>
+
+        <option>Auto Parts Supplier</option>
+
+        <option>Accessories Shop</option>
+
+        <option>Tyre & Wheel Shop</option>
+
+        <option>Auto Electrical</option>
+
+        <option>Car Audio</option>
+
+        <option>Body & Exterior</option>
+
+        <option>Other</option>
+
+    </select>
+
+
+    <label>Business Address</label>
+
+    <textarea
+        id="address"
+        placeholder="Business address"
+    ></textarea>
+
+
+    <button onclick="registerSupplier()">
+        Apply to Become a Supplier
+    </button>
+
+</div>
+
+
+<script>
+
+function registerSupplier() {
+
+    let businessName =
+        document.getElementById("business-name").value;
+
+    let contactName =
+        document.getElementById("contact-name").value;
+
+    let phone =
+        document.getElementById("phone").value;
+
+    let email =
+        document.getElementById("email").value;
+
+    let businessType =
+        document.getElementById("business-type").value;
+
+    let address =
+        document.getElementById("address").value;
+
+
+    if (
+        businessName === "" ||
+        contactName === "" ||
+        phone === "" ||
+        email === "" ||
+        businessType === "" ||
+        address === ""
+    ) {
+
+        alert("Please complete all fields.");
+
+        return;
+
+    }
+
+
+    alert(
+        "Supplier application received!\n\n" +
+        "Thank you, " + businessName + ".\n\n" +
+        "PoundTech will review your application."
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
