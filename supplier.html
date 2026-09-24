@@ -184,28 +184,27 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-function registerSupplier() {
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
-    let businessName =
-        document.getElementById("business-name").value;
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
 
-    let contactName =
-        document.getElementById("contact-name").value;
 
-    let phone =
-        document.getElementById("phone").value;
+async function registerSupplier() {
 
-    let email =
-        document.getElementById("email").value;
-
-    let businessType =
-        document.getElementById("business-type").value;
-
-    let address =
-        document.getElementById("address").value;
+    let businessName = document.getElementById("business-name").value;
+    let contactName = document.getElementById("contact-name").value;
+    let phone = document.getElementById("phone").value;
+    let email = document.getElementById("email").value;
+    let businessType = document.getElementById("business-type").value;
+    let address = document.getElementById("address").value;
 
 
     if (
@@ -220,7 +219,40 @@ function registerSupplier() {
         alert("Please complete all fields.");
 
         return;
+    }
 
+
+    const { data, error } = await supabaseClient
+        .from("suppliers")
+        .insert([
+
+            {
+                business_name: businessName,
+                contact_name: contactName,
+                phone: phone,
+                email: email,
+                business_type: businessType,
+                address: address,
+                status: "Pending"
+            }
+
+        ]);
+
+
+    if (error) {
+
+        console.log(
+            "SUPABASE ERROR:",
+            error.message,
+            error.details,
+            error.hint
+        );
+
+        alert(
+            "There was a problem submitting your application. Please try again."
+        );
+
+        return;
     }
 
 
@@ -230,10 +262,17 @@ function registerSupplier() {
         "PoundTech will review your application."
     );
 
+
+    document.getElementById("business-name").value = "";
+    document.getElementById("contact-name").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("business-type").value = "";
+    document.getElementById("address").value = "";
+
 }
 
 </script>
-
 </body>
 
 </html>
