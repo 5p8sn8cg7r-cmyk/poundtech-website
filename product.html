@@ -356,7 +356,7 @@ function addCart(name, price, quantity) {
 
     let cart =
         JSON.parse(
-            localStorage.getItem("cart")
+            localStorage.getItem("poundtechCart")
         ) || [];
 
     const existing =
@@ -383,7 +383,7 @@ function addCart(name, price, quantity) {
     }
 
     localStorage.setItem(
-        "cart",
+        "poundtechCart",
         JSON.stringify(cart)
     );
 
