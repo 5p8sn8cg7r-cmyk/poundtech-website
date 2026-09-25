@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PoundTech Supplier Login</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+}
+
+header {
+    background: #111;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+header span {
+    color: #e00000;
+}
+
+.container {
+    max-width: 400px;
+    margin: 60px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+}
+
+h2 {
+    margin-top: 0;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    width: 100%;
+    padding: 13px;
+    background: #e00000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #c00000;
+}
+
+#error {
+    color: red;
+    margin-top: 15px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<h1>POUND<span>TECH</span></h1>
+
+<p>Supplier Portal</p>
+
+</header>
+
+
+<div class="container">
+
+<h2>Supplier Login</h2>
+
+<p>
+Log in to manage your PoundTech supplier account.
+</p>
+
+
+<input
+id="email"
+type="email"
+placeholder="Business email"
+>
+
+
+<input
+id="password"
+type="password"
+placeholder="Password"
+>
+
+
+<button onclick="supplierLogin()">
+Login
+</button>
+
+
+<p id="error"></p>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script>
+
+
+const SUPABASE_URL =
+"https://uezacbssvvvtlosnaroh.supabase.co";
+
+
+const SUPABASE_KEY =
+"sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+
+const supabaseClient =
+supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+
+async function supplierLogin() {
+
+
+const email =
+document.getElementById("email").value;
+
+
+const password =
+document.getElementById("password").value;
+
+
+const { data, error } =
+await supabaseClient.auth.signInWithPassword({
+
+    email: email,
+
+    password: password
+
+});
+
+
+if (error) {
+
+    document.getElementById("error").textContent =
+    "Login failed. Please check your email and password.";
+
+    console.log("LOGIN ERROR:", error);
+
+    return;
+
+}
+
+
+window.location.href =
+"supplier-dashboard.html";
+
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
