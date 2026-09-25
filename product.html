@@ -295,59 +295,62 @@ async function loadProduct() {
 
                 </p>
 
+${
+    product.stock > 0
+        ? `
+            <div style="margin:20px 0;">
 
-                ${
-                    product.stock > 0
+                <label>
+                    Quantity:
+                </label>
 
-                    ?
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    margin-top:10px;
+                ">
 
-    <div style="margin:20px 0;">
+                    <button
+                        onclick="changeQuantity(-1)"
+                        style="padding:8px 14px;"
+                    >
+                        −
+                    </button>
 
-    <label>
-        Quantity:
-    </label>
+                    <span
+                        id="quantity"
+                        style="font-size:20px; font-weight:bold;"
+                    >
+                        1
+                    </span>
 
-    <div style="
-        display:flex;
-        align-items:center;
-        gap:10px;
-        margin-top:10px;
-    ">
+                    <button
+                        onclick="changeQuantity(1)"
+                        style="padding:8px 14px;"
+                    >
+                        +
+                    </button>
 
-        <button
-            onclick="changeQuantity(-1)"
-            style="padding:8px 14px;"
-        >
-            −
-        </button>
+                </div>
 
-        <span
-            id="quantity"
-            style="font-size:20px; font-weight:bold;"
-        >
-            1
-        </span>
+            </div>
 
-        <button
-            onclick="changeQuantity(1)"
-            style="padding:8px 14px;"
-        >
-            +
-        </button>
+            <button
+                onclick="
+                    addCart(
+                        '${product.name}',
+                        ${product.price},
+                        selectedQuantity
+                    )
+                "
+            >
+                Add to Cart
+            </button>
+          `
+        : ""
+}
 
-    </div>
-
-</div>
-
-
-<button
-    onclick="
-        addCart(
-            '${product.name}',
-            ${product.price},
-            document.getElementById('quantity').textContent
-        )
-    "
 >
     Add to Cart
 </button>
