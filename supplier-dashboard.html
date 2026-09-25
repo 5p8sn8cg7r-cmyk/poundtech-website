@@ -117,12 +117,83 @@ Checking...
 <h2>Products</h2>
 
 <p>
-Your products will appear here.
+Manage your products and stock below.
 </p>
 
-<button>
+<button onclick="showAddProductForm()">
 Add Product
 </button>
+
+<div id="add-product-form" style="display:none; margin-top:20px;">
+
+    <input
+        type="text"
+        id="product-name"
+        placeholder="Product name"
+        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+    >
+
+    <select
+        id="product-category"
+        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+    >
+        <option value="">Select category</option>
+        <option value="Engine Parts">Engine Parts</option>
+        <option value="Wheels & Tyres">Wheels & Tyres</option>
+        <option value="Lighting">Lighting</option>
+        <option value="Exterior">Exterior</option>
+        <option value="Car Audio">Car Audio</option>
+        <option value="Interior">Interior</option>
+    </select>
+
+    <textarea
+        id="product-description"
+        placeholder="Product description"
+        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+    ></textarea>
+
+    <input
+        type="number"
+        id="product-price"
+        placeholder="Price (R)"
+        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+    >
+
+    <input
+        type="number"
+        id="product-stock"
+        placeholder="Stock quantity"
+        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+    >
+
+    <input
+        type="text"
+        id="product-image"
+        placeholder="Image URL"
+        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+    >
+
+    <input
+        type="text"
+        id="vehicle-compatibility"
+        placeholder="Vehicle compatibility (e.g. VW Polo 2018-2022)"
+        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+    >
+
+    <button onclick="addProduct()">
+        Save Product
+    </button>
+
+    <button
+        onclick="hideAddProductForm()"
+        style="background:#555; margin-left:10px;"
+    >
+        Cancel
+    </button>
+
+    <p id="product-message"></p>
+
+</div>
 
 </div>
 
@@ -252,6 +323,84 @@ window.location.href =
 
 loadSupplier();
 
+    function showAddProductForm() {
+    document.getElementById("add-product-form").style.display = "block";
+}
+
+function hideAddProductForm() {
+    document.getElementById("add-product-form").style.display = "none";
+}
+
+async function addProduct() {
+
+    const name = document.getElementById("product-name").value;
+    const category = document.getElementById("product-category").value;
+    const description = document.getElementById("product-description").value;
+    const price = document.getElementById("product-price").value;
+    const stock = document.getElementById("product-stock").value;
+    const image_url = document.getElementById("product-image").value;
+    const vehicle_compatibility = document.getElementById("vehicle-compatibility").value;
+
+    const message = document.getElementById("product-message");
+
+    if (!name || !category || !price) {
+        message.textContent = "Please fill in the product name, category and price.";
+        return;
+    }
+
+    message.textContent = "Saving product...";
+
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        message.textContent = "You must be logged in.";
+        return;
+    }
+
+    const { data: supplier, error: supplierError } =
+        await supabaseClient
+        .from("suppliers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+    if (supplierError || !supplier) {
+        message.textContent = "Supplier account not found.";
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("products")
+        .insert([{
+            supplier_id: supplier.id,
+            name: name,
+            category: category,
+            description: description,
+            price: Number(price),
+            stock: Number(stock) || 0,
+            image_url: image_url,
+            vehicle_compatibility: vehicle_compatibility,
+            status: "Active"
+        }]);
+
+    if (error) {
+        console.error(error);
+        message.textContent = "Error saving product: " + error.message;
+        return;
+    }
+
+    message.textContent = "Product added successfully!";
+
+    document.getElementById("product-name").value = "";
+    document.getElementById("product-category").value = "";
+    document.getElementById("product-description").value = "";
+    document.getElementById("product-price").value = "";
+    document.getElementById("product-stock").value = "";
+    document.getElementById("product-image").value = "";
+    document.getElementById("vehicle-compatibility").value = "";
+}
+    
 </script>
 
 
