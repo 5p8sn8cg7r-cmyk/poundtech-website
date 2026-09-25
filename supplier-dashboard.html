@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PoundTech Supplier Dashboard</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+}
+
+header {
+    background: #111;
+    color: white;
+    padding: 20px;
+}
+
+header h1 {
+    margin: 0;
+}
+
+header span {
+    color: #e00000;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+button {
+    padding: 12px 18px;
+    background: #e00000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #c00000;
+}
+
+.logout {
+    float: right;
+    background: #555;
+}
+
+.status {
+    font-weight: bold;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<h1>
+POUND<span>TECH</span>
+</h1>
+
+<button class="logout" onclick="logout()">
+Logout
+</button>
+
+</header>
+
+
+<div class="container">
+
+
+<div class="card">
+
+<h2>Supplier Dashboard</h2>
+
+<p id="welcome">
+Loading supplier information...
+</p>
+
+<p>
+
+<strong>Application Status:</strong>
+
+<span id="status">
+Checking...
+</span>
+
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Products</h2>
+
+<p>
+Your products will appear here.
+</p>
+
+<button>
+Add Product
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h2>Orders</h2>
+
+<p>
+Your supplier orders will appear here.
+</p>
+
+</div>
+
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script>
+
+const SUPABASE_URL =
+"https://uezacbssvvvtlosnaroh.supabase.co";
+
+
+const SUPABASE_KEY =
+"sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+
+const supabaseClient =
+supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+
+async function loadSupplier() {
+
+
+const {
+    data: { user },
+    error
+} = await supabaseClient.auth.getUser();
+
+
+if (error || !user) {
+
+    window.location.href =
+    "supplier-login.html";
+
+    return;
+
+}
+
+
+document.getElementById("welcome").textContent =
+"Logged in as " + user.email;
+
+
+
+const { data: supplier, error: supplierError } =
+await supabaseClient
+
+.from("suppliers")
+
+.select("*")
+
+.eq("email", user.email)
+
+.single();
+
+
+if (supplierError) {
+
+    console.log(
+        "SUPPLIER ERROR:",
+        supplierError.message
+    );
+
+    document.getElementById("status").textContent =
+    "Supplier application not found.";
+
+    return;
+
+}
+
+
+document.getElementById("status").textContent =
+supplier.status;
+
+
+if (supplier.status !== "Approved") {
+
+    document.getElementById("status").textContent =
+    supplier.status + " — awaiting approval";
+
+}
+
+}
+
+
+
+async function logout() {
+
+
+const { error } =
+await supabaseClient.auth.signOut();
+
+
+if (error) {
+
+    console.log("LOGOUT ERROR:", error);
+
+    return;
+
+}
+
+
+window.location.href =
+"supplier-login.html";
+
+}
+
+
+
+loadSupplier();
+
+</script>
+
+
+</body>
+
+</html>
