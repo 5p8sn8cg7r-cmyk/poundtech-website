@@ -912,9 +912,12 @@ async function placeOrder() {
     }
 
     container.innerHTML = products.map(product => `
-        <div class="product">
-
-            <div class="product-image">
+        <div class="product"
+        
+     onclick="window.location.href='product.html?id=${product.id}'"
+     style="cursor:pointer;">
+     
+     <div class="product-image">
                 ${
                     product.image_url
                     ? `<img src="${product.image_url}"
