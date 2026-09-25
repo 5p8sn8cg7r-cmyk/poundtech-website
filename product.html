@@ -155,6 +155,7 @@ const supabaseClient =
     );
 
     let productStock = 0;
+    let selectedQuantity = 1;
 
 async function loadProduct() {
 
@@ -363,8 +364,6 @@ async function loadProduct() {
     `;
 
 }
-
-let selectedQuantity = 1;
 
 
 function changeQuantity(amount) {
