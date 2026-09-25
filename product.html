@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Product | PoundTech</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #111;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .tech {
+            color: red;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .product-page {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 450px;
+            background: #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info h2 {
+            font-size: 32px;
+            margin-top: 0;
+        }
+
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .product-info p {
+            line-height: 1.6;
+        }
+
+        .stock {
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        button {
+            background: red;
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #cc0000;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #111;
+            text-decoration: none;
+        }
+
+        @media (max-width: 700px) {
+
+            .product-page {
+                grid-template-columns: 1fr;
+            }
+
+            .product-image {
+                height: 300px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>POUND<span class="tech">TECH</span></h1>
+
+</header>
+
+<div class="container">
+
+    <a href="index.html" class="back">
+        ← Back to Marketplace
+    </a>
+
+    <div id="product-container">
+
+        <p>Loading product...</p>
+
+    </div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+async function loadProduct() {
+
+    const params =
+        new URLSearchParams(window.location.search);
+
+    const productId =
+        params.get("id");
+
+    const container =
+        document.getElementById("product-container");
+
+    if (!productId) {
+
+        container.innerHTML =
+            "<p>Product not found.</p>";
+
+        return;
+
+    }
+
+
+    const { data: product, error } =
+        await supabaseClient
+
+        .from("products")
+
+        .select("*")
+
+        .eq("id", productId)
+
+        .single();
+
+
+    if (error || !product) {
+
+        console.error(error);
+
+        container.innerHTML =
+            "<p>Unable to load product.</p>";
+
+        return;
+
+    }
+
+
+    container.innerHTML = `
+
+        <div class="product-page">
+
+            <div class="product-image">
+
+                ${
+                    product.image_url
+
+                    ?
+
+                    `<img
+                        src="${product.image_url}"
+                        alt="${product.name}"
+                    >`
+
+                    :
+
+                    `<div style="
+                        width:100%;
+                        height:100%;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                    ">
+                        No Image
+                    </div>`
+                }
+
+            </div>
+
+
+            <div class="product-info">
+
+                <h2>${product.name}</h2>
+
+                <p>
+                    <strong>Category:</strong>
+                    ${product.category}
+                </p>
+
+
+                <div class="price">
+
+                    R${product.price}
+
+                </div>
+
+
+                <p>
+
+                    ${
+                        product.description
+                        ||
+                        "No description available."
+                    }
+
+                </p>
+
+
+                <p>
+
+                    <strong>
+                        Vehicle compatibility:
+                    </strong>
+
+                    ${
+                        product.vehicle_compatibility
+                        ||
+                        "Not specified"
+                    }
+
+                </p>
+
+
+                <p class="stock">
+
+                    ${
+                        product.stock > 0
+
+                        ?
+
+                        `In stock: ${product.stock}`
+
+                        :
+
+                        "Out of stock"
+                    }
+
+                </p>
+
+
+                ${
+                    product.stock > 0
+
+                    ?
+
+                    `<button
+                        onclick="
+                            addCart(
+                                '${product.name}',
+                                ${product.price}
+                            )
+                        "
+                    >
+                        Add to Cart
+                    </button>`
+
+                    :
+
+                    ""
+                }
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function addCart(name, price) {
+
+    let cart =
+        JSON.parse(
+            localStorage.getItem("cart")
+        ) || [];
+
+
+    const existing =
+        cart.find(
+            item => item.name === name
+        );
+
+
+    if (existing) {
+
+        existing.quantity++;
+
+    } else {
+
+        cart.push({
+
+            name: name,
+
+            price: price,
+
+            quantity: 1
+
+        });
+
+    }
+
+
+    localStorage.setItem(
+        "cart",
+        JSON.stringify(cart)
+    );
+
+
+    alert("Product added to cart!");
+
+}
+
+
+loadProduct();
+
+</script>
+
+</body>
+
+</html>
