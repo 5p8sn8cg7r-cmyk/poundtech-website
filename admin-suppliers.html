@@ -398,6 +398,8 @@ ${supplier.status}
 
 </p>
 
+${supplier.status === "Pending" ? `
+
 <div>
 
 <button onclick="updateSupplierStatus('${supplier.id}', 'Approved')">
@@ -412,6 +414,8 @@ Reject
 </button>
 
 </div>
+
+` : ""}
 
 </div>
 
