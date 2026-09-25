@@ -358,23 +358,21 @@ function changeQuantity(amount) {
         selectedQuantity;
 }
     
-function addCart(name, price) {
+function addCart(name, price, quantity) {
 
     let cart =
         JSON.parse(
             localStorage.getItem("cart")
         ) || [];
 
-
     const existing =
         cart.find(
             item => item.name === name
         );
 
-
     if (existing) {
 
-        existing.quantity++;
+        existing.quantity += Number(quantity);
 
     } else {
 
@@ -384,18 +382,16 @@ function addCart(name, price) {
 
             price: price,
 
-            quantity: 1
+            quantity: Number(quantity)
 
         });
 
     }
 
-
     localStorage.setItem(
         "cart",
         JSON.stringify(cart)
     );
-
 
     alert("Product added to cart!");
 
