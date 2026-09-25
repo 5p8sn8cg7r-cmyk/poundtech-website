@@ -154,8 +154,8 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
-    let productStock = 0;
-    let selectedQuantity = 1;
+let selectedQuantity = 1;
+let productStock = 0;
 
 async function loadProduct() {
 
@@ -177,7 +177,6 @@ async function loadProduct() {
 
     }
 
-    productStock = product.stock;
 
 
     const { data: product, error } =
@@ -200,9 +199,9 @@ async function loadProduct() {
             "<p>Unable to load product.</p>";
 
         return;
+ }
 
-    }
-
+    productStock = product.stock;
 
     container.innerHTML = `
 
