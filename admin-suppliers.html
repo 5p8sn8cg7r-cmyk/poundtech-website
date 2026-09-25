@@ -398,6 +398,20 @@ ${supplier.status}
 
 </p>
 
+<div>
+
+<button onclick="updateSupplierStatus('${supplier.id}', 'Approved')">
+Approve
+</button>
+
+<button
+    onclick="updateSupplierStatus('${supplier.id}', 'Rejected')"
+    style="background:#555; margin-left:10px;"
+>
+Reject
+</button>
+
+</div>
 
 </div>
 
@@ -408,7 +422,40 @@ ${supplier.status}
 
 }
 
+    async function updateSupplierStatus(id, newStatus) {
 
+    const { error } = await supabaseClient
+        .from("suppliers")
+        .update({
+            status: newStatus
+        })
+        .eq("id", id);
+
+
+    if (error) {
+
+        console.log(
+            "SUPABASE ERROR:",
+            error.message,
+            error.details,
+            error.hint
+        );
+
+        alert("Could not update supplier status.");
+
+        return;
+    }
+
+
+    alert(
+        "Supplier status updated to " + newStatus
+    );
+
+
+    loadSuppliers();
+
+}
+    
 </script>
 
 
