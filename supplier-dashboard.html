@@ -123,8 +123,12 @@ Manage your products and stock below.
 <button onclick="showAddProductForm()">
 Add Product
 </button>
-
-<div id="add-product-form" style="display:none; margin-top:20px;">
+    
+<div id="supplier-products" style="margin-top:20px;">
+    <p>Loading your products...</p>
+</div>
+    
+    <div id="add-product-form" style="display:none; margin-top:20px;">
 
     <input
         type="text"
@@ -400,7 +404,89 @@ async function addProduct() {
     document.getElementById("product-image").value = "";
     document.getElementById("vehicle-compatibility").value = "";
 }
-    
+
+    async function loadSupplierProducts() {
+
+    const productsContainer = document.getElementById("supplier-products");
+
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        productsContainer.innerHTML = "<p>Please log in.</p>";
+        return;
+    }
+
+    const { data: supplier, error: supplierError } =
+        await supabaseClient
+        .from("suppliers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+    if (supplierError || !supplier) {
+        productsContainer.innerHTML = "<p>Supplier account not found.</p>";
+        return;
+    }
+
+    const { data: products, error } =
+        await supabaseClient
+        .from("products")
+        .select("*")
+        .eq("supplier_id", supplier.id)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error(error);
+        productsContainer.innerHTML =
+            "<p>Error loading products.</p>";
+        return;
+    }
+
+    if (!products || products.length === 0) {
+        productsContainer.innerHTML =
+            "<p>You haven't added any products yet.</p>";
+        return;
+    }
+
+    productsContainer.innerHTML = products.map(product => `
+        <div style="
+            border:1px solid #ddd;
+            padding:15px;
+            margin-bottom:15px;
+            border-radius:8px;
+        ">
+            <h3>${product.name}</h3>
+
+            <p>
+                <strong>Category:</strong>
+                ${product.category}
+            </p>
+
+            <p>
+                <strong>Price:</strong>
+                R${product.price}
+            </p>
+
+            <p>
+                <strong>Stock:</strong>
+                ${product.stock}
+            </p>
+
+            <p>
+                <strong>Vehicle compatibility:</strong>
+                ${product.vehicle_compatibility || "Not specified"}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                ${product.status}
+            </p>
+        </div>
+    `).join("");
+}
+    loadSupplierProducts();
+
 </script>
 
 
