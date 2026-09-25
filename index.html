@@ -955,7 +955,24 @@ async function placeOrder() {
         </div>
     `).join("");
 }
+ 
+function updateCartCount() {
 
+    let cart =
+        JSON.parse(
+            localStorage.getItem("poundtechCart")
+        ) || [];
+
+    let totalItems = cart.reduce(function(total, item) {
+        return total + (item.quantity || 1);
+    }, 0);
+
+    document.getElementById("cart-count").innerText =
+        totalItems;
+}
+
+updateCartCount();
+ 
 loadProducts();
 
 </script>
