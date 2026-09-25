@@ -482,11 +482,74 @@ async function addProduct() {
                 <strong>Status:</strong>
                 ${product.status}
             </p>
+
+            <button onclick="editProduct('${product.id}')">
+    Edit Product
+</button>
+
         </div>
     `).join("");
 }
     loadSupplierProducts();
+    
+async function editProduct(productId) {
 
+    const { data: product, error } =
+        await supabaseClient
+        .from("products")
+        .select("*")
+        .eq("id", productId)
+        .single();
+
+    if (error || !product) {
+        alert("Unable to load product.");
+        return;
+    }
+
+    const newName = prompt("Product name:", product.name);
+    if (newName === null) return;
+
+    const newPrice = prompt("Price (R):", product.price);
+    if (newPrice === null) return;
+
+    const newStock = prompt("Stock quantity:", product.stock);
+    if (newStock === null) return;
+
+    const newDescription = prompt(
+        "Description:",
+        product.description || ""
+    );
+    if (newDescription === null) return;
+
+    const newCompatibility = prompt(
+        "Vehicle compatibility:",
+        product.vehicle_compatibility || ""
+    );
+    if (newCompatibility === null) return;
+
+    const { error: updateError } =
+        await supabaseClient
+        .from("products")
+        .update({
+            name: newName,
+            price: Number(newPrice),
+            stock: Number(newStock),
+            description: newDescription,
+            vehicle_compatibility: newCompatibility
+        })
+        .eq("id", productId);
+
+    if (updateError) {
+        console.error(updateError);
+        alert("Unable to update product.");
+        return;
+    }
+
+    alert("Product updated successfully!");
+
+    loadSupplierProducts();
+}
+    
 </script>
 
 
