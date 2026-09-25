@@ -154,6 +154,7 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
+    let productStock = 0;
 
 async function loadProduct() {
 
@@ -174,6 +175,8 @@ async function loadProduct() {
         return;
 
     }
+
+    productStock = product.stock;
 
 
     const { data: product, error } =
@@ -297,16 +300,56 @@ async function loadProduct() {
 
                     ?
 
-                    `<button
-                        onclick="
-                            addCart(
-                                '${product.name}',
-                                ${product.price}
-                            )
-                        "
-                    >
-                        Add to Cart
-                    </button>`
+    <div style="margin:20px 0;">
+
+    <label>
+        Quantity:
+    </label>
+
+    <div style="
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin-top:10px;
+    ">
+
+        <button
+            onclick="changeQuantity(-1)"
+            style="padding:8px 14px;"
+        >
+            −
+        </button>
+
+        <span
+            id="quantity"
+            style="font-size:20px; font-weight:bold;"
+        >
+            1
+        </span>
+
+        <button
+            onclick="changeQuantity(1)"
+            style="padding:8px 14px;"
+        >
+            +
+        </button>
+
+    </div>
+
+</div>
+
+
+<button
+    onclick="
+        addCart(
+            '${product.name}',
+            ${product.price},
+            document.getElementById('quantity').textContent
+        )
+    "
+>
+    Add to Cart
+</button>
 
                     :
 
@@ -321,7 +364,25 @@ async function loadProduct() {
 
 }
 
+let selectedQuantity = 1;
 
+
+function changeQuantity(amount) {
+
+    selectedQuantity += amount;
+
+    if (selectedQuantity < 1) {
+        selectedQuantity = 1;
+    }
+
+    if (selectedQuantity > productStock) {
+        selectedQuantity = productStock;
+    }
+
+    document.getElementById("quantity").textContent =
+        selectedQuantity;
+}
+    
 function addCart(name, price) {
 
     let cart =
