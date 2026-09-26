@@ -609,7 +609,7 @@ const supabaseClient = supabase.createClient(
 }
 
 
-function addCart(name, price) {
+function addCart(name, price, image_url) {
 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
@@ -620,11 +620,12 @@ function addCart(name, price) {
     if (existingProduct) {
         existingProduct.quantity += 1;
     } else {
-        cart.push({
-            name: name,
-            price: price,
-            quantity: 1
-        });
+  cart.push({
+    name: name,
+    price: price,
+    quantity: 1,
+    image_url: image_url
+});
     }
 
     localStorage.setItem("poundtechCart", JSON.stringify(cart));
@@ -983,7 +984,7 @@ async function placeOrder() {
                     R${product.price}
                 </div>
 
-             <button onclick="event.stopPropagation(); addCart('${product.name}', ${product.price})">
+    <button onclick="event.stopPropagation(); addCart('${product.name}', ${product.price}, '${product.image_url || ""}')">
     Add to Cart
 </button>
             </div>
