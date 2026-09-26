@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Orders | PoundTech</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body style="
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f5f7;
+">
+
+    <header style="
+        background:#111;
+        color:white;
+        padding:20px;
+    ">
+
+        <h1 style="
+            margin:0;
+            font-size:24px;
+        ">
+            POUND<span style="color:red;">TECH</span>
+        </h1>
+
+    </header>
+
+    <main style="
+        max-width:900px;
+        margin:40px auto;
+        padding:0 20px;
+    ">
+
+        <h2>My Orders</h2>
+
+        <p style="color:#666;">
+            View your recent PoundTech orders.
+        </p>
+
+        <div id="orders-container">
+            Loading orders...
+        </div>
+
+    </main>
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+async function loadOrders() {
+
+    const container =
+        document.getElementById("orders-container");
+
+    const { data: orders, error } =
+        await supabaseClient
+        .from("orders")
+        .select("*")
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (error) {
+
+        console.error(error);
+
+        container.innerHTML =
+            "<p>Unable to load orders.</p>";
+
+        return;
+    }
+
+    if (!orders || orders.length === 0) {
+
+        container.innerHTML =
+            "<p>You don't have any orders yet.</p>";
+
+        return;
+    }
+
+    container.innerHTML =
+        orders.map(order => `
+
+            <div style="
+                background:white;
+                padding:20px;
+                margin-bottom:15px;
+                border-radius:10px;
+                border:1px solid #ddd;
+            ">
+
+                <h3>
+                    Order ${order.order_number}
+                </h3>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${order.status}
+                </p>
+
+                <p>
+                    <strong>Total:</strong>
+                    R${order.total}
+                </p>
+
+                <p style="color:#777;">
+                    ${new Date(order.created_at).toLocaleString()}
+                </p>
+
+            </div>
+
+        `).join("");
+}
+
+loadOrders();
+
+</script>
+  
+</body>
+
+</html>
