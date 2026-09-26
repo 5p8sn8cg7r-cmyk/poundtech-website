@@ -773,26 +773,8 @@ function showCart() {
 
     </div>
 `;
+     });
  
-                <p style="font-weight:bold;">
-                    R${itemTotal}
-                </p>
-
-                <button onclick="removeFromCart(${index})" style="
-                    background:#e00000;
-                    color:white;
-                    border:none;
-                    padding:6px 10px;
-                    border-radius:4px;
-                    cursor:pointer;
-                ">
-                    Remove
-                </button>
-
-            </div>
-        `;
-    });
-
     cartTotal.innerText = "Total: R" + total;
 
     document.getElementById("cart-panel").style.display = "block";
