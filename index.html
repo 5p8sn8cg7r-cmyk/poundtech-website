@@ -974,9 +974,60 @@ async function placeOrder() {
         status: "Pending"
     };
 
-   const { data, error } = await supabaseClient
+const { data: createdOrder, error } =
+    await supabaseClient
     .from("orders")
-    .insert([order]);
+    .insert([order])
+    .select()
+    .single();
+
+if (error) {
+
+    console.log(
+        "SUPABASE ERROR:",
+        error.message,
+        error.details,
+        error.hint
+    );
+
+    alert("Order error: " + error.message);
+    return;
+}
+
+const orderItems = cart.map(function(item) {
+
+    return {
+        order_id: createdOrder.id,
+        product_id: item.product_id,
+        supplier_id: item.supplier_id,
+        product_name: item.name,
+        quantity: item.quantity || 1,
+        price: item.price
+    };
+
+});
+
+const { error: itemsError } =
+    await supabaseClient
+    .from("order_items")
+    .insert(orderItems);
+
+if (itemsError) {
+
+    console.log(
+        "ORDER ITEMS ERROR:",
+        itemsError.message,
+        itemsError.details,
+        itemsError.hint
+    );
+
+    alert(
+        "Order was created, but the order items could not be saved: " +
+        itemsError.message
+    );
+
+    return;
+}
 
     if (error) {
   console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
