@@ -94,6 +94,110 @@
     </div>
 
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+async function trackOrder() {
+
+    const orderNumber =
+        document.getElementById("order-number").value.trim();
+
+    const email =
+        document.getElementById("order-email").value.trim();
+
+    const result =
+        document.getElementById("order-result");
+
+    if (!orderNumber || !email) {
+        result.innerHTML =
+            "<p style='color:#e00000;'>Please enter your order number and email address.</p>";
+        return;
+    }
+
+    result.innerHTML =
+        "<p>Looking up your order...</p>";
+
+    const { data, error } =
+        await supabaseClient.rpc(
+            "track_poundtech_order",
+            {
+                lookup_order_number: orderNumber,
+                lookup_email: email
+            }
+        );
+
+    if (error) {
+        console.error(error);
+
+        result.innerHTML =
+            "<p style='color:#e00000;'>Unable to track this order.</p>";
+
+        return;
+    }
+
+    if (!data || data.length === 0) {
+
+        result.innerHTML = `
+            <div style="
+                background:#fff3f3;
+                padding:15px;
+                border-radius:8px;
+            ">
+                <strong>Order not found.</strong>
+                <p>
+                    Check your order number and email address.
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+    const order = data[0];
+
+    result.innerHTML = `
+        <div style="
+            background:#f5f5f5;
+            padding:20px;
+            border-radius:8px;
+        ">
+
+            <h3 style="margin-top:0;">
+                Order ${order.order_number}
+            </h3>
+
+            <p>
+                <strong>Status:</strong>
+                ${order.status}
+            </p>
+
+            <p>
+                <strong>Total:</strong>
+                R${order.total}
+            </p>
+
+            <p style="color:#777;">
+                ${new Date(order.created_at).toLocaleString()}
+            </p>
+
+        </div>
+    `;
+}
+
+</script>
+    
 </body>
 </html>
