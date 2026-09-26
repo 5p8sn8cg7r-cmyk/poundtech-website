@@ -585,7 +585,135 @@ async function deleteProduct(productId) {
 
 </script>
 
+<div style="
+    max-width:900px;
+    margin:40px auto;
+    padding:0 20px;
+">
+    <h2>Orders</h2>
 
+    <p style="color:#666;">
+        Orders containing your products will appear here.
+    </p>
+
+    <div id="supplier-orders">
+        Loading orders...
+    </div>
+</div>
+   
+    <script>
+
+async function loadSupplierOrders() {
+
+    const container =
+        document.getElementById("supplier-orders");
+
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        container.innerHTML =
+            "<p>Please log in to view orders.</p>";
+        return;
+    }
+
+    const { data: supplier, error: supplierError } =
+        await supabaseClient
+        .from("suppliers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+    if (supplierError || !supplier) {
+        container.innerHTML =
+            "<p>Supplier account not found.</p>";
+        return;
+    }
+
+    const { data: orders, error } =
+        await supabaseClient
+        .from("orders")
+        .select("*")
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (error) {
+        console.error(error);
+        container.innerHTML =
+            "<p>Unable to load orders.</p>";
+        return;
+    }
+
+    const supplierOrders = orders.filter(order => {
+
+        if (!order.items) return false;
+
+        return order.items.some(item =>
+            item.supplier_id === supplier.id
+        );
+
+    });
+
+    if (supplierOrders.length === 0) {
+        container.innerHTML =
+            "<p>No orders for your products yet.</p>";
+        return;
+    }
+
+    container.innerHTML =
+        supplierOrders.map(order => `
+
+            <div style="
+                background:white;
+                padding:20px;
+                margin-bottom:15px;
+                border-radius:10px;
+                border:1px solid #ddd;
+            ">
+
+                <h3>
+                    Order ${order.order_number}
+                </h3>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${order.status}
+                </p>
+
+                <p>
+                    <strong>Total:</strong>
+                    R${order.total}
+                </p>
+
+                <p>
+                    <strong>Customer:</strong>
+                    ${order.customer_name}
+                </p>
+
+                <p>
+                    <strong>Phone:</strong>
+                    ${order.phone}
+                </p>
+
+                <p>
+                    <strong>Delivery Address:</strong>
+                    ${order.address}
+                </p>
+
+                <p style="color:#777;">
+                    ${new Date(order.created_at).toLocaleString()}
+                </p>
+
+            </div>
+
+        `).join("");
+}
+
+loadSupplierOrders();
+
+</script>
+    
 </body>
 
 </html>
