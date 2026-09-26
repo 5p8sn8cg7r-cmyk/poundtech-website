@@ -983,10 +983,9 @@ async function placeOrder() {
                     R${product.price}
                 </div>
 
-                <button onclick="addCart('${product.name}', ${product.price})">
-                    Add to Cart
-                </button>
-
+             <button onclick="event.stopPropagation(); addCart('${product.name}', ${product.price})">
+    Add to Cart
+</button>
             </div>
 
         </div>
