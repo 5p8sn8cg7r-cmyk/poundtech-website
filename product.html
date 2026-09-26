@@ -319,7 +319,7 @@ async function loadProduct() {
 </div>
 
 <button
-    onclick="addCart('${product.name}', ${product.price}, selectedQuantity)"
+onclick="addCart('${product.name}', ${product.price}, selectedQuantity, '${product.image_url || ""}')"
 >
     Add to Cart
 </button>
@@ -352,7 +352,7 @@ function changeQuantity(amount) {
         selectedQuantity;
 }
     
-function addCart(name, price, quantity) {
+function addCart(name, price, quantity, image_url) {
 
     let cart =
         JSON.parse(
@@ -370,16 +370,18 @@ function addCart(name, price, quantity) {
 
     } else {
 
-        cart.push({
+ cart.push({
 
-            name: name,
+    name: name,
 
-            price: price,
+    price: price,
 
-            quantity: Number(quantity)
+    quantity: Number(quantity),
 
-        });
+    image_url: image_url
 
+});
+        
     }
 
     localStorage.setItem(
