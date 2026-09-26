@@ -431,51 +431,94 @@ Sell on PoundTech
         box-shadow:0 3px 20px rgba(0,0,0,0.1);
     ">
 
-        <h2 style="margin-bottom:25px;">
-            PoundTech Checkout
-        </h2>
+        <h2 style="
+    margin:0 0 8px;
+    font-size:30px;
+">
+    Checkout
+</h2>
 
-        <label>Full Name</label>
+<p style="
+    margin:0 0 30px;
+    color:#666;
+">
+    Complete your details to place your order.
+</p>
 
-        <input id="customer-name" type="text" placeholder="Your full name" style="
+<div style="
+    border:1px solid #e5e5e5;
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:25px;
+">
+
+    <h3 style="
+        margin-top:0;
+        margin-bottom:20px;
+    ">
+        Your Details
+    </h3>
+
+    <label>Full Name</label>
+
+    <input id="customer-name" type="text"
+        placeholder="Your full name"
+        style="
             width:100%;
+            box-sizing:border-box;
             padding:14px;
             margin:8px 0 18px;
             border:1px solid #ddd;
-            border-radius:5px;
-        ">
+            border-radius:6px;
+        "
+    >
 
-        <label>Phone Number</label>
+    <label>Phone Number</label>
 
-        <input id="customer-phone" type="tel" placeholder="Your phone number" style="
+    <input id="customer-phone" type="tel"
+        placeholder="Your phone number"
+        style="
             width:100%;
+            box-sizing:border-box;
             padding:14px;
             margin:8px 0 18px;
             border:1px solid #ddd;
-            border-radius:5px;
-        ">
+            border-radius:6px;
+        "
+    >
 
-        <label>Email Address</label>
+    <label>Email Address</label>
 
-        <input id="customer-email" type="email" placeholder="Your email address" style="
+    <input id="customer-email" type="email"
+        placeholder="Your email address"
+        style="
             width:100%;
+            box-sizing:border-box;
             padding:14px;
             margin:8px 0 18px;
             border:1px solid #ddd;
-            border-radius:5px;
-        ">
+            border-radius:6px;
+        "
+    >
 
-        <label>Delivery Address</label>
+    <label>Delivery Address</label>
 
-        <textarea id="customer-address" placeholder="Enter your delivery address" style="
+    <textarea id="customer-address"
+        placeholder="Enter your delivery address"
+        style="
             width:100%;
+            box-sizing:border-box;
             padding:14px;
-            margin:8px 0 18px;
+            margin:8px 0 5px;
             border:1px solid #ddd;
-            border-radius:5px;
+            border-radius:6px;
             min-height:100px;
-        "></textarea>
+            resize:vertical;
+        "
+    ></textarea>
 
+</div>
+     
         <h3>Order Summary</h3>
 
         <div id="checkout-items" style="margin-top:15px;"></div>
