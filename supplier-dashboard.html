@@ -478,10 +478,38 @@ async function addProduct() {
                 ${product.vehicle_compatibility || "Not specified"}
             </p>
 
-            <p>
-                <strong>Status:</strong>
-                ${product.status}
-            </p>
+  <p>
+    <strong>Status:</strong>
+    <select
+        onchange="updateSupplierOrderStatus('${order.id}', this.value)"
+        style="
+            padding:6px;
+            margin-left:5px;
+            border:1px solid #ccc;
+            border-radius:5px;
+        "
+    >
+        <option value="Pending" ${order.status === "Pending" ? "selected" : ""}>
+            Pending
+        </option>
+
+        <option value="Accepted" ${order.status === "Accepted" ? "selected" : ""}>
+            Accepted
+        </option>
+
+        <option value="Processing" ${order.status === "Processing" ? "selected" : ""}>
+            Processing
+        </option>
+
+        <option value="Shipped" ${order.status === "Shipped" ? "selected" : ""}>
+            Shipped
+        </option>
+
+        <option value="Completed" ${order.status === "Completed" ? "selected" : ""}>
+            Completed
+        </option>
+    </select>
+</p>
 
             <button onclick="editProduct('${product.id}')">
     Edit Product
@@ -866,7 +894,34 @@ async function loadSupplierOrders() {
 
         `).join("");
 }
+        
+async function updateSupplierOrderStatus(orderId, newStatus) {
 
+    const { error } =
+        await supabaseClient
+        .from("orders")
+        .update({
+            status: newStatus
+        })
+        .eq("id", orderId);
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to update order status: " +
+            error.message
+        );
+
+        return;
+    }
+
+    alert("Order status updated!");
+
+    loadSupplierOrders();
+}
+        
 loadSupplierOrders();
 
 </script>
