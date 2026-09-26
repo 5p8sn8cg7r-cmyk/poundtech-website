@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Track Order | PoundTech</title>
+</head>
+
+<body style="
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f5f7;
+">
+
+<header style="
+    background:#111;
+    color:white;
+    padding:20px;
+">
+
+    <h1 style="margin:0;">
+        POUND<span style="color:red;">TECH</span>
+    </h1>
+
+</header>
+
+<main style="
+    max-width:600px;
+    margin:50px auto;
+    padding:20px;
+">
+
+    <div style="
+        background:white;
+        padding:30px;
+        border-radius:10px;
+        border:1px solid #ddd;
+    ">
+
+        <h2>Track Your Order</h2>
+
+        <p style="color:#666;">
+            Enter your order number and email address to check your order status.
+        </p>
+
+        <label>Order Number</label>
+
+        <input
+            id="order-number"
+            type="text"
+            placeholder="e.g. PT123456789"
+            style="
+                width:100%;
+                padding:12px;
+                margin:8px 0 20px;
+                box-sizing:border-box;
+            "
+        >
+
+        <label>Email Address</label>
+
+        <input
+            id="order-email"
+            type="email"
+            placeholder="Your email address"
+            style="
+                width:100%;
+                padding:12px;
+                margin:8px 0 20px;
+                box-sizing:border-box;
+            "
+        >
+
+        <button
+            onclick="trackOrder()"
+            style="
+                width:100%;
+                padding:14px;
+                background:#e00000;
+                color:white;
+                border:none;
+                border-radius:6px;
+                font-weight:bold;
+                cursor:pointer;
+            "
+        >
+            Track Order
+        </button>
+
+        <div id="order-result" style="margin-top:25px;"></div>
+
+    </div>
+
+</main>
+
+</body>
+</html>
