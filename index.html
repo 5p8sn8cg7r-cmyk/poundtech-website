@@ -967,7 +967,7 @@ async function placeOrder() {
 
     if (error) {
   console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
-     alert("There was a problem placing your order. Please try again.");
+    alert("Order error: " + error.message);
         return;
     }
 
