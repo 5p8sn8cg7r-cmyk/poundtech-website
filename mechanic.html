@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Become a PoundTech Mechanic</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 14px;
+            background: #e00000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #b00000;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>POUND<span>TECH</span></h2>
+</header>
+
+<div class="container">
+
+    <h1>Become a PoundTech Mechanic</h1>
+
+    <p>
+        Join the PoundTech automotive marketplace and connect with
+        customers looking for automotive services.
+    </p>
+
+    <form id="mechanic-form">
+
+        <label>Business Name</label>
+        <input
+            type="text"
+            id="business-name"
+            required
+        >
+
+        <label>Contact Person</label>
+        <input
+            type="text"
+            id="contact-name"
+            required
+        >
+
+        <label>Phone</label>
+        <input
+            type="tel"
+            id="phone"
+            required
+        >
+
+        <label>Email</label>
+        <input
+            type="email"
+            id="email"
+            required
+        >
+
+        <label>Business Address</label>
+        <input
+            type="text"
+            id="address"
+        >
+
+        <label>Service Area</label>
+        <input
+            type="text"
+            id="service-area"
+            placeholder="e.g. Sandton, Randburg, Midrand"
+        >
+
+        <label>Services Offered</label>
+        <textarea
+            id="services"
+            placeholder="e.g. Brake repairs, servicing, diagnostics, tyres"
+        ></textarea>
+
+        <label>About Your Business</label>
+        <textarea
+            id="description"
+            placeholder="Tell customers about your business"
+        ></textarea>
+
+        <button type="submit">
+            Submit Application
+        </button>
+
+    </form>
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+document
+.getElementById("mechanic-form")
+.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const result =
+        document.getElementById("result");
+
+    result.innerHTML =
+        "<p>Submitting your application...</p>";
+
+
+    const mechanic = {
+
+        business_name:
+            document.getElementById("business-name").value.trim(),
+
+        contact_name:
+            document.getElementById("contact-name").value.trim(),
+
+        phone:
+            document.getElementById("phone").value.trim(),
+
+        email:
+            document.getElementById("email").value.trim(),
+
+        address:
+            document.getElementById("address").value.trim(),
+
+        service_area:
+            document.getElementById("service-area").value.trim(),
+
+        services:
+            document.getElementById("services").value.trim(),
+
+        description:
+            document.getElementById("description").value.trim(),
+
+        status: "Pending"
+
+    };
+
+
+    const { error } =
+        await supabaseClient
+        .from("mechanics")
+        .insert([mechanic]);
+
+
+    if (error) {
+
+        console.error(error);
+
+        result.innerHTML =
+            "<p style='color:red;'>Unable to submit application. Please try again.</p>";
+
+        return;
+    }
+
+
+    document
+    .getElementById("mechanic-form")
+    .style.display = "none";
+
+
+    result.innerHTML = `
+
+        <div style="
+            background:#f0fff0;
+            padding:20px;
+            border-radius:8px;
+        ">
+
+            <h2>Application Submitted ✓</h2>
+
+            <p>
+                Thank you for applying to become a
+                PoundTech mechanic.
+            </p>
+
+            <p>
+                Your application is currently being reviewed.
+            </p>
+
+        </div>
+
+    `;
+
+});
+
+</script>
+
+</body>
+</html>
