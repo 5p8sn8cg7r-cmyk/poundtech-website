@@ -652,32 +652,45 @@ const supabaseClient = supabase.createClient(
 }
 
 
-function addCart(name, price, image_url) {
+function addCart(product_id, supplier_id, name, price, image_url) {
 
-    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+    let cart =
+        JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
-    let existingProduct = cart.find(function(item) {
-        return item.name === name;
-    });
+    let existingProduct =
+        cart.find(function(item) {
+            return item.product_id === product_id;
+        });
 
     if (existingProduct) {
+
         existingProduct.quantity += 1;
+
     } else {
-  cart.push({
-    name: name,
-    price: price,
-    quantity: 1,
-    image_url: image_url
-});
+
+        cart.push({
+            product_id: product_id,
+            supplier_id: supplier_id,
+            name: name,
+            price: price,
+            quantity: 1,
+            image_url: image_url
+        });
+
     }
 
-    localStorage.setItem("poundtechCart", JSON.stringify(cart));
+    localStorage.setItem(
+        "poundtechCart",
+        JSON.stringify(cart)
+    );
 
-    let totalItems = cart.reduce(function(total, item) {
-        return total + item.quantity;
-    }, 0);
+    let totalItems =
+        cart.reduce(function(total, item) {
+            return total + item.quantity;
+        }, 0);
 
-    document.getElementById("cart-count").innerText = totalItems;
+    document.getElementById("cart-count").innerText =
+        totalItems;
 
     alert(name + " added to your cart!");
 }
@@ -1107,7 +1120,7 @@ async function placeOrder() {
                     R${product.price}
                 </div>
 
-    <button onclick="event.stopPropagation(); addCart('${product.name}', ${product.price}, '${product.image_url || ""}')">
+<button onclick="event.stopPropagation(); addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, '${product.image_url || ""}')">
     Add to Cart
 </button>
             </div>
