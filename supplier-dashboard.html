@@ -599,6 +599,132 @@ async function deleteProduct(productId) {
     <div id="supplier-orders">
         Loading orders...
     </div>
+    <script>
+
+async function loadSupplierOrders() {
+
+    const container =
+        document.getElementById("supplier-orders");
+
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        container.innerHTML =
+            "<p>Please log in to view orders.</p>";
+        return;
+    }
+
+    const { data: orders, error } =
+        await supabaseClient
+        .from("orders")
+        .select("*")
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (error) {
+        console.error(error);
+        container.innerHTML =
+            "<p>Unable to load orders.</p>";
+        return;
+    }
+
+    if (!orders || orders.length === 0) {
+        container.innerHTML =
+            "<p>No orders for your products yet.</p>";
+        return;
+    }
+
+    let html = "";
+
+    for (const order of orders) {
+
+        const { data: items, error: itemsError } =
+            await supabaseClient
+            .from("order_items")
+            .select("*")
+            .eq("order_id", order.id);
+
+        if (itemsError) {
+            console.error(itemsError);
+            continue;
+        }
+
+        if (!items || items.length === 0) {
+            continue;
+        }
+
+        html += `
+            <div style="
+                background:white;
+                padding:20px;
+                margin-bottom:15px;
+                border-radius:10px;
+                border:1px solid #ddd;
+            ">
+
+                <h3>
+                    Order ${order.order_number}
+                </h3>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${order.status}
+                </p>
+
+                <p>
+                    <strong>Customer:</strong>
+                    ${order.customer_name}
+                </p>
+
+                <p>
+                    <strong>Phone:</strong>
+                    ${order.phone}
+                </p>
+
+                <p>
+                    <strong>Delivery Address:</strong>
+                    ${order.address}
+                </p>
+
+                <h4>Products</h4>
+
+                ${items.map(item => `
+                    <div style="
+                        padding:10px;
+                        background:#f5f5f5;
+                        margin-bottom:8px;
+                        border-radius:6px;
+                    ">
+                        <strong>${item.product_name}</strong>
+                        <br>
+                        Quantity: ${item.quantity}
+                        <br>
+                        Price: R${item.price}
+                    </div>
+                `).join("")}
+
+                <p style="color:#777;">
+                    ${new Date(order.created_at).toLocaleString()}
+                </p>
+
+            </div>
+        `;
+    }
+
+    if (html === "") {
+        container.innerHTML =
+            "<p>No orders for your products yet.</p>";
+    } else {
+        container.innerHTML = html;
+    }
+}
+
+loadSupplierOrders();
+
+</script>
+    
 </div>
    
     <script>
