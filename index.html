@@ -1028,7 +1028,24 @@ if (itemsError) {
 
     return;
 }
+for (const item of cart) {
 
+    const { error: stockError } =
+        await supabaseClient.rpc(
+            "reduce_product_stock",
+            {
+                product_id_input: item.product_id,
+                quantity_input: item.quantity || 1
+            }
+        );
+
+    if (stockError) {
+        console.error("STOCK ERROR:", stockError);
+        alert("Order was created, but stock could not be updated: " + stockError.message);
+        return;
+    }
+}
+ 
     if (error) {
   console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
     alert("Order error: " + error.message);
