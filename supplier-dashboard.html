@@ -641,19 +641,45 @@ async function loadSupplierOrders() {
     for (const order of orders) {
 
         const { data: items, error: itemsError } =
-            await supabaseClient
-            .from("order_items")
-            .select("*")
-            .eq("order_id", order.id);
+    await supabaseClient
+    .from("order_items")
+    .select("*")
+    .eq("order_id", order.id);
 
-        if (itemsError) {
-            console.error(itemsError);
-            continue;
-        }
+if (itemsError) {
+    console.error(itemsError);
+    continue;
+}
 
-        if (!items || items.length === 0) {
-            continue;
-        }
+const { data: { user } } =
+    await supabaseClient.auth.getUser();
+
+const { data: supplier, error: supplierError } =
+    await supabaseClient
+    .from("suppliers")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+if (supplierError || !supplier) {
+    continue;
+}
+
+const supplierItems =
+    items.filter(item =>
+        item.supplier_id === supplier.id
+    );
+
+if (supplierItems.length === 0) {
+    continue;
+}
+
+const supplierTotal =
+    supplierItems.reduce(
+        (total, item) =>
+            total + (item.price * item.quantity),
+        0
+    );
 
         html += `
             <div style="
@@ -690,7 +716,7 @@ async function loadSupplierOrders() {
 
                 <h4>Products</h4>
 
-                ${items.map(item => `
+              ${supplierItems.map(item => `
                     <div style="
                         padding:10px;
                         background:#f5f5f5;
@@ -704,6 +730,11 @@ async function loadSupplierOrders() {
                         Price: R${item.price}
                     </div>
                 `).join("")}
+                
+<p>
+    <strong>Your total:</strong>
+    R${supplierTotal}
+</p>
 
                 <p style="color:#777;">
                     ${new Date(order.created_at).toLocaleString()}
