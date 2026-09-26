@@ -682,6 +682,19 @@ function showCart() {
         margin-bottom:10px;
     "
 >
+${item.image_url ? `
+    <img
+        src="${item.image_url}"
+        alt="${item.name}"
+        style="
+            width:80px;
+            height:80px;
+            object-fit:cover;
+            border-radius:8px;
+            margin-bottom:10px;
+        "
+    >
+` : ""}
 
              <h3 style="margin-bottom:8px;">
     ${item.name}
