@@ -319,7 +319,7 @@ async function loadProduct() {
 </div>
 
 <button
-onclick="addCart('${product.name}', ${product.price}, selectedQuantity, '${product.image_url || ""}')"
+<button onclick="addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, selectedQuantity, '${product.image_url || ""}')">
 >
     Add to Cart
 </button>
@@ -352,36 +352,31 @@ function changeQuantity(amount) {
         selectedQuantity;
 }
     
-function addCart(name, price, quantity, image_url) {
+function addCart(product_id, supplier_id, name, price, quantity, image_url) {
 
     let cart =
-        JSON.parse(
-            localStorage.getItem("poundtechCart")
-        ) || [];
+        JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
-    const existing =
-        cart.find(
-            item => item.name === name
-        );
+    let existingProduct =
+        cart.find(function(item) {
+            return item.product_id === product_id;
+        });
 
-    if (existing) {
+    if (existingProduct) {
 
-        existing.quantity += Number(quantity);
+        existingProduct.quantity += Number(quantity);
 
     } else {
 
- cart.push({
+        cart.push({
+            product_id: product_id,
+            supplier_id: supplier_id,
+            name: name,
+            price: price,
+            quantity: Number(quantity),
+            image_url: image_url
+        });
 
-    name: name,
-
-    price: price,
-
-    quantity: Number(quantity),
-
-    image_url: image_url
-
-});
-        
     }
 
     localStorage.setItem(
@@ -390,7 +385,6 @@ function addCart(name, price, quantity, image_url) {
     );
 
     alert("Product added to cart!");
-
 }
 
 
