@@ -245,19 +245,28 @@ async function loadMechanicProfile() {
             ${mechanic.business_name}
         </h1>
 
-        <div class="rating">
+ <div class="rating">
 
-            ⭐ <strong>
-                ${averageRating}
-            </strong>
+    ${
+        reviewCount > 0
+            ? `
+                <div>
+                    ⭐ <strong>${averageRating}</strong>
+                </div>
 
-            ${
-                reviewCount > 0
-                    ? `(${reviewCount} review${reviewCount === 1 ? "" : "s"})`
-                    : ""
-            }
+                <small>
+                    ${reviewCount}
+                    review${reviewCount === 1 ? "" : "s"}
+                </small>
+              `
+            : `
+                <div>
+                    ⭐ No ratings yet
+                </div>
+              `
+    }
 
-        </div>
+</div>
 
         <p>
             📍
