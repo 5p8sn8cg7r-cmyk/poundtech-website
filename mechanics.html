@@ -216,15 +216,12 @@ displayMechanics(allMechanics);
 
 
 function displayMechanics(mechanics) {
-    
-const reviews =
-    window.mechanicReviews || [];
-    
-    const container =
-        document.getElementById(
-            "mechanics-container"
-        );
 
+    const reviews =
+        window.mechanicReviews || [];
+
+    const container =
+        document.getElementById("mechanics-container");
 
     if (!mechanics || mechanics.length === 0) {
 
@@ -234,78 +231,75 @@ const reviews =
         return;
     }
 
+    container.innerHTML =
+        mechanics.map(mechanic => {
 
- container.innerHTML =
-    mechanics.map(mechanic => {
+            const mechanicReviews =
+                reviews.filter(review =>
+                    review.mechanic_id === mechanic.id
+                );
 
-        const mechanicReviews =
-            reviews.filter(review =>
-                review.mechanic_id === mechanic.id
-            );
+            const reviewCount =
+                mechanicReviews.length;
 
-        const reviewCount = mechanicReviews.length;
+            const averageRating =
+                reviewCount > 0
+                    ? (
+                        mechanicReviews.reduce(
+                            (sum, review) =>
+                                sum + review.rating,
+                            0
+                        ) / reviewCount
+                      ).toFixed(1)
+                    : "No ratings";
 
-        const averageRating =
-            reviewCount > 0
-                ? (
-                    mechanicReviews.reduce(
-                        (sum, review) => sum + review.rating,
-                        0
-                    ) / reviewCount
-                  ).toFixed(1)
-                : "No ratings";
+            return `
+                <div class="mechanic-card">
 
-        return `
-            <div class="mechanic-card">
+                    <span class="status">
+                        Approved
+                    </span>
 
-                <span class="status">
-                    Approved
-                </span>
+                    <h2>
+                        ${mechanic.business_name}
+                    </h2>
 
-                <h2>
-                    ${mechanic.business_name}
-                </h2>
+                    <p>
+                        ⭐ <strong>${averageRating}</strong>
+                        ${
+                            reviewCount > 0
+                                ? `(${reviewCount} review${reviewCount === 1 ? "" : "s"})`
+                                : ""
+                        }
+                    </p>
 
-                <p>
-                    ⭐ <strong>${averageRating}</strong>
-                    ${reviewCount > 0
-                        ? `(${reviewCount} review${reviewCount === 1 ? "" : "s"})`
-                        : ""
-                    }
-                </p>
+                    <p class="service-area">
+                        📍
+                        ${mechanic.service_area || "Service area not provided"}
+                    </p>
 
-                <p class="service-area">
+                    <p>
+                        <strong>Services:</strong><br>
+                        ${mechanic.services || "Services not provided"}
+                    </p>
 
-                    📍
-                    ${mechanic.service_area || "Service area not provided"}
+                    <p>
+                        ${mechanic.description || ""}
+                    </p>
 
-                </p>
+                    <button
+                        class="quote-button"
+                        onclick="requestQuote('${mechanic.id}')"
+                    >
+                        Request a Quote
+                    </button>
 
-                <p>
+                </div>
+            `;
 
-                    <strong>Services:</strong><br>
-
-                    ${mechanic.services || "Services not provided"}
-
-                </p>
-
-                <p>
-
-                    ${mechanic.description || ""}
-
-                </p>
-
-                <button
-                    class="quote-button"
-                    onclick="requestQuote('${mechanic.id}')"
-                >
-                    Request a Quote
-                </button>
-
-            </div>
-        `;
-    }).join("");
-
+        }).join("");
+}
+    
 function filterMechanics() {
 
     const search =
