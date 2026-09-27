@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PoundTech - Review Mechanic</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #111;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .booking {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .stars {
+            font-size: 30px;
+            letter-spacing: 5px;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>POUND<span>TECH</span></h1>
+    <p>Review Your Mechanic</p>
+</header>
+
+<div class="container">
+
+    <h2>Leave a Review</h2>
+
+    <p>
+        Enter the email address you used for your booking.
+    </p>
+
+    <input
+        type="email"
+        id="customer-email"
+        placeholder="Your email address"
+    >
+
+    <button onclick="findBooking()">
+        Find Completed Booking
+    </button>
+
+    <div id="message"></div>
+
+    <div id="review-form" style="display:none;">
+
+        <div id="booking-info" class="booking"></div>
+
+        <label>
+            Rating
+        </label>
+
+        <select id="rating">
+            <option value="5">★★★★★ — 5 Stars</option>
+            <option value="4">★★★★☆ — 4 Stars</option>
+            <option value="3">★★★☆☆ — 3 Stars</option>
+            <option value="2">★★☆☆☆ — 2 Stars</option>
+            <option value="1">★☆☆☆☆ — 1 Star</option>
+        </select>
+
+        <label>
+            Review
+        </label>
+
+        <textarea
+            id="review"
+            placeholder="Tell us about your experience..."
+        ></textarea>
+
+        <button onclick="submitReview()">
+            Submit Review
+        </button>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+let currentBooking = null;
+
+
+async function findBooking() {
+
+    const email =
+        document
+        .getElementById("customer-email")
+        .value
+        .trim();
+
+    const message =
+        document.getElementById("message");
+
+    const reviewForm =
+        document.getElementById("review-form");
+
+
+    if (!email) {
+
+        message.innerHTML =
+            "<p>Please enter your email address.</p>";
+
+        return;
+    }
+
+
+    message.innerHTML =
+        "<p>Searching for completed bookings...</p>";
+
+    reviewForm.style.display = "none";
+
+
+    const { data, error } =
+        await supabaseClient
+        .from("mechanic_bookings")
+        .select(`
+            id,
+            mechanic_id,
+            customer_name,
+            customer_email,
+            vehicle,
+            service_required,
+            status,
+            mechanics (
+                business_name
+            )
+        `)
+        .eq("customer_email", email)
+        .eq("status", "Completed")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+
+    if (error) {
+
+        console.error(error);
+
+        message.innerHTML =
+            "<p>Unable to find your booking.</p>";
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        message.innerHTML =
+            "<p>No completed booking was found for this email.</p>";
+
+        return;
+    }
+
+
+    currentBooking = data[0];
+
+
+    document.getElementById("booking-info").innerHTML = `
+
+        <h3>
+            ${currentBooking.mechanics.business_name}
+        </h3>
+
+        <p>
+            <strong>Vehicle:</strong>
+            ${currentBooking.vehicle}
+        </p>
+
+        <p>
+            <strong>Service:</strong>
+            ${currentBooking.service_required}
+        </p>
+
+    `;
+
+
+    message.innerHTML = "";
+
+    reviewForm.style.display = "block";
+}
+
+
+async function submitReview() {
+
+    if (!currentBooking) {
+        return;
+    }
+
+
+    const rating =
+        Number(
+            document.getElementById("rating").value
+        );
+
+    const review =
+        document.getElementById("review").value.trim();
+
+
+    const { error } =
+        await supabaseClient
+        .from("mechanic_reviews")
+        .insert([{
+
+            booking_id: currentBooking.id,
+
+            mechanic_id: currentBooking.mechanic_id,
+
+            customer_name: currentBooking.customer_name,
+
+            customer_email: currentBooking.customer_email,
+
+            rating: rating,
+
+            review: review
+
+        }]);
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to submit review: "
+            + error.message
+        );
+
+        return;
+    }
+
+
+    alert("Review submitted successfully!");
+
+    document.getElementById("review-form").innerHTML = `
+        <h2>Thank you!</h2>
+        <p>Your review has been submitted.</p>
+    `;
+}
+
+</script>
+
+</body>
+</html>
