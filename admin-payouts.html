@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>PoundTech Admin Payouts</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background:#f5f5f5;
+    margin:0;
+    padding:30px;
+}
+
+.container {
+    max-width:1000px;
+    margin:auto;
+}
+
+.card {
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    margin-bottom:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+h1 {
+    margin-bottom:25px;
+}
+
+.payout {
+    border:1px solid #ddd;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:15px;
+}
+
+button {
+    background:#e00000;
+    color:white;
+    border:none;
+    padding:10px 15px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+button:hover {
+    opacity:0.9;
+}
+
+.status {
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>PoundTech Admin — Supplier Payouts</h1>
+
+<div id="login-message" class="card">
+Checking admin login...
+</div>
+
+<div id="payouts" style="display:none;">
+
+<div class="card">
+
+<h2>Supplier Payouts</h2>
+
+<div id="payout-list">
+Loading payouts...
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+"https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+async function loadPayouts() {
+
+    const { data, error } =
+        await supabaseClient
+        .from("supplier_payouts")
+        .select(`
+            *,
+            suppliers (
+                business_name,
+                email
+            )
+        `)
+        .order("created_at", {
+            ascending:false
+        });
+
+
+    if (error) {
+
+        console.error(
+            "PAYOUT LOAD ERROR:",
+            error
+        );
+
+        document.getElementById(
+            "payout-list"
+        ).textContent =
+            "Unable to load payouts.";
+
+        return;
+    }
+
+
+    const container =
+        document.getElementById(
+            "payout-list"
+        );
+
+
+    if (!data || data.length === 0) {
+
+        container.innerHTML =
+            "<p>No payouts found.</p>";
+
+        return;
+    }
+
+
+    container.innerHTML =
+        data.map(function(payout) {
+
+        return `
+
+        <div class="payout">
+
+            <h3>
+                ${payout.suppliers?.business_name || "Supplier"}
+            </h3>
+
+            <p>
+                <strong>Email:</strong>
+                ${payout.suppliers?.email || "N/A"}
+            </p>
+
+            <p>
+                <strong>Amount:</strong>
+                R${Number(payout.amount).toFixed(2)}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                <span class="status">
+                    ${payout.status}
+                </span>
+            </p>
+
+            <p>
+                <strong>Reference:</strong>
+                ${payout.payout_reference || "Not paid yet"}
+            </p>
+
+            <p>
+                <strong>Created:</strong>
+                ${new Date(
+                    payout.created_at
+                ).toLocaleString()}
+            </p>
+
+        </div>
+
+        `;
+
+    }).join("");
+
+}
+
+
+async function checkAdmin() {
+
+    const { data } =
+        await supabaseClient.auth.getSession();
+
+    if (!data.session) {
+
+        document.getElementById(
+            "login-message"
+        ).innerHTML = `
+
+            <h2>Admin Login Required</h2>
+
+            <p>
+                Please log in through the PoundTech admin page.
+            </p>
+
+            <a href="admin.html">
+                Go to Admin Login
+            </a>
+
+        `;
+
+        return;
+    }
+
+
+    document.getElementById(
+        "login-message"
+    ).style.display = "none";
+
+    document.getElementById(
+        "payouts"
+    ).style.display = "block";
+
+
+    loadPayouts();
+
+}
+
+
+checkAdmin();
+
+</script>
+
+</body>
+
+</html>
