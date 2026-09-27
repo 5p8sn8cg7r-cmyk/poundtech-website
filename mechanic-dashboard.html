@@ -170,14 +170,14 @@ async function loadMechanic() {
         return;
     }
 
-    const {
-        data: mechanic,
-        error
-    } = await supabaseClient
-        .from("mechanics")
-        .select("*")
-        .eq("email", user.email)
-        .single();
+const {
+    data: mechanic,
+    error
+} = await supabaseClient
+    .from("mechanics")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
 
     if (error || !mechanic) {
 
