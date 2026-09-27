@@ -231,16 +231,19 @@ const mechanicId =
 
 const info =
     document.getElementById("mechanic-info");
+    let mechanic = null;
 
 async function loadMechanic() {
 
-    const { data: mechanic, error } =
+   const { data, error } =
         await supabaseClient
         .from("mechanics")
         .select("id, business_name, service_area")
         .eq("id", mechanicId)
         .eq("status", "Approved")
         .maybeSingle();
+
+    mechanic = data;
 
     console.log("MECHANIC ID:", mechanicId);
     console.log("MECHANIC DATA:", mechanic);
