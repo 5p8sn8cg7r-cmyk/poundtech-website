@@ -275,17 +275,15 @@ async function acceptQuote() {
 
     if (!currentQuote) return;
 
-    const { error } =
-        await supabaseClient.rpc(
-            "respond_to_mechanic_quote",
-            {
-                quote_id_input: currentQuote.id,
-                customer_email_input:
-                    currentQuote.customer_email,
-                response_input: "Accepted"
-            }
-        );
-
+const { data: bookingId, error } =
+    await supabaseClient.rpc(
+        "accept_mechanic_quote",
+        {
+            quote_id_input: currentQuote.id,
+            customer_email_input:
+                currentQuote.customer_email
+        }
+    );
 
     if (error) {
 
