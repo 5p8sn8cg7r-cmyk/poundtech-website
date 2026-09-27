@@ -505,43 +505,9 @@ async function addProduct() {
                 ${product.stock}
             </p>
 
-            <p>
-                <strong>Vehicle compatibility:</strong>
-                ${product.vehicle_compatibility || "Not specified"}
-            </p>
-
-  <p>
-    <strong>Status:</strong>
-    <select
-        onchange="updateSupplierOrderStatus('${order.id}', this.value)"
-        style="
-            padding:6px;
-            margin-left:5px;
-            border:1px solid #ccc;
-            border-radius:5px;
-        "
-    >
-        <option value="Pending" ${order.status === "Pending" ? "selected" : ""}>
-            Pending
-        </option>
-
-        <option value="Accepted" ${order.status === "Accepted" ? "selected" : ""}>
-            Accepted
-        </option>
-
-        <option value="Processing" ${order.status === "Processing" ? "selected" : ""}>
-            Processing
-        </option>
-
-        <option value="Shipped" ${order.status === "Shipped" ? "selected" : ""}>
-            Shipped
-        </option>
-
-        <option value="Completed" ${order.status === "Completed" ? "selected" : ""}>
-            Completed
-        </option>
-    </select>
-</p>
+       <button onclick="editProduct('${product.id}')">
+    Edit Product
+</button>
 
             <button onclick="editProduct('${product.id}')">
     Edit Product
