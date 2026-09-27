@@ -226,24 +226,55 @@ const params =
 
 
 const mechanicId =
-    params.get("mechanic_id");
+    new URLSearchParams(window.location.search)
+    .get("mechanic_id");
 
-
-let mechanic = null;
-
+const info =
+    document.getElementById("mechanic-info");
 
 async function loadMechanic() {
 
-    const info =
-        document.getElementById(
-            "mechanic-info"
-        );
+    const { data: mechanic, error } =
+        await supabaseClient
+        .from("mechanics")
+        .select("id, business_name, service_area")
+        .eq("id", mechanicId)
+        .eq("status", "Approved")
+        .maybeSingle();
 
+    console.log("MECHANIC ID:", mechanicId);
+    console.log("MECHANIC DATA:", mechanic);
+    console.log("MECHANIC ERROR:", error);
 
-    if (!mechanicId) {
+    if (error) {
+        console.error("MECHANIC LOOKUP ERROR:", error);
 
         info.innerHTML =
-            "<strong>No mechanic selected.</strong>";
+            "<strong>Error loading mechanic:</strong><br>" +
+            error.message;
+
+        document.getElementById("quote-form").style.display = "none";
+        return;
+    }
+
+    if (!mechanic) {
+        info.innerHTML =
+            "<strong>Mechanic not found.</strong>";
+
+        document.getElementById("quote-form").style.display = "none";
+        return;
+    }
+
+    info.innerHTML = `
+        <strong>${mechanic.business_name}</strong>
+        <br>
+        <span style="color:#666;">
+            📍 ${mechanic.service_area || "Service area not provided"}
+        </span>
+    `;
+}
+
+loadMechanic();
 
         document.getElementById(
             "quote-form"
