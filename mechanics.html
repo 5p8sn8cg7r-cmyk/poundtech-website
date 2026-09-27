@@ -311,12 +311,11 @@ function filterMechanics() {
 
 function requestQuote(mechanicId) {
 
-    alert(
-        "Quote requests will be available soon."
-    );
+    window.location.href =
+        "request-quote.html?mechanic_id="
+        + mechanicId;
 
 }
-
 
 loadMechanics();
 
