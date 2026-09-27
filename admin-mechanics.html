@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin - Mechanics</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .mechanic-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .mechanic-card h2 {
+            margin-top: 0;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .empty {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h2>
+        POUND<span>TECH</span> ADMIN
+    </h2>
+
+</header>
+
+
+<div class="container">
+
+    <h1>Mechanic Applications</h1>
+
+    <p>
+        Review and manage mechanic applications.
+    </p>
+
+    <div id="mechanics-container">
+        Loading mechanic applications...
+    </div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+async function loadMechanics() {
+
+    const container =
+        document.getElementById("mechanics-container");
+
+
+    const { data: mechanics, error } =
+        await supabaseClient
+        .from("mechanics")
+        .select("*")
+        .order("created_at", {
+            ascending: false
+        });
+
+
+    if (error) {
+
+        console.error(error);
+
+        container.innerHTML =
+            "<p>Unable to load mechanic applications.</p>";
+
+        return;
+    }
+
+
+    if (!mechanics || mechanics.length === 0) {
+
+        container.innerHTML =
+            "<div class='empty'>No mechanic applications yet.</div>";
+
+        return;
+    }
+
+
+    container.innerHTML =
+        mechanics.map(mechanic => `
+
+            <div class="mechanic-card">
+
+                <h2>
+                    ${mechanic.business_name}
+                </h2>
+
+                <p>
+                    <strong>Contact:</strong>
+                    ${mechanic.contact_name}
+                </p>
+
+                <p>
+                    <strong>Phone:</strong>
+                    ${mechanic.phone}
+                </p>
+
+                <p>
+                    <strong>Email:</strong>
+                    ${mechanic.email}
+                </p>
+
+                <p>
+                    <strong>Address:</strong>
+                    ${mechanic.address || "Not provided"}
+                </p>
+
+                <p>
+                    <strong>Service Area:</strong>
+                    ${mechanic.service_area || "Not provided"}
+                </p>
+
+                <p>
+                    <strong>Services:</strong>
+                    ${mechanic.services || "Not provided"}
+                </p>
+
+                <p>
+                    <strong>Description:</strong>
+                    ${mechanic.description || "Not provided"}
+                </p>
+
+                <p>
+
+                    <strong>Status:</strong>
+
+                    <select
+                        onchange="
+                            updateMechanicStatus(
+                                '${mechanic.id}',
+                                this.value
+                            )
+                        "
+                    >
+
+                        <option
+                            value="Pending"
+                            ${mechanic.status === "Pending" ? "selected" : ""}
+                        >
+                            Pending
+                        </option>
+
+                        <option
+                            value="Approved"
+                            ${mechanic.status === "Approved" ? "selected" : ""}
+                        >
+                            Approved
+                        </option>
+
+                        <option
+                            value="Rejected"
+                            ${mechanic.status === "Rejected" ? "selected" : ""}
+                        >
+                            Rejected
+                        </option>
+
+                    </select>
+
+                </p>
+
+                <p style="color:#777;">
+                    Applied:
+                    ${new Date(
+                        mechanic.created_at
+                    ).toLocaleString()}
+                </p>
+
+            </div>
+
+        `).join("");
+
+}
+
+
+async function updateMechanicStatus(
+    mechanicId,
+    newStatus
+) {
+
+    const { error } =
+        await supabaseClient
+        .from("mechanics")
+        .update({
+            status: newStatus
+        })
+        .eq("id", mechanicId);
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to update mechanic status: "
+            + error.message
+        );
+
+        return;
+    }
+
+
+    alert(
+        "Mechanic status updated!"
+    );
+
+    loadMechanics();
+
+}
+
+
+loadMechanics();
+
+</script>
+
+</body>
+
+</html>
