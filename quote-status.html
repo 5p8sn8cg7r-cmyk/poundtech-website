@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PoundTech - Quote Status</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #111;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        .quote {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .status {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+
+        .accept {
+            background: green;
+            margin-right: 10px;
+        }
+
+        .decline {
+            background: #c00;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>POUND<span>TECH</span></h1>
+    <p>Mechanic Quote</p>
+</header>
+
+<div class="container">
+
+    <h2>Check Your Quote</h2>
+
+    <p>Enter the email address you used when requesting the quote.</p>
+
+    <input
+        type="email"
+        id="customer-email"
+        placeholder="Your email address"
+    >
+
+    <button onclick="findQuote()">View Quote</button>
+
+    <div id="message"></div>
+
+    <div id="quote-result" class="quote hidden"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+
+/*
+Use the SAME existing publishable key you already use
+on your other PoundTech pages.
+*/
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+let currentQuote = null;
+
+
+async function findQuote() {
+
+    const email =
+        document.getElementById("customer-email").value.trim();
+
+    const message =
+        document.getElementById("message");
+
+    const result =
+        document.getElementById("quote-result");
+
+    if (!email) {
+        message.innerHTML =
+            "<p>Please enter your email address.</p>";
+        return;
+    }
+
+    message.innerHTML = "<p>Searching for your quote...</p>";
+    result.classList.add("hidden");
+
+
+    const { data, error } =
+        await supabaseClient.rpc(
+            "track_mechanic_quote",
+            {
+                lookup_email: email
+            }
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+        message.innerHTML =
+            "<p>Error finding your quote.</p>";
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        message.innerHTML =
+            "<p>No quote was found for this email address.</p>";
+
+        return;
+    }
+
+
+    currentQuote = data[0];
+
+    displayQuote(currentQuote);
+}
+
+
+function displayQuote(quote) {
+
+    const result =
+        document.getElementById("quote-result");
+
+    const message =
+        document.getElementById("message");
+
+    message.innerHTML = "";
+
+    let quotePrice =
+        quote.quoted_price
+        ? "R" + Number(quote.quoted_price).toLocaleString()
+        : "Not quoted yet";
+
+
+    result.innerHTML = `
+
+        <h2>${quote.business_name}</h2>
+
+        <p>
+            <strong>Vehicle:</strong>
+            ${quote.vehicle}
+        </p>
+
+        <p>
+            <strong>Service:</strong>
+            ${quote.service_required}
+        </p>
+
+        <div class="price">
+            ${quotePrice}
+        </div>
+
+        <p class="status">
+            Status: ${quote.status}
+        </p>
+
+        <div class="message">
+
+            <strong>Mechanic's Response</strong>
+
+            <p>
+                ${quote.mechanic_response || "No response yet."}
+            </p>
+
+        </div>
+
+        ${
+            quote.status === "Quoted"
+            ? `
+
+                <br>
+
+                <button
+                    class="accept"
+                    onclick="acceptQuote()">
+                    Accept Quote
+                </button>
+
+                <button
+                    class="decline"
+                    onclick="declineQuote()">
+                    Decline Quote
+                </button>
+
+            `
+            : ""
+        }
+
+    `;
+
+    result.classList.remove("hidden");
+}
+
+
+async function acceptQuote() {
+
+    if (!currentQuote) return;
+
+    const { error } =
+        await supabaseClient.rpc(
+            "respond_to_mechanic_quote",
+            {
+                quote_id_input: currentQuote.id,
+                customer_email_input:
+                    currentQuote.customer_email,
+                response_input: "Accepted"
+            }
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to accept the quote: "
+            + error.message
+        );
+
+        return;
+    }
+
+
+    alert("Quote accepted!");
+
+    findQuote();
+}
+
+
+async function declineQuote() {
+
+    if (!currentQuote) return;
+
+    const { error } =
+        await supabaseClient.rpc(
+            "respond_to_mechanic_quote",
+            {
+                quote_id_input: currentQuote.id,
+                customer_email_input:
+                    currentQuote.customer_email,
+                response_input: "Declined"
+            }
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to decline the quote: "
+            + error.message
+        );
+
+        return;
+    }
+
+
+    alert("Quote declined.");
+
+    findQuote();
+}
+
+</script>
+
+</body>
+</html>
