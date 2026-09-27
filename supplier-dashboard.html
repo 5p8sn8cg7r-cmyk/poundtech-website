@@ -112,7 +112,15 @@ Logout
     </div>
 
 </div>
+        
+<hr style="margin:30px 0; border:none; border-top:1px solid #ddd;">
 
+<h3>Payouts</h3>
+
+<div id="supplier-payouts">
+    Loading payouts...
+</div>
+        
 </div>
 
 <div class="card">
@@ -1007,6 +1015,76 @@ async function loadSupplierEarnings() {
 }
 
 loadSupplierEarnings();
+        async function loadSupplierPayouts() {
+
+    const { data, error } =
+        await supabaseClient
+        .from("supplier_payouts")
+        .select("*")
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (error) {
+        console.error("PAYOUT ERROR:", error);
+        document.getElementById("supplier-payouts").textContent =
+            "Unable to load payouts.";
+        return;
+    }
+
+    const container =
+        document.getElementById("supplier-payouts");
+
+    if (!data || data.length === 0) {
+        container.innerHTML =
+            "<p style='color:#666;'>No payouts recorded yet.</p>";
+        return;
+    }
+
+    container.innerHTML = data.map(function(payout) {
+
+        return `
+            <div style="
+                background:#f5f5f5;
+                padding:15px;
+                border-radius:8px;
+                margin-top:10px;
+            ">
+
+                <strong>
+                    R${Number(payout.amount).toFixed(2)}
+                </strong>
+
+                <span style="
+                    margin-left:10px;
+                    color:#666;
+                ">
+                    ${payout.status}
+                </span>
+
+                ${
+                    payout.paid_at
+                    ? `<p style="margin:8px 0 0; color:#666;">
+                        Paid: ${new Date(payout.paid_at).toLocaleDateString()}
+                       </p>`
+                    : ""
+                }
+
+                ${
+                    payout.payout_reference
+                    ? `<p style="margin:8px 0 0; color:#666;">
+                        Reference: ${payout.payout_reference}
+                       </p>`
+                    : ""
+                }
+
+            </div>
+        `;
+
+    }).join("");
+}
+
+loadSupplierPayouts();
         
 </script>
     
