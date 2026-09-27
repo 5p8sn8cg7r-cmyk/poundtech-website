@@ -1249,7 +1249,56 @@ function updateCartCount() {
 updateCartCount();
  
 loadProducts();
+    
+async function searchProducts() {
 
+    const searchInput = document.querySelector(
+        'input[placeholder="Search for parts, accessories or services..."]'
+    );
+
+    const searchTerm = searchInput.value.trim().toLowerCase();
+
+    if (!searchTerm) {
+        loadProducts();
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select("*")
+        .eq("status", "Active")
+        .or(
+            `name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%,vehicle_compatibility.ilike.%${searchTerm}%`
+        );
+
+    if (error) {
+        console.error("SEARCH ERROR:", error);
+        alert("Unable to search products.");
+        return;
+    }
+
+    const container =
+        document.getElementById("featured-products");
+
+    if (!data || data.length === 0) {
+        container.innerHTML =
+            "<p>No products found.</p>";
+        return;
+    }
+
+    container.innerHTML = data.map(product => `
+        <div>
+            <h3>${product.name}</h3>
+            <p>${product.category}</p>
+            <p>R${product.price}</p>
+            <p>
+                Compatible with:
+                ${product.vehicle_compatibility || "Not specified"}
+            </p>
+        </div>
+    `).join("");
+}
+    
 </script>
 
 </body>
