@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Mechanic Profile | PoundTech</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header strong {
+            color: #e60000;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .profile-card,
+        .reviews-card {
+            background: white;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .status {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .rating {
+            font-size: 22px;
+            margin: 15px 0;
+        }
+
+        .review {
+            border-top: 1px solid #ddd;
+            padding: 20px 0;
+        }
+
+        .review:first-child {
+            border-top: none;
+        }
+
+        .stars {
+            color: #f5b400;
+            font-size: 20px;
+        }
+
+        .quote-button {
+            display: inline-block;
+            background: #e60000;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        .quote-button:hover {
+            background: #c00000;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>
+        POUND<strong>TECH</strong>
+    </h1>
+
+</header>
+
+
+<div class="container">
+
+    <div id="profile-container"
+         class="loading">
+
+        Loading mechanic...
+
+    </div>
+
+
+    <div id="reviews-container">
+
+    </div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const mechanicId =
+    params.get("id");
+
+
+async function loadMechanicProfile() {
+
+    const profileContainer =
+        document.getElementById(
+            "profile-container"
+        );
+
+    const reviewsContainer =
+        document.getElementById(
+            "reviews-container"
+        );
+
+
+    if (!mechanicId) {
+
+        profileContainer.innerHTML =
+            "<p>Mechanic not found.</p>";
+
+        return;
+    }
+
+
+    const { data: mechanic, error } =
+        await supabaseClient
+        .from("mechanics")
+        .select("*")
+        .eq("id", mechanicId)
+        .eq("status", "Approved")
+        .single();
+
+
+    if (error || !mechanic) {
+
+        console.error(error);
+
+        profileContainer.innerHTML =
+            "<p>Unable to load mechanic.</p>";
+
+        return;
+    }
+
+
+    const { data: reviews, error: reviewsError } =
+        await supabaseClient
+        .from("mechanic_reviews")
+        .select("*")
+        .eq("mechanic_id", mechanicId)
+        .order("created_at", {
+            ascending: false
+        });
+
+
+    if (reviewsError) {
+
+        console.error(reviewsError);
+
+    }
+
+
+    const mechanicReviews =
+        reviews || [];
+
+    const reviewCount =
+        mechanicReviews.length;
+
+
+    const averageRating =
+        reviewCount > 0
+            ? (
+                mechanicReviews.reduce(
+                    (sum, review) =>
+                        sum + review.rating,
+                    0
+                ) / reviewCount
+              ).toFixed(1)
+            : "No ratings";
+
+
+    profileContainer.className =
+        "profile-card";
+
+
+    profileContainer.innerHTML = `
+
+        <span class="status">
+            Approved
+        </span>
+
+        <h1>
+            ${mechanic.business_name}
+        </h1>
+
+        <div class="rating">
+
+            ⭐ <strong>
+                ${averageRating}
+            </strong>
+
+            ${
+                reviewCount > 0
+                    ? `(${reviewCount} review${reviewCount === 1 ? "" : "s"})`
+                    : ""
+            }
+
+        </div>
+
+        <p>
+            📍
+            <strong>Service Area:</strong>
+            ${mechanic.service_area || "Not provided"}
+        </p>
+
+        <p>
+            <strong>Services:</strong><br>
+            ${mechanic.services || "Not provided"}
+        </p>
+
+        <p>
+            ${mechanic.description || ""}
+        </p>
+
+        <button
+            class="quote-button"
+            onclick="requestQuote()"
+        >
+            Request a Quote
+        </button>
+
+    `;
+
+
+    if (mechanicReviews.length === 0) {
+
+        reviewsContainer.innerHTML = `
+
+            <div class="reviews-card">
+
+                <h2>
+                    Customer Reviews
+                </h2>
+
+                <p>
+                    No reviews yet.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    reviewsContainer.innerHTML = `
+
+        <div class="reviews-card">
+
+            <h2>
+                Customer Reviews
+            </h2>
+
+            ${mechanicReviews.map(review => `
+
+                <div class="review">
+
+                    <div class="stars">
+
+                        ${"★".repeat(review.rating)}
+                        ${"☆".repeat(5 - review.rating)}
+
+                    </div>
+
+                    <p>
+                        ${review.review || "No written review."}
+                    </p>
+
+                    <small>
+                        ${review.customer_name}
+                    </small>
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+    `;
+
+}
+
+
+function requestQuote() {
+
+    window.location.href =
+        "request-quote.html?mechanic_id="
+        + mechanicId;
+
+}
+
+
+loadMechanicProfile();
+
+</script>
+
+</body>
+
+</html>
