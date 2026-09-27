@@ -254,124 +254,27 @@ async function loadMechanic() {
             error.message;
 
         document.getElementById("quote-form").style.display = "none";
-        return;
-    }
 
-    if (!mechanic) {
+    } else if (!mechanic) {
+
         info.innerHTML =
             "<strong>Mechanic not found.</strong>";
 
         document.getElementById("quote-form").style.display = "none";
-        return;
-    }
 
-    info.innerHTML = `
-        <strong>${mechanic.business_name}</strong>
-        <br>
-        <span style="color:#666;">
-            📍 ${mechanic.service_area || "Service area not provided"}
-        </span>
-    `;
+    } else {
+
+        info.innerHTML = `
+            <strong>${mechanic.business_name}</strong>
+            <br>
+            <span style="color:#666;">
+                📍 ${mechanic.service_area || "Service area not provided"}
+            </span>
+        `;
+    }
 }
 
 loadMechanic();
-
-        document.getElementById(
-            "quote-form"
-        ).style.display = "none";
-
-
-const { data, error } =
-    await supabaseClient
-    .from("mechanics")
-    .select(
-        "id, business_name, service_area"
-    )
-    .eq("id", mechanicId)
-    .eq("status", "Approved")
-    .maybeSingle();
-
-console.log("MECHANIC ID:", mechanicId);
-console.log("MECHANIC DATA:", data);
-console.log("MECHANIC ERROR:", error);
-
-
-if (error) {
-
-    console.error("MECHANIC LOOKUP ERROR:", error);
-
-    info.innerHTML =
-        "<strong>Error loading mechanic:</strong><br>"
-        + error.message;
-
-    document.getElementById(
-        "quote-form"
-    ).style.display = "none";
-
-} else if (!mechanic) {
-
-    info.innerHTML =
-        "<strong>Mechanic not found.</strong>";
-
-    document.getElementById(
-        "quote-form"
-    ).style.display = "none";
-
-} else {
-
-    info.innerHTML = `
-        <strong>${mechanic.business_name}</strong>
-        <br>
-        <span style="color:#666;">
-            📍 ${mechanic.service_area || "Service area not provided"}
-        </span>
-    `;
-}
-
-if (!data) {
-
-    info.innerHTML =
-        "<strong>Mechanic not found.</strong>";
-
-    document.getElementById(
-        "quote-form"
-    ).style.display = "none"; 
-
-    return;
-}
-
-        console.error(error);
-
-        info.innerHTML =
-            "<strong>Mechanic not found.</strong>";
-
-        document.getElementById(
-            "quote-form"
-        ).style.display = "none";
-
-        return;
-    }
-
-
-    mechanic = data;
-
-
-    info.innerHTML = `
-
-        <strong>
-            ${mechanic.business_name}
-        </strong>
-
-        <br>
-
-        <span style="color:#666;">
-            📍 ${mechanic.service_area || "Service area not provided"}
-        </span>
-
-    `;
-
-}
-
 
 document
 .getElementById("quote-form")
