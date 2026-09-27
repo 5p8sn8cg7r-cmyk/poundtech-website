@@ -297,14 +297,13 @@ async function markPayoutPaid(payoutId) {
     }
 
     const { error } =
-        await supabaseClient
-        .from("supplier_payouts")
-        .update({
-            status: "Paid",
-            payout_reference: reference,
-            paid_at: new Date().toISOString()
-        })
-        .eq("id", payoutId);
+        await supabaseClient.rpc(
+            "mark_supplier_payout_paid",
+            {
+                payout_id_input: payoutId,
+                payout_reference_input: reference
+            }
+        );
 
     if (error) {
 
