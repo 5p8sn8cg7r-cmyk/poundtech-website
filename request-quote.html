@@ -253,18 +253,47 @@ async function loadMechanic() {
     }
 
 
-    const { data, error } =
-        await supabaseClient
-        .from("mechanics")
-        .select(
-            "id, business_name, service_area"
-        )
-        .eq("id", mechanicId)
-        .eq("status", "Approved")
-        .single();
+const { data, error } =
+    await supabaseClient
+    .from("mechanics")
+    .select(
+        "id, business_name, service_area"
+    )
+    .eq("id", mechanicId)
+    .eq("status", "Approved")
+    .maybeSingle();
+
+console.log("MECHANIC ID:", mechanicId);
+console.log("MECHANIC DATA:", data);
+console.log("MECHANIC ERROR:", error);
 
 
-    if (error || !data) {
+ if (error) {
+
+    console.error("MECHANIC LOOKUP ERROR:", error);
+
+    info.innerHTML =
+        "<strong>Error loading mechanic:</strong><br>"
+        + error.message;
+
+    document.getElementById(
+        "quote-form"
+    ).style.display = "none";
+
+    return;
+}
+
+if (!data) {
+
+    info.innerHTML =
+        "<strong>Mechanic not found.</strong>";
+
+    document.getElementById(
+        "quote-form"
+    ).style.display = "none";
+
+    return;
+}
 
         console.error(error);
 
