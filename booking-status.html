@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PoundTech - Booking Status</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #111;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .booking {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .status {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>POUND<span>TECH</span></h1>
+    <p>Booking Status</p>
+</header>
+
+<div class="container">
+
+    <h2>Track Your Booking</h2>
+
+    <p>
+        Enter the email address you used when requesting your mechanic quote.
+    </p>
+
+    <input
+        type="email"
+        id="customer-email"
+        placeholder="Your email address"
+    >
+
+    <button onclick="findBooking()">
+        View Booking
+    </button>
+
+    <div id="message"></div>
+
+    <div id="booking-result" class="booking" style="display:none;"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+async function findBooking() {
+
+    const email =
+        document
+        .getElementById("customer-email")
+        .value
+        .trim();
+
+    const message =
+        document.getElementById("message");
+
+    const result =
+        document.getElementById("booking-result");
+
+
+    if (!email) {
+
+        message.innerHTML =
+            "<p>Please enter your email address.</p>";
+
+        return;
+    }
+
+
+    message.innerHTML =
+        "<p>Searching for your booking...</p>";
+
+    result.style.display = "none";
+
+
+    const { data, error } =
+        await supabaseClient.rpc(
+            "track_mechanic_booking",
+            {
+                lookup_email: email
+            }
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+        message.innerHTML =
+            "<p>Unable to find your booking.</p>";
+
+        return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+        message.innerHTML =
+            "<p>No booking was found for this email address.</p>";
+
+        return;
+    }
+
+
+    const booking = data[0];
+
+
+    message.innerHTML = "";
+
+
+    result.innerHTML = `
+
+        <h2>${booking.business_name}</h2>
+
+        <p>
+            <strong>Customer:</strong>
+            ${booking.customer_name}
+        </p>
+
+        <p>
+            <strong>Vehicle:</strong>
+            ${booking.vehicle}
+        </p>
+
+        <p>
+            <strong>Service:</strong>
+            ${booking.service_required}
+        </p>
+
+        <div class="price">
+            R${Number(booking.agreed_price).toLocaleString()}
+        </div>
+
+        <p class="status">
+            Status: ${booking.status}
+        </p>
+
+        <p>
+            <strong>Booking Date:</strong>
+            ${booking.booking_date || "Not scheduled yet"}
+        </p>
+
+        <div class="message">
+
+            ${
+                booking.status === "Accepted"
+                ? "Your booking has been accepted by the mechanic."
+                : ""
+            }
+
+            ${
+                booking.status === "Scheduled"
+                ? "Your booking has been scheduled."
+                : ""
+            }
+
+            ${
+                booking.status === "In Progress"
+                ? "Your vehicle is currently being worked on."
+                : ""
+            }
+
+            ${
+                booking.status === "Completed"
+                ? "Your service has been completed."
+                : ""
+            }
+
+        </div>
+
+    `;
+
+
+    result.style.display = "block";
+}
+
+</script>
+
+</body>
+</html>
