@@ -1031,7 +1031,8 @@ if (itemsError) {
 
     return;
 }
-for (const item of cart) {
+
+    for (const item of cart) {
 
     const { error: stockError } =
         await supabaseClient.rpc(
@@ -1044,16 +1045,46 @@ for (const item of cart) {
 
     if (stockError) {
         console.error("STOCK ERROR:", stockError);
-        alert("Order was created, but stock could not be updated: " + stockError.message);
+        alert(
+            "Order was created, but stock could not be updated: " +
+            stockError.message
+        );
         return;
     }
 }
- 
-    if (error) {
-  console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
+
+// Create PoundTech commission records
+const { error: commissionError } =
+    await supabaseClient.rpc(
+        "create_order_commissions",
+        {
+            order_id_input: createdOrder.id
+        }
+    );
+
+if (commissionError) {
+
+    console.error("COMMISSION ERROR:", commissionError);
+
+    alert(
+        "Order was created, but the commission could not be recorded: " +
+        commissionError.message
+    );
+
+    return;
+}
+
+if (error) {
+    console.log(
+        "SUPABASE ERROR:",
+        error.message,
+        error.details,
+        error.hint
+    );
+
     alert("Order error: " + error.message);
-        return;
-    }
+    return;
+}
 
   document.getElementById("checkout-panel").innerHTML = `
     <div style="
