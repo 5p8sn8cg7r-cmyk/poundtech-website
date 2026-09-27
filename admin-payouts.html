@@ -188,6 +188,35 @@ async function loadPayouts() {
                 <strong>Reference:</strong>
                 ${payout.payout_reference || "Not paid yet"}
             </p>
+            
+${
+    payout.status === "Pending"
+    ? `
+        <div style="margin-top:15px;">
+
+            <input
+                id="reference-${payout.id}"
+                type="text"
+                placeholder="Payout reference"
+                style="
+                    padding:10px;
+                    width:220px;
+                    border:1px solid #ccc;
+                    border-radius:6px;
+                    margin-right:8px;
+                "
+            >
+
+            <button
+                onclick="markPayoutPaid('${payout.id}')"
+            >
+                Mark as Paid
+            </button>
+
+        </div>
+      `
+    : ""
+}
 
             <p>
                 <strong>Created:</strong>
@@ -247,7 +276,58 @@ async function checkAdmin() {
 
 
 checkAdmin();
+    
+async function markPayoutPaid(payoutId) {
 
+    const referenceInput =
+        document.getElementById(
+            "reference-" + payoutId
+        );
+
+    const reference =
+        referenceInput.value.trim();
+
+    if (reference === "") {
+
+        alert(
+            "Please enter a payout reference."
+        );
+
+        return;
+    }
+
+    const { error } =
+        await supabaseClient
+        .from("supplier_payouts")
+        .update({
+            status: "Paid",
+            payout_reference: reference,
+            paid_at: new Date().toISOString()
+        })
+        .eq("id", payoutId);
+
+    if (error) {
+
+        console.error(
+            "PAYOUT UPDATE ERROR:",
+            error
+        );
+
+        alert(
+            "Unable to update payout: " +
+            error.message
+        );
+
+        return;
+    }
+
+    alert(
+        "Payout marked as paid!"
+    );
+
+    loadPayouts();
+}
+    
 </script>
 
 </body>
