@@ -675,24 +675,70 @@ async function loadSupplierOrders() {
         return;
     }
 
-    const { data: orders, error } =
+    const { data: supplier, error: supplierError } =
         await supabaseClient
-        .from("orders")
-        .select("*")
-        .order("created_at", {
-            ascending: false
-        });
+        .from("suppliers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-    if (error) {
-        console.error(error);
+    if (supplierError || !supplier) {
+        container.innerHTML =
+            "<p>Supplier account not found.</p>";
+        return;
+    }
+
+    const { data: orderItems, error: itemsError } =
+        await supabaseClient
+        .from("order_items")
+        .select("*")
+        .eq("supplier_id", supplier.id);
+
+    if (itemsError) {
+        console.error(itemsError);
         container.innerHTML =
             "<p>Unable to load orders.</p>";
         return;
     }
 
-    if (!orders || orders.length === 0) {
+    if (!orderItems || orderItems.length === 0) {
         container.innerHTML =
             "<p>No orders for your products yet.</p>";
+        return;
+    }
+
+    const orderIds = [
+        ...new Set(
+            orderItems.map(item => item.order_id)
+        )
+    ];
+
+    const { data: orders, error: ordersError } =
+        await supabaseClient
+        .from("orders")
+        .select("*")
+        .in("id", orderIds)
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (ordersError) {
+        console.error(ordersError);
+        container.innerHTML =
+            "<p>Unable to load orders.</p>";
+        return;
+    }
+
+    const { data: supplierStatuses, error: statusError } =
+        await supabaseClient
+        .from("supplier_order_statuses")
+        .select("*")
+        .eq("supplier_id", supplier.id);
+
+    if (statusError) {
+        console.error(statusError);
+        container.innerHTML =
+            "<p>Unable to load supplier order statuses.</p>";
         return;
     }
 
@@ -700,46 +746,31 @@ async function loadSupplierOrders() {
 
     for (const order of orders) {
 
-        const { data: items, error: itemsError } =
-    await supabaseClient
-    .from("order_items")
-    .select("*")
-    .eq("order_id", order.id);
+        const supplierItems =
+            orderItems.filter(item =>
+                item.order_id === order.id
+            );
 
-if (itemsError) {
-    console.error(itemsError);
-    continue;
-}
+        if (supplierItems.length === 0) {
+            continue;
+        }
 
-const { data: { user } } =
-    await supabaseClient.auth.getUser();
+        const supplierStatusRecord =
+            supplierStatuses.find(status =>
+                status.order_id === order.id
+            );
 
-const { data: supplier, error: supplierError } =
-    await supabaseClient
-    .from("suppliers")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+        const supplierStatus =
+            supplierStatusRecord
+            ? supplierStatusRecord.status
+            : "Pending";
 
-if (supplierError || !supplier) {
-    continue;
-}
-
-const supplierItems =
-    items.filter(item =>
-        item.supplier_id === supplier.id
-    );
-
-if (supplierItems.length === 0) {
-    continue;
-}
-
-const supplierTotal =
-    supplierItems.reduce(
-        (total, item) =>
-            total + (item.price * item.quantity),
-        0
-    );
+        const supplierTotal =
+            supplierItems.reduce(
+                (total, item) =>
+                    total + (item.price * item.quantity),
+                0
+            );
 
         html += `
             <div style="
@@ -753,43 +784,46 @@ const supplierTotal =
                 <h3>
                     Order ${order.order_number}
                 </h3>
-<p>
-    <strong>Status:</strong>
-
-    <select
-        onchange="updateSupplierOrderStatus('${order.id}', this.value)"
-        style="
-            padding:6px;
-            margin-left:5px;
-            border:1px solid #ccc;
-            border-radius:5px;
-        "
-    >
-        <option value="Pending" ${order.status === "Pending" ? "selected" : ""}>
-            Pending
-        </option>
-
-        <option value="Accepted" ${order.status === "Accepted" ? "selected" : ""}>
-            Accepted
-        </option>
-
-        <option value="Processing" ${order.status === "Processing" ? "selected" : ""}>
-            Processing
-        </option>
-
-        <option value="Shipped" ${order.status === "Shipped" ? "selected" : ""}>
-            Shipped
-        </option>
-
-        <option value="Completed" ${order.status === "Completed" ? "selected" : ""}>
-            Completed
-        </option>
-    </select>
-</p>
 
                 <p>
                     <strong>Status:</strong>
-                    ${order.status}
+
+                    <select
+                        onchange="updateSupplierOrderStatus('${order.id}', this.value)"
+                        style="
+                            padding:6px;
+                            margin-left:5px;
+                            border:1px solid #ccc;
+                            border-radius:5px;
+                        "
+                    >
+
+                        <option value="Pending"
+                            ${supplierStatus === "Pending" ? "selected" : ""}>
+                            Pending
+                        </option>
+
+                        <option value="Accepted"
+                            ${supplierStatus === "Accepted" ? "selected" : ""}>
+                            Accepted
+                        </option>
+
+                        <option value="Processing"
+                            ${supplierStatus === "Processing" ? "selected" : ""}>
+                            Processing
+                        </option>
+
+                        <option value="Shipped"
+                            ${supplierStatus === "Shipped" ? "selected" : ""}>
+                            Shipped
+                        </option>
+
+                        <option value="Completed"
+                            ${supplierStatus === "Completed" ? "selected" : ""}>
+                            Completed
+                        </option>
+
+                    </select>
                 </p>
 
                 <p>
@@ -809,7 +843,7 @@ const supplierTotal =
 
                 <h4>Products</h4>
 
-              ${supplierItems.map(item => `
+                ${supplierItems.map(item => `
                     <div style="
                         padding:10px;
                         background:#f5f5f5;
@@ -823,11 +857,11 @@ const supplierTotal =
                         Price: R${item.price}
                     </div>
                 `).join("")}
-                
-<p>
-    <strong>Your total:</strong>
-    R${supplierTotal}
-</p>
+
+                <p>
+                    <strong>Your total:</strong>
+                    R${supplierTotal.toFixed(2)}
+                </p>
 
                 <p style="color:#777;">
                     ${new Date(order.created_at).toLocaleString()}
@@ -845,207 +879,6 @@ const supplierTotal =
     }
 }
 
-loadSupplierOrders();
-
-</script>
-    
-</div>
-   
-    <script>
-
-async function loadSupplierOrders() {
-
-    const container =
-        document.getElementById("supplier-orders");
-
-    const { data: { user }, error: userError } =
-        await supabaseClient.auth.getUser();
-
-    if (userError || !user) {
-        container.innerHTML =
-            "<p>Please log in to view orders.</p>";
-        return;
-    }
-
-    const { data: supplier, error: supplierError } =
-        await supabaseClient
-        .from("suppliers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-    if (supplierError || !supplier) {
-        container.innerHTML =
-            "<p>Supplier account not found.</p>";
-        return;
-    }
-
-    const { data: orders, error } =
-        await supabaseClient
-        .from("orders")
-        .select("*")
-        .order("created_at", {
-            ascending: false
-        });
-
-    if (error) {
-        console.error(error);
-        container.innerHTML =
-            "<p>Unable to load orders.</p>";
-        return;
-    }
-
-    const supplierOrders = orders.filter(order => {
-
-        if (!order.items) return false;
-
-        return order.items.some(item =>
-            item.supplier_id === supplier.id
-        );
-
-    });
-
-    if (supplierOrders.length === 0) {
-        container.innerHTML =
-            "<p>No orders for your products yet.</p>";
-        return;
-    }
-
-    container.innerHTML =
-        supplierOrders.map(order => `
-
-            <div style="
-                background:white;
-                padding:20px;
-                margin-bottom:15px;
-                border-radius:10px;
-                border:1px solid #ddd;
-            ">
-
-                <h3>
-                    Order ${order.order_number}
-                </h3>
-
-                <p>
-                    <strong>Status:</strong>
-                    ${order.status}
-                </p>
-
-                <p>
-                    <strong>Total:</strong>
-                    R${order.total}
-                </p>
-
-                <p>
-                    <strong>Customer:</strong>
-                    ${order.customer_name}
-                </p>
-
-                <p>
-                    <strong>Phone:</strong>
-                    ${order.phone}
-                </p>
-
-                <p>
-                    <strong>Delivery Address:</strong>
-                    ${order.address}
-                </p>
-
-                <p style="color:#777;">
-                    ${new Date(order.created_at).toLocaleString()}
-                </p>
-
-            </div>
-
-        `).join("");
-}
-        
-async function updateSupplierOrderStatus(orderId, newStatus) {
-
-    const { error } =
-        await supabaseClient
-        .from("orders")
-        .update({
-            status: newStatus
-        })
-        .eq("id", orderId);
-
-    if (error) {
-
-        console.error(error);
-
-        alert(
-            "Unable to update order status: " +
-            error.message
-        );
-
-        return;
-    }
-
-    // Create supplier payout when order is completed
-    if (newStatus === "Completed") {
-
-        const { data: supplierData, error: supplierError } =
-            await supabaseClient
-            .from("suppliers")
-            .select("id")
-            .eq("user_id", (await supabaseClient.auth.getUser()).data.user.id)
-            .single();
-
-        if (supplierError) {
-
-            console.error(
-                "SUPPLIER LOOKUP ERROR:",
-                supplierError
-            );
-
-            alert(
-                "Order was completed, but supplier payout could not be created."
-            );
-
-            loadSupplierOrders();
-
-            return;
-        }
-
-        const { error: payoutError } =
-            await supabaseClient.rpc(
-                "create_supplier_payout",
-                {
-                    supplier_id_input: supplierData.id
-                }
-            );
-
-        if (payoutError) {
-
-            console.error(
-                "PAYOUT ERROR:",
-                payoutError
-            );
-
-            // No payout is created if there are no eligible commissions.
-            if (
-                !payoutError.message.includes(
-                    "No eligible payout available"
-                )
-            ) {
-
-                alert(
-                    "Order was completed, but payout creation failed: " +
-                    payoutError.message
-                );
-
-                loadSupplierOrders();
-
-                return;
-            }
-        }
-    }
-
-    alert("Order status updated!");
-
-    loadSupplierOrders();
-}
         
 loadSupplierOrders();
 async function loadSupplierEarnings() {
@@ -1145,6 +978,100 @@ loadSupplierEarnings();
 }
 
 loadSupplierPayouts();
+        
+       async function updateSupplierOrderStatus(orderId, newStatus) {
+
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        alert("Please log in first.");
+        return;
+    }
+
+    const { data: supplier, error: supplierError } =
+        await supabaseClient
+        .from("suppliers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+    if (supplierError || !supplier) {
+        alert("Supplier account not found.");
+        return;
+    }
+
+    const { error: statusError } =
+        await supabaseClient
+        .from("supplier_order_statuses")
+        .update({
+            status: newStatus,
+            updated_at: new Date().toISOString()
+        })
+        .eq("order_id", orderId)
+        .eq("supplier_id", supplier.id);
+
+    if (statusError) {
+        console.error(
+            "STATUS UPDATE ERROR:",
+            statusError
+        );
+
+        alert(
+            "Unable to update order status: " +
+            statusError.message
+        );
+
+        return;
+    }
+
+    /*
+       Create supplier payout when
+       this supplier completes the order.
+    */
+
+    if (newStatus === "Completed") {
+
+        const { error: payoutError } =
+            await supabaseClient.rpc(
+                "create_supplier_payout",
+                {
+                    supplier_id_input: supplier.id
+                }
+            );
+
+        if (payoutError) {
+
+            /*
+               No eligible payout simply means
+               there is nothing new to pay.
+            */
+
+            if (
+                !payoutError.message.includes(
+                    "No eligible payout available"
+                )
+            ) {
+                console.error(
+                    "PAYOUT ERROR:",
+                    payoutError
+                );
+
+                alert(
+                    "Order completed, but payout creation failed: " +
+                    payoutError.message
+                );
+
+                loadSupplierOrders();
+                return;
+            }
+        }
+    }
+
+alert("Order status updated!");
+
+loadSupplierOrders();
+}
         
 </script>
     
