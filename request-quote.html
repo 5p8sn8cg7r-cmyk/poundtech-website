@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Request a Quote | PoundTech</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            background: #e00000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #b00000;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+
+        .mechanic-name {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h2>
+        POUND<span>TECH</span>
+    </h2>
+
+</header>
+
+
+<div class="container">
+
+    <h1>Request a Quote</h1>
+
+    <div
+        id="mechanic-info"
+        class="mechanic-name"
+    >
+        Loading mechanic...
+    </div>
+
+
+    <form id="quote-form">
+
+        <label>
+            Your Name
+        </label>
+
+        <input
+            type="text"
+            id="customer-name"
+            required
+        >
+
+
+        <label>
+            Phone
+        </label>
+
+        <input
+            type="tel"
+            id="customer-phone"
+            required
+        >
+
+
+        <label>
+            Email
+        </label>
+
+        <input
+            type="email"
+            id="customer-email"
+            required
+        >
+
+
+        <label>
+            Vehicle
+        </label>
+
+        <input
+            type="text"
+            id="vehicle"
+            placeholder="e.g. 2014 Mercedes C180"
+            required
+        >
+
+
+        <label>
+            Service Required
+        </label>
+
+        <input
+            type="text"
+            id="service-required"
+            placeholder="e.g. Brake replacement"
+            required
+        >
+
+
+        <label>
+            Describe the Problem
+        </label>
+
+        <textarea
+            id="problem-description"
+            placeholder="Tell the mechanic what needs to be repaired..."
+        ></textarea>
+
+
+        <label>
+            Preferred Date
+        </label>
+
+        <input
+            type="date"
+            id="preferred-date"
+        >
+
+
+        <button type="submit">
+            Send Quote Request
+        </button>
+
+    </form>
+
+
+    <div id="result"></div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+const mechanicId =
+    params.get("mechanic_id");
+
+
+let mechanic = null;
+
+
+async function loadMechanic() {
+
+    const info =
+        document.getElementById(
+            "mechanic-info"
+        );
+
+
+    if (!mechanicId) {
+
+        info.innerHTML =
+            "<strong>No mechanic selected.</strong>";
+
+        document.getElementById(
+            "quote-form"
+        ).style.display = "none";
+
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient
+        .from("mechanics")
+        .select(
+            "id, business_name, service_area"
+        )
+        .eq("id", mechanicId)
+        .eq("status", "Approved")
+        .single();
+
+
+    if (error || !data) {
+
+        console.error(error);
+
+        info.innerHTML =
+            "<strong>Mechanic not found.</strong>";
+
+        document.getElementById(
+            "quote-form"
+        ).style.display = "none";
+
+        return;
+    }
+
+
+    mechanic = data;
+
+
+    info.innerHTML = `
+
+        <strong>
+            ${mechanic.business_name}
+        </strong>
+
+        <br>
+
+        <span style="color:#666;">
+            📍 ${mechanic.service_area || "Service area not provided"}
+        </span>
+
+    `;
+
+}
+
+
+document
+.getElementById("quote-form")
+.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const result =
+            document.getElementById(
+                "result"
+            );
+
+
+        result.innerHTML =
+            "<p>Sending your request...</p>";
+
+
+        const quoteRequest = {
+
+            mechanic_id: mechanicId,
+
+            customer_name:
+                document
+                .getElementById(
+                    "customer-name"
+                )
+                .value
+                .trim(),
+
+            customer_phone:
+                document
+                .getElementById(
+                    "customer-phone"
+                )
+                .value
+                .trim(),
+
+            customer_email:
+                document
+                .getElementById(
+                    "customer-email"
+                )
+                .value
+                .trim(),
+
+            vehicle:
+                document
+                .getElementById(
+                    "vehicle"
+                )
+                .value
+                .trim(),
+
+            service_required:
+                document
+                .getElementById(
+                    "service-required"
+                )
+                .value
+                .trim(),
+
+            problem_description:
+                document
+                .getElementById(
+                    "problem-description"
+                )
+                .value
+                .trim(),
+
+            preferred_date:
+                document
+                .getElementById(
+                    "preferred-date"
+                )
+                .value || null,
+
+            status: "Pending"
+
+        };
+
+
+        const { error } =
+            await supabaseClient
+            .from(
+                "mechanic_quote_requests"
+            )
+            .insert([
+                quoteRequest
+            ]);
+
+
+        if (error) {
+
+            console.error(error);
+
+            result.innerHTML = `
+
+                <p style="color:red;">
+                    Unable to send your request.
+                    Please try again.
+                </p>
+
+            `;
+
+            return;
+        }
+
+
+        document
+        .getElementById(
+            "quote-form"
+        )
+        .style.display = "none";
+
+
+        result.innerHTML = `
+
+            <div style="
+                background:#f0fff0;
+                padding:20px;
+                border-radius:8px;
+            ">
+
+                <h2>
+                    Quote Request Sent ✓
+                </h2>
+
+                <p>
+                    Your request has been sent to
+                    ${mechanic.business_name}.
+                </p>
+
+                <p>
+                    The mechanic can now review
+                    your request and respond with
+                    a quote.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+);
+
+
+loadMechanic();
+
+</script>
+
+</body>
+
+</html>
