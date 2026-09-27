@@ -299,7 +299,7 @@ console.log("MECHANIC DATA:", data);
 console.log("MECHANIC ERROR:", error);
 
 
- if (error) {
+if (error) {
 
     console.error("MECHANIC LOOKUP ERROR:", error);
 
@@ -311,7 +311,24 @@ console.log("MECHANIC ERROR:", error);
         "quote-form"
     ).style.display = "none";
 
-    return;
+} else if (!mechanic) {
+
+    info.innerHTML =
+        "<strong>Mechanic not found.</strong>";
+
+    document.getElementById(
+        "quote-form"
+    ).style.display = "none";
+
+} else {
+
+    info.innerHTML = `
+        <strong>${mechanic.business_name}</strong>
+        <br>
+        <span style="color:#666;">
+            📍 ${mechanic.service_area || "Service area not provided"}
+        </span>
+    `;
 }
 
 if (!data) {
