@@ -956,7 +956,34 @@ async function updateSupplierOrderStatus(orderId, newStatus) {
 }
         
 loadSupplierOrders();
+async function loadSupplierEarnings() {
 
+    const { data, error } =
+        await supabaseClient.rpc("get_supplier_earnings");
+
+    if (error) {
+        console.error("EARNINGS ERROR:", error);
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        return;
+    }
+
+    const earnings = data[0];
+
+    document.getElementById("gross-sales").textContent =
+        "R" + Number(earnings.gross_sales).toFixed(2);
+
+    document.getElementById("supplier-commission").textContent =
+        "R" + Number(earnings.poundtech_commission).toFixed(2);
+
+    document.getElementById("supplier-amount").textContent =
+        "R" + Number(earnings.supplier_amount).toFixed(2);
+}
+
+loadSupplierEarnings();
+        
 </script>
     
 </body>
