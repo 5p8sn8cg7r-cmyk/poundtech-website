@@ -285,17 +285,16 @@ const { data: bookingId, error } =
         }
     );
 
-    if (error) {
+if (error) {
 
-        console.error(error);
+    console.log("BOOKING ERROR:", error);
+    alert("BOOKING ERROR: " + error.message);
 
-        alert(
-            "Unable to accept the quote: "
-            + error.message
-        );
+    return;
+}
 
-        return;
-    }
+console.log("BOOKING CREATED:", bookingId);
+alert("Booking created! ID: " + bookingId);
 
 
     alert("Quote accepted!");
