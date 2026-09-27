@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Find a Mechanic | PoundTech</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .search-box input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .mechanic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .mechanic-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .mechanic-card h2 {
+            margin-top: 0;
+        }
+
+        .service-area {
+            color: #666;
+        }
+
+        .status {
+            display: inline-block;
+            background: #e8f7e8;
+            color: #168016;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .quote-button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background: #e00000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .quote-button:hover {
+            background: #b00000;
+        }
+
+        .empty {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h2>
+        POUND<span>TECH</span>
+    </h2>
+
+</header>
+
+
+<div class="container">
+
+    <h1>Find a Mechanic</h1>
+
+    <p>
+        Find automotive professionals in your area.
+    </p>
+
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="mechanic-search"
+            placeholder="Search by business, service or area..."
+            oninput="filterMechanics()"
+        >
+
+    </div>
+
+
+    <div
+        id="mechanics-container"
+        class="mechanic-grid"
+    >
+        Loading mechanics...
+    </div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+let allMechanics = [];
+
+
+async function loadMechanics() {
+
+    const container =
+        document.getElementById(
+            "mechanics-container"
+        );
+
+
+    const { data: mechanics, error } =
+        await supabaseClient
+        .from("mechanics")
+        .select("*")
+        .eq("status", "Approved")
+        .order("created_at", {
+            ascending: false
+        });
+
+
+    if (error) {
+
+        console.error(error);
+
+        container.innerHTML =
+            "<div class='empty'>Unable to load mechanics.</div>";
+
+        return;
+    }
+
+
+    allMechanics = mechanics || [];
+
+    displayMechanics(allMechanics);
+
+}
+
+
+function displayMechanics(mechanics) {
+
+    const container =
+        document.getElementById(
+            "mechanics-container"
+        );
+
+
+    if (!mechanics || mechanics.length === 0) {
+
+        container.innerHTML =
+            "<div class='empty'>No mechanics found.</div>";
+
+        return;
+    }
+
+
+    container.innerHTML =
+        mechanics.map(mechanic => `
+
+            <div class="mechanic-card">
+
+                <span class="status">
+                    Approved
+                </span>
+
+                <h2>
+                    ${mechanic.business_name}
+                </h2>
+
+                <p class="service-area">
+
+                    📍
+                    ${mechanic.service_area || "Service area not provided"}
+
+                </p>
+
+                <p>
+
+                    <strong>Services:</strong><br>
+
+                    ${mechanic.services || "Services not provided"}
+
+                </p>
+
+                <p>
+
+                    ${mechanic.description || ""}
+
+                </p>
+
+                <button
+                    class="quote-button"
+                    onclick="requestQuote('${mechanic.id}')"
+                >
+                    Request a Quote
+                </button>
+
+            </div>
+
+        `).join("");
+
+}
+
+
+function filterMechanics() {
+
+    const search =
+        document
+        .getElementById("mechanic-search")
+        .value
+        .toLowerCase();
+
+
+    const filtered =
+        allMechanics.filter(mechanic => {
+
+            return (
+
+                (mechanic.business_name || "")
+                .toLowerCase()
+                .includes(search)
+
+                ||
+
+                (mechanic.service_area || "")
+                .toLowerCase()
+                .includes(search)
+
+                ||
+
+                (mechanic.services || "")
+                .toLowerCase()
+                .includes(search)
+
+            );
+
+        });
+
+
+    displayMechanics(filtered);
+
+}
+
+
+function requestQuote(mechanicId) {
+
+    alert(
+        "Quote requests will be available soon."
+    );
+
+}
+
+
+loadMechanics();
+
+</script>
+
+</body>
+
+</html>
