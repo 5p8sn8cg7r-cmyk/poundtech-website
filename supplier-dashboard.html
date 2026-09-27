@@ -982,6 +982,66 @@ async function updateSupplierOrderStatus(orderId, newStatus) {
         return;
     }
 
+    // Create supplier payout when order is completed
+    if (newStatus === "Completed") {
+
+        const { data: supplierData, error: supplierError } =
+            await supabaseClient
+            .from("suppliers")
+            .select("id")
+            .eq("user_id", (await supabaseClient.auth.getUser()).data.user.id)
+            .single();
+
+        if (supplierError) {
+
+            console.error(
+                "SUPPLIER LOOKUP ERROR:",
+                supplierError
+            );
+
+            alert(
+                "Order was completed, but supplier payout could not be created."
+            );
+
+            loadSupplierOrders();
+
+            return;
+        }
+
+        const { error: payoutError } =
+            await supabaseClient.rpc(
+                "create_supplier_payout",
+                {
+                    supplier_id_input: supplierData.id
+                }
+            );
+
+        if (payoutError) {
+
+            console.error(
+                "PAYOUT ERROR:",
+                payoutError
+            );
+
+            // No payout is created if there are no eligible commissions.
+            if (
+                !payoutError.message.includes(
+                    "No eligible payout available"
+                )
+            ) {
+
+                alert(
+                    "Order was completed, but payout creation failed: " +
+                    payoutError.message
+                );
+
+                loadSupplierOrders();
+
+                return;
+            }
+        }
+    }
+
     alert("Order status updated!");
 
     loadSupplierOrders();
