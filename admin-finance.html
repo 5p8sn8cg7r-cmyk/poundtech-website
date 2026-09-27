@@ -270,6 +270,39 @@ async function loadFinance() {
         document.getElementById("dashboard");
 
 
+    const {
+        data: { session }
+    } = await supabaseClient.auth.getSession();
+
+
+    if (!session) {
+
+        loading.innerHTML = `
+            <h2>Admin Login Required</h2>
+
+            <p>
+                Please log in through the PoundTech admin page first.
+            </p>
+
+            <button
+                onclick="window.location.href='admin.html'"
+                style="
+                    padding:12px 20px;
+                    background:#e60000;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                    cursor:pointer;
+                "
+            >
+                Go to Admin Login
+            </button>
+        `;
+
+        return;
+    }
+
+
     const { data, error } =
         await supabaseClient
         .from("commissions")
@@ -311,9 +344,7 @@ async function loadFinance() {
         totalProvider +=
             Number(transaction.provider_amount) || 0;
 
-        if (
-            transaction.status === "Pending"
-        ) {
+        if (transaction.status === "Pending") {
 
             pendingCommission +=
                 Number(transaction.commission_amount) || 0;
@@ -323,48 +354,34 @@ async function loadFinance() {
     });
 
 
-    document.getElementById(
-        "total-sales"
-    ).textContent =
+    document.getElementById("total-sales").textContent =
         "R" + totalSales.toLocaleString();
 
 
-    document.getElementById(
-        "total-commission"
-    ).textContent =
+    document.getElementById("total-commission").textContent =
         "R" + totalCommission.toLocaleString();
 
 
-    document.getElementById(
-        "total-provider"
-    ).textContent =
+    document.getElementById("total-provider").textContent =
         "R" + totalProvider.toLocaleString();
 
 
-    document.getElementById(
-        "pending-commission"
-    ).textContent =
+    document.getElementById("pending-commission").textContent =
         "R" + pendingCommission.toLocaleString();
 
 
     const table =
-        document.getElementById(
-            "transactions"
-        );
+        document.getElementById("transactions");
 
 
     if (transactions.length === 0) {
 
         table.innerHTML = `
-
             <tr>
-
                 <td colspan="6">
                     No transactions yet.
                 </td>
-
             </tr>
-
         `;
 
     } else {
@@ -396,7 +413,7 @@ async function loadFinance() {
                         ).toLocaleString()}
                     </td>
 
-                    <td class="status">
+                    <td>
                         ${transaction.status}
                     </td>
 
@@ -413,17 +430,13 @@ async function loadFinance() {
     }
 
 
-    loading.style.display =
-        "none";
-
-    dashboard.style.display =
-        "block";
-
+    loading.style.display = "none";
+    dashboard.style.display = "block";
 }
 
 
 loadFinance();
-
+    
 </script>
 
 </body>
