@@ -340,6 +340,143 @@ async function loadQuoteRequests() {
         `).join("");
 }
 
+    async function loadBookings() {
+
+    const container =
+        document.getElementById("bookings-container");
+
+    if (!currentMechanic) {
+        container.innerHTML =
+            "<p>Mechanic account not found.</p>";
+        return;
+    }
+
+    const { data: bookings, error } =
+        await supabaseClient
+        .from("mechanic_bookings")
+        .select("*")
+        .eq("mechanic_id", currentMechanic.id)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error(error);
+        container.innerHTML =
+            "<p>Error loading bookings.</p>";
+        return;
+    }
+
+    if (!bookings || bookings.length === 0) {
+        container.innerHTML =
+            "<p>No bookings yet.</p>";
+        return;
+    }
+
+    container.innerHTML = bookings.map(booking => `
+
+        <div style="
+            border:1px solid #ddd;
+            padding:20px;
+            margin-bottom:20px;
+            border-radius:8px;
+        ">
+
+            <h3>Booking</h3>
+
+            <p>
+                <strong>Customer:</strong>
+                ${booking.customer_name}
+            </p>
+
+            <p>
+                <strong>Phone:</strong>
+                ${booking.customer_phone}
+            </p>
+
+            <p>
+                <strong>Vehicle:</strong>
+                ${booking.vehicle}
+            </p>
+
+            <p>
+                <strong>Service:</strong>
+                ${booking.service_required}
+            </p>
+
+            <p>
+                <strong>Agreed Price:</strong>
+                R${Number(booking.agreed_price).toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Booking Date:</strong>
+                ${booking.booking_date || "Not selected"}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                ${booking.status}
+            </p>
+
+            <select
+                onchange="updateBookingStatus('${booking.id}', this.value)"
+            >
+
+                <option value="Accepted"
+                    ${booking.status === "Accepted" ? "selected" : ""}>
+                    Accepted
+                </option>
+
+                <option value="Scheduled"
+                    ${booking.status === "Scheduled" ? "selected" : ""}>
+                    Scheduled
+                </option>
+
+                <option value="In Progress"
+                    ${booking.status === "In Progress" ? "selected" : ""}>
+                    In Progress
+                </option>
+
+                <option value="Completed"
+                    ${booking.status === "Completed" ? "selected" : ""}>
+                    Completed
+                </option>
+
+            </select>
+
+        </div>
+
+    `).join("");
+}
+
+
+async function updateBookingStatus(bookingId, newStatus) {
+
+    const { error } =
+        await supabaseClient
+        .from("mechanic_bookings")
+        .update({
+            status: newStatus
+        })
+        .eq("id", bookingId)
+        .eq("mechanic_id", currentMechanic.id);
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "Unable to update booking: "
+            + error.message
+        );
+
+        return;
+    }
+
+    alert("Booking status updated!");
+
+    loadBookings();
+}
+
 
 // Update quote
 async function updateQuote(requestId) {
@@ -389,6 +526,7 @@ async function updateQuote(requestId) {
     loadQuoteRequests();
 }
 
+    loadBookings();
 
 // Logout
 async function logout() {
