@@ -199,13 +199,27 @@ async function loadMechanics() {
 
     allMechanics = mechanics || [];
 
-    displayMechanics(allMechanics);
+const { data: reviews, error: reviewsError } =
+    await supabaseClient
+    .from("mechanic_reviews")
+    .select("mechanic_id, rating");
+
+if (reviewsError) {
+    console.error(reviewsError);
+}
+
+window.mechanicReviews = reviews || [];
+
+displayMechanics(allMechanics);
 
 }
 
 
 function displayMechanics(mechanics) {
-
+    
+const reviews =
+    window.mechanicReviews || [];
+    
     const container =
         document.getElementById(
             "mechanics-container"
@@ -221,9 +235,27 @@ function displayMechanics(mechanics) {
     }
 
 
-    container.innerHTML =
-        mechanics.map(mechanic => `
+ container.innerHTML =
+    mechanics.map(mechanic => {
 
+        const mechanicReviews =
+            reviews.filter(review =>
+                review.mechanic_id === mechanic.id
+            );
+
+        const reviewCount = mechanicReviews.length;
+
+        const averageRating =
+            reviewCount > 0
+                ? (
+                    mechanicReviews.reduce(
+                        (sum, review) => sum + review.rating,
+                        0
+                    ) / reviewCount
+                  ).toFixed(1)
+                : "No ratings";
+
+        return `
             <div class="mechanic-card">
 
                 <span class="status">
@@ -233,6 +265,14 @@ function displayMechanics(mechanics) {
                 <h2>
                     ${mechanic.business_name}
                 </h2>
+
+                <p>
+                    ⭐ <strong>${averageRating}</strong>
+                    ${reviewCount > 0
+                        ? `(${reviewCount} review${reviewCount === 1 ? "" : "s"})`
+                        : ""
+                    }
+                </p>
 
                 <p class="service-area">
 
@@ -263,11 +303,8 @@ function displayMechanics(mechanics) {
                 </button>
 
             </div>
-
-        `).join("");
-
-}
-
+        `;
+    }).join("");
 
 function filterMechanics() {
 
