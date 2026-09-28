@@ -1286,17 +1286,53 @@ async function searchProducts() {
         return;
     }
 
-    container.innerHTML = data.map(product => `
-        <div>
+ container.innerHTML = data.map(product => `
+    <div class="product"
+         onclick="window.location.href='product.html?id=${product.id}'"
+         style="cursor:pointer;">
+
+        <div class="product-image">
+            ${
+                product.image_url
+                ? `<img src="${product.image_url}"
+                       alt="${product.name}"
+                       style="width:100%; height:100%; object-fit:cover;">`
+                : `<div style="
+                        width:100%;
+                        height:100%;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:#eee;
+                    ">
+                        No Image
+                   </div>`
+            }
+        </div>
+
+        <div class="product-info">
+
             <h3>${product.name}</h3>
+
             <p>${product.category}</p>
-            <p>R${product.price}</p>
+
+            <div class="price">
+                R${product.price}
+            </div>
+
             <p>
                 Compatible with:
                 ${product.vehicle_compatibility || "Not specified"}
             </p>
+
+            <button onclick="event.stopPropagation(); addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, '${product.image_url || ""}')">
+                Add to Cart
+            </button>
+
         </div>
-    `).join("");
+
+    </div>
+`).join("");
 }
     
 </script>
