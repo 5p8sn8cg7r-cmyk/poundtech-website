@@ -156,6 +156,7 @@ const supabaseClient =
 
 let selectedQuantity = 1;
 let productStock = 0;
+let supplier = null;
 
 async function loadProduct() {
 
@@ -184,8 +185,6 @@ async function loadProduct() {
     .eq("id", productId)
     .single();
 
-    console.log("PRODUCT:", product);
-
 
     if (error || !product) {
 
@@ -197,6 +196,19 @@ async function loadProduct() {
         return;
  }
 
+    const { data: supplierData, error: supplierError } =
+    await supabaseClient
+    .from("suppliers")
+    .select("business_name, status")
+    .eq("id", product.supplier_id)
+    .single();
+
+if (supplierError) {
+    console.error("SUPPLIER ERROR:", supplierError);
+} else {
+    supplier = supplierData;
+}
+    
     productStock = product.stock;
 
     container.innerHTML = `
@@ -240,6 +252,14 @@ async function loadProduct() {
                     ${product.category}
                 </p>
 
+<p>
+    <strong>Sold by:</strong>
+    ${
+        supplier
+        ? supplier.business_name
+        : "Supplier not available"
+    }
+</p>
 
                 <div class="price">
 
