@@ -276,8 +276,7 @@ const { data: quotes, error } = await supabaseClient
     }
 
 
-    if (!requests || requests.length === 0) {
-
+    if (!quotes || quotes.length === 0) {
         message.innerHTML =
             `<div class="message">
                 <strong>No quote requests found.</strong>
@@ -296,7 +295,7 @@ const { data: quotes, error } = await supabaseClient
 
     const mechanicIds =
         [...new Set(
-            requests.map(
+           quotes.map(
                 request => request.mechanic_id
             )
         )];
@@ -353,7 +352,7 @@ const { data: quotes, error } = await supabaseClient
 
 
     container.innerHTML =
-        requests.map(request => {
+       quotes.map(request => {
 
             const mechanic =
                 mechanicMap[request.mechanic_id];
