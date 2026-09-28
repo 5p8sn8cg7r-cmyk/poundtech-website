@@ -166,7 +166,27 @@ Loading supplier...
 
 </div>
 
+<div id="reviews-section" style="
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    margin-bottom:30px;
+">
 
+    <h2 style="margin-top:0;">
+        Supplier Reviews
+    </h2>
+
+    <div id="supplier-rating">
+        Loading ratings...
+    </div>
+
+    <div id="reviews-container">
+        Loading reviews...
+    </div>
+
+</div>
+    
 <h2 class="products-heading">
 Products from this supplier
 </h2>
@@ -516,8 +536,105 @@ function addSupplierProductToCart(
     alert("Product added to cart!");
 
 }
+
+    async function loadSupplierReviews() {
+
+    const ratingContainer =
+        document.getElementById("supplier-rating");
+
+    const reviewsContainer =
+        document.getElementById("reviews-container");
+
+    const {
+        data: reviews,
+        error
+    } = await supabaseClient
+        .from("supplier_reviews")
+        .select("*")
+        .eq("supplier_id", supplierId)
+        .order("created_at", {
+            ascending: false
+        });
+
+    if (error) {
+
+        console.error("REVIEWS ERROR:", error);
+
+        ratingContainer.innerHTML =
+            "Unable to load ratings.";
+
+        reviewsContainer.innerHTML = "";
+
+        return;
+    }
+
+    if (!reviews || reviews.length === 0) {
+
+        ratingContainer.innerHTML =
+            "⭐ No ratings yet";
+
+        reviewsContainer.innerHTML =
+            "<p>This supplier has no reviews yet.</p>";
+
+        return;
+    }
+
+    const average =
+        reviews.reduce(
+            (sum, review) =>
+                sum + Number(review.rating),
+            0
+        ) / reviews.length;
+
+    ratingContainer.innerHTML = `
+        <div style="
+            font-size:20px;
+            font-weight:bold;
+            margin-bottom:20px;
+        ">
+            ⭐ ${average.toFixed(1)} / 5
+            <span style="
+                font-size:14px;
+                color:#666;
+                font-weight:normal;
+            ">
+                (${reviews.length} reviews)
+            </span>
+        </div>
+    `;
+
+    reviewsContainer.innerHTML =
+        reviews.map(review => `
+
+            <div style="
+                border-top:1px solid #eee;
+                padding:15px 0;
+            ">
+
+                <strong>
+                    ${review.customer_name}
+                </strong>
+
+                <div style="
+                    margin:5px 0;
+                ">
+                    ${"⭐".repeat(Number(review.rating))}
+                </div>
+
+                <p style="
+                    margin:5px 0;
+                    color:#444;
+                ">
+                    ${review.review_text || ""}
+                </p>
+
+            </div>
+
+        `).join("");
+}
     
 loadSupplier();
+loadSupplierReviews();
 
 </script>
 
