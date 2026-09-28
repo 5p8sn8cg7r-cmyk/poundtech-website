@@ -428,16 +428,41 @@ async function loadSupplierProducts() {
                     </div>
 
 
-                    <button
-                        onclick="
-                            event.stopPropagation();
-                            window.location.href=
-                            'product.html?id=${product.id}'
-                        "
-                    >
-                        View Product
-                    </button>
+<div style="
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+">
 
+    <button
+        onclick="
+            event.stopPropagation();
+            window.location.href=
+            'product.html?id=${product.id}'
+        "
+    >
+        View Product
+    </button>
+
+    <button
+        onclick="
+            event.stopPropagation();
+            addSupplierProductToCart(
+                '${product.id}',
+                '${product.supplier_id}',
+                '${product.name}',
+                ${product.price},
+                '${product.image_url || ""}'
+            )
+        "
+        style="
+            background:#111;
+        "
+    >
+        Add to Cart
+    </button>
+
+</div>
                 </div>
 
             </div>
@@ -446,7 +471,52 @@ async function loadSupplierProducts() {
 
 }
 
+function addSupplierProductToCart(
+    product_id,
+    supplier_id,
+    name,
+    price,
+    image_url
+) {
 
+    let cart =
+        JSON.parse(
+            localStorage.getItem("poundtechCart")
+        ) || [];
+
+    let existingProduct =
+        cart.find(function(item) {
+            return item.product_id === product_id;
+        });
+
+    if (existingProduct) {
+
+        existingProduct.quantity += 1;
+
+    } else {
+
+        cart.push({
+
+            product_id: product_id,
+            supplier_id: supplier_id,
+            name: name,
+            price: price,
+            quantity: 1,
+            image_url: image_url
+
+        });
+
+    }
+
+    localStorage.setItem(
+        "poundtechCart",
+        JSON.stringify(cart)
+    );
+
+    alert("Product added to cart!");
+
+}
+    
 loadSupplier();
 
 </script>
