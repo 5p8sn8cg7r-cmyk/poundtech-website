@@ -271,9 +271,12 @@ async function loadProduct() {
                 </p>
 
 
-                <p class="stock">
+         <p class="stock">
+    <strong>Stock:</strong>
+    ${product.stock} available
+</p>
 
-                   <div style="margin:20px 0;">
+<div style="margin:20px 0;">
 
     <label>
         Quantity:
@@ -311,10 +314,11 @@ async function loadProduct() {
 
 </div>
 
-<button onclick="addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, selectedQuantity, '${product.image_url || ""}')">
+<button
+    onclick="addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, selectedQuantity, '${product.image_url || ""}')"
+>
     Add to Cart
 </button>
-
                     
                 
 
