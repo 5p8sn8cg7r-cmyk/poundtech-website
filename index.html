@@ -384,7 +384,7 @@ Find car parts, accessories and automotive services from businesses across South
 </section>
 
 
-<section class="section">
+<section class="section" id="category-section">
 
 <h2>Shop by Category</h2>
 
@@ -412,6 +412,8 @@ Find car parts, accessories and automotive services from businesses across South
 
 <div class="category" onclick="filterCategory('Interior')">
     🪑 Interior
+</div>
+
 </div>
 
 </div>
@@ -1387,7 +1389,9 @@ if (!searchTerm) {
     loadProducts();
     return;
 }
-
+    
+document.getElementById("category-section").style.display = "none";
+    
 searchStatus.innerHTML = `
     <div class="search-results-bar">
         <span>
@@ -1473,7 +1477,7 @@ searchStatus.innerHTML = `
 `).join("");
 }
     
-    function clearSearch() {
+function clearSearch() {
     const searchInput = document.querySelector(
         'input[placeholder="Search for parts, accessories or services..."]'
     );
@@ -1481,6 +1485,10 @@ searchStatus.innerHTML = `
     searchInput.value = "";
 
     document.getElementById("search-status").innerHTML = "";
+
+    document.getElementById("category-section").style.display = "";
+
+    document.getElementById("products-heading").innerText = "Featured Products";
 
     loadProducts();
 }
