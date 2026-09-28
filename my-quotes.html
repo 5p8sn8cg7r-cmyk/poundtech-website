@@ -255,16 +255,10 @@ async function loadMyQuotes() {
     container.innerHTML = "";
 
 
-    const {
-        data: requests,
-        error
-    } = await supabaseClient
-        .from("mechanic_quote_requests")
-        .select("*")
-        .ilike("customer_email", email)
-        .order("created_at", {
-            ascending: false
-        });
+const { data: quotes, error } = await supabaseClient
+    .rpc("get_customer_quotes", {
+        lookup_email: email
+    });
 
 
     if (error) {
