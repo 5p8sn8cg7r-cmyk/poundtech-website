@@ -184,6 +184,105 @@ Loading supplier...
     <div id="reviews-container">
         Loading reviews...
     </div>
+<hr style="
+    margin:25px 0;
+    border:none;
+    border-top:1px solid #eee;
+">
+
+<h3>Leave a Review</h3>
+
+<p style="color:#666;font-size:14px;">
+    Reviews are verified against completed PoundTech orders.
+</p>
+
+<input
+    id="review-order-number"
+    type="text"
+    placeholder="Order number (e.g. PT1790465694633)"
+    style="
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        margin-bottom:10px;
+        border:1px solid #ddd;
+        border-radius:6px;
+"
+>
+
+<input
+    id="review-email"
+    type="email"
+    placeholder="Email used for your order"
+    style="
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        margin-bottom:10px;
+        border:1px solid #ddd;
+        border-radius:6px;
+"
+>
+
+<input
+    id="review-name"
+    type="text"
+    placeholder="Your name"
+    style="
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        margin-bottom:10px;
+        border:1px solid #ddd;
+        border-radius:6px;
+"
+>
+
+<select
+    id="review-rating"
+    style="
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        margin-bottom:10px;
+        border:1px solid #ddd;
+        border-radius:6px;
+"
+>
+    <option value="">Select rating</option>
+    <option value="5">⭐⭐⭐⭐⭐ — Excellent</option>
+    <option value="4">⭐⭐⭐⭐ — Good</option>
+    <option value="3">⭐⭐⭐ — Average</option>
+    <option value="2">⭐⭐ — Poor</option>
+    <option value="1">⭐ — Very poor</option>
+</select>
+
+<textarea
+    id="review-text"
+    placeholder="Write your review..."
+    rows="4"
+    style="
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        margin-bottom:10px;
+        border:1px solid #ddd;
+        border-radius:6px;
+        resize:vertical;
+"
+></textarea>
+
+<button onclick="submitSupplierReview()">
+    Submit Review
+</button>
+
+<div
+    id="review-message"
+    style="
+        margin-top:15px;
+        font-weight:bold;
+    "
+></div>
 
 </div>
     
@@ -631,6 +730,127 @@ function addSupplierProductToCart(
             </div>
 
         `).join("");
+}
+
+    async function submitSupplierReview() {
+
+    const orderNumber =
+        document.getElementById(
+            "review-order-number"
+        ).value.trim();
+
+    const email =
+        document.getElementById(
+            "review-email"
+        ).value.trim();
+
+    const customerName =
+        document.getElementById(
+            "review-name"
+        ).value.trim();
+
+    const rating =
+        Number(
+            document.getElementById(
+                "review-rating"
+            ).value
+        );
+
+    const reviewText =
+        document.getElementById(
+            "review-text"
+        ).value.trim();
+
+    const message =
+        document.getElementById(
+            "review-message"
+        );
+
+    if (
+        !orderNumber ||
+        !email ||
+        !customerName ||
+        !rating ||
+        !reviewText
+    ) {
+
+        message.style.color = "#e00000";
+
+        message.innerText =
+            "Please complete all fields.";
+
+        return;
+    }
+
+    message.style.color = "#555";
+
+    message.innerText =
+        "Verifying your order...";
+
+    const { data, error } =
+        await supabaseClient.rpc(
+            "submit_supplier_review",
+            {
+                p_order_number: orderNumber,
+                p_email: email,
+                p_supplier_id: supplierId,
+                p_customer_name: customerName,
+                p_rating: rating,
+                p_review_text: reviewText
+            }
+        );
+
+    if (error) {
+
+        console.error(
+            "REVIEW SUBMISSION ERROR:",
+            error
+        );
+
+        message.style.color = "#e00000";
+
+        message.innerText =
+            "Unable to submit review.";
+
+        return;
+    }
+
+    if (!data.success) {
+
+        message.style.color = "#e00000";
+
+        message.innerText =
+            data.message;
+
+        return;
+    }
+
+    message.style.color = "#168000";
+
+    message.innerText =
+        "✓ Review submitted successfully!";
+
+    document.getElementById(
+        "review-order-number"
+    ).value = "";
+
+    document.getElementById(
+        "review-email"
+    ).value = "";
+
+    document.getElementById(
+        "review-name"
+    ).value = "";
+
+    document.getElementById(
+        "review-rating"
+    ).value = "";
+
+    document.getElementById(
+        "review-text"
+    ).value = "";
+
+    loadSupplierReviews();
 }
     
 loadSupplier();
