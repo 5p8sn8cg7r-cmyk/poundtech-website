@@ -292,6 +292,34 @@ footer strong {
         padding: 35px 20px;
     }
 }
+
+    #search-status {
+    margin: 20px 0;
+}
+
+.search-results-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.search-results-bar button {
+    border: none;
+    background: transparent;
+    color: #d71920;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px 8px;
+}
+
+.search-results-bar button:hover {
+    text-decoration: underline;
+}
 </style>
 </head>
 
@@ -340,7 +368,7 @@ Find car parts, accessories and automotive services from businesses across South
     Search
 </button>
 
-    <div id="search-status" style="margin-top: 15px;"></div>
+<div id="search-status"></div>
     
 </div>
 
@@ -1270,10 +1298,14 @@ if (!searchTerm) {
 }
 
 searchStatus.innerHTML = `
-    <div style="display:flex; align-items:center; gap:10px;">
-        <span>Showing results for "<strong>${searchTerm}</strong>"</span>
+    <div class="search-results-bar">
+        <span>
+            Showing results for
+            <strong>"${searchTerm}"</strong>
+        </span>
+
         <button onclick="clearSearch()">
-            Clear Search
+            Clear
         </button>
     </div>
 `;
