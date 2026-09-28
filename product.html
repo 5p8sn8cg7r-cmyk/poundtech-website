@@ -180,15 +180,11 @@ async function loadProduct() {
     const { data: product, error } =
     await supabaseClient
     .from("products")
-    .select(`
-        *,
-        suppliers (
-            business_name,
-            status
-        )
-    `)
+ .select("*")
     .eq("id", productId)
     .single();
+
+    console.log("PRODUCT:", product);
 
 
     if (error || !product) {
