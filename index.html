@@ -340,6 +340,8 @@ Find car parts, accessories and automotive services from businesses across South
     Search
 </button>
 
+    <div id="search-status" style="margin-top: 15px;"></div>
+    
 </div>
 
 </section>
@@ -1258,11 +1260,23 @@ async function searchProducts() {
     );
 
     const searchTerm = searchInput.value.trim().toLowerCase();
+    
+    const searchStatus = document.getElementById("search-status");
 
-    if (!searchTerm) {
-        loadProducts();
-        return;
-    }
+if (!searchTerm) {
+    searchStatus.innerHTML = "";
+    loadProducts();
+    return;
+}
+
+searchStatus.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px;">
+        <span>Showing results for "<strong>${searchTerm}</strong>"</span>
+        <button onclick="clearSearch()">
+            Clear Search
+        </button>
+    </div>
+`;
 
     const { data, error } = await supabaseClient
         .from("products")
@@ -1334,6 +1348,18 @@ async function searchProducts() {
 
     </div>
 `).join("");
+}
+    
+    function clearSearch() {
+    const searchInput = document.querySelector(
+        'input[placeholder="Search for parts, accessories or services..."]'
+    );
+
+    searchInput.value = "";
+
+    document.getElementById("search-status").innerHTML = "";
+
+    loadProducts();
 }
     
 </script>
