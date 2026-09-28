@@ -293,48 +293,42 @@ footer strong {
     }
 }
 
-   #search-status {
-    width: 100%;
-    margin: 20px 0;
+ #search-status {
+    max-width: 750px;
+    margin: 12px auto 0;
 }
 
 .search-results-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 14px 18px;
-    background: white;
-    border-left: 4px solid #d71920;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    font-size: 16px;
+    gap: 15px;
+    padding: 10px 14px;
+    color: white;
+    font-size: 14px;
 }
 
 .search-results-text {
-    color: #222;
-    font-weight: 500;
+    color: #c7c7c7;
 }
 
 .search-results-text strong {
-    color: #000;
-    font-weight: 700;
+    color: white;
 }
 
 .search-results-bar button {
-    flex-shrink: 0;
-    border: none;
-    background: #d71920;
+    border: 1px solid #e00000;
+    background: transparent;
     color: white;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
     cursor: pointer;
-    padding: 8px 14px;
-    border-radius: 6px;
 }
 
 .search-results-bar button:hover {
-    opacity: 0.85;
+    background: #e00000;
 }
 </style>
 </head>
@@ -374,19 +368,19 @@ Find car parts, accessories and automotive services from businesses across South
 
 <div class="search">
 
-<input
-    type="text"
-    placeholder="Search for parts, accessories or services..."
-    onkeydown="if(event.key === 'Enter') searchProducts()"
->
+    <input
+        type="text"
+        placeholder="Search for parts, accessories or services..."
+        onkeydown="if(event.key === 'Enter') searchProducts()"
+    >
 
-<button onclick="searchProducts()">
-    Search
-</button>
+    <button onclick="searchProducts()">
+        Search
+    </button>
+
+</div>
 
 <div id="search-status"></div>
-    
-</div>
 
 </section>
 
