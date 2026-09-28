@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Quotes | PoundTech</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header span {
+            color: red;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .search-box {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .search-button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 15px;
+            background: #e00000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .quote-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .quote-card h2 {
+            margin-top: 0;
+        }
+
+        .mechanic-name {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .rating {
+            margin: 8px 0;
+        }
+
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #eee;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .quoted {
+            background: #e8f7e8;
+            color: #168016;
+        }
+
+        .accepted {
+            background: #e8f0ff;
+            color: #1455a0;
+        }
+
+        .accept-button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 15px;
+            background: #111;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .accept-button:hover {
+            background: #333;
+        }
+
+        .booking-button {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            padding: 13px;
+            margin-top: 15px;
+            background: #e00000;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .message {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>
+        POUND<span>TECH</span>
+    </h1>
+
+    <p>
+        My Quotes
+    </p>
+
+</header>
+
+
+<div class="container">
+
+    <div class="search-box">
+
+        <h2>
+            Find Your Quotes
+        </h2>
+
+        <p>
+            Enter the email address you used when requesting your mechanic quote.
+        </p>
+
+        <input
+            type="email"
+            id="customer-email"
+            placeholder="Your email address"
+        >
+
+        <button
+            class="search-button"
+            onclick="loadMyQuotes()"
+        >
+            View My Quotes
+        </button>
+
+    </div>
+
+
+    <div id="message"></div>
+
+    <div id="quotes-container"></div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+async function loadMyQuotes() {
+
+    const email =
+        document
+        .getElementById("customer-email")
+        .value
+        .trim();
+
+    const message =
+        document.getElementById("message");
+
+    const container =
+        document.getElementById("quotes-container");
+
+
+    if (!email) {
+
+        message.innerHTML =
+            `<div class="message">
+                <p style="color:#e00000;">
+                    Please enter your email address.
+                </p>
+            </div>`;
+
+        container.innerHTML = "";
+
+        return;
+    }
+
+
+    message.innerHTML =
+        `<div class="message">
+            Loading your quotes...
+        </div>`;
+
+    container.innerHTML = "";
+
+
+    const {
+        data: requests,
+        error
+    } = await supabaseClient
+        .from("mechanic_quote_requests")
+        .select("*")
+        .ilike("customer_email", email)
+        .order("created_at", {
+            ascending: false
+        });
+
+
+    if (error) {
+
+        console.error(error);
+
+        message.innerHTML =
+            `<div class="message">
+                <p style="color:#e00000;">
+                    Unable to load your quotes.
+                </p>
+            </div>`;
+
+        return;
+    }
+
+
+    if (!requests || requests.length === 0) {
+
+        message.innerHTML =
+            `<div class="message">
+                <strong>No quote requests found.</strong>
+                <p>
+                    Make sure you entered the same email address
+                    used when requesting your quote.
+                </p>
+            </div>`;
+
+        return;
+    }
+
+
+    message.innerHTML = "";
+
+
+    const mechanicIds =
+        [...new Set(
+            requests.map(
+                request => request.mechanic_id
+            )
+        )];
+
+
+    const {
+        data: mechanics,
+        error: mechanicError
+    } = await supabaseClient
+        .from("mechanics")
+        .select("id, business_name, service_area")
+        .in("id", mechanicIds);
+
+
+    if (mechanicError) {
+
+        console.error(mechanicError);
+
+        message.innerHTML =
+            `<div class="message">
+                Unable to load mechanic information.
+            </div>`;
+
+        return;
+    }
+
+
+    const {
+        data: reviews,
+        error: reviewError
+    } = await supabaseClient
+        .from("mechanic_reviews")
+        .select("mechanic_id, rating")
+        .in("mechanic_id", mechanicIds);
+
+
+    if (reviewError) {
+        console.error(reviewError);
+    }
+
+
+    const mechanicMap = {};
+
+    (mechanics || []).forEach(
+        mechanic => {
+            mechanicMap[mechanic.id] =
+                mechanic;
+        }
+    );
+
+
+    const reviewData =
+        reviews || [];
+
+
+    container.innerHTML =
+        requests.map(request => {
+
+            const mechanic =
+                mechanicMap[request.mechanic_id];
+
+
+            const mechanicReviews =
+                reviewData.filter(
+                    review =>
+                        review.mechanic_id ===
+                        request.mechanic_id
+                );
+
+
+            let ratingText =
+                "No ratings yet";
+
+
+            if (mechanicReviews.length > 0) {
+
+                const average =
+                    mechanicReviews.reduce(
+                        (sum, review) =>
+                            sum + Number(review.rating),
+                        0
+                    ) /
+                    mechanicReviews.length;
+
+
+                ratingText =
+                    `⭐ ${average.toFixed(1)} / 5
+                    (${mechanicReviews.length} reviews)`;
+            }
+
+
+            const isQuoted =
+                request.status === "Quoted";
+
+
+            const isAccepted =
+                request.status === "Accepted";
+
+
+            return `
+
+                <div class="quote-card">
+
+                    <span class="
+                        status
+                        ${isQuoted ? "quoted" : ""}
+                        ${isAccepted ? "accepted" : ""}
+                    ">
+                        ${request.status}
+                    </span>
+
+
+                    <div class="mechanic-name">
+
+                        ${mechanic
+                            ? mechanic.business_name
+                            : "Mechanic"
+                        }
+
+                    </div>
+
+
+                    <div class="rating">
+
+                        ${ratingText}
+
+                    </div>
+
+
+                    <p>
+                        📍
+                        ${
+                            mechanic
+                            ? mechanic.service_area ||
+                              "Service area not provided"
+                            : ""
+                        }
+                    </p>
+
+
+                    <hr>
+
+
+                    <p>
+                        <strong>Vehicle:</strong>
+                        ${request.vehicle}
+                    </p>
+
+
+                    <p>
+                        <strong>Service:</strong>
+                        ${request.service_required}
+                    </p>
+
+
+                    <p>
+                        <strong>Problem:</strong>
+                        ${
+                            request.problem_description ||
+                            "Not provided"
+                        }
+                    </p>
+
+
+                    ${
+                        request.mechanic_response
+                        ? `
+                            <p>
+                                <strong>Mechanic response:</strong><br>
+                                ${request.mechanic_response}
+                            </p>
+                        `
+                        : ""
+                    }
+
+
+                    ${
+                        request.quoted_price !== null &&
+                        request.quoted_price !== undefined
+                        ? `
+                            <div class="price">
+                                R${Number(
+                                    request.quoted_price
+                                ).toLocaleString()}
+                            </div>
+                        `
+                        : `
+                            <p>
+                                Waiting for mechanic to send a quote.
+                            </p>
+                        `
+                    }
+
+
+                    ${
+                        isQuoted
+                        ? `
+                            <button
+                                class="accept-button"
+                                onclick="
+                                    acceptQuote(
+                                        '${request.id}',
+                                        '${request.customer_email}'
+                                    )
+                                "
+                            >
+                                Accept This Quote
+                            </button>
+                        `
+                        : ""
+                    }
+
+
+                    ${
+                        isAccepted
+                        ? `
+                            <a
+                                class="booking-button"
+                                href="booking-status.html"
+                            >
+                                View Booking Status
+                            </a>
+                        `
+                        : ""
+                    }
+
+                </div>
+
+            `;
+
+        }).join("");
+
+}
+
+
+async function acceptQuote(
+    quoteRequestId,
+    customerEmail
+) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to accept this quote?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    const message =
+        document.getElementById("message");
+
+
+    message.innerHTML =
+        `<div class="message">
+            Accepting quote...
+        </div>`;
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.rpc(
+            "accept_mechanic_quote",
+            {
+                p_quote_request_id:
+                    quoteRequestId,
+
+                p_customer_email:
+                    customerEmail
+            }
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+        message.innerHTML =
+            `<div class="message">
+                <p style="color:#e00000;">
+                    Unable to accept this quote.
+                </p>
+            </div>`;
+
+        return;
+    }
+
+
+    if (!data.success) {
+
+        message.innerHTML =
+            `<div class="message">
+                <p style="color:#e00000;">
+                    ${data.message}
+                </p>
+            </div>`;
+
+        return;
+    }
+
+
+    message.innerHTML =
+        `<div class="message">
+            <p style="color:#168016;">
+                ✓ ${data.message}
+            </p>
+        </div>`;
+
+
+    loadMyQuotes();
+
+}
+
+
+</script>
+
+</body>
+
+</html>
