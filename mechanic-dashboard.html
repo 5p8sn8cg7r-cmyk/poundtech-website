@@ -170,6 +170,7 @@ async function loadMechanic() {
         error: userError
     } = await supabaseClient.auth.getUser();
 
+    // Not logged in
     if (userError || !user) {
 
         window.location.href =
@@ -178,25 +179,35 @@ async function loadMechanic() {
         return;
     }
 
-const {
-    data: mechanic,
-    error
-} = await supabaseClient
-    .from("mechanics")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
 
+    const {
+        data: mechanic,
+        error
+    } = await supabaseClient
+        .from("mechanics")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "Approved")
+        .maybeSingle();
+
+
+    // Logged in, but not an approved mechanic
     if (error || !mechanic) {
 
-        document.getElementById(
-            "mechanic-name"
-        ).innerText =
-            "Mechanic account not found.";
+        alert(
+            "You do not have an approved mechanic account."
+        );
+
+        await supabaseClient.auth.signOut();
+
+        window.location.href =
+            "mechanic-login.html";
 
         return;
     }
 
+
+    // Approved mechanic
     currentMechanic = mechanic;
 
     document.getElementById(
@@ -204,10 +215,10 @@ const {
     ).innerText =
         mechanic.business_name;
 
-    loadQuoteRequests();
-loadBookings();
-}
 
+    loadQuoteRequests();
+    loadBookings();
+}
 
 // Load quote requests
 async function loadQuoteRequests() {
