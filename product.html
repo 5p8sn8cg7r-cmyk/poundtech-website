@@ -254,9 +254,21 @@ if (supplierError) {
 
 <p>
     <strong>Sold by:</strong>
+
     ${
         supplier
-        ? supplier.business_name
+        ? `
+            <a
+                href="supplier.html?id=${product.supplier_id}"
+                style="
+                    color:#e00000;
+                    font-weight:bold;
+                    text-decoration:none;
+                "
+            >
+                ${supplier.business_name}
+            </a>
+        `
         : "Supplier not available"
     }
 </p>
