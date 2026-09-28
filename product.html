@@ -177,6 +177,19 @@ async function loadProduct() {
 
     }
 
+    const { data: product, error } =
+    await supabaseClient
+    .from("products")
+    .select(`
+        *,
+        suppliers (
+            business_name,
+            status
+        )
+    `)
+    .eq("id", productId)
+    .single();
+
 
     if (error || !product) {
 
