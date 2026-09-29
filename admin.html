@@ -185,13 +185,20 @@ async function adminLogin() {
         return;
     }
 
-    const user = data.user;
+const user = data.user;
 
-    // Make sure this is the actual PoundTech admin
-if (!user || user.id.trim() !== ADMIN_UID.trim()) {
+if (!user) {
 
     document.getElementById("login-error").textContent =
-        "You do not have permission to access the admin dashboard.";
+        "No user account was returned.";
+
+    return;
+}
+
+if (user.id.trim() !== ADMIN_UID.trim()) {
+
+    document.getElementById("login-error").textContent =
+        "Admin UID mismatch. Received: " + user.id;
 
     await supabaseClient.auth.signOut();
 
