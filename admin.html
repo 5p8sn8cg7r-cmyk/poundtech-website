@@ -160,8 +160,8 @@ document.getElementById("admin-nav").style.display = "none";
 
 }
 
-    const ADMIN_UID =
-"dd66c237-95cb-44c8-a43e-be823026fba8";
+const ADMIN_UID =
+"dd66c237-95cb-44c8-a43a-be823026fba8";
     
   async function adminLogin() {
 
@@ -197,15 +197,26 @@ document.getElementById("admin-nav").style.display = "none";
         return;
     }
 
-console.log("RETURNED UID:", JSON.stringify(user.id));
-console.log("EXPECTED UID:", JSON.stringify(ADMIN_UID));
-console.log("RETURNED LENGTH:", user.id.length);
-console.log("EXPECTED LENGTH:", ADMIN_UID.length);
+if (user.id.trim() !== ADMIN_UID.trim()) {
 
-document.getElementById("login-error").textContent =
-    "Returned: [" + user.id + "] Expected: [" + ADMIN_UID + "]";
+    document.getElementById("login-error").textContent =
+        "Wrong admin account. Your UID is: " + user.id;
 
-      return;
+    await supabaseClient.auth.signOut();
+
+    return;
+}
+
+document.getElementById("login").style.display =
+    "none";
+
+document.getElementById("orders").style.display =
+    "block";
+
+document.getElementById("admin-nav").style.display =
+    "block";
+
+loadOrders();
       
     document.getElementById("login").style.display =
         "none";
