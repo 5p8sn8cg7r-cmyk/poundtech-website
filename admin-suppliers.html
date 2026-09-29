@@ -187,8 +187,7 @@ supabase.createClient(
     SUPABASE_KEY
 );
 
-const ADMIN_UID =
-"dd66c237-95cb-44c8-a43e-be823026fba8";
+const ADMIN_UID = "dd66c237-95cb-44c8-a43a-be823026fba8";
     
 async function adminLogin() {
 
@@ -224,8 +223,8 @@ if (!user) {
     return;
 }
 
-if (user.id !== ADMIN_UID) {
-
+if (user.id.trim() !== ADMIN_UID.trim()) {
+    
     document.getElementById("error").textContent =
         "Wrong admin account. Your UID is: " + user.id;
 
