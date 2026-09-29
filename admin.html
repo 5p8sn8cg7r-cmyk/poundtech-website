@@ -159,8 +159,11 @@ document.getElementById("orders").style.display = "none";
 document.getElementById("admin-nav").style.display = "none";
 
 }
+
+    const ADMIN_UID =
+"dd66c237-95cb-44c8-a43e-be823026fba8";
     
-async function adminLogin() {
+    async function adminLogin() {
 
     const email =
         document.getElementById("admin-email").value;
@@ -184,26 +187,26 @@ async function adminLogin() {
         return;
     }
 
-const user = data.user;
+    const user = data.user;
 
-if (!user) {
+    if (!user) {
 
-    document.getElementById("login-error").textContent =
-        "No user account was returned.";
+        document.getElementById("login-error").textContent =
+            "No user account was returned after login.";
 
-    return;
-}
+        return;
+    }
 
-if (user.id !== "dd66c237-95cb-44c8-a43e-be823026fba8") {
+    if (user.id.trim() !== ADMIN_UID.trim()) {
 
-    document.getElementById("login-error").textContent =
-        "You do not have permission to access the admin dashboard.";
+        document.getElementById("login-error").textContent =
+            "Wrong admin account. Your UID is: " + user.id;
 
-    await supabaseClient.auth.signOut();
+        await supabaseClient.auth.signOut();
 
-    return;
-}
-    // Correct admin
+        return;
+    }
+
     document.getElementById("login").style.display =
         "none";
 
@@ -215,7 +218,7 @@ if (user.id !== "dd66c237-95cb-44c8-a43e-be823026fba8") {
 
     loadOrders();
 }
-
+    
 async function loadOrders() {
 
     const { data: orders, error } = await supabaseClient
