@@ -144,7 +144,6 @@ const supabaseClient = supabase.createClient(
     SUPABASE_KEY
 );
 
-const ADMIN_UID = "dd66c237-95cb-44c8-a43e-be823026fba8";
     
 async function adminLogout() {
 
@@ -195,10 +194,10 @@ if (!user) {
     return;
 }
 
-if (user.id.trim() !== ADMIN_UID.trim()) {
+if (user.id !== "dd66c237-95cb-44c8-a43e-be823026fba8") {
 
     document.getElementById("login-error").textContent =
-        "Admin UID mismatch. Received: " + user.id;
+        "You do not have permission to access the admin dashboard.";
 
     await supabaseClient.auth.signOut();
 
