@@ -310,6 +310,36 @@ footer strong {
     .categories::-webkit-scrollbar {
         display: none;
     }
+
+        .products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .product {
+        padding: 12px;
+    }
+
+    .product img {
+        height: 140px;
+        object-fit: cover;
+    }
+
+    .product h3 {
+        font-size: 16px;
+        margin: 8px 0 5px;
+    }
+
+    .product p {
+        font-size: 14px;
+        margin: 5px 0;
+    }
+
+    .product button {
+        width: 100%;
+        padding: 10px 6px;
+        font-size: 13px;
+    }
 }
 
  #search-status {
