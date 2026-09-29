@@ -214,20 +214,25 @@ async function adminLogin() {
         return;
     }
 
-    const user = data.user;
+const user = data.user;
 
-    console.log("SUPPLIER ADMIN USER UID:", user.id);
-console.log("EXPECTED ADMIN UID:", ADMIN_UID);
-    
-    if (!user || user.id !== ADMIN_UID) {
+if (!user) {
 
-        document.getElementById("error").textContent =
-            "You do not have permission to access supplier administration.";
+    document.getElementById("error").textContent =
+        "No user account was returned after login.";
 
-        await supabaseClient.auth.signOut();
+    return;
+}
 
-        return;
-    }
+if (user.id !== ADMIN_UID) {
+
+    document.getElementById("error").textContent =
+        "Wrong admin account. Your UID is: " + user.id;
+
+    await supabaseClient.auth.signOut();
+
+    return;
+}
 
     document.getElementById("login").style.display =
         "none";
