@@ -199,8 +199,8 @@ const ADMIN_UID =
 
 if (user.id.trim() !== ADMIN_UID.trim()) {
 
-    document.getElementById("login-error").textContent =
-        "Wrong admin account. Your UID is: " + user.id;
+   document.getElementById("login-error").textContent =
+    "You do not have permission to access the admin dashboard.";
 
     await supabaseClient.auth.signOut();
 
