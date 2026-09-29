@@ -144,6 +144,9 @@ const supabaseClient = supabase.createClient(
     SUPABASE_KEY
 );
 
+    const ADMIN_UID =
+"dd66c237-95cb-44c8-a43e-be823026fba8";
+    
 async function adminLogout() {
 
     const { error } = await supabaseClient.auth.signOut();
@@ -161,13 +164,17 @@ document.getElementById("admin-nav").style.display = "none";
     
 async function adminLogin() {
 
-    const email = document.getElementById("admin-email").value;
-    const password = document.getElementById("admin-password").value;
+    const email =
+        document.getElementById("admin-email").value;
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
+    const password =
+        document.getElementById("admin-password").value;
+
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
     if (error) {
 
@@ -179,13 +186,31 @@ async function adminLogin() {
         return;
     }
 
-   document.getElementById("login").style.display = "none";
-document.getElementById("orders").style.display = "block";
-document.getElementById("admin-nav").style.display = "block";
+    const user = data.user;
 
-loadOrders();
+    // Make sure this is the actual PoundTech admin
+    if (!user || user.id !== ADMIN_UID) {
+
+        document.getElementById("login-error").textContent =
+            "You do not have permission to access the admin dashboard.";
+
+        await supabaseClient.auth.signOut();
+
+        return;
+    }
+
+    // Correct admin
+    document.getElementById("login").style.display =
+        "none";
+
+    document.getElementById("orders").style.display =
+        "block";
+
+    document.getElementById("admin-nav").style.display =
+        "block";
+
+    loadOrders();
 }
-
 
 async function loadOrders() {
 
