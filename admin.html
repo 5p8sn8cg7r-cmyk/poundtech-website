@@ -144,8 +144,7 @@ const supabaseClient = supabase.createClient(
     SUPABASE_KEY
 );
 
-    const ADMIN_UID =
-"dd66c237-95cb-44c8-a43e-be823026fba8";
+const ADMIN_UID = "dd66c237-95cb-44c8-a43e-be823026fba8";
     
 async function adminLogout() {
 
@@ -189,16 +188,15 @@ async function adminLogin() {
     const user = data.user;
 
     // Make sure this is the actual PoundTech admin
-    if (!user || user.id !== ADMIN_UID) {
+if (!user || user.id.trim() !== ADMIN_UID.trim()) {
 
-        document.getElementById("login-error").textContent =
-            "You do not have permission to access the admin dashboard.";
+    document.getElementById("login-error").textContent =
+        "You do not have permission to access the admin dashboard.";
 
-        await supabaseClient.auth.signOut();
+    await supabaseClient.auth.signOut();
 
-        return;
-    }
-
+    return;
+}
     // Correct admin
     document.getElementById("login").style.display =
         "none";
