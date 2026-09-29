@@ -197,16 +197,25 @@ document.getElementById("admin-nav").style.display = "none";
         return;
     }
 
-    if (user.id.trim() !== ADMIN_UID.trim()) {
+const returnedUID = String(user.id)
+    .trim()
+    .toLowerCase();
 
-        document.getElementById("login-error").textContent =
-            "Wrong admin account. Your UID is: " + user.id;
+const correctUID =
+    "dd66c237-95cb-44c8-a43e-be823026fba8"
+        .trim()
+        .toLowerCase();
 
-        await supabaseClient.auth.signOut();
+if (returnedUID !== correctUID) {
 
-        return;
-    }
+    document.getElementById("login-error").textContent =
+        "Wrong admin account. Your UID is: " + user.id;
 
+    await supabaseClient.auth.signOut();
+
+    return;
+}
+      
     document.getElementById("login").style.display =
         "none";
 
