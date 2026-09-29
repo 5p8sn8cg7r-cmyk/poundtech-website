@@ -291,6 +291,25 @@ footer strong {
     .mechanic {
         padding: 35px 20px;
     }
+
+        .categories {
+        display: flex;
+        overflow-x: auto;
+        gap: 12px;
+        padding-bottom: 10px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .category {
+        flex: 0 0 180px;
+        padding: 22px 12px;
+        scroll-snap-align: start;
+    }
+
+    .categories::-webkit-scrollbar {
+        display: none;
+    }
 }
 
  #search-status {
