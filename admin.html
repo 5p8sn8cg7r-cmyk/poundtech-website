@@ -82,7 +82,7 @@
     <h1>POUND<span>TECH</span></h1>
     <p>Admin Dashboard</p>
 
-    <div style="margin:20px 0;">
+    <div id="admin-nav" style="display:none; margin:20px 0;">
 
         <button onclick="window.location.href='admin.html'">
             📦 Orders
@@ -99,7 +99,7 @@
     </button>
 
 </header>
-
+    
 <div class="container">
 
     <div id="login">
@@ -149,8 +149,9 @@ async function adminLogout() {
         return;
     }
 
-    document.getElementById("login").style.display = "block";
-    document.getElementById("orders").style.display = "none";
+   document.getElementById("login").style.display = "block";
+document.getElementById("orders").style.display = "none";
+document.getElementById("admin-nav").style.display = "none";
 
 }
     
@@ -174,10 +175,11 @@ async function adminLogin() {
         return;
     }
 
-    document.getElementById("login").style.display = "none";
-    document.getElementById("orders").style.display = "block";
+   document.getElementById("login").style.display = "none";
+document.getElementById("orders").style.display = "block";
+document.getElementById("admin-nav").style.display = "block";
 
-    loadOrders();
+loadOrders();
 }
 
 
