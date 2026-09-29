@@ -216,6 +216,9 @@ async function adminLogin() {
 
     const user = data.user;
 
+    console.log("SUPPLIER ADMIN USER UID:", user.id);
+console.log("EXPECTED ADMIN UID:", ADMIN_UID);
+    
     if (!user || user.id !== ADMIN_UID) {
 
         document.getElementById("error").textContent =
