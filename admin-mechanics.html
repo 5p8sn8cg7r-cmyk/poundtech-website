@@ -104,8 +104,42 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
-
+    const ADMIN_UID =
+    "dd66c237-95cb-44c8-a43a-be823026fba8";
+    
 async function loadMechanics() {
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+
+    // Not logged in
+    if (userError || !user) {
+
+        window.location.href =
+            "admin.html";
+
+        return;
+    }
+
+
+    // Logged in, but not the admin
+    if (user.id !== ADMIN_UID) {
+
+        alert(
+            "You do not have permission to access the admin panel."
+        );
+
+        await supabaseClient.auth.signOut();
+
+        window.location.href =
+            "admin.html";
+
+        return;
+    }
+
 
     const container =
         document.getElementById("mechanics-container");
@@ -234,8 +268,7 @@ async function loadMechanics() {
         `).join("");
 
 }
-
-
+    
 async function updateMechanicStatus(
     mechanicId,
     newStatus
