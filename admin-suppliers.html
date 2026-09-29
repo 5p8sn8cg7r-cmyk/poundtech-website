@@ -187,51 +187,52 @@ supabase.createClient(
     SUPABASE_KEY
 );
 
-
-
+const ADMIN_UID =
+"dd66c237-95cb-44c8-a43e-be823026fba8";
+    
 async function adminLogin() {
 
+    const email =
+        document.getElementById("admin-email").value;
 
-const email =
-document.getElementById("admin-email").value;
+    const password =
+        document.getElementById("admin-password").value;
 
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
-const password =
-document.getElementById("admin-password").value;
+    if (error) {
 
+        document.getElementById("error").textContent =
+            "Login failed. Please check your email and password.";
 
-const { data, error } =
-await supabaseClient.auth.signInWithPassword({
+        console.log("LOGIN ERROR:", error);
 
-    email: email,
+        return;
+    }
 
-    password: password
+    const user = data.user;
 
-});
+    if (!user || user.id !== ADMIN_UID) {
 
+        document.getElementById("error").textContent =
+            "You do not have permission to access supplier administration.";
 
-if (error) {
+        await supabaseClient.auth.signOut();
 
-    document.getElementById("error").textContent =
-    "Login failed. Please check your email and password.";
+        return;
+    }
 
-    console.log("LOGIN ERROR:", error);
+    document.getElementById("login").style.display =
+        "none";
 
-    return;
+    document.getElementById("suppliers").style.display =
+        "block";
 
-}
-
-
-document.getElementById("login").style.display =
-"none";
-
-
-document.getElementById("suppliers").style.display =
-"block";
-
-
-loadSuppliers();
-
+    loadSuppliers();
 }
 
 
