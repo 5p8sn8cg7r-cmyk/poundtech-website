@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Account | PoundTech</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+}
+header {
+    background: #111;
+    color: white;
+    padding: 20px;
+    border-bottom: 4px solid #e32636;
+}
+header a { color: white; text-decoration: none; }
+main {
+    max-width: 440px;
+    margin: 35px auto;
+    padding: 20px;
+}
+.panel {
+    background: white;
+    padding: 24px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px #0001;
+}
+input, button {
+    width: 100%;
+    padding: 13px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    font-size: 16px;
+    border-radius: 6px;
+}
+input { border: 1px solid #ccc; }
+button {
+    border: none;
+    background: #e32636;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+button.secondary { background: #333; }
+#message { line-height: 1.5; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🏎️ PoundTech</h1>
+    <a href="index.html">← Back to marketplace</a>
+</header>
+
+<main>
+    <section class="panel">
+        <h2>Customer Account</h2>
+        <p>Create an account to save your vehicles in My Garage.</p>
+
+        <form id="account-form">
+            <input id="email" type="email"
+                   placeholder="Email address" autocomplete="email" required>
+            <input id="password" type="password"
+                   placeholder="Password (at least 8 characters)"
+                   autocomplete="current-password" minlength="8" required>
+
+            <button id="login-button" type="button">Log In</button>
+            <button id="signup-button" type="button" class="secondary">
+                Create Account
+            </button>
+        </form>
+
+        <p id="message" role="status"></p>
+        <button id="logout-button" type="button" class="secondary"
+                style="display:none">Log Out</button>
+        <button id="garage-button" type="button" style="display:none">
+            Go to My Garage
+        </button>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+const message = document.getElementById("message");
+const loginButton = document.getElementById("login-button");
+const signupButton = document.getElementById("signup-button");
+const logoutButton = document.getElementById("logout-button");
+const garageButton = document.getElementById("garage-button");
+
+function showMessage(text, error = false) {
+    message.textContent = text;
+    message.style.color = error ? "#c62828" : "#16783a";
+}
+
+function setBusy(busy) {
+    loginButton.disabled = busy;
+    signupButton.disabled = busy;
+}
+
+function showLoggedIn(email) {
+    document.getElementById("account-form").style.display = "none";
+    logoutButton.style.display = "block";
+    garageButton.style.display = "block";
+    showMessage("Logged in as " + email);
+}
+
+async function checkSession() {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+        showMessage(error.message, true);
+        return;
+    }
+
+    if (data.session) {
+        showLoggedIn(data.session.user.email);
+    }
+}
+
+loginButton.addEventListener("click", async function() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        showMessage("Enter your email and password.", true);
+        return;
+    }
+
+    setBusy(true);
+    showMessage("Logging in...");
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    setBusy(false);
+
+    if (error) {
+        showMessage(error.message, true);
+        return;
+    }
+
+    showLoggedIn(data.user.email);
+});
+
+signupButton.addEventListener("click", async function() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        showMessage("Enter your email and choose a password.", true);
+        return;
+    }
+
+    if (password.length < 8) {
+        showMessage("Use a password with at least 8 characters.", true);
+        return;
+    }
+
+    setBusy(true);
+    showMessage("Creating your account...");
+
+    const redirectTo =
+        window.location.origin + "/poundtech-website/garage.html";
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+            emailRedirectTo: redirectTo
+        }
+    });
+
+    setBusy(false);
+
+    if (error) {
+        showMessage(error.message, true);
+        return;
+    }
+
+    if (data.session && data.user) {
+        showLoggedIn(data.user.email);
+        showMessage("Account created. You can now open My Garage.");
+    } else {
+        showMessage(
+            "Registration received. Check your email for the confirmation link, " +
+            "then return here and log in."
+        );
+    }
+});
+
+logoutButton.addEventListener("click", async function() {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+        showMessage(error.message, true);
+        return;
+    }
+
+    document.getElementById("account-form").style.display = "block";
+    logoutButton.style.display = "none";
+    garageButton.style.display = "none";
+    showMessage("You have logged out.");
+});
+
+garageButton.addEventListener("click", function() {
+    window.location.href = "garage.html";
+});
+
+checkSession();
+</script>
+</body>
+</html>
+```
