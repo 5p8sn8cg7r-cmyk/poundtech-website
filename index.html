@@ -881,6 +881,7 @@ function selectGarageVehicle() {
     } else {
         status.textContent =
             "Choose a vehicle from My Garage to find compatible products.";
+            loadProducts();
     }
 }
 
@@ -1402,8 +1403,8 @@ if (error) {
  localStorage.removeItem("poundtechCart");
 }
 
- async function loadProducts() {
 
+async function loadProducts() {
     const container = document.getElementById("products-container");
 
     const { data: products, error } = await supabaseClient
@@ -1423,50 +1424,132 @@ if (error) {
         return;
     }
 
-    container.innerHTML = products.map(product => `
-        <div class="product"
-        
-     onclick="window.location.href='product.html?id=${product.id}'"
-     style="cursor:pointer;">
-     
-     <div class="product-image">
-                ${
-                    product.image_url
-                    ? `<img src="${product.image_url}"
-                           alt="${product.name}"
-                           style="width:100%; height:100%; object-fit:cover;">`
-                    : `<div style="
-                            width:100%;
-                            height:100%;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            background:#eee;
-                        ">
-                            No Image
-                       </div>`
-                }
-            </div>
+    // No vehicle selected: preserve the normal catalogue.
+    let displayedProducts = products;
 
-            <div class="product-info">
+    if (selectedGarageVehicle) {
+        const vehicle = selectedGarageVehicle;
 
-                <h3>${product.name}</h3>
+        function normalise(value) {
+            return String(value || "").trim().toLowerCase();
+        }
 
-                <p>${product.category}</p>
+        function getCompatibility(product) {
+            const compatibility = normalise(
+                product.vehicle_compatibility
+            );
 
-                <div class="price">
-                    R${product.price}
+            // Treat explicitly universal products as universal.
+            if (
+                compatibility === "universal" ||
+                compatibility.includes("universal")
+            ) {
+                return "universal";
+            }
+
+            if (!compatibility) {
+                return "unknown";
+            }
+
+            const vehicleDetails = [
+                vehicle.year,
+                vehicle.make,
+                vehicle.model
+            ].map(normalise);
+
+            const matches = vehicleDetails.every(detail =>
+                detail && compatibility.includes(detail)
+            );
+
+            return matches ? "match" : "mismatch";
+        }
+
+        const matches = [];
+        const universal = [];
+        const unknown = [];
+
+        products.forEach(product => {
+            const result = getCompatibility(product);
+
+            if (result === "match") {
+                matches.push(product);
+            } else if (result === "universal") {
+                universal.push(product);
+            } else if (result === "unknown") {
+                unknown.push(product);
+            }
+        });
+
+        // Show matching products first, then universal products.
+        // Keep unknown-fitment products visible rather than hiding
+        // products when compatibility data is incomplete.
+        displayedProducts = [
+            ...matches,
+            ...universal,
+            ...unknown
+        ];
+    }
+
+    if (displayedProducts.length === 0) {
+        container.innerHTML =
+            "<p>No compatible products found for this vehicle.</p>";
+        return;
+    }
+
+    container.innerHTML = displayedProducts.map(product => {
+        const compatibility = String(
+            product.vehicle_compatibility || ""
+        ).trim().toLowerCase();
+
+        const isUniversal =
+            compatibility === "universal" ||
+            compatibility.includes("universal");
+
+        const fitmentLabel = isUniversal
+            ? '<p style="color:#777;">Universal — check fitment</p>'
+            : "";
+
+        return `
+            <div class="product"
+                 onclick="window.location.href='product.html?id=${product.id}'"
+                 style="cursor:pointer;">
+
+                <div class="product-image">
+                    ${
+                        product.image_url
+                        ? `<img src="${product.image_url}"
+                               alt="${product.name}"
+                               style="width:100%; height:100%; object-fit:cover;">`
+                        : `<div style="
+                                width:100%;
+                                height:100%;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                background:#eee;">
+                                No Image
+                           </div>`
+                    }
                 </div>
 
-<button onclick="event.stopPropagation(); addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, '${product.image_url || ""}')">
-    Add to Cart
-</button>
-            </div>
+                <div class="product-info">
+                    <h3>${product.name}</h3>
+                    <p>${product.category || ""}</p>
+                    ${fitmentLabel}
 
-        </div>
-    `).join("");
+                    <div class="price">
+                        R${product.price}
+                    </div>
+
+                    <button onclick="event.stopPropagation(); addCart('${product.id}', '${product.supplier_id}', '${String(product.name || "").replace(/'/g, "\\'")}', ${product.price}, '${String(product.image_url || "").replace(/'/g, "\\'")}')">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join("");
 }
- 
+    
 function updateCartCount() {
 
     let cart =
