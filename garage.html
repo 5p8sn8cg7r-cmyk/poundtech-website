@@ -1,1 +1,253 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Garage | PoundTech</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            color: #222;
+        }
+        header {
+            background: #111;
+            color: white;
+            padding: 18px 20px;
+            border-bottom: 4px solid #e32636;
+        }
+        header a {
+            color: white;
+            text-decoration: none;
+            margin-right: 18px;
+        }
+        header h1 { margin: 0 0 14px; }
+        main {
+            max-width: 850px;
+            margin: 25px auto;
+            padding: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 22px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 8px #00000012;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 7px 0;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        input { border: 1px solid #ccc; }
+        button {
+            background: #e32636;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:disabled { opacity: .6; cursor: wait; }
+        .vehicle {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        .delete { background: #333; }
+        #message { margin: 12px 0; }
+        .muted { color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
 
+<header>
+    <h1>🚗 PoundTech My Garage</h1>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="mechanics.html">Mechanics</a>
+        <a href="index.html">Products</a>
+    </nav>
+</header>
+
+<main>
+    <section class="panel">
+        <h2>Add Your Vehicle</h2>
+        <p class="muted">Save your vehicles so PoundTech can help you find compatible parts.</p>
+
+        <form id="vehicle-form">
+            <input id="make" placeholder="Make (e.g. Mercedes-Benz)" required>
+            <input id="model" placeholder="Model (e.g. C180)" required>
+            <input id="year" type="number" placeholder="Year (e.g. 2014)"
+                   min="1950" max="2100" required>
+            <input id="engine" placeholder="Engine (optional, e.g. 1.6 petrol)">
+            <input id="nickname" placeholder="Nickname (optional, e.g. My daily)">
+            <button id="save-button" type="submit">Save Vehicle</button>
+        </form>
+        <div id="message" role="status"></div>
+    </section>
+
+    <section class="panel">
+        <h2>My Vehicles</h2>
+        <div id="vehicles-list">Loading vehicles...</div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const form = document.getElementById("vehicle-form");
+const message = document.getElementById("message");
+const vehiclesList = document.getElementById("vehicles-list");
+const saveButton = document.getElementById("save-button");
+
+let currentUser = null;
+
+function showMessage(text, isError = false) {
+    message.textContent = text;
+    message.style.color = isError ? "#c62828" : "#16803c";
+}
+
+async function initialiseGarage() {
+    const { data, error } = await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+        vehiclesList.textContent = "Please log in to view your garage.";
+        showMessage("Log in to your PoundTech account before saving vehicles.", true);
+        form.querySelector("button").disabled = true;
+        return;
+    }
+
+    currentUser = data.user;
+    await loadVehicles();
+}
+
+async function loadVehicles() {
+    vehiclesList.textContent = "Loading vehicles...";
+
+    const { data, error } = await supabaseClient
+        .from("customer_vehicles")
+        .select("id, make, model, year, engine, nickname, created_at")
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        vehiclesList.textContent = "Could not load vehicles.";
+        showMessage(error.message, true);
+        return;
+    }
+
+    vehiclesList.replaceChildren();
+
+    if (!data || data.length === 0) {
+        vehiclesList.textContent = "No vehicles saved yet. Add your first vehicle above.";
+        return;
+    }
+
+    data.forEach(function(vehicle) {
+        const card = document.createElement("div");
+        card.className = "vehicle";
+
+        const title = document.createElement("h3");
+        title.textContent = vehicle.year + " " + vehicle.make + " " + vehicle.model;
+        card.appendChild(title);
+
+        if (vehicle.engine) {
+            const engine = document.createElement("p");
+            engine.textContent = "Engine: " + vehicle.engine;
+            card.appendChild(engine);
+        }
+
+        if (vehicle.nickname) {
+            const nickname = document.createElement("p");
+            nickname.textContent = "Nickname: " + vehicle.nickname;
+            card.appendChild(nickname);
+        }
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete";
+        deleteButton.textContent = "Remove Vehicle";
+        deleteButton.addEventListener("click", function() {
+            deleteVehicle(vehicle.id);
+        });
+
+        card.appendChild(deleteButton);
+        vehiclesList.appendChild(card);
+    });
+}
+
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    if (!currentUser) {
+        showMessage("Please log in first.", true);
+        return;
+    }
+
+    const year = Number(document.getElementById("year").value);
+
+    if (!Number.isInteger(year) || year < 1950 || year > new Date().getFullYear() + 1) {
+        showMessage("Please enter a valid vehicle year.", true);
+        return;
+    }
+
+    saveButton.disabled = true;
+    showMessage("Saving vehicle...");
+
+    const vehicle = {
+        user_id: currentUser.id,
+        make: document.getElementById("make").value.trim(),
+        model: document.getElementById("model").value.trim(),
+        year: year,
+        engine: document.getElementById("engine").value.trim() || null,
+        nickname: document.getElementById("nickname").value.trim() || null
+    };
+
+    const { error } = await supabaseClient
+        .from("customer_vehicles")
+        .insert(vehicle);
+
+    saveButton.disabled = false;
+
+    if (error) {
+        showMessage("Could not save vehicle: " + error.message, true);
+        return;
+    }
+
+    form.reset();
+    showMessage("Vehicle saved successfully!");
+    await loadVehicles();
+});
+
+async function deleteVehicle(vehicleId) {
+    if (!currentUser || !confirm("Remove this vehicle from your garage?")) return;
+
+    const { error } = await supabaseClient
+        .from("customer_vehicles")
+        .delete()
+        .eq("id", vehicleId)
+        .eq("user_id", currentUser.id);
+
+    if (error) {
+        showMessage("Could not remove vehicle: " + error.message, true);
+        return;
+    }
+
+    showMessage("Vehicle removed.");
+    await loadVehicles();
+}
+
+initialiseGarage();
+</script>
+</body>
+</html>
+```
