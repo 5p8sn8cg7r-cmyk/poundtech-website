@@ -430,7 +430,28 @@ Find car parts, accessories and automotive services from businesses across South
 </div>
 
 <div id="search-status"></div>
+<div style="max-width:750px; margin:18px auto 0; text-align:left;">
 
+    <label for="garage-vehicle-select"
+           style="display:block; margin-bottom:8px; color:white; font-weight:bold;">
+        Shop for your vehicle
+    </label>
+
+    <select id="garage-vehicle-select"
+            onchange="selectGarageVehicle()"
+            style="width:100%; padding:14px; border-radius:6px; border:1px solid #ddd; font-size:15px;">
+
+        <option value="">Loading your saved vehicles...</option>
+
+    </select>
+
+    <p id="garage-vehicle-status"
+       style="margin-top:8px; color:#c7c7c7; font-size:13px;">
+        Choose a vehicle from My Garage to find compatible products.
+    </p>
+
+</div>
+    
 </section>
 
 
@@ -753,7 +774,118 @@ const supabaseClient = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
- 
+    let garageVehicles = [];
+let selectedGarageVehicle = null;
+
+async function loadGarageVehicles() {
+
+    const select = document.getElementById("garage-vehicle-select");
+    const status = document.getElementById("garage-vehicle-status");
+
+    const { data: userData, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !userData.user) {
+        select.innerHTML = `
+            <option value="">Sign in to use My Garage</option>
+        `;
+
+        status.innerHTML = `
+            <a href="customer-login.html" style="color:white;">
+                Sign in or open My Garage
+            </a>
+        `;
+
+        return;
+    }
+
+    const { data: vehicles, error } = await supabaseClient
+        .from("customer_vehicles")
+        .select("id, make, model, year, engine, nickname")
+        .eq("user_id", userData.user.id)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("GARAGE VEHICLES ERROR:", error);
+
+        select.innerHTML = `
+            <option value="">Unable to load saved vehicles</option>
+        `;
+
+        status.textContent =
+            "We couldn't load your vehicles. Please try again later.";
+
+        return;
+    }
+
+    garageVehicles = vehicles || [];
+
+    if (garageVehicles.length === 0) {
+        select.innerHTML = `
+            <option value="">No saved vehicles found</option>
+        `;
+
+        status.innerHTML = `
+            Add a vehicle in
+            <a href="garage.html" style="color:white;">My Garage</a>
+            first.
+        `;
+
+        return;
+    }
+
+    select.innerHTML = `
+        <option value="">Choose a saved vehicle</option>
+    `;
+
+    garageVehicles.forEach(function(vehicle) {
+
+        const option = document.createElement("option");
+
+        option.value = vehicle.id;
+
+        option.textContent =
+            (vehicle.nickname
+                ? vehicle.nickname + " — "
+                : "") +
+            vehicle.year + " " +
+            vehicle.make + " " +
+            vehicle.model +
+            (vehicle.engine ? " (" + vehicle.engine + ")" : "");
+
+        select.appendChild(option);
+    });
+
+    status.textContent =
+        "Select a vehicle to personalise your product results.";
+}
+
+function selectGarageVehicle() {
+
+    const select = document.getElementById("garage-vehicle-select");
+
+    selectedGarageVehicle =
+        garageVehicles.find(function(vehicle) {
+            return vehicle.id === select.value;
+        }) || null;
+
+    const status = document.getElementById("garage-vehicle-status");
+
+    if (selectedGarageVehicle) {
+        status.textContent =
+            "Selected: " +
+            selectedGarageVehicle.year + " " +
+            selectedGarageVehicle.make + " " +
+            selectedGarageVehicle.model +
+            ". Compatibility filtering will use this vehicle.";
+    } else {
+        status.textContent =
+            "Choose a vehicle from My Garage to find compatible products.";
+    }
+}
+
+loadGarageVehicles();
+    
  function searchProducts() {
     alert("Search functionality will be connected soon!");
 }
