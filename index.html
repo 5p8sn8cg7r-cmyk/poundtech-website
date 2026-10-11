@@ -864,6 +864,9 @@ async function loadGarageVehicles() {
 function selectGarageVehicle() {
     const select = document.getElementById("garage-vehicle-select");
 
+    console.log("Dropdown value:", select.value);
+console.log("Saved vehicles:", garageVehicles);
+    
     selectedGarageVehicle =
         garageVehicles.find(function(vehicle) {
             return vehicle.id === select.value;
