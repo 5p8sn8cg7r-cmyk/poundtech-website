@@ -1470,7 +1470,15 @@ async function loadProducts() {
             const make = normalise(vehicle.make);
             const model = normalise(vehicle.model);
             const year = normalise(vehicle.year);
+const makeAliases = {
+    "volkswagen": ["volkswagen", "vw"],
+    "mercedes benz": ["mercedes benz", "mercedes"],
+    "bmw": ["bmw"],
+    "toyota": ["toyota"]
+};
 
+const makesToMatch = makeAliases[make] || [make];
+            
             const vehicleName = normalise(
                 vehicle.make + " " + vehicle.model
             );
@@ -1478,12 +1486,12 @@ async function loadProducts() {
             const matches = entries.some(entry => {
                 // Match make + model, e.g. Mercedes-Benz C180.
                 // The year is optional unless the entry specifies it.
-                const nameMatches =
-                    entry.includes(vehicleName) ||
-                    (
-                        entry.includes(make) &&
-                        entry.includes(model)
-                    );
+           const nameMatches =
+    entry.includes(vehicleName) ||
+    (
+        makesToMatch.some(alias => entry.includes(alias)) &&
+        entry.includes(model)
+    );
 
                 if (!nameMatches) {
                     return false;
