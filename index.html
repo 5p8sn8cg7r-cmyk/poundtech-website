@@ -860,8 +860,8 @@ async function loadGarageVehicles() {
         "Select a vehicle to personalise your product results.";
 }
 
-function selectGarageVehicle() {
 
+function selectGarageVehicle() {
     const select = document.getElementById("garage-vehicle-select");
 
     selectedGarageVehicle =
@@ -881,8 +881,10 @@ function selectGarageVehicle() {
     } else {
         status.textContent =
             "Choose a vehicle from My Garage to find compatible products.";
-            loadProducts();
     }
+
+    // Refresh products whether a vehicle is selected or cleared.
+    loadProducts();
 }
 
 loadGarageVehicles();
