@@ -870,7 +870,7 @@ console.log("Saved vehicles:", garageVehicles);
     
     selectedGarageVehicle =
         garageVehicles.find(function(vehicle) {
-            return vehicle.id === select.value;
+        return String(vehicle.id) === select.value;
         }) || null;
 console.log("Selected vehicle:", selectedGarageVehicle);
 console.log("Products will reload now");
