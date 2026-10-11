@@ -1432,6 +1432,7 @@ async function loadProducts() {
         return;
     }
 
+  
     // No vehicle selected: preserve the normal catalogue.
     let displayedProducts = products;
 
@@ -1439,37 +1440,68 @@ async function loadProducts() {
         const vehicle = selectedGarageVehicle;
 
         function normalise(value) {
-            return String(value || "").trim().toLowerCase();
+            return String(value || "")
+                .trim()
+                .toLowerCase()
+                .replace(/[-_]/g, " ")
+                .replace(/\s+/g, " ");
         }
 
         function getCompatibility(product) {
-            const compatibility = normalise(
-                product.vehicle_compatibility
-            );
+            const raw = String(
+                product.vehicle_compatibility || ""
+            ).trim();
 
-            // Treat explicitly universal products as universal.
-            if (
-                compatibility === "universal" ||
-                compatibility.includes("universal")
-            ) {
-                return "universal";
-            }
-
-            if (!compatibility) {
+            if (!raw) {
                 return "unknown";
             }
 
-            const vehicleDetails = [
-                vehicle.year,
-                vehicle.make,
-                vehicle.model
-            ].map(normalise);
+            // Compatibility entries are alternatives:
+            // "VW Polo, Toyota Corolla" means either vehicle.
+            const entries = raw
+                .split(/[,;\n]+/)
+                .map(normalise)
+                .filter(Boolean);
 
-            const matches = vehicleDetails.every(detail =>
-                detail && compatibility.includes(detail)
+            if (entries.some(entry => entry === "universal")) {
+                return "universal";
+            }
+
+            const make = normalise(vehicle.make);
+            const model = normalise(vehicle.model);
+            const year = normalise(vehicle.year);
+
+            const vehicleName = normalise(
+                vehicle.make + " " + vehicle.model
             );
 
-            return matches ? "match" : "mismatch";
+            const matches = entries.some(entry => {
+                // Match make + model, e.g. Mercedes-Benz C180.
+                // The year is optional unless the entry specifies it.
+                const nameMatches =
+                    entry.includes(vehicleName) ||
+                    (
+                        entry.includes(make) &&
+                        entry.includes(model)
+                    );
+
+                if (!nameMatches) {
+                    return false;
+                }
+
+                // If a year is specified in the entry, require
+                // the selected vehicle's year to match.
+                const years = entry.match(/\b(?:19|20)\d{2}\b/g);
+
+                return !years || years.includes(year);
+            });
+
+            if (matches) {
+                return "match";
+            }
+
+            // Compatibility information exists and does not match.
+            return "mismatch";
         }
 
         const matches = [];
@@ -1486,11 +1518,9 @@ async function loadProducts() {
             } else if (result === "unknown") {
                 unknown.push(product);
             }
+            // Known mismatches are intentionally hidden.
         });
 
-        // Show matching products first, then universal products.
-        // Keep unknown-fitment products visible rather than hiding
-        // products when compatibility data is incomplete.
         displayedProducts = [
             ...matches,
             ...universal,
