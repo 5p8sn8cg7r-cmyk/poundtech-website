@@ -868,7 +868,9 @@ function selectGarageVehicle() {
         garageVehicles.find(function(vehicle) {
             return vehicle.id === select.value;
         }) || null;
-
+console.log("Selected vehicle:", selectedGarageVehicle);
+console.log("Products will reload now");
+    
     const status = document.getElementById("garage-vehicle-status");
 
     if (selectedGarageVehicle) {
