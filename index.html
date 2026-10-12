@@ -926,6 +926,16 @@ const supabaseClient = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+    async function updateGarageLink() {
+    const { data } = await supabaseClient.auth.getSession();
+
+    if (data.session) {
+        document.getElementById("garage-link").href = "garage.html";
+    }
+}
+
+updateGarageLink();
+    
     let toastTimer;
 
 function showToast(message) {
