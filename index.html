@@ -25,10 +25,17 @@ body {
 header {
     background: #08090b;
     color: white;
-    padding: 18px 6%;
+    padding: 0 6%;
+}
+
+.header-top {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    row-gap: 10px;
+    padding: 16px 0;
+    border-bottom: 1px solid #1f2227;
 }
 
 .logo {
@@ -41,10 +48,45 @@ header {
     color: #e00000;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-left: auto;
+}
+
+.header-actions a {
+    color: #c7c7c7;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.header-actions a:hover {
+    color: #e00000;
+}
+
+.header-actions .cart-btn {
+    background: #e00000;
+    color: white;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.header-actions .cart-btn:hover {
+    background: #b80000;
+    color: white;
+}
+
+nav {
+    display: flex;
+    gap: 30px;
+    padding: 13px 0;
+}
+
 nav a {
     color: white;
     text-decoration: none;
-    margin-left: 25px;
     font-size: 15px;
 }
 
@@ -267,15 +309,32 @@ footer strong {
 
 @media (max-width: 700px) {
 
-    header {
-        flex-direction: column;
-        gap: 15px;
+      .logo {
+        font-size: 22px;
     }
 
-    nav a {
-        margin: 0 7px;
+    .header-actions {
+        gap: 12px;
     }
 
+    .header-actions a {
+        font-size: 13px;
+    }
+
+    .header-actions .cart-btn {
+        padding: 7px 12px;
+    }
+
+    nav {
+        gap: 22px;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    nav::-webkit-scrollbar {
+        display: none;
+    }
+    
     .hero h1 {
         font-size: 38px;
     }
@@ -385,23 +444,28 @@ footer strong {
 
 <header>
 
-<div class="logo">
-POUND<span>TECH</span>
-</div>
+    <div class="header-top">
 
-<nav>
-<a href="#">Home</a>
-<a href="#">Parts</a>
-<a href="#">Accessories</a>
-<a href="#">Mechanics</a>
-<a href="#">Sell</a>
- 
- <a href="track-order.html">Track Order</a>
-     <a href="customer-login.html">My Garage</a>    
-    
-<a href="#" onclick="showCart()">🛒 Cart (<span id="cart-count">0</span>)</a>
-</nav>
-    
+        <div class="logo">
+            POUND<span>TECH</span>
+        </div>
+
+        <div class="header-actions">
+            <a href="track-order.html">Track Order</a>
+            <a href="customer-login.html">My Garage</a>
+            <a href="#" class="cart-btn" onclick="showCart()">🛒 Cart (<span id="cart-count">0</span>)</a>
+        </div>
+
+    </div>
+
+    <nav>
+        <a href="#">Home</a>
+        <a href="#">Parts</a>
+        <a href="#">Accessories</a>
+        <a href="#">Mechanics</a>
+        <a href="#">Sell</a>
+    </nav>
+
 </header>
 
 
