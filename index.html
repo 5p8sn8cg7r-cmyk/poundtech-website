@@ -305,6 +305,46 @@ footer strong {
     color: white;
 }
 
+    /* ICONS */
+
+.category {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.cat-icon {
+    width: 34px;
+    height: 34px;
+    fill: none;
+    stroke: #111;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.2s;
+}
+
+.category:hover .cat-icon {
+    stroke: #e00000;
+}
+
+.header-actions .cart-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cart-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+    
 /* MOBILE */
 
 @media (max-width: 700px) {
@@ -453,7 +493,10 @@ footer strong {
         <div class="header-actions">
             <a href="track-order.html">Track Order</a>
             <a href="customer-login.html">My Garage</a>
-            <a href="#" class="cart-btn" onclick="showCart()">🛒 Cart (<span id="cart-count">0</span>)</a>
+           <a href="#" class="cart-btn" onclick="showCart()">
+    <svg class="cart-icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 7H6"/></svg>
+    Cart (<span id="cart-count">0</span>)
+</a>
         </div>
 
     </div>
@@ -525,31 +568,35 @@ Find car parts, accessories and automotive services from businesses across South
 
 <div class="categories">
 
-<div class="category" onclick="filterCategory('Engine Parts')">
-    🔧 Engine Parts
-</div>
+    <div class="category" onclick="filterCategory('Engine Parts')">
+        <svg class="cat-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22M5 5l2.5 2.5M16.5 16.5L19 19M5 19l2.5-2.5M16.5 7.5L19 5"/></svg>
+        <span>Engine Parts</span>
+    </div>
 
-<div class="category" onclick="filterCategory('Wheels & Tyres')">
-    🛞 Wheels & Tyres
-</div>
+    <div class="category" onclick="filterCategory('Wheels & Tyres')">
+        <svg class="cat-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg>
+        <span>Wheels &amp; Tyres</span>
+    </div>
 
-<div class="category" onclick="filterCategory('Lighting')">
-    💡 Lighting
-</div>
+    <div class="category" onclick="filterCategory('Lighting')">
+        <svg class="cat-icon" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+        <span>Lighting</span>
+    </div>
 
-<div class="category" onclick="filterCategory('Exterior')">
-    🚗 Exterior
-</div>
+    <div class="category" onclick="filterCategory('Exterior')">
+        <svg class="cat-icon" viewBox="0 0 24 24"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><path d="M3 12h18M9.5 17h5"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/></svg>
+        <span>Exterior</span>
+    </div>
 
-<div class="category" onclick="filterCategory('Car Audio')">
-    🔊 Car Audio
-</div>
+    <div class="category" onclick="filterCategory('Car Audio')">
+        <svg class="cat-icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><circle cx="12" cy="6.5" r="1"/></svg>
+        <span>Car Audio</span>
+    </div>
 
-<div class="category" onclick="filterCategory('Interior')">
-    🪑 Interior
-</div>
-
-</div>
+    <div class="category" onclick="filterCategory('Interior')">
+        <svg class="cat-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M3.5 10H10M14 10h6.5M12 14v7"/></svg>
+        <span>Interior</span>
+    </div>
 
 </div>
 
