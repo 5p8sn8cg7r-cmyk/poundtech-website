@@ -380,6 +380,42 @@ footer strong {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+    /* FITMENT BADGES */
+
+.fit-badge {
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+.fit-match {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e6f4ea;
+    color: #16803c !important;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.fit-icon {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.fit-universal {
+    color: #777;
+}
+
+.fit-unknown {
+    color: #9a6700;
+}
     
 /* MOBILE */
 
@@ -1688,15 +1724,40 @@ function getCompatibility(product, vehicle) {
     return matches ? "match" : "mismatch";
 }
 
-function renderProductCard(product) {
+function renderProductCard(product, status) {
 
     const compatibility = String(
         product.vehicle_compatibility || ""
     ).trim().toLowerCase();
 
-    const fitmentLabel = compatibility.includes("universal")
-        ? '<p style="color:#777;">Universal — check fitment</p>'
-        : "";
+    // Without a selected vehicle, keep the original universal label.
+    if (!status && compatibility.includes("universal")) {
+        status = "universal";
+    }
+
+    let fitmentLabel = "";
+
+    if (status === "match") {
+
+        const v = selectedGarageVehicle;
+        const vehicleName = v ? v.make + " " + v.model : "your vehicle";
+
+        fitmentLabel =
+            '<p class="fit-badge fit-match">' +
+            '<svg class="fit-icon" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' +
+            'Fits your ' + esc(vehicleName) +
+            '</p>';
+
+    } else if (status === "universal") {
+
+        fitmentLabel =
+            '<p class="fit-badge fit-universal">Universal — check fitment</p>';
+
+    } else if (status === "unknown") {
+
+        fitmentLabel =
+            '<p class="fit-badge fit-unknown">Fitment not specified — check before buying</p>';
+    }
 
     const handler =
         "event.stopPropagation(); addCart('" +
@@ -1776,7 +1837,9 @@ async function loadProducts() {
         return;
     }
 
-    let displayedProducts = products;
+     let displayedProducts = products.map(function(product) {
+        return { product: product, status: null };
+    });
 
     if (selectedGarageVehicle) {
 
@@ -1788,11 +1851,11 @@ async function loadProducts() {
             const result = getCompatibility(product, selectedGarageVehicle);
 
             if (result === "match") {
-                matches.push(product);
+                matches.push({ product: product, status: "match" });
             } else if (result === "universal") {
-                universal.push(product);
+                universal.push({ product: product, status: "universal" });
             } else if (result === "unknown") {
-                unknown.push(product);
+                unknown.push({ product: product, status: "unknown" });
             }
             // Known mismatches are intentionally hidden.
         });
@@ -1807,7 +1870,11 @@ async function loadProducts() {
         return;
     }
 
-    container.innerHTML = displayedProducts.map(renderProductCard).join("");
+    container.innerHTML = displayedProducts
+        .map(function(item) {
+            return renderProductCard(item.product, item.status);
+        })
+        .join("");
 }
 
 function filterCategory(category) {
