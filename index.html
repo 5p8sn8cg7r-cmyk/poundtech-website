@@ -537,13 +537,13 @@ footer strong {
 
     </div>
 
-    <nav>
-        <a href="#">Home</a>
-        <a href="#">Parts</a>
-        <a href="#">Accessories</a>
-        <a href="#">Mechanics</a>
-        <a href="#">Sell</a>
-    </nav>
+<nav>
+    <a href="index.html">Home</a>
+    <a href="index.html?view=parts">Parts</a>
+    <a href="index.html?view=accessories">Accessories</a>
+    <a href="mechanics.html">Mechanics</a>
+    <a href="supplier.html">Sell</a>
+</nav>
 
 </header>
 
@@ -1579,189 +1579,7 @@ if (error) {
 }
 
 
-async function loadProducts() {
-    const container = document.getElementById("products-container");
 
-    const { data: products, error } = await supabaseClient
-        .from("products")
-        .select("*")
-        .eq("status", "Active")
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        console.error(error);
-        container.innerHTML = "<p>Unable to load products.</p>";
-        return;
-    }
-
-    if (!products || products.length === 0) {
-        container.innerHTML = "<p>No products available yet.</p>";
-        return;
-    }
-
-  
-    // No vehicle selected: preserve the normal catalogue.
-    let displayedProducts = products;
-
-    if (selectedGarageVehicle) {
-        const vehicle = selectedGarageVehicle;
-
-        function normalise(value) {
-            return String(value || "")
-                .trim()
-                .toLowerCase()
-                .replace(/[-_]/g, " ")
-                .replace(/\s+/g, " ");
-        }
-
-        function getCompatibility(product) {
-            const raw = String(
-                product.vehicle_compatibility || ""
-            ).trim();
-
-            if (!raw) {
-                return "unknown";
-            }
-
-            // Compatibility entries are alternatives:
-            // "VW Polo, Toyota Corolla" means either vehicle.
-            const entries = raw
-                .split(/[,;\n]+/)
-                .map(normalise)
-                .filter(Boolean);
-
-            if (entries.some(entry => entry === "universal")) {
-                return "universal";
-            }
-
-            const make = normalise(vehicle.make);
-            const model = normalise(vehicle.model);
-            const year = normalise(vehicle.year);
-const makeAliases = {
-    "volkswagen": ["volkswagen", "vw"],
-    "mercedes benz": ["mercedes benz", "mercedes"],
-    "bmw": ["bmw"],
-    "toyota": ["toyota"]
-};
-
-const makesToMatch = makeAliases[make] || [make];
-            
-            const vehicleName = normalise(
-                vehicle.make + " " + vehicle.model
-            );
-
-            const matches = entries.some(entry => {
-                // Match make + model, e.g. Mercedes-Benz C180.
-                // The year is optional unless the entry specifies it.
-           const nameMatches =
-    entry.includes(vehicleName) ||
-    (
-        makesToMatch.some(alias => entry.includes(alias)) &&
-        entry.includes(model)
-    );
-
-                if (!nameMatches) {
-                    return false;
-                }
-
-                // If a year is specified in the entry, require
-                // the selected vehicle's year to match.
-                const years = entry.match(/\b(?:19|20)\d{2}\b/g);
-
-                return !years || years.includes(year);
-            });
-
-            if (matches) {
-                return "match";
-            }
-
-            // Compatibility information exists and does not match.
-            return "mismatch";
-        }
-
-        const matches = [];
-        const universal = [];
-        const unknown = [];
-
-        products.forEach(product => {
-            const result = getCompatibility(product);
-
-            if (result === "match") {
-                matches.push(product);
-            } else if (result === "universal") {
-                universal.push(product);
-            } else if (result === "unknown") {
-                unknown.push(product);
-            }
-            // Known mismatches are intentionally hidden.
-        });
-
-        displayedProducts = [
-            ...matches,
-            ...universal,
-            ...unknown
-        ];
-    }
-
-    if (displayedProducts.length === 0) {
-        container.innerHTML =
-            "<p>No compatible products found for this vehicle.</p>";
-        return;
-    }
-
-    container.innerHTML = displayedProducts.map(product => {
-        const compatibility = String(
-            product.vehicle_compatibility || ""
-        ).trim().toLowerCase();
-
-        const isUniversal =
-            compatibility === "universal" ||
-            compatibility.includes("universal");
-
-        const fitmentLabel = isUniversal
-            ? '<p style="color:#777;">Universal — check fitment</p>'
-            : "";
-
-        return `
-            <div class="product"
-                 onclick="window.location.href='product.html?id=${product.id}'"
-                 style="cursor:pointer;">
-
-                <div class="product-image">
-                    ${
-                        product.image_url
-                        ? `<img src="${product.image_url}"
-                               alt="${product.name}"
-                               style="width:100%; height:100%; object-fit:cover;">`
-                        : `<div style="
-                                width:100%;
-                                height:100%;
-                                display:flex;
-                                align-items:center;
-                                justify-content:center;
-                                background:#eee;">
-                                No Image
-                           </div>`
-                    }
-                </div>
-
-                <div class="product-info">
-                    <h3>${product.name}</h3>
-                    <p>${product.category || ""}</p>
-                    ${fitmentLabel}
-
-                    <div class="price">
-                        R${product.price}
-                    </div>
-
-                    <button onclick="event.stopPropagation(); addCart('${product.id}', '${product.supplier_id}', '${String(product.name || "").replace(/'/g, "\\'")}', ${product.price}, '${String(product.image_url || "").replace(/'/g, "\\'")}')">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join("");
-}
     
 function updateCartCount() {
 
@@ -1777,41 +1595,127 @@ function updateCartCount() {
     document.getElementById("cart-count").innerText =
         totalItems;
 }
+    
+updateCartCount();
+ 
+// ================= PRODUCT LISTING =================
+// Category/group and vehicle filters work together.
 
-    async function filterCategory(category) {
+const GROUPS = {
+    parts: {
+        title: "Parts",
+        categories: ["Engine Parts", "Wheels & Tyres"]
+    },
+    accessories: {
+        title: "Accessories",
+        categories: ["Lighting", "Exterior", "Car Audio", "Interior"]
+    }
+};
 
-    const container = document.getElementById("products-container");
+// null = no filter (featured/all products)
+let activeFilter = null;
 
-    const { data: products, error } = await supabaseClient
-        .from("products")
-        .select("*")
-        .eq("status", "Active")
-        .eq("category", category)
-        .order("created_at", { ascending: false });
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
 
-    if (error) {
-        console.error("CATEGORY ERROR:", error);
-        container.innerHTML = "<p>Unable to load products.</p>";
-        return;
+function js(value) {
+    return String(value == null ? "" : value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
+}
+
+function normalise(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[-_]/g, " ")
+        .replace(/\s+/g, " ");
+}
+
+const MAKE_ALIASES = {
+    "volkswagen": ["volkswagen", "vw"],
+    "mercedes benz": ["mercedes benz", "mercedes"],
+    "bmw": ["bmw"],
+    "toyota": ["toyota"]
+};
+
+function getCompatibility(product, vehicle) {
+
+    const raw = String(product.vehicle_compatibility || "").trim();
+
+    if (!raw) {
+        return "unknown";
     }
 
-    if (!products || products.length === 0) {
-        container.innerHTML = `
-            <p>No products found in <strong>${category}</strong>.</p>
-        `;
-        return;
+    const entries = raw
+        .split(/[,;\n]+/)
+        .map(normalise)
+        .filter(Boolean);
+
+    if (entries.some(entry => entry === "universal")) {
+        return "universal";
     }
 
-    container.innerHTML = products.map(product => `
+    const make = normalise(vehicle.make);
+    const model = normalise(vehicle.model);
+    const year = normalise(vehicle.year);
+    const makesToMatch = MAKE_ALIASES[make] || [make];
+    const vehicleName = normalise(vehicle.make + " " + vehicle.model);
+
+    const matches = entries.some(entry => {
+
+        const nameMatches =
+            entry.includes(vehicleName) ||
+            (
+                makesToMatch.some(alias => entry.includes(alias)) &&
+                entry.includes(model)
+            );
+
+        if (!nameMatches) {
+            return false;
+        }
+
+        const years = entry.match(/\b(?:19|20)\d{2}\b/g);
+
+        return !years || years.includes(year);
+    });
+
+    return matches ? "match" : "mismatch";
+}
+
+function renderProductCard(product) {
+
+    const compatibility = String(
+        product.vehicle_compatibility || ""
+    ).trim().toLowerCase();
+
+    const fitmentLabel = compatibility.includes("universal")
+        ? '<p style="color:#777;">Universal — check fitment</p>'
+        : "";
+
+    const handler =
+        "event.stopPropagation(); addCart('" +
+        js(product.id) + "', '" +
+        js(product.supplier_id) + "', '" +
+        js(product.name) + "', " +
+        Number(product.price) + ", '" +
+        js(product.image_url) + "')";
+
+    return `
         <div class="product"
-             onclick="window.location.href='product.html?id=${product.id}'"
+             onclick="window.location.href='product.html?id=${esc(product.id)}'"
              style="cursor:pointer;">
 
             <div class="product-image">
                 ${
                     product.image_url
-                    ? `<img src="${product.image_url}"
-                           alt="${product.name}"
+                    ? `<img src="${esc(product.image_url)}"
+                           alt="${esc(product.name)}"
                            style="width:100%; height:100%; object-fit:cover;">`
                     : `<div style="
                             width:100%;
@@ -1819,38 +1723,122 @@ function updateCartCount() {
                             display:flex;
                             align-items:center;
                             justify-content:center;
-                            background:#eee;
-                        ">
+                            background:#eee;">
                             No Image
                        </div>`
                 }
             </div>
 
             <div class="product-info">
+                <h3>${esc(product.name)}</h3>
+                <p>${esc(product.category || "")}</p>
+                ${fitmentLabel}
 
-                <h3>${product.name}</h3>
+                <div class="price">R${esc(product.price)}</div>
 
-                <p>${product.category}</p>
-
-                <div class="price">
-                    R${product.price}
-                </div>
-
-                <button onclick="event.stopPropagation(); addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, '${product.image_url || ""}')">
+                <button onclick="${esc(handler)}">
                     Add to Cart
                 </button>
-
             </div>
-
         </div>
-    `).join("");
-
-    document.getElementById("products-heading").innerText = category;
+    `;
 }
-    
-updateCartCount();
- 
-loadProducts();
+
+async function loadProducts() {
+
+    const container = document.getElementById("products-container");
+
+    document.getElementById("products-heading").innerText =
+        activeFilter ? activeFilter.title : "Featured Products";
+
+    let query = supabaseClient
+        .from("products")
+        .select("*")
+        .eq("status", "Active");
+
+    if (activeFilter) {
+        query = query.in("category", activeFilter.categories);
+    }
+
+    const { data: products, error } = await query
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("PRODUCTS ERROR:", error);
+        container.innerHTML = "<p>Unable to load products.</p>";
+        return;
+    }
+
+    if (!products || products.length === 0) {
+        container.innerHTML = activeFilter
+            ? "<p>No products found in <strong>" + esc(activeFilter.title) + "</strong> yet.</p>"
+            : "<p>No products available yet.</p>";
+        return;
+    }
+
+    let displayedProducts = products;
+
+    if (selectedGarageVehicle) {
+
+        const matches = [];
+        const universal = [];
+        const unknown = [];
+
+        products.forEach(product => {
+            const result = getCompatibility(product, selectedGarageVehicle);
+
+            if (result === "match") {
+                matches.push(product);
+            } else if (result === "universal") {
+                universal.push(product);
+            } else if (result === "unknown") {
+                unknown.push(product);
+            }
+            // Known mismatches are intentionally hidden.
+        });
+
+        displayedProducts = [...matches, ...universal, ...unknown];
+    }
+
+    if (displayedProducts.length === 0) {
+        container.innerHTML = activeFilter
+            ? "<p>No compatible products found in <strong>" + esc(activeFilter.title) + "</strong> for this vehicle.</p>"
+            : "<p>No compatible products found for this vehicle.</p>";
+        return;
+    }
+
+    container.innerHTML = displayedProducts.map(renderProductCard).join("");
+}
+
+function filterCategory(category) {
+    activeFilter = { title: category, categories: [category] };
+    loadProducts();
+}
+
+async function showGroup(key) {
+
+    const group = GROUPS[key];
+
+    if (!group) {
+        return;
+    }
+
+    activeFilter = { title: group.title, categories: group.categories };
+
+    await loadProducts();
+
+    document.getElementById("products-heading")
+        .scrollIntoView({ behavior: "smooth" });
+}
+
+// Nav links (index.html?view=parts / accessories)
+const view = new URLSearchParams(window.location.search).get("view");
+
+if (GROUPS[view]) {
+    showGroup(view);
+} else {
+    loadProducts();
+}
     
 async function searchProducts() {
 
