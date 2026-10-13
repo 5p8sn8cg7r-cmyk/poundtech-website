@@ -549,6 +549,95 @@ footer strong {
 .search-results-bar button:hover {
     background: #e00000;
 }
+    /* SECTION HEADINGS */
+
+.section > h2 {
+    position: relative;
+    padding-bottom: 14px;
+    /* For red text instead of a red bar, add:  color: #e00000;  */
+}
+
+.section > h2::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 48px;
+    height: 4px;
+    background: #e00000;
+    border-radius: 2px;
+}
+
+/* CATEGORY SLIDER */
+
+.category-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 60%;
+    max-width: 320px;
+    height: 20px;
+    margin: 8px auto 0;
+    background: transparent;
+    outline: none;
+}
+
+.category-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    background: #d9dbe0;
+    border-radius: 4px;
+}
+
+.category-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 44px;
+    height: 14px;
+    margin-top: -5px;
+    background: #e00000;
+    border: none;
+    border-radius: 7px;
+}
+
+.category-slider::-moz-range-track {
+    height: 4px;
+    background: #d9dbe0;
+    border-radius: 4px;
+}
+
+.category-slider::-moz-range-thumb {
+    width: 44px;
+    height: 14px;
+    background: #e00000;
+    border: none;
+    border-radius: 7px;
+}
+
+/* SMALLER TILES ON PHONE */
+
+@media (max-width: 700px) {
+
+    .categories {
+        scroll-snap-type: none;
+        gap: 10px;
+    }
+
+    .category {
+        flex: 0 0 118px;
+        padding: 16px 8px;
+        font-size: 13px;
+        gap: 10px;
+    }
+
+    .cat-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .cat-icon-duo {
+        width: 52px;
+        height: 28px;
+    }
+}
 </style>
 </head>
 
@@ -671,9 +760,20 @@ Find car parts, accessories and automotive services from businesses across South
         <rect x="31" y="2" width="8" height="4" rx="2"/><path d="M35 6v2.5"/><rect x="29.5" y="8.5" width="11" height="8.5" rx="2.5"/><rect x="28" y="18.5" width="14" height="3.5" rx="1.5"/>
     </svg>
     <span>Interior</span>
+
+    <div class="category" onclick="filterCategory('4x4 & Off-Road')">
+    <svg class="cat-icon" viewBox="0 0 24 24"><path d="M2.5 13.5V10l2.5-.8 1.7-3.4h8l3 3.6 2.8.8v3.3z"/><path d="M8 4h6M9 4v1.8M13 4v1.8"/><circle cx="7" cy="16.5" r="3"/><circle cx="16.5" cy="16.5" r="3"/><circle cx="7" cy="16.5" r="1"/><circle cx="16.5" cy="16.5" r="1"/></svg>
+    <span>4x4 &amp; Off-Road</span>
 </div>
 
+<div class="category" onclick="filterCategory('Commercial & Trucking')">
+    <svg class="cat-icon" viewBox="0 0 24 24"><path d="M1.5 6h12v9.5h-12z"/><path d="M13.5 9h4l3 3.5v3h-7"/><circle cx="5" cy="17.5" r="1.9"/><circle cx="9" cy="17.5" r="1.9"/><circle cx="17" cy="17.5" r="1.9"/></svg>
+    <span>Commercial &amp; Trucking</span>
 </div>
+    
+</div>
+
+ <input type="range" id="category-slider" class="category-slider" min="0" max="100" value="0" aria-label="Scroll categories">
 
 </section>
 
@@ -1640,11 +1740,11 @@ updateCartCount();
 const GROUPS = {
     parts: {
         title: "Parts",
-        categories: ["Engine Parts", "Wheels & Tyres"]
+        categories: ["Engine Parts", "Wheels & Tyres", "Commercial & Trucking"]
     },
     accessories: {
         title: "Accessories",
-        categories: ["Lighting", "Exterior", "Car Audio", "Interior"]
+        categories: ["Lighting", "Exterior", "Car Audio", "Interior", "4x4 & Off-Road"]
     }
 };
 
@@ -2025,7 +2125,31 @@ function clearSearch() {
 
     loadProducts();
 }
-    
+    const catRow = document.querySelector(".categories");
+const catSlider = document.getElementById("category-slider");
+
+function syncCategorySlider() {
+    const max = catRow.scrollWidth - catRow.clientWidth;
+
+    if (max <= 4) {
+        catSlider.style.display = "none";
+        return;
+    }
+
+    catSlider.style.display = "";
+    catSlider.value = (catRow.scrollLeft / max) * 100;
+}
+
+catRow.addEventListener("scroll", syncCategorySlider);
+window.addEventListener("resize", syncCategorySlider);
+
+catSlider.addEventListener("input", function() {
+    const max = catRow.scrollWidth - catRow.clientWidth;
+    catRow.scrollLeft = (catSlider.value / 100) * max;
+});
+
+syncCategorySlider();
+
 </script>
 
 </body>
