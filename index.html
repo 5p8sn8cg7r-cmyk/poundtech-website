@@ -297,12 +297,63 @@ nav a:hover {
 footer {
     background: #08090b;
     color: #aaa;
-    text-align: center;
-    padding: 35px;
+    padding: 50px 6% 30px;
 }
 
-footer strong {
+.footer-inner {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 35px;
+    text-align: left;
+    padding-bottom: 35px;
+    border-bottom: 1px solid #1f2227;
+}
+
+.footer-logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 1px;
     color: white;
+    margin-bottom: 10px;
+}
+
+.footer-logo span {
+    color: #e00000;
+}
+
+.footer-brand p {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.footer-contact {
+    margin-top: 12px;
+}
+
+.footer-col h4 {
+    color: white;
+    font-size: 14px;
+    margin-bottom: 14px;
+}
+
+.footer-col a,
+.footer-contact a {
+    display: block;
+    color: #aaa;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.footer-col a:hover,
+.footer-contact a:hover {
+    color: #e00000;
+}
+
+.footer-copy {
+    text-align: center;
+    font-size: 13px;
+    padding-top: 25px;
 }
 
     /* ICONS */
@@ -510,6 +561,14 @@ footer strong {
         width: 100%;
         padding: 10px 6px;
         font-size: 13px;
+    }
+
+        .footer-inner {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
     }
 }
 
@@ -973,21 +1032,44 @@ Sell on PoundTech
 
 </div>
  
- <footer>
+<footer>
 
-<p>
-<strong>POUNDTECH</strong>
-</p>
+<div class="footer-inner">
 
-<p>
-South Africa's automotive marketplace
-</p>
+    <div class="footer-brand">
+        <div class="footer-logo">POUND<span>TECH</span></div>
+        <p>South Africa's automotive marketplace</p>
+        <p class="footer-contact">
+            <a href="mailto:info@poundtech.co.za">info@poundtech.co.za</a>
+        </p>
+    </div>
 
-<br>
+    <div class="footer-col">
+        <h4>Shop</h4>
+        <a href="index.html?view=parts">Parts</a>
+        <a href="index.html?view=accessories">Accessories</a>
+        <a href="mechanics.html">Mechanics</a>
+        <a href="supplier.html">Sell on PoundTech</a>
+    </div>
 
-<p>
-© 2026 PoundTech. All rights reserved.
-</p>
+    <div class="footer-col">
+        <h4>Support</h4>
+        <a href="track-order.html">Track Order</a>
+        <a href="customer-login.html">My Garage</a>
+        <a href="mailto:orders@poundtech.co.za">orders@poundtech.co.za</a>
+    </div>
+
+    <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </div>
+
+</div>
+
+<p class="footer-copy">© 2026 PoundTech. All rights reserved.</p>
     
 <div id="cart-panel" style="
     display:none;
