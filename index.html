@@ -1573,10 +1573,10 @@ function closeCheckout() {
  
 async function placeOrder() {
 
-    let name = document.getElementById("customer-name").value;
-    let phone = document.getElementById("customer-phone").value;
-    let email = document.getElementById("customer-email").value;
-    let address = document.getElementById("customer-address").value;
+    let name = document.getElementById("customer-name").value.trim();
+    let phone = document.getElementById("customer-phone").value.trim();
+    let email = document.getElementById("customer-email").value.trim();
+    let address = document.getElementById("customer-address").value.trim();
 
     if (name === "" || phone === "" || email === "" || address === "") {
         alert("Please complete all your details before placing the order.");
@@ -1590,210 +1590,77 @@ async function placeOrder() {
         return;
     }
 
-    let total = 0;
-
-    cart.forEach(function(item) {
-        total += item.price * (item.quantity || 1);
+    const { data: result, error } = await supabaseClient.rpc("place_order", {
+        customer_name_input: name,
+        phone_input: phone,
+        email_input: email,
+        address_input: address,
+        items_input: cart.map(function(item) {
+            return {
+                product_id: item.product_id,
+                quantity: item.quantity || 1
+            };
+        })
     });
 
-    let order = {
-        order_number: "PT" + Date.now(),
-        customer_name: name,
-        phone: phone,
-        email: email,
-        address: address,
-        items: cart,
-        total: total,
-        status: "Pending"
-    };
-
-const { data: createdOrder, error } =
-    await supabaseClient
-    .from("orders")
-    .insert([order])
-    .select()
-    .single();
-
-if (error) {
-
-    console.log(
-        "SUPABASE ERROR:",
-        error.message,
-        error.details,
-        error.hint
-    );
-
-    alert("Order error: " + error.message);
-    return;
-}
-
-const orderItems = cart.map(function(item) {
-
-    return {
-        order_id: createdOrder.id,
-        product_id: item.product_id,
-        supplier_id: item.supplier_id,
-        product_name: item.name,
-        quantity: item.quantity || 1,
-        price: item.price
-    };
-
-});
-
-const { error: itemsError } =
-    await supabaseClient
-    .from("order_items")
-    .insert(orderItems);
-
-if (itemsError) {
-
-    console.log(
-        "ORDER ITEMS ERROR:",
-        itemsError.message,
-        itemsError.details,
-        itemsError.hint
-    );
-
-    alert(
-        "Order was created, but the order items could not be saved: " +
-        itemsError.message
-    );
-
-    return;
-}
-
-    for (const item of cart) {
-
-    const { error: stockError } =
-        await supabaseClient.rpc(
-            "reduce_product_stock",
-            {
-                product_id_input: item.product_id,
-                quantity_input: item.quantity || 1
-            }
-        );
-
-    if (stockError) {
-        console.error("STOCK ERROR:", stockError);
-        alert(
-            "Order was created, but stock could not be updated: " +
-            stockError.message
-        );
+    if (error) {
+        console.error("PLACE ORDER ERROR:", error);
+        alert("Order error: " + error.message);
         return;
     }
-}
 
-// Create PoundTech commission records
-const { error: commissionError } =
-    await supabaseClient.rpc(
-        "create_order_commissions",
-        {
-            order_id_input: createdOrder.id
-        }
-    );
+    const orderNumber = result.order_number;
 
-if (commissionError) {
-
-    console.error("COMMISSION ERROR:", commissionError);
-
-    alert(
-        "Order was created, but the commission could not be recorded: " +
-        commissionError.message
-    );
-
-    return;
-}
-
-if (error) {
-    console.log(
-        "SUPABASE ERROR:",
-        error.message,
-        error.details,
-        error.hint
-    );
-
-    alert("Order error: " + error.message);
-    return;
-}
-
-  document.getElementById("checkout-panel").innerHTML = `
-    <div style="
-        max-width:600px;
-        margin:80px auto;
-        background:white;
-        padding:40px 30px;
-        border-radius:12px;
-        text-align:center;
-        box-shadow:0 3px 20px rgba(0,0,0,0.1);
-    ">
-
+    document.getElementById("checkout-panel").innerHTML = `
         <div style="
-            font-size:60px;
-            margin-bottom:15px;
+            max-width:600px;
+            margin:80px auto;
+            background:white;
+            padding:40px 30px;
+            border-radius:12px;
+            text-align:center;
+            box-shadow:0 3px 20px rgba(0,0,0,0.1);
         ">
-            ✓
-        </div>
+            <div style="font-size:60px; margin-bottom:15px;">✓</div>
 
-        <h2 style="
-            margin-bottom:10px;
-            font-size:28px;
-        ">
-            Order Confirmed!
-        </h2>
+            <h2 style="margin-bottom:10px; font-size:28px;">
+                Order Confirmed!
+            </h2>
 
-        <p style="
-            color:#666;
-            margin-bottom:25px;
-        ">
-            Thank you, ${name}. Your PoundTech order has been received.
-        </p>
-
-        <div style="
-            background:#f5f5f5;
-            padding:18px;
-            border-radius:8px;
-            margin-bottom:25px;
-        ">
-
-            <p style="
-                margin:0 0 8px;
-                color:#666;
-            ">
-                Order Number
+            <p style="color:#666; margin-bottom:25px;">
+                Thank you, ${esc(name)}. Your PoundTech order has been received.
             </p>
 
-            <strong style="font-size:22px;">
-                ${order.order_number}
-            </strong>
+            <div style="background:#f5f5f5; padding:18px; border-radius:8px; margin-bottom:25px;">
+                <p style="margin:0 0 8px; color:#666;">Order Number</p>
+                <strong style="font-size:22px;">${esc(orderNumber)}</strong>
+            </div>
 
+            <p style="color:#666;">
+                We'll use the contact details you provided to follow up about your order.
+            </p>
+
+            <button
+                onclick="location.reload()"
+                style="
+                    margin-top:20px;
+                    width:100%;
+                    padding:15px;
+                    background:#e00000;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                    font-size:16px;
+                    font-weight:bold;
+                    cursor:pointer;
+                "
+            >
+                Continue Shopping
+            </button>
         </div>
+    `;
 
-        <p style="color:#666;">
-            We'll use the contact details you provided to follow up about your order.
-        </p>
-
-        <button
-            onclick="location.reload()"
-            style="
-                margin-top:20px;
-                width:100%;
-                padding:15px;
-                background:#e00000;
-                color:white;
-                border:none;
-                border-radius:6px;
-                font-size:16px;
-                font-weight:bold;
-                cursor:pointer;
-            "
-        >
-            Continue Shopping
-        </button>
-
-    </div>
-`;
-
- localStorage.removeItem("poundtechCart");
+    localStorage.removeItem("poundtechCart");
 }
 
 
