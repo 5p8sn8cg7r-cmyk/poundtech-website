@@ -153,104 +153,61 @@ const supabaseClient =
     );
 
 
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
 let currentBooking = null;
+let currentEmail = "";
 
 
 async function findBooking() {
 
     const email =
-        document
-        .getElementById("customer-email")
-        .value
-        .trim();
+        document.getElementById("customer-email").value.trim();
 
-    const message =
-        document.getElementById("message");
-
-    const reviewForm =
-        document.getElementById("review-form");
-
+    const message = document.getElementById("message");
+    const reviewForm = document.getElementById("review-form");
 
     if (!email) {
-
-        message.innerHTML =
-            "<p>Please enter your email address.</p>";
-
+        message.innerHTML = "<p>Please enter your email address.</p>";
         return;
     }
 
-
-    message.innerHTML =
-        "<p>Searching for completed bookings...</p>";
-
+    message.innerHTML = "<p>Searching for completed bookings...</p>";
     reviewForm.style.display = "none";
 
-
-    const { data, error } =
-        await supabaseClient
-        .from("mechanic_bookings")
-        .select(`
-            id,
-            mechanic_id,
-            customer_name,
-            customer_email,
-            vehicle,
-            service_required,
-            status,
-            mechanics (
-                business_name
-            )
-        `)
-        .eq("customer_email", email)
-        .eq("status", "Completed")
-        .order("created_at", { ascending: false })
-        .limit(1);
-
+    const { data, error } = await supabaseClient.rpc(
+        "find_booking_to_review",
+        { customer_email_input: email }
+    );
 
     if (error) {
-
         console.error(error);
-
-        message.innerHTML =
-            "<p>Unable to find your booking.</p>";
-
+        message.innerHTML = "<p>Unable to find your booking.</p>";
         return;
     }
-
 
     if (!data || data.length === 0) {
-
         message.innerHTML =
-            "<p>No completed booking was found for this email.</p>";
-
+            "<p>No completed booking waiting for a review was found for this email.</p>";
         return;
     }
 
-
     currentBooking = data[0];
-
+    currentEmail = email;
 
     document.getElementById("booking-info").innerHTML = `
-
-        <h3>
-            ${currentBooking.mechanics.business_name}
-        </h3>
-
-        <p>
-            <strong>Vehicle:</strong>
-            ${currentBooking.vehicle}
-        </p>
-
-        <p>
-            <strong>Service:</strong>
-            ${currentBooking.service_required}
-        </p>
-
+        <h3>${esc(currentBooking.business_name)}</h3>
+        <p><strong>Vehicle:</strong> ${esc(currentBooking.vehicle)}</p>
+        <p><strong>Service:</strong> ${esc(currentBooking.service_required)}</p>
     `;
 
-
     message.innerHTML = "";
-
     reviewForm.style.display = "block";
 }
 
@@ -261,50 +218,22 @@ async function submitReview() {
         return;
     }
 
+    const rating = Number(document.getElementById("rating").value);
+    const review = document.getElementById("review").value.trim();
 
-    const rating =
-        Number(
-            document.getElementById("rating").value
-        );
-
-    const review =
-        document.getElementById("review").value.trim();
-
-
-    const { error } =
-        await supabaseClient
-        .from("mechanic_reviews")
-        .insert([{
-
-            booking_id: currentBooking.id,
-
-            mechanic_id: currentBooking.mechanic_id,
-
-            customer_name: currentBooking.customer_name,
-
-            customer_email: currentBooking.customer_email,
-
-            rating: rating,
-
-            review: review
-
-        }]);
-
+    const { error } = await supabaseClient.rpc("submit_mechanic_review", {
+        booking_id_input: currentBooking.booking_id,
+        customer_email_input: currentEmail,
+        customer_name_input: currentBooking.customer_name,
+        rating_input: rating,
+        review_input: review
+    });
 
     if (error) {
-
         console.error(error);
-
-        alert(
-            "Unable to submit review: "
-            + error.message
-        );
-
+        alert("Unable to submit review: " + error.message);
         return;
     }
-
-
-    alert("Review submitted successfully!");
 
     document.getElementById("review-form").innerHTML = `
         <h2>Thank you!</h2>
