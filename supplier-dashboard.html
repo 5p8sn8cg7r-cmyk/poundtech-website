@@ -267,7 +267,26 @@ supabase.createClient(
     SUPABASE_KEY
 );
 
+(async function guardSupplierPage() {
 
+    const { data: userData } = await supabaseClient.auth.getUser();
+
+    if (!userData || !userData.user) {
+        window.location.href = "supplier-login.html";
+        return;
+    }
+
+    const { data: supplier } = await supabaseClient
+        .from("suppliers")
+        .select("id")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+
+    if (!supplier) {
+        alert("This account is not a PoundTech supplier.");
+        window.location.href = "index.html";
+    }
+})();
 
 async function loadSupplier() {
 
