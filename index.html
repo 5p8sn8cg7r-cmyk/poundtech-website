@@ -533,35 +533,55 @@ footer {
         display: none;
     }
 
-        .products {
+    
+    .products {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        gap: 10px;
     }
 
     .product {
-        padding: 12px;
+        padding: 0;
+        min-width: 0;
+        border-radius: 8px;
+    }
+
+    .product-image {
+        height: 105px;
     }
 
     .product img {
-        height: 140px;
-        object-fit: cover;
+        width: 100%;
+        height: 105px;
+        object-fit: contain;
+    }
+
+    .product-info {
+        padding: 9px;
     }
 
     .product h3 {
-        font-size: 16px;
-        margin: 8px 0 5px;
+        font-size: 13px;
+        line-height: 1.3;
+        margin: 0 0 5px;
     }
 
     .product p {
-        font-size: 14px;
-        margin: 5px 0;
+        font-size: 11px;
+        line-height: 1.35;
+        margin: 4px 0;
+    }
+
+    .price {
+        font-size: 16px;
+        margin: 8px 0;
     }
 
     .product button {
         width: 100%;
-        padding: 10px 6px;
-        font-size: 13px;
+        padding: 9px 4px;
+        font-size: 12px;
     }
+
 
         .footer-inner {
         grid-template-columns: 1fr 1fr;
