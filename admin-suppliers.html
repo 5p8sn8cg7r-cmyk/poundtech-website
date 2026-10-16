@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>PoundTech Supplier Admin</title>
 
 <style>
@@ -76,8 +73,19 @@ button:hover {
     background: #c00000;
 }
 
-#logout {
-    float: right;
+.nav-links {
+    margin-top: 14px;
+}
+
+.nav-links a {
+    color: #c7c7c7;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 14px;
+}
+
+.nav-links a:hover {
+    color: #e00000;
 }
 
 .supplier {
@@ -101,6 +109,16 @@ button:hover {
     font-weight: bold;
 }
 
+.status-approved {
+    background: #e6f4ea;
+    color: #16803c;
+}
+
+.status-rejected {
+    background: #fdecec;
+    color: #8a1111;
+}
+
 .empty {
     text-align: center;
     background: white;
@@ -109,368 +127,238 @@ button:hover {
 }
 
 #error {
-    color: red;
+    color: #c62828;
 }
 
 </style>
-
 </head>
-
 
 <body>
 
-
 <header>
 
-<h1>POUND<span>TECH</span></h1>
+    <h1>POUND<span>TECH</span></h1>
+    <p>Supplier Administration</p>
 
-<p>Supplier Administration</p>
+    <div class="nav-links">
+        <a href="admin.html">Orders</a>
+        <a href="admin-mechanics.html">Mechanic Applications</a>
+        <a href="admin-suppliers.html">Supplier Applications</a>
+    </div>
 
-<button id="logout" onclick="adminLogout()">
-Logout
-</button>
+    <button id="logout" onclick="adminLogout()" style="margin-top:14px;">
+        Logout
+    </button>
 
 </header>
 
-
 <div class="container">
 
+    <div id="login">
 
-<div id="login">
+        <h2>Admin Login</h2>
 
-<h2>Admin Login</h2>
+        <input id="admin-email" type="email" placeholder="Admin email">
+        <input id="admin-password" type="password" placeholder="Password">
 
-<input
-id="admin-email"
-type="email"
-placeholder="Admin email"
->
+        <button onclick="adminLogin()">Login</button>
 
-<input
-id="admin-password"
-type="password"
-placeholder="Password"
->
+        <p id="error"></p>
 
-<button onclick="adminLogin()">
-Login
-</button>
+    </div>
 
-<p id="error"></p>
+    <div id="suppliers" style="display:none;"></div>
 
 </div>
-
-
-<div id="suppliers" style="display:none;"></div>
-
-
-</div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
 <script>
 
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
-const SUPABASE_URL =
-"https://uezacbssvvvtlosnaroh.supabase.co";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-
-const SUPABASE_KEY =
-"sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
-
-
-const supabaseClient =
-supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
-
+// Cosmetic check only. The database enforces who is really admin (is_admin()).
 const ADMIN_UID = "dd66c237-95cb-44c8-a43a-be823026fba8";
-    
-async function adminLogin() {
 
-    const email =
-        document.getElementById("admin-email").value;
 
-    const password =
-        document.getElementById("admin-password").value;
-
-    const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-    if (error) {
-
-        document.getElementById("error").textContent =
-            "Login failed. Please check your email and password.";
-
-        console.log("LOGIN ERROR:", error);
-
-        return;
-    }
-
-const user = data.user;
-
-if (!user) {
-
-    document.getElementById("error").textContent =
-        "No user account was returned after login.";
-
-    return;
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
 }
 
-if (user.id.trim() !== ADMIN_UID.trim()) {
-    
-    document.getElementById("error").textContent =
-        "Wrong admin account. Your UID is: " + user.id;
 
-    await supabaseClient.auth.signOut();
-
-    return;
-}
-
-    document.getElementById("login").style.display =
-        "none";
-
-    document.getElementById("suppliers").style.display =
-        "block";
-
+function showSuppliers() {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("suppliers").style.display = "block";
     loadSuppliers();
 }
 
+
+async function adminLogin() {
+
+    const email = document.getElementById("admin-email").value;
+    const password = document.getElementById("admin-password").value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        document.getElementById("error").textContent =
+            "Login failed. Please check your email and password.";
+        console.log("LOGIN ERROR:", error);
+        return;
+    }
+
+    const user = data.user;
+
+    if (!user) {
+        document.getElementById("error").textContent =
+            "No user account was returned after login.";
+        return;
+    }
+
+    if (user.id.trim() !== ADMIN_UID.trim()) {
+        document.getElementById("error").textContent =
+            "You do not have permission to access the admin dashboard.";
+        await supabaseClient.auth.signOut();
+        return;
+    }
+
+    showSuppliers();
+}
 
 
 async function adminLogout() {
 
+    const { error } = await supabaseClient.auth.signOut();
 
-const { error } =
-await supabaseClient.auth.signOut();
+    if (error) {
+        console.log("LOGOUT ERROR:", error);
+        return;
+    }
 
-
-if (error) {
-
-    console.log("LOGOUT ERROR:", error);
-
-    return;
-
+    document.getElementById("login").style.display = "block";
+    document.getElementById("suppliers").style.display = "none";
 }
 
 
-document.getElementById("login").style.display =
-"block";
-
-
-document.getElementById("suppliers").style.display =
-"none";
-
+function statusClass(status) {
+    if (status === "Approved") return "status status-approved";
+    if (status === "Rejected") return "status status-rejected";
+    return "status";
 }
-
 
 
 async function loadSuppliers() {
 
-
-const { data: suppliers, error } =
-await supabaseClient
-
-.from("suppliers")
-
-.select("*")
-
-.order("created_at", {
-    ascending: false
-});
-
-
-if (error) {
-
-
-console.log(
-    "SUPABASE ERROR:",
-    error.message,
-    error.details,
-    error.hint,
-    error.code
-);
-
-
-alert("Could not load suppliers.");
-
-return;
-
-}
-
-
-let container =
-document.getElementById("suppliers");
-
-
-container.innerHTML = "";
-
-
-if (!suppliers || suppliers.length === 0) {
-
-
-container.innerHTML = `
-
-<div class="empty">
-
-<h2>No supplier applications yet</h2>
-
-<p>
-Supplier applications will appear here.
-</p>
-
-</div>
-
-`;
-
-
-return;
-
-}
-
-
-
-suppliers.forEach(function(supplier) {
-
-
-container.innerHTML += `
-
-<div class="supplier">
-
-<h2>
-${supplier.business_name}
-</h2>
-
-
-<p>
-
-<strong>Contact:</strong>
-${supplier.contact_name}
-
-</p>
-
-
-<p>
-
-<strong>Phone:</strong>
-${supplier.phone}
-
-</p>
-
-
-<p>
-
-<strong>Email:</strong>
-${supplier.email}
-
-</p>
-
-
-<p>
-
-<strong>Business Type:</strong>
-${supplier.business_type}
-
-</p>
-
-
-<p>
-
-<strong>Address:</strong>
-${supplier.address}
-
-</p>
-
-
-<p>
-
-<strong>Date Applied:</strong>
-${supplier.created_at}
-
-</p>
-
-
-<p>
-
-<strong>Status:</strong>
-
-<span class="status">
-${supplier.status}
-</span>
-
-</p>
-
-${supplier.status === "Pending" ? `
-
-<div>
-
-<button onclick="updateSupplierStatus('${supplier.id}', 'Approved')">
-Approve
-</button>
-
-<button
-    onclick="updateSupplierStatus('${supplier.id}', 'Rejected')"
-    style="background:#555; margin-left:10px;"
->
-Reject
-</button>
-
-</div>
-
-` : ""}
-
-</div>
-
-`;
-
-});
-
-
-}
-
-    async function updateSupplierStatus(id, newStatus) {
-
-    const { error } = await supabaseClient
+    const { data: suppliers, error } = await supabaseClient
         .from("suppliers")
-        .update({
-            status: newStatus
-        })
-        .eq("id", id);
-
+        .select("*")
+        .order("created_at", { ascending: false });
 
     if (error) {
-
-        console.log(
-            "SUPABASE ERROR:",
-            error.message,
-            error.details,
-            error.hint
-        );
-
-        alert("Could not update supplier status.");
-
+        console.log("SUPABASE ERROR:", error.message, error.details, error.hint, error.code);
+        alert("Could not load suppliers.");
         return;
     }
 
+    const container = document.getElementById("suppliers");
 
-    alert(
-        "Supplier status updated to " + newStatus
-    );
+    container.innerHTML = "";
 
+    if (!suppliers || suppliers.length === 0) {
+        container.innerHTML = `
+            <div class="empty">
+                <h2>No supplier applications yet</h2>
+                <p>Supplier applications will appear here.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = "";
+
+    suppliers.forEach(function(supplier) {
+
+        html += `
+            <div class="supplier">
+
+                <h2>${esc(supplier.business_name)}</h2>
+
+                <p><strong>Contact:</strong> ${esc(supplier.contact_name)}</p>
+                <p><strong>Phone:</strong> ${esc(supplier.phone)}</p>
+                <p><strong>Email:</strong> ${esc(supplier.email)}</p>
+                <p><strong>Business Type:</strong> ${esc(supplier.business_type)}</p>
+                <p><strong>Address:</strong> ${esc(supplier.address)}</p>
+                <p><strong>Date Applied:</strong> ${esc(new Date(supplier.created_at).toLocaleString())}</p>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="${statusClass(supplier.status)}">${esc(supplier.status)}</span>
+                </p>
+
+                ${supplier.status === "Pending" ? `
+                    <div>
+                        <button onclick="updateSupplierStatus('${esc(supplier.id)}', 'Approved')">
+                            Approve
+                        </button>
+                        <button
+                            onclick="updateSupplierStatus('${esc(supplier.id)}', 'Rejected')"
+                            style="background:#555; margin-left:10px;"
+                        >
+                            Reject
+                        </button>
+                    </div>
+                ` : ""}
+
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+
+async function updateSupplierStatus(id, newStatus) {
+
+    if (!confirm("Mark this supplier as " + newStatus + "?")) {
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("suppliers")
+        .update({ status: newStatus })
+        .eq("id", id);
+
+    if (error) {
+        console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
+        alert("Could not update supplier status.");
+        return;
+    }
 
     loadSuppliers();
-
 }
-    
+
+
+// Keep the admin signed in after a page refresh.
+(async function restoreSession() {
+
+    const { data } = await supabaseClient.auth.getSession();
+
+    if (data && data.session && data.session.user.id === ADMIN_UID) {
+        showSuppliers();
+    }
+})();
+
 </script>
 
-
 </body>
-
 </html>
