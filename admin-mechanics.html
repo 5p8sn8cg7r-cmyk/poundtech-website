@@ -1,87 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Mechanics | PoundTech</title>
 
-    <title>Admin - Mechanics</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
 
-    <style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-        }
+header {
+    background: #000;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
 
-        header {
-            background: #000;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
+header h2 {
+    margin: 0;
+}
 
-        header span {
-            color: red;
-        }
+header span {
+    color: #e00000;
+}
 
-        .container {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+.nav-links {
+    margin-top: 12px;
+}
 
-        .mechanic-card {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-        }
+.nav-links a {
+    color: #c7c7c7;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 14px;
+}
 
-        .mechanic-card h2 {
-            margin-top: 0;
-        }
+.nav-links a:hover {
+    color: #e00000;
+}
 
-        select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 15px;
-        }
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
 
-        .empty {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-        }
+.mechanic-card {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
 
-    </style>
+.mechanic-card h2 {
+    margin-top: 0;
+}
 
+select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+.empty {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+</style>
 </head>
 
 <body>
 
 <header>
 
-    <h2>
-        POUND<span>TECH</span> ADMIN
-    </h2>
+    <h2>POUND<span>TECH</span> ADMIN</h2>
+
+    <div class="nav-links">
+        <a href="admin.html">Orders</a>
+        <a href="admin-mechanics.html">Mechanic Applications</a>
+        <a href="admin-suppliers.html">Supplier Applications</a>
+    </div>
 
 </header>
-
 
 <div class="container">
 
     <h1>Mechanic Applications</h1>
 
-    <p>
-        Review and manage mechanic applications.
-    </p>
+    <p>Review and manage mechanic applications.</p>
 
     <div id="mechanics-container">
         Loading mechanic applications...
@@ -89,219 +106,117 @@
 
 </div>
 
-
 <script>
 
-const SUPABASE_URL =
-    "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
-const SUPABASE_KEY =
-    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+// Cosmetic check only. The database enforces who is really admin (is_admin()).
+const ADMIN_UID = "dd66c237-95cb-44c8-a43a-be823026fba8";
 
-    const ADMIN_UID =
-    "dd66c237-95cb-44c8-a43a-be823026fba8";
-    
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+
 async function loadMechanics() {
 
-    const {
-        data: { user },
-        error: userError
-    } = await supabaseClient.auth.getUser();
-
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
 
     // Not logged in
     if (userError || !user) {
-
-        window.location.href =
-            "admin.html";
-
+        window.location.href = "admin.html";
         return;
     }
-
 
     // Logged in, but not the admin
     if (user.id !== ADMIN_UID) {
-
-        alert(
-            "You do not have permission to access the admin panel."
-        );
-
+        alert("You do not have permission to access the admin panel.");
         await supabaseClient.auth.signOut();
-
-        window.location.href =
-            "admin.html";
-
+        window.location.href = "admin.html";
         return;
     }
 
+    const container = document.getElementById("mechanics-container");
 
-    const container =
-        document.getElementById("mechanics-container");
-
-
-    const { data: mechanics, error } =
-        await supabaseClient
+    const { data: mechanics, error } = await supabaseClient
         .from("mechanics")
         .select("*")
-        .order("created_at", {
-            ascending: false
-        });
-
+        .order("created_at", { ascending: false });
 
     if (error) {
-
         console.error(error);
-
-        container.innerHTML =
-            "<p>Unable to load mechanic applications.</p>";
-
+        container.innerHTML = "<p>Unable to load mechanic applications.</p>";
         return;
     }
-
 
     if (!mechanics || mechanics.length === 0) {
-
-        container.innerHTML =
-            "<div class='empty'>No mechanic applications yet.</div>";
-
+        container.innerHTML = "<div class='empty'>No mechanic applications yet.</div>";
         return;
     }
 
+    container.innerHTML = mechanics.map(mechanic => `
 
-    container.innerHTML =
-        mechanics.map(mechanic => `
+        <div class="mechanic-card">
 
-            <div class="mechanic-card">
+            <h2>${esc(mechanic.business_name)}</h2>
 
-                <h2>
-                    ${mechanic.business_name}
-                </h2>
+            <p><strong>Contact:</strong> ${esc(mechanic.contact_name)}</p>
+            <p><strong>Phone:</strong> ${esc(mechanic.phone)}</p>
+            <p><strong>Email:</strong> ${esc(mechanic.email)}</p>
+            <p><strong>Address:</strong> ${esc(mechanic.address || "Not provided")}</p>
+            <p><strong>Service Area:</strong> ${esc(mechanic.service_area || "Not provided")}</p>
+            <p><strong>Services:</strong> ${esc(mechanic.services || "Not provided")}</p>
+            <p><strong>Description:</strong> ${esc(mechanic.description || "Not provided")}</p>
 
-                <p>
-                    <strong>Contact:</strong>
-                    ${mechanic.contact_name}
-                </p>
+            <p>
+                <strong>Status:</strong>
 
-                <p>
-                    <strong>Phone:</strong>
-                    ${mechanic.phone}
-                </p>
+                <select onchange="updateMechanicStatus('${esc(mechanic.id)}', this.value)">
+                    <option value="Pending" ${mechanic.status === "Pending" ? "selected" : ""}>Pending</option>
+                    <option value="Approved" ${mechanic.status === "Approved" ? "selected" : ""}>Approved</option>
+                    <option value="Rejected" ${mechanic.status === "Rejected" ? "selected" : ""}>Rejected</option>
+                </select>
+            </p>
 
-                <p>
-                    <strong>Email:</strong>
-                    ${mechanic.email}
-                </p>
+            <p style="color:#777;">
+                Applied: ${esc(new Date(mechanic.created_at).toLocaleString())}
+            </p>
 
-                <p>
-                    <strong>Address:</strong>
-                    ${mechanic.address || "Not provided"}
-                </p>
+        </div>
 
-                <p>
-                    <strong>Service Area:</strong>
-                    ${mechanic.service_area || "Not provided"}
-                </p>
-
-                <p>
-                    <strong>Services:</strong>
-                    ${mechanic.services || "Not provided"}
-                </p>
-
-                <p>
-                    <strong>Description:</strong>
-                    ${mechanic.description || "Not provided"}
-                </p>
-
-                <p>
-
-                    <strong>Status:</strong>
-
-                    <select
-                        onchange="
-                            updateMechanicStatus(
-                                '${mechanic.id}',
-                                this.value
-                            )
-                        "
-                    >
-
-                        <option
-                            value="Pending"
-                            ${mechanic.status === "Pending" ? "selected" : ""}
-                        >
-                            Pending
-                        </option>
-
-                        <option
-                            value="Approved"
-                            ${mechanic.status === "Approved" ? "selected" : ""}
-                        >
-                            Approved
-                        </option>
-
-                        <option
-                            value="Rejected"
-                            ${mechanic.status === "Rejected" ? "selected" : ""}
-                        >
-                            Rejected
-                        </option>
-
-                    </select>
-
-                </p>
-
-                <p style="color:#777;">
-                    Applied:
-                    ${new Date(
-                        mechanic.created_at
-                    ).toLocaleString()}
-                </p>
-
-            </div>
-
-        `).join("");
-
+    `).join("");
 }
-    
-async function updateMechanicStatus(
-    mechanicId,
-    newStatus
-) {
 
-    const { error } =
-        await supabaseClient
+
+async function updateMechanicStatus(mechanicId, newStatus) {
+
+    if (!confirm("Change this mechanic's status to " + newStatus + "?")) {
+        loadMechanics();
+        return;
+    }
+
+    const { error } = await supabaseClient
         .from("mechanics")
-        .update({
-            status: newStatus
-        })
+        .update({ status: newStatus })
         .eq("id", mechanicId);
 
-
     if (error) {
-
         console.error(error);
-
-        alert(
-            "Unable to update mechanic status: "
-            + error.message
-        );
-
+        alert("Unable to update mechanic status: " + error.message);
+        loadMechanics();
         return;
     }
 
-
-    alert(
-        "Mechanic status updated!"
-    );
-
     loadMechanics();
-
 }
 
 
@@ -310,5 +225,4 @@ loadMechanics();
 </script>
 
 </body>
-
 </html>
