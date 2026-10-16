@@ -1,0 +1,280 @@
+/* PoundTech shared styles for inner pages */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f5f7;
+    color: #111;
+    line-height: 1.6;
+}
+
+/* HEADER */
+
+.site-header {
+    background: #08090b;
+    padding: 18px 6%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: white;
+    text-decoration: none;
+}
+
+.logo span {
+    color: #e00000;
+}
+
+.site-header .back {
+    color: #c7c7c7;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.site-header .back:hover {
+    color: #e00000;
+}
+
+/* PAGE HERO */
+
+.page-hero {
+    background: linear-gradient(135deg, #090b0e, #1b1e23);
+    color: white;
+    padding: 50px 6% 70px;
+    text-align: center;
+}
+
+.page-hero h1 {
+    font-size: 32px;
+}
+
+.page-hero p {
+    color: #c7c7c7;
+    font-size: 15px;
+    margin-top: 10px;
+}
+
+/* LAYOUT */
+
+.page-main {
+    max-width: 650px;
+    margin: -30px auto 50px;
+    padding: 0 20px;
+}
+
+.card {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+
+.card .lead {
+    color: #666;
+    margin-bottom: 22px;
+}
+
+/* FORMS */
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 18px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    background: white;
+    color: #111;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #e00000;
+    box-shadow: 0 0 0 3px rgba(224, 0, 0, 0.12);
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* BUTTONS */
+
+.btn {
+    display: inline-block;
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #e00000;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background: #b80000;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.btn-dark {
+    background: #111;
+}
+
+.btn-dark:hover {
+    background: #333;
+}
+
+/* MESSAGES */
+
+.message {
+    margin: 16px 0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.message-info {
+    background: #f4f5f7;
+    color: #333;
+    border-left: 4px solid #999;
+}
+
+.message-error {
+    background: #fdecec;
+    color: #8a1111;
+    border-left: 4px solid #e00000;
+}
+
+.message-success {
+    background: #e6f4ea;
+    color: #16803c;
+    border-left: 4px solid #16803c;
+}
+
+/* INFO BOX */
+
+.info-box {
+    background: #f4f5f7;
+    border-left: 4px solid #e00000;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+}
+
+.info-box h3 {
+    font-size: 17px;
+    margin-bottom: 6px;
+}
+
+.info-box p {
+    color: #444;
+    font-size: 15px;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 24px 0;
+}
+
+/* THANK YOU */
+
+.done {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.done .tick {
+    font-size: 54px;
+    color: #16803c;
+    margin-bottom: 10px;
+}
+
+.done h2 {
+    margin-bottom: 8px;
+}
+
+.done p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* FOOTER */
+
+.site-footer {
+    background: #08090b;
+    color: #aaa;
+    text-align: center;
+    padding: 30px 6%;
+    font-size: 13px;
+}
+
+.site-footer nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 20px;
+    margin-bottom: 14px;
+}
+
+.site-footer a {
+    color: #aaa;
+    text-decoration: none;
+}
+
+.site-footer a:hover {
+    color: #e00000;
+}
+
+/* PHONE */
+
+@media (max-width: 700px) {
+
+    .page-hero {
+        padding: 38px 6% 60px;
+    }
+
+    .page-hero h1 {
+        font-size: 26px;
+    }
+
+    .card {
+        padding: 24px 20px;
+    }
+}
