@@ -717,6 +717,34 @@ footer {
         height: 28px;
     }
 }
+    /* ACTIVE CATEGORY */
+
+.category.active {
+    background: #111;
+    color: white;
+}
+
+.category.active .cat-icon {
+    stroke: #fff;
+}
+
+.clear-filter {
+    margin-left: 12px;
+    padding: 6px 12px;
+    border: 1px solid #e00000;
+    background: transparent;
+    color: #e00000;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.clear-filter:hover {
+    background: #e00000;
+    color: white;
+}
 </style>
 </head>
 
@@ -1927,8 +1955,7 @@ async function loadProducts() {
 
     const container = document.getElementById("products-container");
 
-    document.getElementById("products-heading").innerText =
-        activeFilter ? activeFilter.title : "Featured Products";
+       updateCategoryUI();
 
     let query = supabaseClient
         .from("products")
@@ -1996,8 +2023,51 @@ async function loadProducts() {
 }
 
 function filterCategory(category) {
-    activeFilter = { title: category, categories: [category] };
+
+    const sameTile =
+        activeFilter &&
+        activeFilter.categories.length === 1 &&
+        activeFilter.categories[0] === category;
+
+    // Tapping the active tile again clears the filter.
+    activeFilter = sameTile
+        ? null
+        : { title: category, categories: [category] };
+
     loadProducts();
+}
+
+
+function clearCategoryFilter() {
+    activeFilter = null;
+    loadProducts();
+}
+
+
+function updateCategoryUI() {
+
+    const heading = document.getElementById("products-heading");
+
+    if (activeFilter) {
+        heading.innerHTML =
+            esc(activeFilter.title) +
+            ' <button class="clear-filter" onclick="clearCategoryFilter()">Show all ✕</button>';
+    } else {
+        heading.textContent = "Featured Products";
+    }
+
+    document.querySelectorAll(".category").forEach(function(tile) {
+
+        const label = tile.querySelector("span");
+        const name = label ? label.textContent.trim() : "";
+
+        const isActive =
+            !!activeFilter &&
+            activeFilter.categories.length === 1 &&
+            activeFilter.categories[0] === name;
+
+        tile.classList.toggle("active", isActive);
+    });
 }
 
 async function showGroup(key) {
