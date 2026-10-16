@@ -2022,7 +2022,7 @@ async function loadProducts() {
         .join("");
 }
 
-function filterCategory(category) {
+async function filterCategory(category) {
 
     const sameTile =
         activeFilter &&
@@ -2034,13 +2034,13 @@ function filterCategory(category) {
         ? null
         : { title: category, categories: [category] };
 
-    loadProducts();
-}
+    await loadProducts();
 
-
-function clearCategoryFilter() {
-    activeFilter = null;
-    loadProducts();
+    // Scroll down to the products only when a category was selected.
+    if (activeFilter) {
+        document.getElementById("products-heading")
+            .scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 }
 
 
@@ -2051,7 +2051,7 @@ function updateCategoryUI() {
     if (activeFilter) {
         heading.innerHTML =
             esc(activeFilter.title) +
-            ' <button class="clear-filter" onclick="clearCategoryFilter()">Show all ✕</button>';
+            ' <button class="clear-filter" onclick="clearCategoryFilter()">Clear ✕</button>';
     } else {
         heading.textContent = "Featured Products";
     }
@@ -2069,7 +2069,7 @@ function updateCategoryUI() {
         tile.classList.toggle("active", isActive);
     });
 }
-
+    
 async function showGroup(key) {
 
     const group = GROUPS[key];
