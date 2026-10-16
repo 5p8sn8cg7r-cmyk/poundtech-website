@@ -1,78 +1,113 @@
 <!DOCTYPE html>
-<html>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <head>
+<html lang="en">
+<head>
 
-    <title>PoundTech Admin</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoundTech Admin</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
 
-    <style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f4f5f7;
+    color: #111;
+}
 
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #f4f5f7;
-            color: #111;
-        }
+header {
+    background: #111;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
 
-        header {
-            background: #111;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
+header span {
+    color: #e00000;
+}
 
-        header span {
-            color: #e00000;
-        }
+button {
+    padding: 10px 16px;
+    background: #e00000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 4px;
+}
 
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 20px;
-        }
+button:hover {
+    background: #c00000;
+}
 
-        .order {
-            background: white;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 14px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
 
-        .order h2 {
-            margin-top: 0;
-        }
+#login {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 400px;
+    margin: auto;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+}
 
-        .status {
-            display: inline-block;
-            background: #fff3cd;
-            padding: 6px 12px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
+#login-error {
+    color: #c62828;
+}
 
-        .product {
-            border-top: 1px solid #ddd;
-            padding: 12px 0;
-        }
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 20px;
+}
 
-        .total {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 15px;
-        }
+.order {
+    background: white;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
 
-        .empty {
-            text-align: center;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-        }
+.order h2 {
+    margin-top: 0;
+}
 
-    </style>
+.status {
+    display: inline-block;
+    background: #fff3cd;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-weight: bold;
+}
 
+.product {
+    border-top: 1px solid #ddd;
+    padding: 12px 0;
+}
+
+.total {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.empty {
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+}
+
+</style>
 </head>
 
 <body>
@@ -82,49 +117,26 @@
     <h1>POUND<span>TECH</span></h1>
     <p>Admin Dashboard</p>
 
-   <div id="admin-nav" style="display:none; margin:20px 0;">
+    <div id="admin-nav" style="display:none; margin:20px 0;">
+        <button onclick="window.location.href='admin.html'">📦 Orders</button>
+        <button onclick="window.location.href='admin-mechanics.html'">🔧 Mechanic Applications</button>
+        <button onclick="window.location.href='admin-suppliers.html'">🏪 Supplier Applications</button>
+    </div>
 
-    <button onclick="window.location.href='admin.html'">
-        📦 Orders
-    </button>
-
-    <button onclick="window.location.href='admin-mechanics.html'">
-        🔧 Mechanic Applications
-    </button>
-
-    <button onclick="window.location.href='admin-suppliers.html'">
-        🏪 Supplier Applications
-    </button>
-
-</div>
-
-    <button onclick="adminLogout()">
-        Logout
-    </button>
+    <button onclick="adminLogout()">Logout</button>
 
 </header>
-    
+
 <div class="container">
 
     <div id="login">
 
         <h2>Admin Login</h2>
 
-        <input
-            id="admin-email"
-            type="email"
-            placeholder="Admin email"
-        >
+        <input id="admin-email" type="email" placeholder="Admin email">
+        <input id="admin-password" type="password" placeholder="Password">
 
-        <input
-            id="admin-password"
-            type="password"
-            placeholder="Password"
-        >
-
-        <button onclick="adminLogin()">
-            Login
-        </button>
+        <button onclick="adminLogin()">Login</button>
 
         <p id="login-error"></p>
 
@@ -134,17 +146,36 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 
 const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
-const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    
+// Cosmetic check only. The database enforces who is really admin (is_admin()).
+const ADMIN_UID = "dd66c237-95cb-44c8-a43a-be823026fba8";
+
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+
+function showDashboard() {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("orders").style.display = "block";
+    document.getElementById("admin-nav").style.display = "block";
+    loadOrders();
+}
+
+
 async function adminLogout() {
 
     const { error } = await supabaseClient.auth.signOut();
@@ -154,82 +185,48 @@ async function adminLogout() {
         return;
     }
 
-   document.getElementById("login").style.display = "block";
-document.getElementById("orders").style.display = "none";
-document.getElementById("admin-nav").style.display = "none";
-
+    document.getElementById("login").style.display = "block";
+    document.getElementById("orders").style.display = "none";
+    document.getElementById("admin-nav").style.display = "none";
 }
 
-const ADMIN_UID =
-"dd66c237-95cb-44c8-a43a-be823026fba8";
-    
-  async function adminLogin() {
 
-    const email =
-        document.getElementById("admin-email").value;
+async function adminLogin() {
 
-    const password =
-        document.getElementById("admin-password").value;
+    const email = document.getElementById("admin-email").value;
+    const password = document.getElementById("admin-password").value;
 
-    const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
 
     if (error) {
-
         document.getElementById("login-error").textContent =
             "Login failed. Please check your email and password.";
-
         console.log("LOGIN ERROR:", error);
-
         return;
     }
 
     const user = data.user;
 
     if (!user) {
-
         document.getElementById("login-error").textContent =
             "No user account was returned after login.";
-
         return;
     }
 
-if (user.id.trim() !== ADMIN_UID.trim()) {
+    if (user.id.trim() !== ADMIN_UID.trim()) {
+        document.getElementById("login-error").textContent =
+            "You do not have permission to access the admin dashboard.";
+        await supabaseClient.auth.signOut();
+        return;
+    }
 
-   document.getElementById("login-error").textContent =
-    "You do not have permission to access the admin dashboard.";
-
-    await supabaseClient.auth.signOut();
-
-    return;
+    showDashboard();
 }
 
-document.getElementById("login").style.display =
-    "none";
 
-document.getElementById("orders").style.display =
-    "block";
-
-document.getElementById("admin-nav").style.display =
-    "block";
-
-loadOrders();
-      
-    document.getElementById("login").style.display =
-        "none";
-
-    document.getElementById("orders").style.display =
-        "block";
-
-    document.getElementById("admin-nav").style.display =
-        "block";
-
-    loadOrders();
-}
-    
 async function loadOrders() {
 
     const { data: orders, error } = await supabaseClient
@@ -238,108 +235,96 @@ async function loadOrders() {
         .order("created_at", { ascending: false });
 
     if (error) {
-
-       console.log("SUPABASE ERROR:", error.message, error.details, error.hint, error.code);
-        
+        console.log("SUPABASE ERROR:", error.message, error.details, error.hint, error.code);
         alert("Could not load orders.");
-
         return;
     }
 
-    let container = document.getElementById("orders");
+    const container = document.getElementById("orders");
 
     container.innerHTML = "";
 
     if (!orders || orders.length === 0) {
-
         container.innerHTML = `
             <div class="empty">
                 <h2>No orders yet</h2>
                 <p>Orders will appear here when customers place them.</p>
             </div>
         `;
-
         return;
     }
 
+    let html = "";
 
     orders.forEach(function(order) {
 
         let productsHTML = "";
 
-        order.items.forEach(function(item) {
+        const items = Array.isArray(order.items) ? order.items : [];
 
-            let quantity = item.quantity || 1;
+        items.forEach(function(item) {
+
+            const quantity = item.quantity || 1;
 
             productsHTML += `
                 <div class="product">
-
-                    <strong>${item.name}</strong>
-
+                    <strong>${esc(item.name)}</strong>
                     <p>
-                        Quantity: ${quantity}
+                        Quantity: ${esc(quantity)}
                         <br>
-                        Price: R${item.price}
+                        Price: R${esc(item.price)}
                     </p>
-
                 </div>
             `;
-
         });
 
-
-        container.innerHTML += `
-
+        html += `
             <div class="order">
 
-                <h2>Order #${order.order_number}</h2>
+                <h2>Order #${esc(order.order_number)}</h2>
 
                 <p>
                     <strong>Date:</strong>
-                    ${order.created_at}
+                    ${esc(new Date(order.created_at).toLocaleString())}
                 </p>
 
                 <p>
                     <strong>Status:</strong>
-                    <span class="status">
-                        ${order.status}
-                    </span>
+                    <span class="status">${esc(order.status)}</span>
                 </p>
 
                 <h3>Customer</h3>
 
                 <p>
-                    <strong>Name:</strong>
-                    ${order.customer_name}
-                    <br>
-
-                    <strong>Phone:</strong>
-                    ${order.phone}
-                    <br>
-
-                    <strong>Email:</strong>
-                    ${order.email}
-                    <br>
-
-                    <strong>Address:</strong>
-                    ${order.address}
+                    <strong>Name:</strong> ${esc(order.customer_name)}<br>
+                    <strong>Phone:</strong> ${esc(order.phone)}<br>
+                    <strong>Email:</strong> ${esc(order.email)}<br>
+                    <strong>Address:</strong> ${esc(order.address)}
                 </p>
 
                 <h3>Products</h3>
 
                 ${productsHTML}
 
-                <div class="total">
-                    Total: R${order.total}
-                </div>
+                <div class="total">Total: R${esc(order.total)}</div>
 
             </div>
-
         `;
-
     });
 
+    container.innerHTML = html;
 }
+
+
+// Keep the admin signed in after a page refresh.
+(async function restoreSession() {
+
+    const { data } = await supabaseClient.auth.getSession();
+
+    if (data && data.session && data.session.user.id === ADMIN_UID) {
+        showDashboard();
+    }
+})();
 
 </script>
 
