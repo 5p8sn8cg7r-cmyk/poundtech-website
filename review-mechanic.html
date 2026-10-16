@@ -68,10 +68,25 @@
             letter-spacing: 5px;
         }
 
-        .message {
+                .message {
             margin-top: 15px;
             padding: 15px;
             border-radius: 6px;
+        }
+
+        .message-info {
+            background: #f4f5f7;
+            color: #333;
+            border-left: 4px solid #999;
+            line-height: 1.5;
+        }
+
+        .message-error {
+            background: #fdecec;
+            color: #8a1111;
+            border-left: 4px solid #e00000;
+            line-height: 1.5;
+        }
         }
     </style>
 </head>
@@ -165,21 +180,35 @@ let currentBooking = null;
 let currentEmail = "";
 
 
+function showMessage(text, type) {
+    const message = document.getElementById("message");
+
+    if (!text) {
+        message.className = "";
+        message.textContent = "";
+        return;
+    }
+
+    message.className = "message message-" + (type || "info");
+    message.textContent = text;
+}
+
+
 async function findBooking() {
 
     const email =
         document.getElementById("customer-email").value.trim();
 
-    const message = document.getElementById("message");
     const reviewForm = document.getElementById("review-form");
 
+    reviewForm.style.display = "none";
+
     if (!email) {
-        message.innerHTML = "<p>Please enter your email address.</p>";
+        showMessage("Please enter the email address you used for your booking.", "error");
         return;
     }
 
-    message.innerHTML = "<p>Searching for completed bookings...</p>";
-    reviewForm.style.display = "none";
+    showMessage("Searching for your booking…", "info");
 
     const { data, error } = await supabaseClient.rpc(
         "find_booking_to_review",
@@ -188,13 +217,17 @@ async function findBooking() {
 
     if (error) {
         console.error(error);
-        message.innerHTML = "<p>Unable to find your booking.</p>";
+        showMessage("Something went wrong. Please try again in a moment.", "error");
         return;
     }
 
     if (!data || data.length === 0) {
-        message.innerHTML =
-            "<p>No completed booking waiting for a review was found for this email.</p>";
+        showMessage(
+            "We couldn't find a booking to review under this email. " +
+            "Please check the address and try again. " +
+            "If you've already reviewed your booking, it won't appear here.",
+            "error"
+        );
         return;
     }
 
@@ -207,7 +240,7 @@ async function findBooking() {
         <p><strong>Service:</strong> ${esc(currentBooking.service_required)}</p>
     `;
 
-    message.innerHTML = "";
+    showMessage("");
     reviewForm.style.display = "block";
 }
 
