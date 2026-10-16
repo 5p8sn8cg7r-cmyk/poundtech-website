@@ -1,197 +1,297 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>PoundTech Supplier Login</title>
+<title>Supplier Login | PoundTech</title>
+<link rel="stylesheet" href="site.css">
 
 <style>
-
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f5f7;
-    margin: 0;
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 22px;
 }
 
-header {
-    background: #111;
-    color: white;
-    padding: 25px;
-    text-align: center;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 32px;
-}
-
-header span {
-    color: #e00000;
-}
-
-.container {
-    max-width: 400px;
-    margin: 60px auto;
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-}
-
-h2 {
-    margin-top: 0;
-}
-
-input {
-    width: 100%;
+.tab {
+    flex: 1;
     padding: 12px;
-    margin-top: 10px;
-    margin-bottom: 15px;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-button {
-    width: 100%;
-    padding: 13px;
-    background: #e00000;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
+    border: 1px solid #ddd;
+    background: white;
+    color: #111;
+    border-radius: 8px;
+    font-size: 15px;
     font-weight: bold;
     cursor: pointer;
 }
 
-button:hover {
-    background: #c00000;
+.tab.active {
+    background: #111;
+    color: white;
+    border-color: #111;
 }
 
-#error {
-    color: red;
-    margin-top: 15px;
+.hint {
+    font-size: 13px;
+    color: #666;
+    margin: -8px 0 18px;
 }
-
 </style>
-
 </head>
-
 
 <body>
 
-
-<header>
-
-<h1>POUND<span>TECH</span></h1>
-
-<p>Supplier Portal</p>
-
+<header class="site-header">
+    <a class="logo" href="index.html">POUND<span>TECH</span></a>
+    <a class="back" href="index.html">&larr; Back to marketplace</a>
 </header>
 
+<section class="page-hero">
+    <h1>Supplier Portal</h1>
+    <p>Manage your products, orders and payouts.</p>
+</section>
 
-<div class="container">
+<main class="page-main">
+<div class="card">
 
-<h2>Supplier Login</h2>
+    <div class="tabs">
+        <button class="tab active" id="tab-login" onclick="showTab('login')">Log in</button>
+        <button class="tab" id="tab-signup" onclick="showTab('signup')">Create account</button>
+    </div>
 
-<p>
-Log in to manage your PoundTech supplier account.
-</p>
+    <div id="message" role="status"></div>
 
+    <!-- LOG IN -->
+    <div id="login-form">
 
-<input
-id="email"
-type="email"
-placeholder="Business email"
->
+        <label for="login-email">Email address</label>
+        <input id="login-email" type="email" autocomplete="email" placeholder="you@business.co.za">
 
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="Your password">
 
-<input
-id="password"
-type="password"
-placeholder="Password"
->
+        <button class="btn" id="login-button" onclick="supplierLogin()">Log in</button>
 
+    </div>
 
-<button onclick="supplierLogin()">
-Login
-</button>
+    <!-- CREATE ACCOUNT -->
+    <div id="signup-form" style="display:none;">
 
+        <p class="lead">
+            Your application must be approved first. Create your account with the
+            <strong>same email address</strong> you used on your application.
+        </p>
 
-<p id="error"></p>
+        <label for="signup-email">Email address</label>
+        <input id="signup-email" type="email" autocomplete="email" placeholder="you@business.co.za">
+
+        <label for="signup-password">Choose a password</label>
+        <input id="signup-password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+
+        <label for="signup-password2">Confirm password</label>
+        <input id="signup-password2" type="password" autocomplete="new-password" placeholder="Repeat your password">
+
+        <button class="btn" id="signup-button" onclick="supplierSignup()">Create account</button>
+
+        <p class="hint" style="margin-top:14px;">
+            We'll email you a link to confirm your address before you can log in.
+            Not a supplier yet? <a href="supplier.html">Apply to sell on PoundTech</a>.
+        </p>
+
+    </div>
 
 </div>
+</main>
 
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
 <script>
 
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
-const SUPABASE_URL =
-"https://uezacbssvvvtlosnaroh.supabase.co";
-
-
-const SUPABASE_KEY =
-"sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
-const supabaseClient =
-supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+function showMessage(text, type) {
 
+    const message = document.getElementById("message");
+
+    if (!text) {
+        message.className = "";
+        message.textContent = "";
+        return;
+    }
+
+    message.className = "message message-" + (type || "info");
+    message.textContent = text;
+}
+
+
+function showTab(which) {
+
+    showMessage("");
+
+    document.getElementById("login-form").style.display =
+        which === "login" ? "block" : "none";
+
+    document.getElementById("signup-form").style.display =
+        which === "signup" ? "block" : "none";
+
+    document.getElementById("tab-login").classList.toggle("active", which === "login");
+    document.getElementById("tab-signup").classList.toggle("active", which === "signup");
+}
+
+
+// Links this login to the supplier's approved application, then routes them.
+async function routeAfterLogin() {
+
+    const { data: result, error } = await supabaseClient.rpc("claim_supplier_account");
+
+    if (error) {
+        console.error(error);
+        await supabaseClient.auth.signOut();
+        showMessage("Something went wrong. Please try again in a moment.", "error");
+        return false;
+    }
+
+    if (result === "linked") {
+        window.location.href = "supplier-dashboard.html";
+        return true;
+    }
+
+    await supabaseClient.auth.signOut();
+
+    if (result === "unconfirmed") {
+        showMessage("Please confirm your email address first. Check your inbox for the confirmation link.", "error");
+    } else if (result === "pending") {
+        showMessage("Your application is still being reviewed. We'll let you know once it's approved.", "info");
+    } else if (result === "rejected") {
+        showMessage("Your supplier application was not approved. Please contact info@poundtech.co.za.", "error");
+    } else {
+        showMessage("We couldn't find an approved supplier application for this email. Please apply first, and use the same email address.", "error");
+    }
+
+    return false;
+}
 
 
 async function supplierLogin() {
 
+    const email = document.getElementById("login-email").value.trim().toLowerCase();
+    const password = document.getElementById("login-password").value;
+    const button = document.getElementById("login-button");
 
-const email =
-document.getElementById("email").value;
+    if (!email || !password) {
+        showMessage("Please enter your email address and password.", "error");
+        return;
+    }
 
+    button.disabled = true;
+    showMessage("Logging in…", "info");
 
-const password =
-document.getElementById("password").value;
+    const { error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
 
+    if (error) {
+        button.disabled = false;
+        console.error(error);
 
-const { data, error } =
-await supabaseClient.auth.signInWithPassword({
+        if (error.message && error.message.toLowerCase().includes("confirm")) {
+            showMessage("Please confirm your email address first. Check your inbox for the confirmation link.", "error");
+        } else {
+            showMessage("Login failed. Please check your email and password.", "error");
+        }
+        return;
+    }
 
-    email: email,
+    const routed = await routeAfterLogin();
 
-    password: password
-
-});
-
-
-if (error) {
-
-    document.getElementById("error").textContent =
-    "Login failed. Please check your email and password.";
-
-    console.log("LOGIN ERROR:", error);
-
-    return;
-
+    if (!routed) {
+        button.disabled = false;
+    }
 }
 
 
-window.location.href =
-"supplier-dashboard.html";
+async function supplierSignup() {
 
+    const email = document.getElementById("signup-email").value.trim().toLowerCase();
+    const password = document.getElementById("signup-password").value;
+    const password2 = document.getElementById("signup-password2").value;
+    const button = document.getElementById("signup-button");
 
+    if (!email) {
+        showMessage("Please enter the email address you used on your application.", "error");
+        return;
+    }
+
+    if (password.length < 8) {
+        showMessage("Your password must be at least 8 characters long.", "error");
+        return;
+    }
+
+    if (password !== password2) {
+        showMessage("The two passwords don't match.", "error");
+        return;
+    }
+
+    button.disabled = true;
+    showMessage("Creating your account…", "info");
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            emailRedirectTo: window.location.origin + "/supplier-login.html"
+        }
+    });
+
+    button.disabled = false;
+
+    if (error) {
+        console.error(error);
+        showMessage("We couldn't create your account: " + error.message, "error");
+        return;
+    }
+
+    // Already registered: Supabase returns a user with no identities.
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+        showMessage("An account with this email already exists. Please log in instead.", "error");
+        return;
+    }
+
+    showMessage(
+        "Almost there. We've sent a confirmation link to " + email +
+        ". Click it, then come back here and log in.",
+        "success"
+    );
 }
 
+
+// If the supplier is already signed in (for example after clicking the
+// confirmation link), continue straight to their dashboard.
+(async function checkExistingSession() {
+
+    const { data } = await supabaseClient.auth.getSession();
+
+    if (data && data.session) {
+        await routeAfterLogin();
+    }
+})();
 
 </script>
 
-<script src="nav.js"></script>
 </body>
-
 </html>
