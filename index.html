@@ -2069,6 +2069,11 @@ function updateCategoryUI() {
         tile.classList.toggle("active", isActive);
     });
 }
+
+    async function clearCategoryFilter() {
+    activeFilter = null;
+    await loadProducts();
+}
     
 async function showGroup(key) {
 
