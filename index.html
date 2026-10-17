@@ -745,6 +745,48 @@ footer {
     background: #e00000;
     color: white;
 }
+
+    /* SELL STEPS */
+
+.sell-steps {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 560px;
+    margin: 0 auto 24px;
+}
+
+.sell-steps div {
+    background: #f4f5f7;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.sell-steps span {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    border-radius: 50%;
+    background: #e00000;
+    color: #fff;
+    text-align: center;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.sell-login {
+    margin-top: 18px;
+    font-size: 14px;
+}
+
+.sell-login a {
+    color: #e00000;
+    font-weight: bold;
+}
 </style>
 </head>
 
@@ -945,7 +987,6 @@ Find a Mechanic
 
 </section>
 
-
 <section class="sell">
 
 <h2>Are you an automotive business?</h2>
@@ -954,13 +995,21 @@ Find a Mechanic
 Join PoundTech and reach customers looking for automotive products and services.
 </p>
 
+<div class="sell-steps">
+    <div><span>1</span> Apply</div>
+    <div><span>2</span> We review it</div>
+    <div><span>3</span> Create your account</div>
+</div>
+
 <button onclick="sellOnPoundTech()">
-Sell on PoundTech
+Apply to Sell on PoundTech
 </button>
-<p style="margin-top:16px; font-size:14px;">
-    Already a supplier?
-    <a href="supplier-login.html" style="color:#e00000; font-weight:bold;">Log in to your supplier account</a>
+
+<p class="sell-login">
+Already approved?
+<a href="supplier-login.html">Log in or create your account</a>
 </p>
+
 </section>
 
 <div id="checkout-panel" style="
