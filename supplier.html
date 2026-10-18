@@ -81,7 +81,7 @@
         <div class="steps">
             <div><span>1</span> Apply</div>
             <div><span>2</span> We review it</div>
-            <div><span>3</span> Create your account</div>
+            <div><span>3</span> Get your login</div>
         </div>
 
         <div id="message" role="status"></div>
@@ -97,7 +97,7 @@
 
         <label for="email">Email address</label>
         <input id="email" type="email" placeholder="Business email" autocomplete="email">
-        <p class="hint">Use the email you'll sign in with. You'll need it to create your supplier account once you're approved.</p>
+        <p class="hint">We'll use this email to contact you and set up your supplier login once you're approved.</p>
 
         <label for="business-type">Business type</label>
         <select id="business-type">
@@ -121,7 +121,7 @@
         </button>
 
         <p class="hint" style="margin-top:16px;">
-            Already approved? <a href="supplier-login.html" style="color:#e00000; font-weight:bold;">Log in or create your account</a>
+            Already approved? <a href="supplier-login.html" style="color:#e00000; font-weight:bold;">Log in to your supplier account</a>
         </p>
 
     </div>
@@ -227,14 +227,12 @@ async function registerSupplier() {
         <div class="next-steps">
             <strong>What happens next</strong>
             <ol>
-                <li>We review your application and approve it.</li>
-                <li>Come back to the supplier login and choose <strong>Create account</strong>, using <strong>${esc(email)}</strong>.</li>
-                <li>Confirm your email, then log in to add your products.</li>
+                <li>We review your application.</li>
+                <li>Once it's approved, we'll contact you on <strong>${esc(email)}</strong> or <strong>${esc(phone)}</strong> with your supplier login details.</li>
+                <li>Log in to add your products and start selling.</li>
             </ol>
         </div>
 
-        <a class="btn" href="supplier-login.html">Go to supplier login</a>
-        <p style="margin-top:12px;"></p>
         <a class="btn btn-dark" href="index.html">Back to marketplace</a>
     `;
 }
