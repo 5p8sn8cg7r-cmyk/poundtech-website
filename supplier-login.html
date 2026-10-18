@@ -5,38 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Supplier Login | PoundTech</title>
 <link rel="stylesheet" href="site.css">
-
-<style>
-.tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 22px;
-}
-
-.tab {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #ddd;
-    background: white;
-    color: #111;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.tab.active {
-    background: #111;
-    color: white;
-    border-color: #111;
-}
-
-.hint {
-    font-size: 13px;
-    color: #666;
-    margin: -8px 0 18px;
-}
-</style>
 </head>
 
 <body>
@@ -54,51 +22,24 @@
 <main class="page-main">
 <div class="card">
 
-    <div class="tabs">
-        <button class="tab active" id="tab-login" onclick="showTab('login')">Log in</button>
-        <button class="tab" id="tab-signup" onclick="showTab('signup')">Create account</button>
-    </div>
+    <h2>Supplier Login</h2>
+    <p class="lead">Log in with the email and password PoundTech sent you when your application was approved.</p>
 
     <div id="message" role="status"></div>
 
-    <!-- LOG IN -->
-    <div id="login-form">
+    <label for="login-email">Email address</label>
+    <input id="login-email" type="email" autocomplete="email" placeholder="you@business.co.za">
 
-        <label for="login-email">Email address</label>
-        <input id="login-email" type="email" autocomplete="email" placeholder="you@business.co.za">
+    <label for="login-password">Password</label>
+    <input id="login-password" type="password" autocomplete="current-password" placeholder="Your password">
 
-        <label for="login-password">Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" placeholder="Your password">
+    <button class="btn" id="login-button" onclick="supplierLogin()">Log in</button>
 
-        <button class="btn" id="login-button" onclick="supplierLogin()">Log in</button>
-
-    </div>
-
-    <!-- CREATE ACCOUNT -->
-    <div id="signup-form" style="display:none;">
-
-        <p class="lead">
-            Your application must be approved first. Create your account with the
-            <strong>same email address</strong> you used on your application.
-        </p>
-
-        <label for="signup-email">Email address</label>
-        <input id="signup-email" type="email" autocomplete="email" placeholder="you@business.co.za">
-
-        <label for="signup-password">Choose a password</label>
-        <input id="signup-password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
-
-        <label for="signup-password2">Confirm password</label>
-        <input id="signup-password2" type="password" autocomplete="new-password" placeholder="Repeat your password">
-
-        <button class="btn" id="signup-button" onclick="supplierSignup()">Create account</button>
-
-        <p class="hint" style="margin-top:14px;">
-            We'll email you a link to confirm your address before you can log in.
-            Not a supplier yet? <a href="supplier.html">Apply to sell on PoundTech</a>.
-        </p>
-
-    </div>
+    <p style="margin-top:18px; font-size:14px; color:#666;">
+        Not a supplier yet? <a href="supplier.html" style="color:#e00000; font-weight:bold;">Apply to sell on PoundTech</a><br>
+        Forgot your password or need help? Email
+        <a href="mailto:info@poundtech.co.za" style="color:#e00000; font-weight:bold;">info@poundtech.co.za</a>.
+    </p>
 
 </div>
 </main>
@@ -138,21 +79,6 @@ function showMessage(text, type) {
 }
 
 
-function showTab(which) {
-
-    showMessage("");
-
-    document.getElementById("login-form").style.display =
-        which === "login" ? "block" : "none";
-
-    document.getElementById("signup-form").style.display =
-        which === "signup" ? "block" : "none";
-
-    document.getElementById("tab-login").classList.toggle("active", which === "login");
-    document.getElementById("tab-signup").classList.toggle("active", which === "signup");
-}
-
-
 // Links this login to the supplier's approved application, then routes them.
 async function routeAfterLogin() {
 
@@ -173,9 +99,9 @@ async function routeAfterLogin() {
     await supabaseClient.auth.signOut();
 
     if (result === "unconfirmed") {
-        showMessage("Please confirm your email address first. Check your inbox for the confirmation link.", "error");
+        showMessage("Your account isn't active yet. Please contact info@poundtech.co.za.", "error");
     } else if (result === "pending") {
-        showMessage("Your application is still being reviewed. We'll let you know once it's approved.", "info");
+        showMessage("Your application is still being reviewed. We'll be in touch once it's approved.", "info");
     } else if (result === "rejected") {
         showMessage("Your supplier application was not approved. Please contact info@poundtech.co.za.", "error");
     } else {
@@ -208,12 +134,7 @@ async function supplierLogin() {
     if (error) {
         button.disabled = false;
         console.error(error);
-
-        if (error.message && error.message.toLowerCase().includes("confirm")) {
-            showMessage("Please confirm your email address first. Check your inbox for the confirmation link.", "error");
-        } else {
-            showMessage("Login failed. Please check your email and password.", "error");
-        }
+        showMessage("Login failed. Please check your email and password.", "error");
         return;
     }
 
@@ -225,63 +146,7 @@ async function supplierLogin() {
 }
 
 
-async function supplierSignup() {
-
-    const email = document.getElementById("signup-email").value.trim().toLowerCase();
-    const password = document.getElementById("signup-password").value;
-    const password2 = document.getElementById("signup-password2").value;
-    const button = document.getElementById("signup-button");
-
-    if (!email) {
-        showMessage("Please enter the email address you used on your application.", "error");
-        return;
-    }
-
-    if (password.length < 8) {
-        showMessage("Your password must be at least 8 characters long.", "error");
-        return;
-    }
-
-    if (password !== password2) {
-        showMessage("The two passwords don't match.", "error");
-        return;
-    }
-
-    button.disabled = true;
-    showMessage("Creating your account…", "info");
-
-    const { data, error } = await supabaseClient.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            emailRedirectTo: window.location.origin + "/supplier-login.html"
-        }
-    });
-
-    button.disabled = false;
-
-    if (error) {
-        console.error(error);
-        showMessage("We couldn't create your account: " + error.message, "error");
-        return;
-    }
-
-    // Already registered: Supabase returns a user with no identities.
-    if (data.user && data.user.identities && data.user.identities.length === 0) {
-        showMessage("An account with this email already exists. Please log in instead.", "error");
-        return;
-    }
-
-    showMessage(
-        "Almost there. We've sent a confirmation link to " + email +
-        ". Click it, then come back here and log in.",
-        "success"
-    );
-}
-
-
-// If the supplier is already signed in (for example after clicking the
-// confirmation link), continue straight to their dashboard.
+// Already signed in? Continue to the dashboard.
 (async function checkExistingSession() {
 
     const { data } = await supabaseClient.auth.getSession();
