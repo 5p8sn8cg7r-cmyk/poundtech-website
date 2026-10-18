@@ -96,12 +96,38 @@ nav a:hover {
 
 /* HERO */
 
+
 .hero {
     background: linear-gradient(135deg, #090b0e, #1b1e23);
     color: white;
     padding: 90px 6%;
     text-align: center;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
 }
+
+.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/a/af/Map_of_South_Africa_with_provinces.svg");
+    background-repeat: no-repeat;
+    background-position: right 8% center;
+    background-size: auto 125%;
+    opacity: 0.09;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@media (max-width: 700px) {
+    .hero::before {
+        background-position: center center;
+        background-size: auto 90%;
+        opacity: 0.07;
+    }
+}
+
 
 .hero h1 {
     font-size: 52px;
