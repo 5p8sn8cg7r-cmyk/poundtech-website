@@ -1260,6 +1260,61 @@ el("calendar-next").addEventListener("click", () => {
     renderCalendar();
 });
 
+    
+/* Save booking status to Supabase */
+el("calendar-day-bookings").addEventListener("click", async (event) => {
+    const button = event.target.closest(".save-booking-status");
+
+    if (!button) return;
+
+    const bookingId = button.dataset.bookingId;
+    const select = document.getElementById(`booking-status-${bookingId}`);
+    const newStatus = select.value;
+
+    const allowedStatuses = [
+        "Scheduled",
+        "Accepted",
+        "In Progress",
+        "Completed",
+        "Cancelled"
+    ];
+
+    if (!allowedStatuses.includes(newStatus)) {
+        alert("Invalid booking status.");
+        return;
+    }
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Saving...";
+
+    const { data, error } = await supabaseClient
+        .from("mechanic_bookings")
+        .update({ status: newStatus })
+        .eq("id", bookingId)
+        .eq("mechanic_id", business.id)
+        .select("id, status")
+        .single();
+
+    if (error) {
+        console.error("Booking status update failed:", error);
+        alert("Could not save the status. Check your Supabase permissions.");
+        button.disabled = false;
+        button.textContent = originalText;
+        return;
+    }
+
+    const booking = calendarBookings.find(item => item.id === data.id);
+
+    if (booking) {
+        booking.status = data.status;
+    }
+
+    renderCalendar();
+
+    alert("Booking status updated successfully!");
+});
+
 /* ---------- WIRING ---------- */
 
 el("login-btn").addEventListener("click", signIn);
