@@ -1202,8 +1202,29 @@ function renderSelectedDay() {
                 <p><strong>Vehicle:</strong> ${esc(booking.vehicle || "Not specified")}</p>
                 <p><strong>Service:</strong> ${esc(booking.service_required || "Not specified")}</p>
                 <p><strong>Phone:</strong> ${esc(booking.customer_phone || "Not provided")}</p>
-                <p><strong>Price:</strong> ${esc(money(booking.agreed_price || 0))}</p>
-                ${booking.notes ? `<p><strong>Notes:</strong> ${esc(booking.notes)}</p>` : ""}
+               
+<p><strong>Price:</strong> ${esc(money(booking.agreed_price || 0))}</p>
+${booking.notes ? `<p><strong>Notes:</strong> ${esc(booking.notes)}</p>` : ""}
+
+<label for="booking-status-${booking.id}"><strong>Update status:</strong></label>
+<select
+    id="booking-status-${booking.id}"
+    class="booking-status-select"
+    data-booking-id="${booking.id}">
+    ${["Scheduled", "Accepted", "In Progress", "Completed", "Cancelled"].map(status => `
+        <option value="${status}" ${booking.status === status ? "selected" : ""}>
+            ${status}
+        </option>
+    `).join("")}
+</select>
+
+<button
+    type="button"
+    class="btn btn-dark btn-small save-booking-status"
+    data-booking-id="${booking.id}">
+    Save status
+</button
+
             </div>
         `;
     }).join("");
