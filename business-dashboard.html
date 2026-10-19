@@ -655,12 +655,25 @@ async function init() {
         return;
     }
 
-    const { data, error } = await supabaseClient
-        .from("mechanics")
-        .select("id, business_name, business_type, status")
-        .eq("user_id", session.user.id)
-        .order("created_at", { ascending: true })
-        .limit(1);
+    
+const { data: result, error } = await supabaseClient.rpc(
+    "reschedule_mechanic_booking",
+    {
+        p_booking_id: bookingId,
+        p_new_start: newStart.toISOString()
+    }
+);
+
+const data = result && result.success
+    ? {
+        id: result.booking_id,
+        booking_date: result.booking_date,
+        start_time: result.start_time,
+        end_time: result.end_time,
+        duration_minutes: result.duration_minutes
+    }
+    : null;
+
 
     if (error) {
         console.error(error);
