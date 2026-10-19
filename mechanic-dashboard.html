@@ -1,148 +1,185 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mechanic Dashboard - PoundTech</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mechanic Dashboard | PoundTech</title>
+<link rel="stylesheet" href="site.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-        }
+.page-main { max-width: 920px; margin-top: 28px; }
 
-        header {
-            background: #111;
-            color: white;
-            padding: 18px 25px;
-        }
+.card { margin-bottom: 22px; }
 
-        header h1 {
-            margin: 0;
-        }
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
 
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
+.top-bar .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        .card {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
+.btn-small {
+    width: auto;
+    padding: 9px 16px;
+    font-size: 14px;
+}
 
-        .quote {
-            border: 1px solid #ddd;
-            padding: 18px;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
+.btn-outline {
+    background: white;
+    color: #111;
+    border: 1px solid #ccc;
+}
 
-        .quote h3 {
-            margin-top: 0;
-        }
+.btn-outline:hover { background: #f4f5f7; }
 
-        label {
-            display: block;
-            margin-top: 12px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
+.section-title {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    margin: 26px 0 12px;
+}
 
-        textarea,
-        input,
-        select {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
+.section-title:first-of-type { margin-top: 6px; }
 
-        textarea {
-            min-height: 90px;
-            resize: vertical;
-        }
+.item {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 14px;
+}
 
-        button {
-            margin-top: 15px;
-            padding: 11px 18px;
-            border: none;
-            border-radius: 6px;
-            background: #111;
-            color: white;
-            cursor: pointer;
-        }
+.item.needs-action {
+    border-left: 4px solid #e00000;
+    background: #fffafa;
+}
 
-        button:hover {
-            background: #333;
-        }
+.item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
 
-        .logout {
-            background: #c00;
-        }
+.item-head h3 { font-size: 17px; }
 
-        .status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 15px;
-            background: #eee;
-            font-size: 13px;
-        }
+.pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: bold;
+    background: #eee;
+    color: #444;
+    white-space: nowrap;
+}
 
-        #message {
-            margin-bottom: 20px;
-        }
-    </style>
+.pill-ok   { background: #e6f4ea; color: #16803c; }
+.pill-warn { background: #fff4e0; color: #8a5a00; }
+.pill-bad  { background: #fdecec; color: #8a1111; }
+
+.details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 4px 20px;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.details strong { color: #666; font-weight: bold; }
+
+.when {
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 14px;
+}
+
+.actions select {
+    width: auto;
+    margin: 0;
+    padding: 9px 12px;
+    font-size: 14px;
+}
+
+.actions .btn { width: auto; }
+
+.empty { color: #666; padding: 4px 0 10px; }
+
+.quote-form { margin-top: 14px; }
+
+.quote-form textarea { min-height: 80px; }
+
+#message { position: sticky; top: 10px; z-index: 5; }
+
+[hidden] { display: none !important; }
+
+</style>
 </head>
 
 <body>
 
-<header>
-    <h1>PoundTech Mechanic Dashboard</h1>
+<header class="site-header">
+    <a class="logo" href="index.html">POUND<span>TECH</span></a>
+    <a class="back" href="index.html">&larr; Back to marketplace</a>
 </header>
 
-<div class="container">
+<section class="page-hero">
+    <h1 id="hero-title">Mechanic Dashboard</h1>
+    <p id="hero-sub">Loading your account…</p>
+</section>
 
-    <div class="card">
-        <h2>Welcome</h2>
-        <p id="mechanic-name">Loading...</p>
+<main class="page-main">
 
-        <button
-            class="logout"
-            onclick="logout()">
-            Logout
-        </button>
-    </div>
-
-    <div class="card">
-
-        <h2>Quote Requests</h2>
-
-        <div id="message"></div>
-
-        <div id="quote-requests">
-            Loading quote requests...
+    <div class="top-bar">
+        <div class="btn-row">
+            <a class="btn btn-small" href="business-dashboard.html">Services &amp; hours</a>
         </div>
-        
-<hr style="margin:40px 0;">
-
-<h2>Bookings</h2>
-
-<div id="bookings-container">
-    <p>Loading bookings...</p>
-</div>
-        
+        <button class="btn btn-small btn-outline" id="logout-btn">Log out</button>
     </div>
 
-</div>
+    <div id="message" role="status"></div>
+
+    <div class="card">
+        <h2>Bookings</h2>
+        <p class="lead">Approve new requests, track upcoming work and mark jobs complete.</p>
+        <div id="bookings-container"><p class="empty">Loading bookings…</p></div>
+    </div>
+
+    <div class="card">
+        <h2>Quote requests</h2>
+        <p class="lead">Customers asking for a price on a job.</p>
+        <div id="quote-requests"><p class="empty">Loading quote requests…</p></div>
+    </div>
+
+</main>
+
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
@@ -153,218 +190,205 @@ const SUPABASE_KEY =
     "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
 const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
 let currentMechanic = null;
+let messageTimer = null;
 
 
-// Load logged-in mechanic
-async function loadMechanic() {
+/* ---------- helpers ---------- */
 
-    const {
-        data: { user },
-        error: userError
-    } = await supabaseClient.auth.getUser();
+// Everything that comes from a customer is escaped before it goes on the page.
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
 
-    // Not logged in
-    if (userError || !user) {
+function $(id) {
+    return document.getElementById(id);
+}
 
-        window.location.href =
-            "mechanic-login.html";
+function notify(text, type) {
 
+    const box = $("message");
+
+    clearTimeout(messageTimer);
+
+    if (!text) {
+        box.className = "";
+        box.textContent = "";
         return;
     }
 
+    box.className = "message message-" + (type || "info");
+    box.textContent = text;
 
-    const {
-        data: mechanic,
-        error
-    } = await supabaseClient
+    messageTimer = setTimeout(() => notify(""), 5000);
+}
+
+function money(value) {
+    return "R" + Number(value).toLocaleString("en-ZA", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function pillClass(status) {
+    if (["Scheduled", "Accepted", "In Progress", "Completed", "Quoted"].includes(status)) {
+        return "pill pill-ok";
+    }
+    if (["Pending", "Pending Approval"].includes(status)) {
+        return "pill pill-warn";
+    }
+    if (["Declined", "Cancelled"].includes(status)) {
+        return "pill pill-bad";
+    }
+    return "pill";
+}
+
+function formatWhen(booking) {
+
+    if (booking.start_time) {
+        return new Date(booking.start_time).toLocaleString("en-ZA", {
+            timeZone: "Africa/Johannesburg",
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        });
+    }
+
+    if (booking.booking_date) {
+        return new Date(booking.booking_date + "T00:00:00").toLocaleDateString("en-ZA", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        });
+    }
+
+    return "Date not selected";
+}
+
+function whenValue(booking) {
+
+    if (booking.start_time) {
+        return new Date(booking.start_time).getTime();
+    }
+
+    if (booking.booking_date) {
+        return new Date(booking.booking_date + "T23:59:59").getTime();
+    }
+
+    return null;
+}
+
+
+/* ---------- start up ---------- */
+
+async function loadMechanic() {
+
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    // Not logged in
+    if (userError || !user) {
+        window.location.href = "mechanic-login.html";
+        return;
+    }
+
+    const { data: mechanic, error } = await supabaseClient
         .from("mechanics")
         .select("*")
         .eq("user_id", user.id)
         .eq("status", "Approved")
         .maybeSingle();
 
-
-    // Logged in, but not an approved mechanic
+    // Logged in, but not an approved business
     if (error || !mechanic) {
-
-        alert(
-            "You do not have an approved mechanic account."
-        );
-
+        alert("You do not have an approved business account.");
         await supabaseClient.auth.signOut();
-
-        window.location.href =
-            "mechanic-login.html";
-
+        window.location.href = "mechanic-login.html";
         return;
     }
 
-
-    // Approved mechanic
     currentMechanic = mechanic;
 
-    document.getElementById(
-        "mechanic-name"
-    ).innerText =
-        mechanic.business_name;
+    $("hero-title").textContent = mechanic.business_name;
+    $("hero-sub").textContent = "Your bookings and quote requests in one place.";
 
-
-    loadQuoteRequests();
     loadBookings();
+    loadQuoteRequests();
 }
 
-// Load quote requests
-async function loadQuoteRequests() {
 
-    const container =
-        document.getElementById(
-            "quote-requests"
-        );
+/* ---------- bookings ---------- */
 
-    const {
-        data: requests,
-        error
-    } = await supabaseClient
-        .from("mechanic_quote_requests")
-        .select("*")
-        .eq("mechanic_id", currentMechanic.id)
-        .order("created_at", {
-            ascending: false
-        });
+function bookingCard(booking) {
 
-    if (error) {
+    const needsApproval = booking.status === "Pending Approval";
+    const closed = ["Declined", "Cancelled"].includes(booking.status);
 
-        console.error(error);
+    let actions = "";
 
-        container.innerHTML =
-            "<p>Error loading quote requests.</p>";
+    if (needsApproval) {
+        actions = `
+            <div class="actions">
+                <button class="btn btn-small" data-action="approve" data-id="${esc(booking.id)}">Approve</button>
+                <button class="btn btn-small btn-outline" data-action="decline" data-id="${esc(booking.id)}">Decline</button>
+            </div>`;
+    } else if (!closed) {
+        const options = ["Accepted", "Scheduled", "In Progress", "Completed", "Cancelled"]
+            .map(s => `<option value="${esc(s)}" ${booking.status === s ? "selected" : ""}>${esc(s)}</option>`)
+            .join("");
 
-        return;
+        actions = `
+            <div class="actions">
+                <label style="margin:0;font-weight:normal;font-size:14px;">Update status</label>
+                <select data-action="status" data-id="${esc(booking.id)}">${options}</select>
+            </div>`;
     }
 
-    if (!requests || requests.length === 0) {
+    return `
+        <div class="item ${needsApproval ? "needs-action" : ""}">
 
-        container.innerHTML =
-            "<p>No quote requests yet.</p>";
-
-        return;
-    }
-
-    container.innerHTML =
-        requests.map(request => `
-
-            <div class="quote">
-
-                <h3>
-                    ${request.customer_name}
-                </h3>
-
-                <span class="status">
-                    ${request.status}
+            <div class="item-head">
+                <h3>${esc(booking.customer_name)}</h3>
+                <span>
+                    <span class="${pillClass(booking.status)}">${esc(booking.status)}</span>
+                    ${booking.payment_status === "Paid" ? '<span class="pill pill-ok">Paid</span>' : ""}
                 </span>
-
-                <p>
-                    <strong>Phone:</strong>
-                    ${request.customer_phone}
-                </p>
-
-                <p>
-                    <strong>Email:</strong>
-                    ${request.customer_email}
-                </p>
-
-                <p>
-                    <strong>Vehicle:</strong>
-                    ${request.vehicle}
-                </p>
-
-                <p>
-                    <strong>Service:</strong>
-                    ${request.service_required}
-                </p>
-
-                <p>
-                    <strong>Problem:</strong>
-                    ${request.problem_description || "Not provided"}
-                </p>
-
-                <p>
-                    <strong>Preferred date:</strong>
-                    ${request.preferred_date || "Not specified"}
-                </p>
-
-                <label>Response</label>
-
-                <textarea
-                    id="response-${request.id}"
-                    placeholder="Enter your response to the customer..."
-                >${request.mechanic_response || ""}</textarea>
-
-                <label>Quoted Price (R)</label>
-
-                <input
-                    type="number"
-                    id="price-${request.id}"
-                    value="${request.quoted_price || ""}"
-                    placeholder="Enter price"
-                >
-
-                <label>Status</label>
-
-                <select id="status-${request.id}">
-
-                    <option value="Pending"
-                        ${request.status === "Pending" ? "selected" : ""}>
-                        Pending
-                    </option>
-
-                    <option value="Quoted"
-                        ${request.status === "Quoted" ? "selected" : ""}>
-                        Quoted
-                    </option>
-
-                    <option value="Accepted"
-                        ${request.status === "Accepted" ? "selected" : ""}>
-                        Accepted
-                    </option>
-
-                    <option value="Declined"
-                        ${request.status === "Declined" ? "selected" : ""}>
-                        Declined
-                    </option>
-
-                </select>
-
-                <button
-                    onclick="updateQuote('${request.id}')">
-                    Send Quote
-                </button>
-
             </div>
 
-        `).join("");
+            <div class="when">${esc(formatWhen(booking))}</div>
+
+            <div class="details">
+                <div><strong>Service:</strong> ${esc(booking.service_required)}</div>
+                <div><strong>Price:</strong> ${esc(money(booking.agreed_price))}</div>
+                <div><strong>Vehicle:</strong> ${esc(booking.vehicle)}</div>
+                <div><strong>Phone:</strong> ${esc(booking.customer_phone)}</div>
+                <div><strong>Email:</strong> ${esc(booking.customer_email)}</div>
+                ${booking.notes ? `<div><strong>Notes:</strong> ${esc(booking.notes)}</div>` : ""}
+            </div>
+
+            ${actions}
+
+        </div>`;
 }
 
-    async function loadBookings() {
+async function loadBookings() {
 
-    const container =
-        document.getElementById("bookings-container");
+    const container = $("bookings-container");
 
-    if (!currentMechanic) {
-        container.innerHTML =
-            "<p>Mechanic account not found.</p>";
-        return;
-    }
-
-    const { data: bookings, error } =
-        await supabaseClient
+    const { data: bookings, error } = await supabaseClient
         .from("mechanic_bookings")
         .select("*")
         .eq("mechanic_id", currentMechanic.id)
@@ -372,182 +396,231 @@ async function loadQuoteRequests() {
 
     if (error) {
         console.error(error);
-        container.innerHTML =
-            "<p>Error loading bookings.</p>";
+        container.innerHTML = '<p class="empty">We couldn\'t load your bookings. Please refresh the page.</p>';
         return;
     }
 
     if (!bookings || bookings.length === 0) {
-        container.innerHTML =
-            "<p>No bookings yet.</p>";
+        container.innerHTML = '<p class="empty">No bookings yet.</p>';
         return;
     }
 
-    container.innerHTML = bookings.map(booking => `
+    const now = Date.now();
+    const activeStatuses = ["Accepted", "Scheduled", "In Progress"];
 
-        <div style="
-            border:1px solid #ddd;
-            padding:20px;
-            margin-bottom:20px;
-            border-radius:8px;
-        ">
+    const needsApproval = bookings
+        .filter(b => b.status === "Pending Approval")
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-            <h3>Booking</h3>
+    const upcoming = bookings
+        .filter(b => activeStatuses.includes(b.status) && (whenValue(b) === null || whenValue(b) >= now))
+        .sort((a, b) => (whenValue(a) || Infinity) - (whenValue(b) || Infinity));
 
-            <p>
-                <strong>Customer:</strong>
-                ${booking.customer_name}
-            </p>
+    const shown = new Set(needsApproval.concat(upcoming).map(b => b.id));
 
-            <p>
-                <strong>Phone:</strong>
-                ${booking.customer_phone}
-            </p>
+    const past = bookings
+        .filter(b => !shown.has(b.id))
+        .sort((a, b) => (whenValue(b) || 0) - (whenValue(a) || 0));
 
-            <p>
-                <strong>Vehicle:</strong>
-                ${booking.vehicle}
-            </p>
+    let html = "";
 
-            <p>
-                <strong>Service:</strong>
-                ${booking.service_required}
-            </p>
+    if (needsApproval.length) {
+        html += '<h3 class="section-title">Needs your approval (' + needsApproval.length + ')</h3>';
+        html += needsApproval.map(bookingCard).join("");
+    }
 
-            <p>
-                <strong>Agreed Price:</strong>
-                R${Number(booking.agreed_price).toLocaleString()}
-            </p>
+    if (upcoming.length) {
+        html += '<h3 class="section-title">Upcoming</h3>';
+        html += upcoming.map(bookingCard).join("");
+    }
 
-            <p>
-                <strong>Booking Date:</strong>
-                ${booking.booking_date || "Not selected"}
-            </p>
+    if (past.length) {
+        html += '<h3 class="section-title">Completed &amp; past</h3>';
+        html += past.map(bookingCard).join("");
+    }
 
-            <p>
-                <strong>Status:</strong>
-                ${booking.status}
-            </p>
-
-            <select
-                onchange="updateBookingStatus('${booking.id}', this.value)"
-            >
-
-                <option value="Accepted"
-                    ${booking.status === "Accepted" ? "selected" : ""}>
-                    Accepted
-                </option>
-
-                <option value="Scheduled"
-                    ${booking.status === "Scheduled" ? "selected" : ""}>
-                    Scheduled
-                </option>
-
-                <option value="In Progress"
-                    ${booking.status === "In Progress" ? "selected" : ""}>
-                    In Progress
-                </option>
-
-                <option value="Completed"
-                    ${booking.status === "Completed" ? "selected" : ""}>
-                    Completed
-                </option>
-
-            </select>
-
-        </div>
-
-    `).join("");
+    container.innerHTML = html;
 }
 
+async function setBookingStatus(bookingId, newStatus) {
 
-async function updateBookingStatus(bookingId, newStatus) {
-
-    const { error } =
-        await supabaseClient
+    const { error } = await supabaseClient
         .from("mechanic_bookings")
         .update({
-            status: newStatus
+            status: newStatus,
+            cancelled_at: newStatus === "Cancelled" ? new Date().toISOString() : null
         })
         .eq("id", bookingId)
         .eq("mechanic_id", currentMechanic.id);
 
     if (error) {
-
         console.error(error);
-
-        alert(
-            "Unable to update booking: "
-            + error.message
-        );
-
+        notify("We couldn't update that booking: " + error.message, "error");
+        loadBookings();
         return;
     }
 
-    alert("Booking status updated!");
-
+    notify("Booking updated.", "success");
     loadBookings();
 }
 
 
-// Update quote
-async function updateQuote(requestId) {
+/* ---------- quote requests ---------- */
 
-    const response =
-        document.getElementById(
-            "response-" + requestId
-        ).value;
+async function loadQuoteRequests() {
 
-    const price =
-        document.getElementById(
-            "price-" + requestId
-        ).value;
+    const container = $("quote-requests");
 
-    const status =
-        document.getElementById(
-            "status-" + requestId
-        ).value;
-
-    const {
-        error
-    } = await supabaseClient
+    const { data: requests, error } = await supabaseClient
         .from("mechanic_quote_requests")
-        .update({
-            mechanic_response: response,
-            quoted_price: price || null,
-            status: status
-        })
-        .eq("id", requestId)
-        .eq(
-            "mechanic_id",
-            currentMechanic.id
-        );
+        .select("*")
+        .eq("mechanic_id", currentMechanic.id)
+        .order("created_at", { ascending: false });
 
     if (error) {
-
-        alert(
-            "Error updating quote: " +
-            error.message
-        );
-
+        console.error(error);
+        container.innerHTML = '<p class="empty">We couldn\'t load your quote requests. Please refresh the page.</p>';
         return;
     }
 
-    alert("Quote updated successfully!");
+    if (!requests || requests.length === 0) {
+        container.innerHTML = '<p class="empty">No quote requests yet.</p>';
+        return;
+    }
 
+    container.innerHTML = requests.map(request => {
+
+        const id = esc(request.id);
+
+        const statusOptions = ["Pending", "Quoted", "Accepted", "Declined"]
+            .map(s => `<option value="${s}" ${request.status === s ? "selected" : ""}>${s}</option>`)
+            .join("");
+
+        return `
+            <div class="item">
+
+                <div class="item-head">
+                    <h3>${esc(request.customer_name)}</h3>
+                    <span class="${pillClass(request.status)}">${esc(request.status)}</span>
+                </div>
+
+                <div class="details">
+                    <div><strong>Phone:</strong> ${esc(request.customer_phone)}</div>
+                    <div><strong>Email:</strong> ${esc(request.customer_email)}</div>
+                    <div><strong>Vehicle:</strong> ${esc(request.vehicle)}</div>
+                    <div><strong>Service:</strong> ${esc(request.service_required)}</div>
+                    <div><strong>Preferred date:</strong> ${esc(request.preferred_date || "Not specified")}</div>
+                </div>
+
+                <p style="margin-top:10px;font-size:14px;">
+                    <strong style="color:#666;">Problem:</strong>
+                    ${esc(request.problem_description || "Not provided")}
+                </p>
+
+                <div class="quote-form">
+
+                    <label for="response-${id}">Your response</label>
+                    <textarea id="response-${id}"
+                        placeholder="Enter your response to the customer…">${esc(request.mechanic_response || "")}</textarea>
+
+                    <label for="price-${id}">Quoted price (R)</label>
+                    <input type="number" id="price-${id}" min="0" step="0.01"
+                        value="${esc(request.quoted_price || "")}" placeholder="Enter price">
+
+                    <label for="status-${id}">Status</label>
+                    <select id="status-${id}">${statusOptions}</select>
+
+                    <button class="btn btn-small" data-action="send-quote" data-id="${id}">Send quote</button>
+
+                </div>
+
+            </div>`;
+    }).join("");
+}
+
+async function updateQuote(requestId) {
+
+    const response = $("response-" + requestId).value;
+    const priceText = $("price-" + requestId).value;
+    const status = $("status-" + requestId).value;
+
+    const price = priceText === "" ? null : Number(priceText);
+
+    if (price !== null && (!isFinite(price) || price < 0)) {
+        notify("Please enter a valid price.", "error");
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("mechanic_quote_requests")
+        .update({
+            mechanic_response: response,
+            quoted_price: price,
+            status: status
+        })
+        .eq("id", requestId)
+        .eq("mechanic_id", currentMechanic.id);
+
+    if (error) {
+        console.error(error);
+        notify("We couldn't update that quote: " + error.message, "error");
+        return;
+    }
+
+    notify("Quote updated.", "success");
     loadQuoteRequests();
 }
 
-    
-// Logout
+
+/* ---------- wiring ---------- */
+
 async function logout() {
-
     await supabaseClient.auth.signOut();
-
-    window.location.href =
-        "mechanic-login.html";
+    window.location.href = "mechanic-login.html";
 }
 
+$("logout-btn").addEventListener("click", logout);
+
+$("bookings-container").addEventListener("click", e => {
+
+    const button = e.target.closest("button[data-action]");
+
+    if (!button) { return; }
+
+    const id = button.dataset.id;
+
+    if (button.dataset.action === "approve") {
+        setBookingStatus(id, "Scheduled");
+    } else if (button.dataset.action === "decline") {
+        if (confirm("Decline this booking request? The time slot will be freed up.")) {
+            setBookingStatus(id, "Declined");
+        }
+    }
+});
+
+$("bookings-container").addEventListener("change", e => {
+
+    const select = e.target.closest("select[data-action='status']");
+
+    if (!select) { return; }
+
+    if (select.value === "Cancelled" &&
+        !confirm("Cancel this booking? The time slot will be freed up.")) {
+        loadBookings();
+        return;
+    }
+
+    setBookingStatus(select.dataset.id, select.value);
+});
+
+$("quote-requests").addEventListener("click", e => {
+
+    const button = e.target.closest("button[data-action='send-quote']");
+
+    if (button) {
+        updateQuote(button.dataset.id);
+    }
+});
 
 loadMechanic();
 
