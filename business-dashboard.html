@@ -684,11 +684,13 @@ async function init() {
 
     show("app", true);
 
-  await Promise.all([
+
+await Promise.all([
     loadServices(),
     loadHours(),
     loadSettings(),
-    loadCalendarBookings()
+    loadCalendarBookings(),
+    loadBusinessStats()
 ]);
 }
 
@@ -1145,6 +1147,64 @@ function displayBookingTime(value) {
         minute: "2-digit",
         timeZone: "Africa/Johannesburg"
     }).format(date);
+}
+
+    
+/* ---------- BUSINESS DASHBOARD STATISTICS ---------- */
+
+async function loadBusinessStats() {
+    const message = el("stats-message");
+
+    message.textContent = "Loading business statistics...";
+
+    const { data: bookings, error } = await supabaseClient
+        .from("mechanic_bookings")
+        .select("id, booking_date, status, agreed_price, start_time")
+        .eq("mechanic_id", business.id);
+
+    if (error) {
+        console.error("Business statistics error:", error);
+        message.textContent = "Could not load statistics. Check Supabase permissions.";
+        return;
+    }
+
+    const allBookings = bookings || [];
+
+    // Use South African local dates to match the booking calendar.
+    const today = localDateKey(new Date());
+
+    const activeBookings = allBookings.filter(booking =>
+        booking.status !== "Cancelled"
+    );
+
+    const todaysBookings = activeBookings.filter(booking =>
+        booking.booking_date === today
+    );
+
+    const upcomingBookings = activeBookings.filter(booking =>
+        booking.booking_date > today &&
+        booking.status !== "Completed"
+    );
+
+    const completedBookings = allBookings.filter(booking =>
+        booking.status === "Completed"
+    );
+
+    const revenue = completedBookings.reduce((total, booking) =>
+        total + Number(booking.agreed_price || 0), 0
+    );
+
+    el("stat-today").textContent = todaysBookings.length;
+    el("stat-upcoming").textContent = upcomingBookings.length;
+    el("stat-completed").textContent = completedBookings.length;
+
+    el("stat-revenue").textContent = new Intl.NumberFormat("en-ZA", {
+        style: "currency",
+        currency: "ZAR",
+        maximumFractionDigits: 2
+    }).format(revenue);
+
+    message.textContent = "Statistics updated successfully.";
 }
 
 async function loadCalendarBookings() {
