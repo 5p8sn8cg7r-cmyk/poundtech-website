@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a Service | PoundTech</title>
+<link rel="stylesheet" href="site.css">
+
+<style>
+
+.page-main { max-width: 720px; }
+
+.card + .card { margin-top: 22px; }
+
+.summary-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.summary-top h2 { margin-bottom: 2px; }
+
+.biz-name { color: #666; font-size: 15px; }
+
+.price { font-size: 22px; font-weight: bold; }
+
+.facts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: bold;
+    background: #f4f5f7;
+    color: #444;
+}
+
+.tag-ok   { background: #e6f4ea; color: #16803c; }
+.tag-warn { background: #fff4e0; color: #8a5a00; }
+
+.step-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e00000;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.step-title h2 { margin: 0; font-size: 20px; }
+
+.slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.slot {
+    padding: 12px 6px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    color: #111;
+}
+
+.slot:hover { border-color: #e00000; }
+
+.slot.selected {
+    background: #e00000;
+    border-color: #e00000;
+    color: white;
+    font-weight: bold;
+}
+
+.chosen {
+    background: #f4f5f7;
+    border-left: 4px solid #e00000;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.hint { color: #777; font-size: 13px; margin: -10px 0 18px; }
+
+.done { text-align: center; }
+
+.done .ref {
+    display: inline-block;
+    margin: 6px 0 18px;
+    padding: 8px 16px;
+    background: #f4f5f7;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.done .tick.pending { color: #8a5a00; }
+
+.done .details {
+    text-align: left;
+    background: #f4f5f7;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 0 auto 22px;
+    max-width: 440px;
+    font-size: 15px;
+}
+
+.done .details div { margin-bottom: 4px; }
+
+.btn-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-row .btn { width: auto; }
+
+[hidden] { display: none !important; }
+
+</style>
+</head>
+
+<body>
+
+<header class="site-header">
+    <a class="logo" href="index.html">POUND<span>TECH</span></a>
+    <a class="back" href="index.html">&larr; Back to marketplace</a>
+</header>
+
+<section class="page-hero">
+    <h1 id="hero-title">Book a Service</h1>
+    <p id="hero-sub">Choose a date and time that suits you.</p>
+</section>
+
+<main class="page-main">
+
+    <div id="page-message" role="status"></div>
+
+    <div id="booking" hidden>
+
+        <!-- Service summary -->
+        <div class="card" id="service-card"></div>
+
+        <!-- Step 1 -->
+        <div class="card" id="date-card">
+
+            <div class="step-title">
+                <span class="step-num">1</span>
+                <h2>Pick a date and time</h2>
+            </div>
+
+            <label for="booking-date">Date</label>
+            <input type="date" id="booking-date">
+
+            <div id="slots-message" role="status"></div>
+            <div class="slots" id="slots"></div>
+
+        </div>
+
+        <!-- Step 2 -->
+        <div class="card" id="details-card" hidden>
+
+            <div class="step-title">
+                <span class="step-num">2</span>
+                <h2>Your details</h2>
+            </div>
+
+            <div class="chosen" id="chosen"></div>
+
+            <label for="f-name">Full name</label>
+            <input type="text" id="f-name" maxlength="100" autocomplete="name">
+
+            <label for="f-phone">Phone number</label>
+            <input type="tel" id="f-phone" maxlength="20" autocomplete="tel" placeholder="e.g. 082 123 4567">
+
+            <label for="f-email">Email address</label>
+            <input type="email" id="f-email" maxlength="254" autocomplete="email">
+
+            <label for="f-vehicle">Your vehicle</label>
+            <input type="text" id="f-vehicle" maxlength="100" placeholder="e.g. 2018 VW Polo">
+
+            <label for="f-notes">Notes for the business (optional)</label>
+            <textarea id="f-notes" maxlength="500" style="min-height:90px;"
+                placeholder="Anything they should know before you arrive?"></textarea>
+
+            <button class="btn" id="submit-btn">Confirm booking</button>
+
+            <p class="hint" style="margin:14px 0 0;">
+                No payment is taken online yet. Please keep your booking reference.
+            </p>
+
+            <div id="form-message" role="status"></div>
+
+        </div>
+
+    </div>
+
+    <!-- Finished -->
+    <div class="card done" id="done-card" hidden></div>
+
+</main>
+
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://uezacbssvvvtlosnaroh.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Page that lists businesses (your Find a Mechanic page).
+const FIND_PAGE = "mechanics.html";
+
+const TZ = "Africa/Johannesburg";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+let business = null;
+let service = null;
+let selectedSlot = null;     // { start: ISO string, end: ISO string }
+let slotRequestId = 0;       // ignores out-of-date slot responses
+
+
+/* ---------- helpers ---------- */
+
+function $(id) {
+    return document.getElementById(id);
+}
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function setMessage(id, text, type) {
+
+    const box = $(id);
+
+    if (!text) {
+        box.className = "";
+        box.textContent = "";
+        return;
+    }
+
+    box.className = "message message-" + (type || "info");
+    box.textContent = text;
+}
+
+function money(value) {
+
+    const n = Number(value);
+    const digits = Number.isInteger(n) ? 0 : 2;
+
+    return "R" + n.toLocaleString("en-ZA", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+    });
+}
+
+function durationLabel(minutes) {
+
+    const m = Number(minutes);
+
+    if (m < 60) { return m + " min"; }
+
+    const h = Math.floor(m / 60);
+    const rest = m % 60;
+
+    return rest ? h + " h " + rest + " min" : h + " h";
+}
+
+function timeLabel(iso) {
+    return new Date(iso).toLocaleTimeString("en-GB", {
+        timeZone: TZ,
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23"
+    });
+}
+
+function dayLabel(iso) {
+    return new Date(iso).toLocaleDateString("en-ZA", {
+        timeZone: TZ,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    });
+}
+
+function todayInSA() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date());
+}
+
+function addDays(dateString, days) {
+    const d = new Date(dateString + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+}
+
+function fatal(text) {
+    $("booking").hidden = true;
+    $("hero-title").textContent = "Book a Service";
+    setMessage("page-message", text, "error");
+}
+
+
+/* ---------- load the business and service ---------- */
+
+async function start() {
+
+    const params = new URLSearchParams(window.location.search);
+    const mechanicId = params.get("mechanic_id") || "";
+    const serviceId = params.get("service_id") || "";
+
+    if (!UUID_PATTERN.test(mechanicId) || !UUID_PATTERN.test(serviceId)) {
+        fatal("This booking link isn't valid. Please go back and choose a service.");
+        return;
+    }
+
+    const [bizRes, svcRes, setRes] = await Promise.all([
+        supabaseClient
+            .from("mechanics")
+            .select("id, business_name, business_type, service_area")
+            .eq("id", mechanicId)
+            .eq("status", "Approved")
+            .maybeSingle(),
+        supabaseClient
+            .from("business_services")
+            .select("id, mechanic_id, name, description, price, duration_minutes, booking_mode")
+            .eq("id", serviceId)
+            .eq("mechanic_id", mechanicId)
+            .eq("is_active", true)
+            .maybeSingle(),
+        supabaseClient
+            .from("business_settings")
+            .select("max_advance_days")
+            .eq("mechanic_id", mechanicId)
+            .maybeSingle()
+    ]);
+
+    if (bizRes.error || svcRes.error) {
+        console.error(bizRes.error || svcRes.error);
+        fatal("We couldn't load this service right now. Please try again shortly.");
+        return;
+    }
+
+    if (!bizRes.data || !svcRes.data) {
+        fatal("This service is no longer available.");
+        return;
+    }
+
+    business = bizRes.data;
+    service = svcRes.data;
+
+    const maxAdvance = (setRes.data && setRes.data.max_advance_days) || 60;
+    const today = todayInSA();
+
+    const dateInput = $("booking-date");
+    dateInput.min = today;
+    dateInput.max = addDays(today, maxAdvance);
+    dateInput.value = "";
+
+    $("hero-title").textContent = service.name;
+    $("hero-sub").textContent = "with " + business.business_name;
+
+    const instant = service.booking_mode === "instant";
+
+    $("service-card").innerHTML = `
+        <div class="summary-top">
+            <div>
+                <h2>${esc(service.name)}</h2>
+                <div class="biz-name">${esc(business.business_name)}${business.service_area ? " &middot; " + esc(business.service_area) : ""}</div>
+            </div>
+            <div class="price">${esc(money(service.price))}</div>
+        </div>
+        ${service.description ? `<p style="margin-top:12px;color:#444;">${esc(service.description)}</p>` : ""}
+        <div class="facts">
+            <span class="tag">${esc(durationLabel(service.duration_minutes))}</span>
+            <span class="tag ${instant ? "tag-ok" : "tag-warn"}">
+                ${instant ? "Confirmed instantly" : "The business confirms your request"}
+            </span>
+        </div>
+    `;
+
+    $("booking").hidden = false;
+}
+
+
+/* ---------- slots ---------- */
+
+async function loadSlots() {
+
+    const date = $("booking-date").value;
+
+    selectedSlot = null;
+    $("details-card").hidden = true;
+    $("slots").innerHTML = "";
+    setMessage("slots-message", "");
+
+    if (!date) { return; }
+
+    const myRequest = ++slotRequestId;
+
+    setMessage("slots-message", "Checking available times…", "info");
+
+    const { data, error } = await supabaseClient.rpc("get_available_slots", {
+        p_mechanic_id: business.id,
+        p_service_id: service.id,
+        p_date: date
+    });
+
+    if (myRequest !== slotRequestId) { return; }   // a newer date was picked
+
+    if (error) {
+        console.error(error);
+        setMessage("slots-message", "We couldn't load the available times. Please try again.", "error");
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        setMessage("slots-message",
+            "No times are available on this day. Please try another date.", "info");
+        return;
+    }
+
+    setMessage("slots-message", "");
+
+    $("slots").innerHTML = data.map(slot => `
+        <button type="button" class="slot"
+                data-start="${esc(slot.slot_start)}" data-end="${esc(slot.slot_end)}">
+            ${esc(timeLabel(slot.slot_start))}
+        </button>
+    `).join("");
+}
+
+function chooseSlot(button) {
+
+    document.querySelectorAll("#slots .slot").forEach(b => b.classList.remove("selected"));
+    button.classList.add("selected");
+
+    selectedSlot = { start: button.dataset.start, end: button.dataset.end };
+
+    $("chosen").innerHTML =
+        "<strong>" + esc(dayLabel(selectedSlot.start)) + "</strong><br>" +
+        esc(timeLabel(selectedSlot.start)) + " &ndash; " + esc(timeLabel(selectedSlot.end));
+
+    setMessage("form-message", "");
+    $("details-card").hidden = false;
+    $("details-card").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
+/* ---------- booking ---------- */
+
+async function submitBooking() {
+
+    if (!selectedSlot) {
+        setMessage("form-message", "Please choose a time slot first.", "error");
+        return;
+    }
+
+    const name = $("f-name").value.trim();
+    const phone = $("f-phone").value.trim();
+    const email = $("f-email").value.trim();
+    const vehicle = $("f-vehicle").value.trim();
+    const notes = $("f-notes").value.trim();
+
+    if (name.length < 2) {
+        setMessage("form-message", "Please enter your full name.", "error");
+        return;
+    }
+
+    if (!/^[0-9+()\s-]{7,20}$/.test(phone)) {
+        setMessage("form-message", "Please enter a valid phone number.", "error");
+        return;
+    }
+
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        setMessage("form-message", "Please enter a valid email address.", "error");
+        return;
+    }
+
+    if (vehicle.length < 2) {
+        setMessage("form-message", "Please enter your vehicle, for example 2018 VW Polo.", "error");
+        return;
+    }
+
+    const button = $("submit-btn");
+    button.disabled = true;
+    setMessage("form-message", "Confirming your booking…", "info");
+
+    const { data, error } = await supabaseClient.rpc("create_booking", {
+        p_mechanic_id: business.id,
+        p_service_id: service.id,
+        p_start: selectedSlot.start,
+        p_customer_name: name,
+        p_customer_phone: phone,
+        p_customer_email: email,
+        p_vehicle: vehicle,
+        p_notes: notes || null
+    });
+
+    button.disabled = false;
+
+    if (error) {
+
+        console.error(error);
+
+        const text = error.message || "We couldn't complete your booking. Please try again.";
+
+        // The slot may have been taken in the meantime: refresh the times and
+        // show the reason next to them (the details form closes until a new time is picked).
+        if (/slot|time|available/i.test(text)) {
+            await loadSlots();
+            setMessage("slots-message", text, "error");
+            $("date-card").scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+            setMessage("form-message", text, "error");
+        }
+
+        return;
+    }
+
+    showDone(data);
+}
+
+function showDone(booking) {
+
+    const confirmed = booking.status === "Scheduled";
+    const reference = String(booking.booking_id).slice(0, 8).toUpperCase();
+
+    $("booking").hidden = true;
+    $("hero-title").textContent = confirmed ? "Booking confirmed" : "Request sent";
+    $("hero-sub").textContent = booking.business_name;
+
+    $("done-card").innerHTML = `
+        <div class="tick ${confirmed ? "" : "pending"}">${confirmed ? "&#10003;" : "&hellip;"}</div>
+        <h2>${confirmed ? "You're booked in!" : "Your request has been sent"}</h2>
+        <p>
+            ${confirmed
+                ? "Your booking is confirmed. Please arrive at the time below."
+                : esc(booking.business_name) + " will review your request and confirm your booking."}
+        </p>
+        <div class="ref">${esc(reference)}</div>
+        <div class="details">
+            <div><strong>${esc(booking.service_name)}</strong> &middot; ${esc(money(booking.price))}</div>
+            <div>${esc(dayLabel(booking.start_time))}</div>
+            <div>${esc(timeLabel(booking.start_time))} &ndash; ${esc(timeLabel(booking.end_time))}</div>
+            <div>${esc(booking.business_name)}</div>
+        </div>
+        <div class="btn-row">
+            <a class="btn" href="index.html">Back to marketplace</a>
+            <a class="btn btn-dark" href="${esc(FIND_PAGE)}">Find another business</a>
+        </div>
+    `;
+
+    $("done-card").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+
+/* ---------- wiring ---------- */
+
+$("booking-date").addEventListener("change", loadSlots);
+
+$("slots").addEventListener("click", e => {
+
+    const button = e.target.closest("button.slot");
+
+    if (button) { chooseSlot(button); }
+});
+
+$("submit-btn").addEventListener("click", submitBooking);
+
+start();
+
+</script>
+
+</body>
+</html>
