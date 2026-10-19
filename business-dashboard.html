@@ -257,6 +257,56 @@ input[type="checkbox"] {
     }
 }
 
+    
+/* Business overview statistics */
+.business-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.business-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    background: #fff;
+    min-width: 0;
+}
+
+.business-stat-icon {
+    font-size: 23px;
+}
+
+.business-stat-number {
+    font-size: 26px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.business-stat-label {
+    color: #666;
+    font-size: 13px;
+}
+
+@media (max-width: 700px) {
+    .business-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .business-stat {
+        padding: 14px;
+    }
+
+    .business-stat-number {
+        font-size: 22px;
+    }
+}
+
 </style>
 </head>
 
@@ -406,6 +456,41 @@ input[type="checkbox"] {
             Choose a date to view appointments.
         </p>
     </div>
+</div>
+
+        
+<!-- BUSINESS DASHBOARD STATISTICS -->
+<div class="card" id="business-stats">
+    <h2>Business overview</h2>
+    <p class="lead">Track your workshop's booking performance.</p>
+
+    <div class="business-stats-grid">
+        <div class="business-stat">
+            <span class="business-stat-icon">📅</span>
+            <span class="business-stat-number" id="stat-today">—</span>
+            <span class="business-stat-label">Today's bookings</span>
+        </div>
+
+        <div class="business-stat">
+            <span class="business-stat-icon">⏰</span>
+            <span class="business-stat-number" id="stat-upcoming">—</span>
+            <span class="business-stat-label">Upcoming bookings</span>
+        </div>
+
+        <div class="business-stat">
+            <span class="business-stat-icon">✅</span>
+            <span class="business-stat-number" id="stat-completed">—</span>
+            <span class="business-stat-label">Completed jobs</span>
+        </div>
+
+        <div class="business-stat">
+            <span class="business-stat-icon">💰</span>
+            <span class="business-stat-number" id="stat-revenue">R —</span>
+            <span class="business-stat-label">Completed-job revenue</span>
+        </div>
+    </div>
+
+    <p id="stats-message" class="empty-note"></p>
 </div>
 
         <!-- Hours -->
