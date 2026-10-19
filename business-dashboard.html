@@ -599,7 +599,12 @@ async function init() {
 
     show("app", true);
 
-    await Promise.all([loadServices(), loadHours(), loadSettings()]);
+  await Promise.all([
+    loadServices(),
+    loadHours(),
+    loadSettings(),
+    loadCalendarBookings()
+]);
 }
 
 
@@ -1029,6 +1034,210 @@ async function saveSettings() {
     msg("settings-msg", "Booking settings saved.", "success");
 }
 
+
+/* ---------- BOOKING CALENDAR ---------- */
+
+let calendarBookings = [];
+let calendarMonth = new Date();
+let selectedCalendarDate = localDateKey(new Date());
+
+function localDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function displayBookingTime(value) {
+    if (!value) return "Time not specified";
+
+    const date = new Date(value);
+
+    if (isNaN(date.getTime())) return "Time not specified";
+
+    return new Intl.DateTimeFormat("en-ZA", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Johannesburg"
+    }).format(date);
+}
+
+async function loadCalendarBookings() {
+    const grid = el("calendar-grid");
+
+    grid.innerHTML = "<p>Loading appointments...</p>";
+
+    const { data, error } = await supabaseClient
+        .from("mechanic_bookings")
+        .select(`
+            id,
+            mechanic_id,
+            customer_name,
+            customer_phone,
+            vehicle,
+            service_required,
+            agreed_price,
+            booking_date,
+            start_time,
+            end_time,
+            status,
+            notes
+        `)
+        .eq("mechanic_id", business.id)
+        .order("start_time", { ascending: true });
+
+    if (error) {
+        console.error("Calendar loading error:", error);
+        grid.innerHTML =
+            '<p class="empty-note">Could not load bookings. Check your Supabase permissions.</p>';
+        return;
+    }
+
+    calendarBookings = data || [];
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+
+    el("calendar-month").textContent =
+        new Intl.DateTimeFormat("en-ZA", {
+            month: "long",
+            year: "numeric"
+        }).format(calendarMonth);
+
+    const firstDay = new Date(year, month, 1);
+
+    // Monday-first calendar
+    const mondayOffset = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    let html = weekdays.map(day =>
+        `<div class="calendar-weekday">${day}</div>`
+    ).join("");
+
+    for (let i = 0; i < mondayOffset; i++) {
+        html += '<div class="calendar-day empty"></div>';
+    }
+
+    const today = localDateKey(new Date());
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const key = localDateKey(date);
+
+        const count = calendarBookings.filter(booking =>
+            booking.booking_date === key &&
+            booking.status !== "Cancelled"
+        ).length;
+
+        const classes = [
+            "calendar-day",
+            key === today ? "today" : "",
+            key === selectedCalendarDate ? "selected" : ""
+        ].filter(Boolean).join(" ");
+
+        html += `
+            <button type="button"
+                class="${classes}"
+                data-calendar-date="${key}"
+                aria-label="${key}, ${count} appointments"
+                aria-pressed="${key === selectedCalendarDate}">
+                <span class="calendar-day-number">${day}</span>
+                ${count ? `<span class="calendar-dot"></span>` : ""}
+            </button>
+        `;
+    }
+
+    el("calendar-grid").innerHTML = html;
+    renderSelectedDay();
+}
+
+function renderSelectedDay() {
+    const date = selectedCalendarDate;
+
+    const parsedDate = new Date(date + "T12:00:00");
+
+    el("calendar-selected-date").textContent =
+        new Intl.DateTimeFormat("en-ZA", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        }).format(parsedDate);
+
+    const bookings = calendarBookings.filter(booking =>
+        booking.booking_date === date &&
+        booking.status !== "Cancelled"
+    );
+
+    const container = el("calendar-day-bookings");
+
+    if (!bookings.length) {
+        container.innerHTML =
+            '<p class="empty-note">No appointments scheduled for this date.</p>';
+        return;
+    }
+
+    container.innerHTML = bookings.map(booking => {
+        const completed = booking.status === "Completed";
+
+        const time = booking.start_time
+            ? displayBookingTime(booking.start_time)
+            : "Time not specified";
+
+        const endTime = booking.end_time
+            ? displayBookingTime(booking.end_time)
+            : "";
+
+        return `
+            <div class="calendar-appointment ${completed ? "completed" : ""}">
+                <strong>${esc(booking.customer_name || "Customer")}</strong>
+                <span class="calendar-status">${esc(booking.status || "Unknown")}</span>
+
+                <p><strong>Time:</strong> ${esc(time)}${endTime ? " – " + esc(endTime) : ""}</p>
+                <p><strong>Vehicle:</strong> ${esc(booking.vehicle || "Not specified")}</p>
+                <p><strong>Service:</strong> ${esc(booking.service_required || "Not specified")}</p>
+                <p><strong>Phone:</strong> ${esc(booking.customer_phone || "Not provided")}</p>
+                <p><strong>Price:</strong> ${esc(money(booking.agreed_price || 0))}</p>
+                ${booking.notes ? `<p><strong>Notes:</strong> ${esc(booking.notes)}</p>` : ""}
+            </div>
+        `;
+    }).join("");
+}
+
+// Select a date in the calendar
+el("calendar-grid").addEventListener("click", event => {
+    const button = event.target.closest("[data-calendar-date]");
+
+    if (!button) return;
+
+    selectedCalendarDate = button.dataset.calendarDate;
+    renderCalendar();
+});
+
+// Previous month
+el("calendar-prev").addEventListener("click", () => {
+    calendarMonth = new Date(
+        calendarMonth.getFullYear(),
+        calendarMonth.getMonth() - 1,
+        1
+    );
+    renderCalendar();
+});
+
+// Next month
+el("calendar-next").addEventListener("click", () => {
+    calendarMonth = new Date(
+        calendarMonth.getFullYear(),
+        calendarMonth.getMonth() + 1,
+        1
+    );
+    renderCalendar();
+});
 
 /* ---------- WIRING ---------- */
 
