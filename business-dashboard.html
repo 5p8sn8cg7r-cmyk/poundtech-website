@@ -1604,6 +1604,71 @@ el("calendar-day-bookings").addEventListener("click", async (event) => {
 
     alert("Booking rescheduled successfully!");
 });
+    
+/* ---------- CANCEL BOOKINGS ---------- */
+
+el("calendar-day-bookings").addEventListener("click", async (event) => {
+    const button = event.target.closest(".cancel-booking");
+
+    if (!button) return;
+
+    const bookingId = button.dataset.bookingId;
+    const booking = calendarBookings.find(item => item.id === bookingId);
+
+    if (!booking) {
+        alert("Could not find this booking. Refresh the dashboard and try again.");
+        return;
+    }
+
+    if (booking.status === "Cancelled" || booking.status === "Completed") {
+        alert("This booking is already cancelled or completed.");
+        return;
+    }
+
+    const confirmed = confirm(
+        `Cancel the booking for ${booking.customer_name || "this customer"}? This action will update the booking in PoundTech.`
+    );
+
+    if (!confirmed) return;
+
+    button.disabled = true;
+    button.textContent = "Cancelling...";
+
+    const { data, error } = await supabaseClient
+        .from("mechanic_bookings")
+        .update({
+            status: "Cancelled",
+            cancelled_at: new Date().toISOString()
+        })
+        .eq("id", bookingId)
+        .eq("mechanic_id", business.id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Booking cancellation failed:", error);
+        alert("Could not cancel the booking. Check the browser console for details.");
+        button.disabled = false;
+        button.textContent = "Cancel booking";
+        return;
+    }
+
+    const index = calendarBookings.findIndex(item => item.id === bookingId);
+
+    if (index !== -1) {
+        calendarBookings[index] = {
+            ...calendarBookings[index],
+            ...data
+        };
+    }
+
+    renderCalendar();
+
+    // Refresh the statistics after cancellation.
+    await loadBusinessStats();
+
+    alert("Booking cancelled successfully.");
+});
 
 /* ---------- WIRING ---------- */
 
