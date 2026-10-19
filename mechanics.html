@@ -1,154 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find a Mechanic | PoundTech</title>
+<link rel="stylesheet" href="site.css">
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
 
-    <title>Find a Mechanic | PoundTech</title>
+.page-main { max-width: 1100px; }
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+.search-card {
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 26px;
+}
 
-    <style>
+.search-card input {
+    margin-bottom: 14px;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-        }
+.chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
-        header {
-            background: #000;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
+.chip {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
 
-        header span {
-            color: red;
-        }
+.chip:hover { border-color: #e00000; }
 
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+.chip.active {
+    background: #e00000;
+    border-color: #e00000;
+    color: white;
+    font-weight: bold;
+}
 
-        .search-box {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
 
-        .search-box input {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 13px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-        }
+.biz {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+}
 
-        .mechanic-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
+.biz-top {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
 
-        .mechanic-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-        }
+.tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: bold;
+    background: #f4f5f7;
+    color: #444;
+}
 
-        .mechanic-card h2 {
-            margin-top: 0;
-        }
+.tag-ok   { background: #e6f4ea; color: #16803c; }
+.tag-warn { background: #fff4e0; color: #8a5a00; }
+.tag-off  { background: #f0f0f0; color: #666; }
 
-        .service-area {
-            color: #666;
-        }
+.biz h2 { font-size: 20px; margin-bottom: 4px; }
 
-        .status {
-            display: inline-block;
-            background: #e8f7e8;
-            color: #168016;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
+.biz h2 a { color: #111; text-decoration: none; }
+.biz h2 a:hover { color: #e00000; }
 
-        .quote-button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 15px;
-            background: #e00000;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-        }
+.rating { font-size: 14px; color: #333; margin-bottom: 4px; }
+.rating .star { color: #e0a000; }
 
-        .quote-button:hover {
-            background: #b00000;
-        }
+.area { font-size: 14px; color: #666; }
 
-        .empty {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-        }
+.desc { font-size: 14px; color: #444; margin-top: 10px; }
 
-    </style>
+.services {
+    margin-top: 16px;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+}
 
+.services h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.svc {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f3f3f3;
+    font-size: 14px;
+}
+
+.svc:last-child { border-bottom: none; }
+
+.svc-name { color: #111; }
+.svc-name small { display: block; color: #777; font-size: 12px; }
+.svc-price { font-weight: bold; white-space: nowrap; text-align: right; }
+
+.legacy-services { font-size: 14px; color: #444; }
+
+details { margin-top: 6px; font-size: 14px; }
+
+summary {
+    cursor: pointer;
+    color: #e00000;
+    font-weight: bold;
+    font-size: 13px;
+    padding: 4px 0;
+}
+
+.hours {
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.hours-line { margin-bottom: 4px; }
+
+.hours-line strong { color: #111; }
+
+.week {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #444;
+}
+
+.week div {
+    display: flex;
+    justify-content: space-between;
+    max-width: 240px;
+    padding: 2px 0;
+}
+
+.biz .btn {
+    margin-top: auto;
+}
+
+.biz-actions { margin-top: 18px; padding-top: 4px; }
+
+.empty {
+    grid-column: 1 / -1;
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    color: #555;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+}
+
+</style>
 </head>
 
 <body>
 
-<header>
-
-    <h2>
-        POUND<span>TECH</span>
-    </h2>
-
+<header class="site-header">
+    <a class="logo" href="index.html">POUND<span>TECH</span></a>
+    <a class="back" href="index.html">&larr; Back to marketplace</a>
 </header>
 
-
-<div class="container">
-
+<section class="page-hero">
     <h1>Find a Mechanic</h1>
+    <p>Mechanics, car washes and detailers across South Africa.</p>
+</section>
 
-    <p>
-        Find automotive professionals in your area.
-    </p>
+<main class="page-main">
 
+    <div class="search-card">
 
-    <div class="search-box">
-
+        <label for="mechanic-search" class="sr-only" style="position:absolute;left:-9999px;">Search</label>
         <input
             type="text"
             id="mechanic-search"
             placeholder="Search by business, service or area..."
-            oninput="filterMechanics()"
+            autocomplete="off"
         >
 
+        <div class="chips" id="type-chips">
+            <button class="chip active" data-type="all">All</button>
+            <button class="chip" data-type="mechanic">Mechanics</button>
+            <button class="chip" data-type="car_wash">Car washes</button>
+            <button class="chip" data-type="detailer">Detailing</button>
+        </div>
+
     </div>
 
-
-    <div
-        id="mechanics-container"
-        class="mechanic-grid"
-    >
-        Loading mechanics...
+    <div id="mechanics-container" class="grid">
+        <div class="empty">Loading…</div>
     </div>
 
-</div>
+</main>
 
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
@@ -159,204 +241,380 @@ const SUPABASE_KEY =
     "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
 const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+
+const TYPE_LABELS = {
+    mechanic: "Mechanic",
+    car_wash: "Car wash",
+    detailer: "Detailing"
+};
+
+const MAX_SERVICES_SHOWN = 4;
+
+// Display order Monday first. Database: 0 = Sunday ... 6 = Saturday.
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 let allMechanics = [];
+let servicesByBusiness = {};
+let hoursByBusiness = {};
+let ratingsByBusiness = {};
+let currentType = "all";
 
+
+/* ---------- helpers ---------- */
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function money(value) {
+    const n = Number(value);
+    const digits = Number.isInteger(n) ? 0 : 2;
+
+    return "R" + n.toLocaleString("en-ZA", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+    });
+}
+
+function durationLabel(minutes) {
+    const m = Number(minutes);
+
+    if (m < 60) { return m + " min"; }
+
+    const h = Math.floor(m / 60);
+    const rest = m % 60;
+
+    return rest ? h + " h " + rest + " min" : h + " h";
+}
+
+function timeText(value) {
+    return String(value).slice(0, 5);
+}
+
+function sastNow() {
+
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Africa/Johannesburg",
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23"
+    }).formatToParts(new Date());
+
+    const get = type => parts.find(p => p.type === type).value;
+
+    const dayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+    return {
+        day: dayMap[get("weekday")],
+        time: get("hour") + ":" + get("minute")
+    };
+}
+
+function group(rows, key) {
+
+    const result = {};
+
+    (rows || []).forEach(row => {
+        (result[row[key]] = result[row[key]] || []).push(row);
+    });
+
+    return result;
+}
+
+
+/* ---------- loading ---------- */
 
 async function loadMechanics() {
 
-    const container =
-        document.getElementById(
-            "mechanics-container"
-        );
+    const container = document.getElementById("mechanics-container");
 
-
-    const { data: mechanics, error } =
-        await supabaseClient
+    // Only the fields customers need to see. Contact details are not loaded here.
+    const mechanicsQuery = supabaseClient
         .from("mechanics")
-        .select("*")
+        .select("id, business_name, business_type, service_area, services, description, created_at")
         .eq("status", "Approved")
-        .order("created_at", {
-            ascending: false
-        });
+        .order("created_at", { ascending: false });
 
+    const servicesQuery = supabaseClient
+        .from("business_services")
+        .select("id, mechanic_id, name, description, price, duration_minutes, booking_mode, sort_order")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
 
-    if (error) {
+    const hoursQuery = supabaseClient
+        .from("business_hours")
+        .select("mechanic_id, day_of_week, is_open, open_time, close_time");
 
-        console.error(error);
+    const reviewsQuery = supabaseClient
+        .from("mechanic_reviews")
+        .select("mechanic_id, rating");
 
-        container.innerHTML =
-            "<div class='empty'>Unable to load mechanics.</div>";
+    const [mechanicsRes, servicesRes, hoursRes, reviewsRes] =
+        await Promise.all([mechanicsQuery, servicesQuery, hoursQuery, reviewsQuery]);
 
+    if (mechanicsRes.error) {
+        console.error(mechanicsRes.error);
+        container.innerHTML = '<div class="empty">We couldn\'t load businesses right now. Please try again shortly.</div>';
         return;
     }
 
+    [servicesRes, hoursRes, reviewsRes].forEach(res => {
+        if (res.error) { console.error(res.error); }
+    });
 
-    allMechanics = mechanics || [];
+    allMechanics = mechanicsRes.data || [];
+    servicesByBusiness = group(servicesRes.data, "mechanic_id");
+    hoursByBusiness = group(hoursRes.data, "mechanic_id");
 
-const { data: reviews, error: reviewsError } =
-    await supabaseClient
-    .from("mechanic_reviews")
-    .select("mechanic_id, rating");
+    ratingsByBusiness = {};
 
-if (reviewsError) {
-    console.error(reviewsError);
+    (reviewsRes.data || []).forEach(review => {
+        const entry = ratingsByBusiness[review.mechanic_id] || { sum: 0, count: 0 };
+        entry.sum += Number(review.rating);
+        entry.count += 1;
+        ratingsByBusiness[review.mechanic_id] = entry;
+    });
+
+    applyFilters();
 }
 
-window.mechanicReviews = reviews || [];
 
-displayMechanics(allMechanics);
+/* ---------- rendering ---------- */
 
+function hoursToday(rows) {
+
+    if (!rows || rows.length === 0) { return ""; }
+
+    const now = sastNow();
+    const today = rows.find(r => r.day_of_week === now.day);
+
+    if (!today) { return ""; }
+
+    if (!today.is_open) {
+        return '<strong>Closed today</strong>';
+    }
+
+    const open = timeText(today.open_time);
+    const close = timeText(today.close_time);
+
+    if (now.time < open) {
+        return '<strong>Opens today</strong> at ' + esc(open);
+    }
+
+    if (now.time < close) {
+        return '<strong>Open now</strong> until ' + esc(close);
+    }
+
+    return '<strong>Closed for today</strong>';
 }
 
+function weekList(rows) {
 
-function displayMechanics(mechanics) {
+    if (!rows || rows.length === 0) { return ""; }
 
-    const reviews =
-        window.mechanicReviews || [];
+    const byDay = {};
+    rows.forEach(r => { byDay[r.day_of_week] = r; });
 
-    const container =
-        document.getElementById("mechanics-container");
+    return DAY_ORDER.map(day => {
 
-    if (!mechanics || mechanics.length === 0) {
+        const row = byDay[day];
 
-        container.innerHTML =
-            "<div class='empty'>No mechanics found.</div>";
+        const text = !row ? "—" :
+            row.is_open ? esc(timeText(row.open_time)) + " – " + esc(timeText(row.close_time)) :
+            "Closed";
 
+        return '<div><span>' + esc(DAY_NAMES[day]) + '</span><span>' + text + '</span></div>';
+
+    }).join("");
+}
+
+function serviceRow(service) {
+
+    return `
+        <div class="svc">
+            <div class="svc-name">
+                ${esc(service.name)}
+                <small>${esc(durationLabel(service.duration_minutes))}</small>
+            </div>
+            <div class="svc-price">${esc(money(service.price))}</div>
+        </div>`;
+}
+
+function businessCard(mechanic) {
+
+    const services = servicesByBusiness[mechanic.id] || [];
+    const hours = hoursByBusiness[mechanic.id] || [];
+    const rating = ratingsByBusiness[mechanic.id];
+
+    const hasInstant = services.some(s => s.booking_mode === "instant");
+
+    const ratingHtml = rating
+        ? '<span class="star">★</span> <strong>' + (rating.sum / rating.count).toFixed(1) + '</strong> (' +
+          rating.count + ' review' + (rating.count === 1 ? "" : "s") + ')'
+        : "No ratings yet";
+
+    let servicesHtml;
+
+    if (services.length > 0) {
+
+        const shown = services.slice(0, MAX_SERVICES_SHOWN).map(serviceRow).join("");
+        const rest = services.slice(MAX_SERVICES_SHOWN);
+
+        servicesHtml = `
+            <div class="services">
+                <h3>Services</h3>
+                ${shown}
+                ${rest.length ? `
+                    <details>
+                        <summary>Show ${rest.length} more service${rest.length === 1 ? "" : "s"}</summary>
+                        ${rest.map(serviceRow).join("")}
+                    </details>` : ""}
+            </div>`;
+
+    } else if (mechanic.services) {
+
+        servicesHtml = `
+            <div class="services">
+                <h3>Services</h3>
+                <div class="legacy-services">${esc(mechanic.services)}</div>
+            </div>`;
+
+    } else {
+        servicesHtml = "";
+    }
+
+    const today = hoursToday(hours);
+
+    const hoursHtml = hours.length === 0 ? "" : `
+        <div class="hours">
+            ${today ? '<div class="hours-line">' + today + '</div>' : ""}
+            <details>
+                <summary>Opening hours</summary>
+                <div class="week">${weekList(hours)}</div>
+            </details>
+        </div>`;
+
+    return `
+        <div class="biz">
+
+            <div class="biz-top">
+                <span class="tag">${esc(TYPE_LABELS[mechanic.business_type] || "Mechanic")}</span>
+                ${hasInstant ? '<span class="tag tag-ok">Instant booking</span>' : ""}
+            </div>
+
+            <h2>
+                <a href="mechanic-profile.html?id=${encodeURIComponent(mechanic.id)}">${esc(mechanic.business_name)}</a>
+            </h2>
+
+            <div class="rating">${ratingHtml}</div>
+
+            <div class="area">${esc(mechanic.service_area || "Service area not provided")}</div>
+
+            ${mechanic.description ? `<div class="desc">${esc(mechanic.description)}</div>` : ""}
+
+            ${servicesHtml}
+
+            ${hoursHtml}
+
+            <div class="biz-actions">
+                <button class="btn" data-action="quote" data-id="${esc(mechanic.id)}">Request a Quote</button>
+            </div>
+
+        </div>`;
+}
+
+function displayMechanics(list) {
+
+    const container = document.getElementById("mechanics-container");
+
+    if (!list || list.length === 0) {
+        container.innerHTML = '<div class="empty">No businesses match your search.</div>';
         return;
     }
 
-    container.innerHTML =
-        mechanics.map(mechanic => {
-
-            const mechanicReviews =
-                reviews.filter(review =>
-                    review.mechanic_id === mechanic.id
-                );
-
-            const reviewCount =
-                mechanicReviews.length;
-
-            const averageRating =
-                reviewCount > 0
-                    ? (
-                        mechanicReviews.reduce(
-                            (sum, review) =>
-                                sum + review.rating,
-                            0
-                        ) / reviewCount
-                      ).toFixed(1)
-                    : "No ratings";
-
-            return `
-                <div class="mechanic-card">
-
-                    <span class="status">
-                        Approved
-                    </span>
-
-                  <h2>
-    <a
-        href="mechanic-profile.html?id=${mechanic.id}"
-        style="color:#111; text-decoration:none;"
-    >
-        ${mechanic.business_name}
-    </a>
-</h2>
-
-                    <p>
-                        ⭐ <strong>${averageRating}</strong>
-                        ${
-                            reviewCount > 0
-                                ? `(${reviewCount} review${reviewCount === 1 ? "" : "s"})`
-                                : ""
-                        }
-                    </p>
-
-                    <p class="service-area">
-                        📍
-                        ${mechanic.service_area || "Service area not provided"}
-                    </p>
-
-                    <p>
-                        <strong>Services:</strong><br>
-                        ${mechanic.services || "Services not provided"}
-                    </p>
-
-                    <p>
-                        ${mechanic.description || ""}
-                    </p>
-
-                    <button
-                        class="quote-button"
-                        onclick="requestQuote('${mechanic.id}')"
-                    >
-                        Request a Quote
-                    </button>
-
-                </div>
-            `;
-
-        }).join("");
+    container.innerHTML = list.map(businessCard).join("");
 }
-    
-function filterMechanics() {
-
-    const search =
-        document
-        .getElementById("mechanic-search")
-        .value
-        .toLowerCase();
 
 
-    const filtered =
-        allMechanics.filter(mechanic => {
+/* ---------- search & filter ---------- */
 
-            return (
+function applyFilters() {
 
-                (mechanic.business_name || "")
-                .toLowerCase()
-                .includes(search)
+    const search = document.getElementById("mechanic-search").value.trim().toLowerCase();
 
-                ||
+    const filtered = allMechanics.filter(mechanic => {
 
-                (mechanic.service_area || "")
-                .toLowerCase()
-                .includes(search)
+        const type = mechanic.business_type || "mechanic";
 
-                ||
+        if (currentType !== "all" && type !== currentType) {
+            return false;
+        }
 
-                (mechanic.services || "")
-                .toLowerCase()
-                .includes(search)
+        if (!search) {
+            return true;
+        }
 
-            );
+        const serviceNames = (servicesByBusiness[mechanic.id] || [])
+            .map(s => s.name)
+            .join(" ");
 
-        });
+        const haystack = [
+            mechanic.business_name,
+            mechanic.service_area,
+            mechanic.services,
+            serviceNames,
+            TYPE_LABELS[type]
+        ].join(" ").toLowerCase();
 
+        return haystack.includes(search);
+    });
 
     displayMechanics(filtered);
-
 }
 
 
-function requestQuote(mechanicId) {
+/* ---------- wiring ---------- */
 
-    window.location.href =
-        "request-quote.html?mechanic_id="
-        + mechanicId;
+document.getElementById("mechanic-search").addEventListener("input", applyFilters);
 
-}
+document.getElementById("type-chips").addEventListener("click", e => {
+
+    const chip = e.target.closest(".chip");
+
+    if (!chip) { return; }
+
+    currentType = chip.dataset.type;
+
+    document.querySelectorAll("#type-chips .chip").forEach(c => {
+        c.classList.toggle("active", c === chip);
+    });
+
+    applyFilters();
+});
+
+document.getElementById("mechanics-container").addEventListener("click", e => {
+
+    const button = e.target.closest("button[data-action='quote']");
+
+    if (button) {
+        window.location.href =
+            "request-quote.html?mechanic_id=" + encodeURIComponent(button.dataset.id);
+    }
+});
 
 loadMechanics();
 
 </script>
-<script src="nav.js"></script>
-</body>
 
+</body>
 </html>
