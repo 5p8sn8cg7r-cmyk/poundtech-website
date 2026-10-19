@@ -655,12 +655,10 @@ async function init() {
         return;
     }
 
-
 const { data, error } = await supabaseClient
     .from("mechanics")
     .select("*")
-    .eq("user_id", session.user.id)
-    .maybeSingle();
+    .eq("user_id", session.user.id);
 
 
     if (error) {
