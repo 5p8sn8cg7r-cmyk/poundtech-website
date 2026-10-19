@@ -1521,7 +1521,6 @@ el("calendar-day-bookings").addEventListener("click", async (event) => {
     alert("Booking status updated successfully!");
 });
 
-    
 /* ---------- RESCHEDULE BOOKINGS ---------- */
 
 el("calendar-day-bookings").addEventListener("click", async (event) => {
@@ -1532,6 +1531,11 @@ el("calendar-day-bookings").addEventListener("click", async (event) => {
     const bookingId = button.dataset.bookingId;
     const dateInput = document.getElementById(`booking-date-${bookingId}`);
     const timeInput = document.getElementById(`booking-time-${bookingId}`);
+
+    if (!dateInput || !timeInput) {
+        alert("Could not find the date or time fields. Refresh the dashboard and try again.");
+        return;
+    }
 
     const newDate = dateInput.value;
     const newTime = timeInput.value;
@@ -1561,89 +1565,80 @@ el("calendar-day-bookings").addEventListener("click", async (event) => {
         return;
     }
 
-    // Preserve the booking's existing duration where possible.
-    let durationMinutes = Number(booking.duration_minutes) || 0;
-
-    if (!durationMinutes && booking.start_time && booking.end_time) {
-        durationMinutes = Math.round(
-            (new Date(booking.end_time) - new Date(booking.start_time)) / 60000
-        );
-    }
-
-    if (!durationMinutes || durationMinutes <= 0) {
-        durationMinutes = 60;
-    }
-
-    const newEnd = new Date(
-        newStart.getTime() + durationMinutes * 60000
-    );
-
     button.disabled = true;
     button.textContent = "Saving...";
 
-    const { data, error } = await supabaseClient
-        .from("mechanic_bookings")
-        .update({
-            booking_date: newDate,
-            start_time: newStart.toISOString(),
-            end_time: newEnd.toISOString()
-        })
-        .eq("id", bookingId)
-        .eq("mechanic_id", business.id)
-        .select()
-        .single();
-
+    const { data: result, error } = await supabaseClient.rpc(
+        "reschedule_mechanic_booking",
+        {
+            p_booking_id: bookingId,
+            p_new_start: newStart.toISOString()
+        }
+    );
 
     if (error) {
         console.error("Rescheduling failed:", error);
 
+        const errorMessage = (error.message || "").toLowerCase();
 
-if (error) {
-    console.error("Rescheduling failed:", error);
+        if (
+            errorMessage.includes("capacity") ||
+            errorMessage.includes("slot") ||
+            errorMessage.includes("opening hours") ||
+            errorMessage.includes("notice period") ||
+            errorMessage.includes("advance booking") ||
+            errorMessage.includes("closed on the selected day") ||
+            errorMessage.includes("future") ||
+            errorMessage.includes("same day") ||
+            errorMessage.includes("time slots")
+        ) {
+            alert(
+                "This time slot is unavailable or doesn't meet the booking rules. " +
+                "Please choose another date or start time."
+            );
+        } else {
+            alert(
+                "Could not reschedule this booking. " +
+                (error.message || "Please try again.")
+            );
+        }
 
-    const errorMessage = (error.message || "").toLowerCase();
-
-    if (
-        error.code === "23P01" ||
-        errorMessage.includes("capacity") ||
-        errorMessage.includes("slot") ||
-        errorMessage.includes("booking end time")
-    ) {
-        alert(
-            "This time slot is unavailable or has reached booking capacity. " +
-            "Please choose another date or start time."
-        );
-    } else {
-        alert(
-            "Could not reschedule this booking. " +
-            (error.message || "Please try again.")
-        );
+        button.disabled = false;
+        button.textContent = "Save new date and time";
+        return;
     }
 
-    button.disabled = false;
-    button.textContent = "Save new date and time";
-    return;
-}
+    if (!result || !result.success) {
+        alert("The booking could not be rescheduled. Please try again.");
+        button.disabled = false;
+        button.textContent = "Save new date and time";
+        return;
+    }
 
-
+    const updatedBooking = {
+        id: result.booking_id,
+        booking_date: result.booking_date,
+        start_time: result.start_time,
+        end_time: result.end_time,
+        duration_minutes: result.duration_minutes
+    };
 
     const index = calendarBookings.findIndex(item => item.id === bookingId);
 
     if (index !== -1) {
         calendarBookings[index] = {
             ...calendarBookings[index],
-            ...data
+            ...updatedBooking
         };
     }
 
-    // Show the month containing the rescheduled appointment.
-    selectedCalendarDate = newDate;
-    calendarMonth = new Date(`${newDate}T12:00:00`);
+    selectedCalendarDate = result.booking_date;
+    calendarMonth = new Date(`${result.booking_date}T12:00:00`);
 
     renderCalendar();
 
     alert("Booking rescheduled successfully!");
-};
+});
     
 /* ---------- CANCEL BOOKINGS ---------- */
 
