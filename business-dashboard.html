@@ -1404,6 +1404,17 @@ ${booking.notes ? `<p><strong>Notes:</strong> ${esc(booking.notes)}</p>` : ""}
         data-booking-id="${booking.id}">
         Save new date and time
     </button>
+    
+${booking.status !== "Cancelled" && booking.status !== "Completed" ? `
+    <button
+        type="button"
+        class="btn btn-small cancel-booking"
+        data-booking-id="${booking.id}"
+        style="background:#b00020;color:white;margin-top:8px;">
+        Cancel booking
+    </button>
+` : ""}
+
 </div>
 
             </div>
