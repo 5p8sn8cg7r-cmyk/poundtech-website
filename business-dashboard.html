@@ -1496,6 +1496,104 @@ el("calendar-day-bookings").addEventListener("click", async (event) => {
     alert("Booking status updated successfully!");
 });
 
+    
+/* ---------- RESCHEDULE BOOKINGS ---------- */
+
+el("calendar-day-bookings").addEventListener("click", async (event) => {
+    const button = event.target.closest(".save-booking-reschedule");
+
+    if (!button) return;
+
+    const bookingId = button.dataset.bookingId;
+    const dateInput = document.getElementById(`booking-date-${bookingId}`);
+    const timeInput = document.getElementById(`booking-time-${bookingId}`);
+
+    const newDate = dateInput.value;
+    const newTime = timeInput.value;
+
+    if (!newDate || !newTime) {
+        alert("Please choose both a new date and start time.");
+        return;
+    }
+
+    const booking = calendarBookings.find(item => item.id === bookingId);
+
+    if (!booking) {
+        alert("Could not find this booking. Refresh the dashboard and try again.");
+        return;
+    }
+
+    if (booking.status === "Cancelled" || booking.status === "Completed") {
+        alert("Cancelled or completed bookings cannot be rescheduled.");
+        return;
+    }
+
+    // South Africa uses UTC+02:00 year-round.
+    const newStart = new Date(`${newDate}T${newTime}:00+02:00`);
+
+    if (isNaN(newStart.getTime())) {
+        alert("The selected date or time is invalid.");
+        return;
+    }
+
+    // Preserve the booking's existing duration where possible.
+    let durationMinutes = Number(booking.duration_minutes) || 0;
+
+    if (!durationMinutes && booking.start_time && booking.end_time) {
+        durationMinutes = Math.round(
+            (new Date(booking.end_time) - new Date(booking.start_time)) / 60000
+        );
+    }
+
+    if (!durationMinutes || durationMinutes <= 0) {
+        durationMinutes = 60;
+    }
+
+    const newEnd = new Date(
+        newStart.getTime() + durationMinutes * 60000
+    );
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+
+    const { data, error } = await supabaseClient
+        .from("mechanic_bookings")
+        .update({
+            booking_date: newDate,
+            start_time: newStart.toISOString(),
+            end_time: newEnd.toISOString()
+        })
+        .eq("id", bookingId)
+        .eq("mechanic_id", business.id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Rescheduling failed:", error);
+        alert("Could not reschedule this booking. Check the browser console for details.");
+        button.disabled = false;
+        button.textContent = "Save new date and time";
+        return;
+    }
+
+    const index = calendarBookings.findIndex(item => item.id === bookingId);
+
+    if (index !== -1) {
+        calendarBookings[index] = {
+            ...calendarBookings[index],
+            ...data
+        };
+    }
+
+    // Show the month containing the rescheduled appointment.
+    selectedCalendarDate = newDate;
+    calendarMonth = new Date(`${newDate}T12:00:00`);
+
+    renderCalendar();
+
+    alert("Booking rescheduled successfully!");
+});
+
 /* ---------- WIRING ---------- */
 
 el("login-btn").addEventListener("click", signIn);
