@@ -1368,7 +1368,7 @@ ${booking.notes ? `<p><strong>Notes:</strong> ${esc(booking.notes)}</p>` : ""}
     class="btn btn-dark btn-small save-booking-status"
     data-booking-id="${booking.id}">
     Save status
-</button
+</button>
 
 <div class="booking-reschedule">
     <label for="booking-date-${booking.id}">
@@ -1579,13 +1579,27 @@ el("calendar-day-bookings").addEventListener("click", async (event) => {
         .select()
         .single();
 
+
     if (error) {
         console.error("Rescheduling failed:", error);
-        alert("Could not reschedule this booking. Check the browser console for details.");
+
+        if (error.code === "23P01") {
+            alert(
+                "This time slot overlaps with another active booking. " +
+                "Please choose a different date or start time."
+            );
+        } else {
+            alert(
+                "Could not reschedule this booking. " +
+                (error.message || "Please try again.")
+            );
+        }
+
         button.disabled = false;
         button.textContent = "Save new date and time";
         return;
     }
+
 
     const index = calendarBookings.findIndex(item => item.id === bookingId);
 
