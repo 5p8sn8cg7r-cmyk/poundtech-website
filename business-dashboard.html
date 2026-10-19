@@ -1370,6 +1370,42 @@ ${booking.notes ? `<p><strong>Notes:</strong> ${esc(booking.notes)}</p>` : ""}
     Save status
 </button
 
+<div class="booking-reschedule">
+    <label for="booking-date-${booking.id}">
+        <strong>New date</strong>
+    </label>
+    <input
+        type="date"
+        id="booking-date-${booking.id}"
+        class="booking-new-date"
+        data-booking-id="${booking.id}"
+        value="${esc(booking.booking_date || "")}"
+    >
+
+    <label for="booking-time-${booking.id}">
+        <strong>New start time</strong>
+    </label>
+    <input
+        type="time"
+        id="booking-time-${booking.id}"
+        class="booking-new-time"
+        data-booking-id="${booking.id}"
+        value="${booking.start_time ? new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Africa/Johannesburg',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23'
+        }).format(new Date(booking.start_time)) : ''}"
+    >
+
+    <button
+        type="button"
+        class="btn btn-dark btn-small save-booking-reschedule"
+        data-booking-id="${booking.id}">
+        Save new date and time
+    </button>
+</div>
+
             </div>
         `;
     }).join("");
