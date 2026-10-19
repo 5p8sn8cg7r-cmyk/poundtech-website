@@ -123,7 +123,23 @@
 
 .svc-name { color: #111; }
 .svc-name small { display: block; color: #777; font-size: 12px; }
-.svc-price { font-weight: bold; white-space: nowrap; text-align: right; }
+.svc-price { font-weight: bold; white-space: nowrap; }
+
+.svc-side { text-align: right; flex-shrink: 0; }
+
+.svc-book {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 5px 14px;
+    border: 1px solid #e00000;
+    border-radius: 6px;
+    color: #e00000;
+    font-size: 12px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.svc-book:hover { background: #e00000; color: white; }
 
 .legacy-services { font-size: 14px; color: #444; }
 
@@ -446,7 +462,13 @@ function serviceRow(service) {
                 ${esc(service.name)}
                 <small>${esc(durationLabel(service.duration_minutes))}</small>
             </div>
-            <div class="svc-price">${esc(money(service.price))}</div>
+            <div class="svc-side">
+                <div class="svc-price">${esc(money(service.price))}</div>
+                <a class="svc-book"
+                   href="book.html?mechanic_id=${encodeURIComponent(service.mechanic_id)}&service_id=${encodeURIComponent(service.id)}">
+                    ${service.booking_mode === "instant" ? "Book" : "Request"}
+                </a>
+            </div>
         </div>`;
 }
 
