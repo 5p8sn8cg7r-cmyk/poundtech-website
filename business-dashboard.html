@@ -1214,20 +1214,21 @@ async function loadCalendarBookings() {
 
     const { data, error } = await supabaseClient
         .from("mechanic_bookings")
-        .select(`
-            id,
-            mechanic_id,
-            customer_name,
-            customer_phone,
-            vehicle,
-            service_required,
-            agreed_price,
-            booking_date,
-            start_time,
-            end_time,
-            status,
-            notes
-        `)
+.select(`
+    id,
+    mechanic_id,
+    customer_name,
+    customer_phone,
+    vehicle,
+    service_required,
+    agreed_price,
+    booking_date,
+    start_time,
+    end_time,
+    duration_minutes,
+    status,
+    notes
+`)
         .eq("mechanic_id", business.id)
         .order("start_time", { ascending: true });
 
@@ -1583,22 +1584,34 @@ el("calendar-day-bookings").addEventListener("click", async (event) => {
     if (error) {
         console.error("Rescheduling failed:", error);
 
-        if (error.code === "23P01") {
-            alert(
-                "This time slot overlaps with another active booking. " +
-                "Please choose a different date or start time."
-            );
-        } else {
-            alert(
-                "Could not reschedule this booking. " +
-                (error.message || "Please try again.")
-            );
-        }
 
-        button.disabled = false;
-        button.textContent = "Save new date and time";
-        return;
+if (error) {
+    console.error("Rescheduling failed:", error);
+
+    const errorMessage = (error.message || "").toLowerCase();
+
+    if (
+        error.code === "23P01" ||
+        errorMessage.includes("capacity") ||
+        errorMessage.includes("slot") ||
+        errorMessage.includes("booking end time")
+    ) {
+        alert(
+            "This time slot is unavailable or has reached booking capacity. " +
+            "Please choose another date or start time."
+        );
+    } else {
+        alert(
+            "Could not reschedule this booking. " +
+            (error.message || "Please try again.")
+        );
     }
+
+    button.disabled = false;
+    button.textContent = "Save new date and time";
+    return;
+}
+
 
 
     const index = calendarBookings.findIndex(item => item.id === bookingId);
