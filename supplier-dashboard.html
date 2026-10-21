@@ -156,6 +156,15 @@ Manage your products and stock below.
 Add Product
 </button>
     
+<p id="photo-status" style="color:#555; margin-top:14px;"></p>
+
+<input
+    type="file"
+    id="replace-photo-input"
+    accept="image/*"
+    style="display:none;"
+>
+
 <div id="supplier-products" style="margin-top:20px;">
     <p>Loading your products...</p>
 </div>
@@ -210,12 +219,28 @@ Add Product
         style="display:block; margin-bottom:10px; padding:10px; width:100%;"
     >
 
+    <label for="product-image-file"
+           style="display:block; font-weight:bold; margin-bottom:6px;">
+        Product photo
+    </label>
+
     <input
-        type="text"
-        id="product-image"
-        placeholder="Image URL"
-        style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+        type="file"
+        id="product-image-file"
+        accept="image/*"
+        style="display:block; margin-bottom:8px; width:100%;"
     >
+
+    <img
+        id="product-image-preview"
+        alt="Photo preview"
+        style="display:none; max-width:220px; max-height:220px; border-radius:8px; margin-bottom:8px; border:1px solid #ddd; object-fit:cover;"
+    >
+
+    <p style="color:#777; font-size:13px; margin:0 0 12px;">
+        Choose a photo from your phone's gallery, take one with your camera, or pick a file.
+        It is resized automatically.
+    </p>
 
     <input
         type="text"
@@ -274,6 +299,198 @@ supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+
+// Anything that came from a customer or supplier is escaped before it goes on the page.
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+
+/* ---------- PRODUCT PHOTOS ---------- */
+
+const PRODUCT_IMAGE_BUCKET = "product-images";
+const MAX_IMAGE_SIDE = 1200;
+const MAX_IMAGE_INPUT_BYTES = 15 * 1024 * 1024;
+const MAX_IMAGE_OUTPUT_BYTES = 2 * 1024 * 1024;
+
+function uniqueName() {
+    if (window.crypto && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return Date.now() + "-" + Math.random().toString(36).slice(2);
+}
+
+async function readImage(file) {
+
+    if (window.createImageBitmap) {
+        try {
+            return await createImageBitmap(file, { imageOrientation: "from-image" });
+        } catch (e) {
+            // fall through to the older method
+        }
+    }
+
+    return await new Promise(function (resolve, reject) {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = function () {
+            URL.revokeObjectURL(url);
+            reject(new Error("That file could not be read as a photo."));
+        };
+        img.src = url;
+    });
+}
+
+// Shrinks the photo in the browser so uploads are quick and storage stays small.
+async function resizeImage(file) {
+
+    if (!file.type || file.type.indexOf("image/") !== 0) {
+        throw new Error("Please choose a photo (JPG, PNG or WebP).");
+    }
+
+    if (file.size > MAX_IMAGE_INPUT_BYTES) {
+        throw new Error("That photo is too large. Please choose one under 15 MB.");
+    }
+
+    const img = await readImage(file);
+
+    const width = img.width || img.naturalWidth;
+    const height = img.height || img.naturalHeight;
+
+    const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(width, height));
+    const outWidth = Math.max(1, Math.round(width * scale));
+    const outHeight = Math.max(1, Math.round(height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = outWidth;
+    canvas.height = outHeight;
+
+    const ctx = canvas.getContext("2d");
+
+    // White behind transparent PNGs.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, outWidth, outHeight);
+    ctx.drawImage(img, 0, 0, outWidth, outHeight);
+
+    if (img.close) { img.close(); }
+
+    function toBlob(quality) {
+        return new Promise(function (resolve) {
+            canvas.toBlob(resolve, "image/jpeg", quality);
+        });
+    }
+
+    let blob = await toBlob(0.82);
+
+    if (blob && blob.size > MAX_IMAGE_OUTPUT_BYTES) {
+        blob = await toBlob(0.6);
+    }
+
+    if (!blob || blob.size > MAX_IMAGE_OUTPUT_BYTES) {
+        throw new Error("That photo could not be made small enough. Please try another.");
+    }
+
+    return blob;
+}
+
+async function uploadProductImage(file, supplierId) {
+
+    const blob = await resizeImage(file);
+
+    // Each supplier writes only inside their own folder.
+    const path = supplierId + "/" + uniqueName() + ".jpg";
+
+    const { error } = await supabaseClient.storage
+        .from(PRODUCT_IMAGE_BUCKET)
+        .upload(path, blob, {
+            contentType: "image/jpeg",
+            cacheControl: "31536000",
+            upsert: false
+        });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    const { data } = supabaseClient.storage
+        .from(PRODUCT_IMAGE_BUCKET)
+        .getPublicUrl(path);
+
+    return data.publicUrl;
+}
+
+// Returns the storage path for one of our own photo URLs, otherwise null.
+function imagePathFromUrl(url) {
+
+    const marker = "/storage/v1/object/public/" + PRODUCT_IMAGE_BUCKET + "/";
+    const text = String(url || "");
+    const index = text.indexOf(marker);
+
+    if (index === -1) { return null; }
+
+    return decodeURIComponent(text.slice(index + marker.length).split("?")[0]);
+}
+
+async function removeStoredImage(url) {
+
+    const path = imagePathFromUrl(url);
+
+    if (!path) { return; }
+
+    const { error } = await supabaseClient.storage
+        .from(PRODUCT_IMAGE_BUCKET)
+        .remove([path]);
+
+    if (error) {
+        console.error("Could not remove old photo:", error);
+    }
+}
+
+async function getSupplierId() {
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (!user) { return null; }
+
+    const { data: supplier } = await supabaseClient
+        .from("suppliers")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    return supplier ? supplier.id : null;
+}
+
+// Live preview in the Add Product form.
+document.addEventListener("change", function (e) {
+
+    if (!e.target || e.target.id !== "product-image-file") { return; }
+
+    const preview = document.getElementById("product-image-preview");
+    const file = e.target.files && e.target.files[0];
+
+    if (preview.dataset.url) {
+        URL.revokeObjectURL(preview.dataset.url);
+        preview.dataset.url = "";
+    }
+
+    if (!file) {
+        preview.style.display = "none";
+        preview.removeAttribute("src");
+        return;
+    }
+
+    const url = URL.createObjectURL(file);
+    preview.dataset.url = url;
+    preview.src = url;
+    preview.style.display = "block";
+});
 
 (async function guardSupplierPage() {
 
@@ -409,14 +626,30 @@ function hideAddProductForm() {
     document.getElementById("add-product-form").style.display = "none";
 }
 
+let savingProduct = false;
+
+// Stops a double tap from saving the same product twice while a photo uploads.
 async function addProduct() {
+
+    if (savingProduct) { return; }
+
+    savingProduct = true;
+
+    try {
+        await addProductInner();
+    } finally {
+        savingProduct = false;
+    }
+}
+
+async function addProductInner() {
 
     const name = document.getElementById("product-name").value;
     const category = document.getElementById("product-category").value;
     const description = document.getElementById("product-description").value;
     const price = document.getElementById("product-price").value;
     const stock = document.getElementById("product-stock").value;
-    const image_url = document.getElementById("product-image").value;
+    const imageFile = document.getElementById("product-image-file").files[0] || null;
     const vehicle_compatibility = document.getElementById("vehicle-compatibility").value;
 
     const message = document.getElementById("product-message");
@@ -448,6 +681,23 @@ async function addProduct() {
         return;
     }
 
+    let image_url = "";
+
+    if (imageFile) {
+
+        message.textContent = "Uploading photo...";
+
+        try {
+            image_url = await uploadProductImage(imageFile, supplier.id);
+        } catch (uploadError) {
+            console.error(uploadError);
+            message.textContent = "Photo upload failed: " + uploadError.message;
+            return;
+        }
+
+        message.textContent = "Saving product...";
+    }
+
     const { error } = await supabaseClient
         .from("products")
         .insert([{
@@ -475,8 +725,12 @@ async function addProduct() {
     document.getElementById("product-description").value = "";
     document.getElementById("product-price").value = "";
     document.getElementById("product-stock").value = "";
-    document.getElementById("product-image").value = "";
+    document.getElementById("product-image-file").value = "";
+    document.getElementById("product-image-preview").style.display = "none";
+    document.getElementById("product-image-preview").removeAttribute("src");
     document.getElementById("vehicle-compatibility").value = "";
+
+    loadSupplierProducts();
 }
 
     async function loadSupplierProducts() {
@@ -529,40 +783,137 @@ async function addProduct() {
             padding:15px;
             margin-bottom:15px;
             border-radius:8px;
+            display:flex;
+            gap:15px;
+            align-items:flex-start;
+            flex-wrap:wrap;
         ">
-            <h3>${product.name}</h3>
 
-            <p>
-                <strong>Category:</strong>
-                ${product.category}
-            </p>
+            <div style="
+                width:90px;
+                height:90px;
+                border-radius:8px;
+                background:#eee;
+                overflow:hidden;
+                flex-shrink:0;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#888;
+                font-size:12px;
+            ">
+                ${
+                    product.image_url
+                    ? '<img src="' + esc(product.image_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
+                    : "No photo"
+                }
+            </div>
 
-            <p>
-                <strong>Price:</strong>
-                R${product.price}
-            </p>
+            <div style="flex:1; min-width:200px;">
 
-            <p>
-                <strong>Stock:</strong>
-                ${product.stock}
-            </p>
+                <h3 style="margin-top:0;">${esc(product.name)}</h3>
 
-            <button onclick="editProduct('${product.id}')">
-    Edit Product
-</button>
+                <p>
+                    <strong>Category:</strong>
+                    ${esc(product.category)}
+                </p>
 
-<button
-    onclick="deleteProduct('${product.id}')"
-    style="background:#555; margin-left:10px;"
->
-    Delete Product
-</button>      
+                <p>
+                    <strong>Price:</strong>
+                    R${esc(product.price)}
+                </p>
 
-</div>
+                <p>
+                    <strong>Stock:</strong>
+                    ${esc(product.stock)}
+                </p>
+
+                <button onclick="choosePhoto('${esc(product.id)}')">
+                    ${product.image_url ? "Change Photo" : "Add Photo"}
+                </button>
+
+                <button
+                    onclick="editProduct('${esc(product.id)}')"
+                    style="margin-left:10px;"
+                >
+                    Edit Product
+                </button>
+
+                <button
+                    onclick="deleteProduct('${esc(product.id)}')"
+                    style="background:#555; margin-left:10px;"
+                >
+                    Delete Product
+                </button>
+
+            </div>
+
+        </div>
     `).join("");
 }
     loadSupplierProducts();
     
+let replacingProductId = null;
+
+function choosePhoto(productId) {
+    replacingProductId = productId;
+
+    const input = document.getElementById("replace-photo-input");
+    input.value = "";
+    input.click();
+}
+
+document.getElementById("replace-photo-input").addEventListener("change", async function (e) {
+
+    const file = e.target.files && e.target.files[0];
+    const productId = replacingProductId;
+    const status = document.getElementById("photo-status");
+
+    if (!file || !productId) { return; }
+
+    status.textContent = "Uploading photo...";
+
+    try {
+
+        const supplierId = await getSupplierId();
+
+        if (!supplierId) {
+            status.textContent = "Supplier account not found.";
+            return;
+        }
+
+        const { data: existing } = await supabaseClient
+            .from("products")
+            .select("image_url")
+            .eq("id", productId)
+            .maybeSingle();
+
+        const newUrl = await uploadProductImage(file, supplierId);
+
+        const { error } = await supabaseClient
+            .from("products")
+            .update({ image_url: newUrl })
+            .eq("id", productId);
+
+        if (error) {
+            await removeStoredImage(newUrl);
+            throw new Error(error.message);
+        }
+
+        if (existing && existing.image_url) {
+            await removeStoredImage(existing.image_url);
+        }
+
+        status.textContent = "Photo updated.";
+
+        loadSupplierProducts();
+
+    } catch (err) {
+        console.error(err);
+        status.textContent = "Photo upload failed: " + err.message;
+    }
+});
+
 async function editProduct(productId) {
 
     const { data: product, error } =
@@ -631,6 +982,12 @@ async function deleteProduct(productId) {
         return;
     }
 
+    const { data: existing } = await supabaseClient
+        .from("products")
+        .select("image_url")
+        .eq("id", productId)
+        .maybeSingle();
+
     const { error } = await supabaseClient
         .from("products")
         .delete()
@@ -640,6 +997,10 @@ async function deleteProduct(productId) {
         console.error(error);
         alert("Unable to delete product.");
         return;
+    }
+
+    if (existing && existing.image_url) {
+        await removeStoredImage(existing.image_url);
     }
 
     alert("Product deleted successfully!");
@@ -786,7 +1147,7 @@ async function loadSupplierOrders() {
             ">
 
                 <h3>
-                    Order ${order.order_number}
+                    Order ${esc(order.order_number)}
                 </h3>
 
                 <p>
@@ -832,17 +1193,17 @@ async function loadSupplierOrders() {
 
                 <p>
                     <strong>Customer:</strong>
-                    ${order.customer_name}
+                    ${esc(order.customer_name)}
                 </p>
 
                 <p>
                     <strong>Phone:</strong>
-                    ${order.phone}
+                    ${esc(order.phone)}
                 </p>
 
                 <p>
                     <strong>Delivery Address:</strong>
-                    ${order.address}
+                    ${esc(order.address)}
                 </p>
 
                 <h4>Products</h4>
@@ -854,7 +1215,7 @@ async function loadSupplierOrders() {
                         margin-bottom:8px;
                         border-radius:6px;
                     ">
-                        <strong>${item.product_name}</strong>
+                        <strong>${esc(item.product_name)}</strong>
                         <br>
                         Quantity: ${item.quantity}
                         <br>
@@ -956,7 +1317,7 @@ loadSupplierEarnings();
                     margin-left:10px;
                     color:#666;
                 ">
-                    ${payout.status}
+                    ${esc(payout.status)}
                 </span>
 
                 ${
@@ -970,7 +1331,7 @@ loadSupplierEarnings();
                 ${
                     payout.payout_reference
                     ? `<p style="margin:8px 0 0; color:#666;">
-                        Reference: ${payout.payout_reference}
+                        Reference: ${esc(payout.payout_reference)}
                        </p>`
                     : ""
                 }
