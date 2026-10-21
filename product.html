@@ -1,424 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product | PoundTech</title>
+<link rel="stylesheet" href="site.css">
 
-    <meta charset="UTF-8">
+<style>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+.product-main {
+    max-width: 1100px;
+    margin: 30px auto 60px;
+    padding: 0 20px;
+}
 
-    <title>Product | PoundTech</title>
+.product-page {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+.product-image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 520px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+}
 
-    <style>
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            color: #111;
-        }
+.category-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #f4f5f7;
+    color: #444;
+    font-size: 13px;
+    font-weight: bold;
+}
 
-        header {
-            background: #111;
-            color: white;
-            padding: 20px;
-        }
+.product-info h1 {
+    font-size: 30px;
+    line-height: 1.2;
+    margin: 12px 0 8px;
+}
 
-        header h1 {
-            margin: 0;
-        }
+.sold-by { color: #555; font-size: 15px; }
 
-        .tech {
-            color: red;
-        }
+.sold-by a {
+    color: #e00000;
+    font-weight: bold;
+    text-decoration: none;
+}
 
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 20px;
-        }
+.price {
+    font-size: 30px;
+    font-weight: bold;
+    margin: 18px 0;
+}
 
-        .product-page {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
+.desc { color: #333; margin-bottom: 16px; }
 
-        .product-image {
-            width: 100%;
-            height: 450px;
-            background: #eee;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+.meta-row { font-size: 15px; margin-bottom: 8px; }
+.meta-row strong { color: #555; }
 
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+.fit-ok {
+    display: inline-block;
+    margin: 4px 8px 4px 0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #e6f4ea;
+    color: #16803c;
+    font-size: 14px;
+    font-weight: bold;
+}
 
-        .product-info h2 {
-            font-size: 32px;
-            margin-top: 0;
-        }
+.stock-in  { color: #16803c; font-weight: bold; }
+.stock-low { color: #8a5a00; font-weight: bold; }
+.stock-out { color: #b80000; font-weight: bold; }
 
-        .price {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
+.qty {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 20px;
+}
 
-        .product-info p {
-            line-height: 1.6;
-        }
+.qty button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: white;
+    font-size: 20px;
+    cursor: pointer;
+}
 
-        .stock {
-            margin: 15px 0;
-            font-weight: bold;
-        }
+.qty button:hover { border-color: #e00000; }
 
-        button {
-            background: red;
-            color: white;
-            border: none;
-            padding: 14px 25px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+.qty span {
+    min-width: 30px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+}
 
-        button:hover {
-            background: #cc0000;
-        }
+.actions-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
 
-        .back {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #111;
-            text-decoration: none;
-        }
+.notice {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+}
 
-        @media (max-width: 700px) {
+@media (max-width: 800px) {
 
-            .product-page {
-                grid-template-columns: 1fr;
-            }
+    .product-page {
+        grid-template-columns: 1fr;
+        gap: 22px;
+        padding: 20px;
+    }
 
-            .product-image {
-                height: 300px;
-            }
+    .product-info h1 { font-size: 24px; }
+}
 
-        }
-
-    </style>
-
+</style>
 </head>
 
 <body>
 
-<header>
-
-    <h1>POUND<span class="tech">TECH</span></h1>
-
+<header class="site-header">
+    <a class="logo" href="index.html">POUND<span>TECH</span></a>
+    <a class="back" href="index.html">&larr; Back to marketplace</a>
 </header>
 
-<div class="container">
-
-
+<main class="product-main">
     <div id="product-container">
-
-        <p>Loading product...</p>
-
+        <div class="notice">Loading product&hellip;</div>
     </div>
+</main>
 
-</div>
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="pt-share.js"></script>
 
 <script>
 
 const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
-
 const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 
-const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+PT.init(supabaseClient);
+
+const esc = PT.esc;
+
+let currentProduct = null;
 let selectedQuantity = 1;
-let productStock = 0;
-let supplier = null;
+
+
+function money(value) {
+    const n = Number(value);
+    return "R" + n.toLocaleString("en-ZA", {
+        minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function notice(html) {
+    document.getElementById("product-container").innerHTML = '<div class="notice">' + html + '</div>';
+}
+
 
 async function loadProduct() {
 
-    const params =
-        new URLSearchParams(window.location.search);
-
-    const productId =
-        params.get("id");
-
-    const container =
-        document.getElementById("product-container");
+    const productId = new URLSearchParams(window.location.search).get("id");
 
     if (!productId) {
-
-        container.innerHTML =
-            "<p>Product not found.</p>";
-
+        notice("Product not found. <a href='index.html' style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
         return;
-
     }
 
-    const { data: product, error } =
-    await supabaseClient
-    .from("products")
- .select("*")
-    .eq("id", productId)
-    .single();
+    const { data: product, error } = await supabaseClient
+        .from("products")
+        .select("*")
+        .eq("id", productId)
+        .maybeSingle();
 
-
-    if (error || !product) {
-
+    if (error) {
         console.error(error);
-
-        container.innerHTML =
-            "<p>Unable to load product.</p>";
-
+        notice("We couldn't load this product right now. Please try again shortly.");
         return;
- }
+    }
 
-    const { data: supplierData, error: supplierError } =
-    await supabaseClient
-    .from("suppliers")
-    .select("business_name, status")
-    .eq("id", product.supplier_id)
-    .single();
+    if (!product || (product.status && product.status !== "Active")) {
+        notice("This product is no longer available. <a href='index.html' style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
+        return;
+    }
 
-if (supplierError) {
-    console.error("SUPPLIER ERROR:", supplierError);
-} else {
-    supplier = supplierData;
-}
-    
-    productStock = product.stock;
+    currentProduct = product;
 
-    container.innerHTML = `
+    document.title = product.name + " | PoundTech";
 
+    let supplier = null;
+
+    if (product.supplier_id) {
+
+        const supplierResult = await supabaseClient
+            .from("suppliers")
+            .select("business_name, status")
+            .eq("id", product.supplier_id)
+            .maybeSingle();
+
+        if (supplierResult.error) {
+            console.error("SUPPLIER ERROR:", supplierResult.error);
+        } else {
+            supplier = supplierResult.data;
+        }
+    }
+
+    const stock = Number(product.stock) || 0;
+
+    const stockHtml =
+        stock <= 0  ? '<span class="stock-out">Out of stock</span>' :
+        stock <= 5  ? '<span class="stock-low">Only ' + esc(stock) + ' left</span>' :
+                      '<span class="stock-in">In stock</span>';
+
+    selectedQuantity = stock > 0 ? 1 : 0;
+
+    document.getElementById("product-container").innerHTML = `
         <div class="product-page">
 
             <div class="product-image">
-
-                ${
-                    product.image_url
-
-                    ?
-
-                    `<img
-                        src="${product.image_url}"
-                        alt="${product.name}"
-                    >`
-
-                    :
-
-                    `<div style="
-                        width:100%;
-                        height:100%;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                    ">
-                        No Image
-                    </div>`
-                }
-
+                ${product.image_url
+                    ? `<img src="${esc(product.image_url)}" alt="${esc(product.name)}">`
+                    : "No image"}
             </div>
-
 
             <div class="product-info">
 
-                <h2>${product.name}</h2>
+                <span class="category-tag">${esc(product.category)}</span>
 
-                <p>
-                    <strong>Category:</strong>
-                    ${product.category}
-                </p>
+                <h1>${esc(product.name)}</h1>
 
-<p>
-    <strong>Sold by:</strong>
-
-    ${
-        supplier
-        ? `
-            <a
-            href="supplier-store.html?id=${product.supplier_id}"
-                style="
-                    color:#e00000;
-                    font-weight:bold;
-                    text-decoration:none;
-                "
-            >
-                ${supplier.business_name}
-            </a>
-        `
-        : "Supplier not available"
-    }
-</p>
-
-                <div class="price">
-
-                    R${product.price}
-
+                <div class="sold-by">
+                    ${supplier
+                        ? 'Sold by <a href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '">' + esc(supplier.business_name) + '</a>'
+                        : "Supplier not available"}
                 </div>
 
+                <div class="price">${esc(money(product.price))}</div>
 
-                <p>
+                <p class="desc">${esc(product.description || "No description available.")}</p>
 
-                    ${
-                        product.description
-                        ||
-                        "No description available."
-                    }
+                <div class="meta-row">
+                    <strong>Vehicle compatibility:</strong>
+                    ${esc(product.vehicle_compatibility || "Not specified")}
+                </div>
 
-                </p>
+                <div id="fit-badges"></div>
 
+                <div class="meta-row">${stockHtml}</div>
 
-                <p>
+                ${stock > 0 ? `
+                    <div class="qty">
+                        <button type="button" id="qty-minus" aria-label="Decrease quantity">&minus;</button>
+                        <span id="qty-value">1</span>
+                        <button type="button" id="qty-plus" aria-label="Increase quantity">+</button>
+                    </div>
+                ` : ""}
 
-                    <strong>
-                        Vehicle compatibility:
-                    </strong>
+                <button type="button" class="btn" id="add-cart-btn" ${stock > 0 ? "" : "disabled"}>
+                    ${stock > 0 ? "Add to Cart" : "Out of stock"}
+                </button>
 
-                    ${
-                        product.vehicle_compatibility
-                        ||
-                        "Not specified"
-                    }
-
-                </p>
-
-
-         <p class="stock">
-    <strong>Stock:</strong>
-    ${product.stock} available
-</p>
-
-<div style="margin:20px 0;">
-
-    <label>
-        Quantity:
-    </label>
-
-    <div style="
-        display:flex;
-        align-items:center;
-        gap:10px;
-        margin-top:10px;
-    ">
-
-        <button
-            onclick="changeQuantity(-1)"
-            style="padding:8px 14px;"
-        >
-            −
-        </button>
-
-        <span
-            id="quantity"
-            style="font-size:20px; font-weight:bold;"
-        >
-            1
-        </span>
-
-        <button
-            onclick="changeQuantity(1)"
-            style="padding:8px 14px;"
-        >
-            +
-        </button>
-
-    </div>
-
-</div>
-
-<button
-    onclick="addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, selectedQuantity, '${product.image_url || ""}')"
->
-    Add to Cart
-</button>
-                    
-                
+                <div class="actions-row">
+                    ${PT.heartPill(product.id)}
+                    ${PT.sharePill({ id: product.id, name: product.name, price: product.price })}
+                </div>
 
             </div>
 
         </div>
-
     `;
 
+    PT.refresh();
+
+    if (stock > 0) {
+        document.getElementById("qty-minus").addEventListener("click", function () { changeQuantity(-1); });
+        document.getElementById("qty-plus").addEventListener("click", function () { changeQuantity(1); });
+        document.getElementById("add-cart-btn").addEventListener("click", addToCart);
+    }
+
+    showFitBadges(product);
 }
 
 
 function changeQuantity(amount) {
 
-    selectedQuantity += amount;
+    const stock = Number(currentProduct.stock) || 0;
 
-    if (selectedQuantity < 1) {
-        selectedQuantity = 1;
-    }
+    selectedQuantity = Math.max(1, Math.min(stock, selectedQuantity + amount));
 
-    if (selectedQuantity > productStock) {
-        selectedQuantity = productStock;
-    }
-
-    document.getElementById("quantity").textContent =
-        selectedQuantity;
+    document.getElementById("qty-value").textContent = selectedQuantity;
 }
-    
-function addCart(product_id, supplier_id, name, price, quantity, image_url) {
 
-    let cart =
-        JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
-    let existingProduct =
-        cart.find(function(item) {
-            return item.product_id === product_id;
-        });
+function addToCart() {
 
-    if (existingProduct) {
+    const product = currentProduct;
 
-        existingProduct.quantity += Number(quantity);
+    let cart = [];
 
-    } else {
-
-        cart.push({
-            product_id: product_id,
-            supplier_id: supplier_id,
-            name: name,
-            price: price,
-            quantity: Number(quantity),
-            image_url: image_url
-        });
-
+    try {
+        cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+    } catch (e) {
+        cart = [];
     }
 
-    localStorage.setItem(
-        "poundtechCart",
-        JSON.stringify(cart)
-    );
+    const existing = cart.find(function (item) { return item.product_id === product.id; });
 
-    alert("Product added to cart!");
+    if (existing) {
+        existing.quantity = Number(existing.quantity || 1) + selectedQuantity;
+    } else {
+        cart.push({
+            product_id: product.id,
+            supplier_id: product.supplier_id,
+            name: product.name,
+            price: Number(product.price),
+            quantity: selectedQuantity,
+            image_url: product.image_url || ""
+        });
+    }
+
+    localStorage.setItem("poundtechCart", JSON.stringify(cart));
+
+    PT.toast(product.name + " added to cart");
+}
+
+
+// For logged-in customers: show which of their garage vehicles this fits.
+async function showFitBadges(product) {
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+
+    if (!sessionData || !sessionData.session) { return; }
+
+    const { data: vehicles, error } = await supabaseClient
+        .from("customer_vehicles")
+        .select("id, make, model, year, engine, nickname")
+        .eq("user_id", sessionData.session.user.id);
+
+    if (error || !vehicles) { return; }
+
+    const fits = vehicles.filter(function (v) { return PT.fit(product, v) === "match"; });
+
+    document.getElementById("fit-badges").innerHTML = fits.map(function (v) {
+        return '<span class="fit-ok">Fits your ' + esc(v.year + " " + v.make + " " + v.model) + '</span>';
+    }).join("");
 }
 
 
 loadProduct();
 
 </script>
-   <script src="nav.js"></script>
-</body>
 
+</body>
 </html>
