@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -444,6 +443,12 @@ footer {
     transform: translateX(-50%) translateY(0);
 }
 
+    /* SAVE + SHARE BUTTONS ON PRODUCT IMAGES */
+
+.product-image {
+    position: relative;
+}
+
     /* FITMENT BADGES */
 
 .fit-badge {
@@ -814,7 +819,8 @@ footer {
 
         <div class="header-actions">
             <a href="track-order.html">Track Order</a>
-            <a href="customer-login.html">My Garage</a>
+            <a href="favourites.html">Saved (<span data-pt-saved-count>0</span>)</a>
+            <a href="customer-login.html" id="garage-link">My Garage</a>
            <a href="#" class="cart-btn" onclick="showCart()">
     <svg class="cart-icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 7H6"/></svg>
     Cart (<span id="cart-count">0</span>)
@@ -1197,6 +1203,7 @@ Already approved?
     <div class="footer-col">
         <h4>Support</h4>
         <a href="track-order.html">Track Order</a>
+        <a href="favourites.html">Saved Items</a>
         <a href="customer-login.html">My Garage</a>
         <a href="mailto:orders@poundtech.co.za">orders@poundtech.co.za</a>
     </div>
@@ -1276,6 +1283,7 @@ Already approved?
     <div id="toast"></div>
     
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="pt-share.js"></script>
  
 <script>
  
@@ -1286,11 +1294,16 @@ const supabaseClient = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+
+PT.init(supabaseClient);
+
     async function updateGarageLink() {
     const { data } = await supabaseClient.auth.getSession();
 
-    if (data.session) {
-        document.getElementById("garage-link").href = "garage.html";
+    const garageLink = document.getElementById("garage-link");
+
+    if (data.session && garageLink) {
+        garageLink.href = "garage.html";
     }
 }
 
@@ -1515,7 +1528,7 @@ function showCart() {
 
                 ${
                     item.image_url
-                    ? '<img src="' + item.image_url + '" alt="' + item.name + '" style="width:85px;height:85px;object-fit:cover;border-radius:8px;flex-shrink:0;">'
+                    ? '<img src="' + esc(item.image_url) + '" alt="' + esc(item.name) + '" style="width:85px;height:85px;object-fit:cover;border-radius:8px;flex-shrink:0;">'
                     : '<div style="width:85px;height:85px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#777;flex-shrink:0;">No Image</div>'
                 }
 
@@ -1525,7 +1538,7 @@ function showCart() {
                         margin:0 0 6px 0;
                         font-size:17px;
                     ">
-                        ${item.name}
+                        ${esc(item.name)}
                     </h3>
 
                     <p style="
@@ -1666,7 +1679,7 @@ function checkout() {
                 padding:12px 0;
                 border-bottom:1px solid #ddd;
             ">
-                <strong>${item.name}</strong>
+                <strong>${esc(item.name)}</strong>
                 <p>R${item.price} × ${quantity} = R${itemTotal}</p>
             </div>
         `;
@@ -1995,6 +2008,7 @@ function renderProductCard(product, status) {
                             No Image
                        </div>`
                 }
+                ${PT.cardActions({ id: product.id, name: product.name, price: product.price })}
             </div>
 
             <div class="product-info">
@@ -2183,7 +2197,7 @@ searchStatus.innerHTML = `
     <div class="search-results-bar">
         <span>
             Showing results for
-            <strong>"${searchTerm}"</strong>
+            <strong>"${esc(searchTerm)}"</strong>
         </span>
 
         <button onclick="clearSearch()">
@@ -2215,53 +2229,9 @@ searchStatus.innerHTML = `
         return;
     }
 
- container.innerHTML = data.map(product => `
-    <div class="product"
-         onclick="window.location.href='product.html?id=${product.id}'"
-         style="cursor:pointer;">
-
-        <div class="product-image">
-            ${
-                product.image_url
-                ? `<img src="${product.image_url}"
-                       alt="${product.name}"
-                       style="width:100%; height:100%; object-fit:cover;">`
-                : `<div style="
-                        width:100%;
-                        height:100%;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:#eee;
-                    ">
-                        No Image
-                   </div>`
-            }
-        </div>
-
-        <div class="product-info">
-
-            <h3>${product.name}</h3>
-
-            <p>${product.category}</p>
-
-            <div class="price">
-                R${product.price}
-            </div>
-
-            <p>
-                Compatible with:
-                ${product.vehicle_compatibility || "Not specified"}
-            </p>
-
-            <button onclick="event.stopPropagation(); addCart('${product.id}', '${product.supplier_id}', '${product.name}', ${product.price}, '${product.image_url || ""}')">
-                Add to Cart
-            </button>
-
-        </div>
-
-    </div>
-`).join("");
+ container.innerHTML = data.map(function(product) {
+    return renderProductCard(product, null);
+}).join("");
 }
     
 function clearSearch() {
