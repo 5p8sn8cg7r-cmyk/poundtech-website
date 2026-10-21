@@ -160,7 +160,7 @@ Add Product
     <p>Loading your products...</p>
 </div>
     
-    <div id="add-product-form" style="display:none; margin-top:20px;">
+   <div id="add-product-form" style="display:none; margin-top:20px; scroll-margin-top:20px;">
 
     <input
         type="text"
@@ -386,9 +386,24 @@ window.location.href =
 
 loadSupplier();
 
-    function showAddProductForm() {
-    document.getElementById("add-product-form").style.display = "block";
+
+function showAddProductForm() {
+    const form = document.getElementById("add-product-form");
+
+    form.style.display = "block";
+
+    form.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    setTimeout(() => {
+        document.getElementById("product-name").focus({
+            preventScroll: true
+        });
+    }, 400);
 }
+
 
 function hideAddProductForm() {
     document.getElementById("add-product-form").style.display = "none";
