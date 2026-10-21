@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saved Items | PoundTech</title>
+<link rel="stylesheet" href="site.css">
+
+<style>
+
+.page-main { max-width: 1100px; }
+
+.toolbar {
+    background: white;
+    padding: 20px 22px;
+    border-radius: 12px;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 24px;
+}
+
+.toolbar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.toolbar h2 { font-size: 18px; }
+
+.chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.chip {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.chip:hover { border-color: #e00000; }
+
+.chip.active {
+    background: #e00000;
+    border-color: #e00000;
+    color: white;
+    font-weight: bold;
+}
+
+.mechanic-btn {
+    width: auto;
+    padding: 10px 18px;
+    font-size: 14px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 20px;
+}
+
+.item {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.item-image {
+    position: relative;
+    height: 180px;
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    font-weight: bold;
+}
+
+.item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.item-info {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.item-info h3 { font-size: 16px; margin-bottom: 4px; }
+
+.item-cat { color: #777; font-size: 13px; }
+
+.fit {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.fit-match { color: #16803c; }
+.fit-universal { color: #777; font-weight: normal; }
+
+.item-price {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 12px 0;
+}
+
+.item .btn {
+    margin-top: auto;
+    padding: 11px;
+    font-size: 14px;
+}
+
+.empty {
+    grid-column: 1 / -1;
+    background: white;
+    padding: 40px 24px;
+    border-radius: 12px;
+    text-align: center;
+    color: #555;
+}
+
+.empty h2 { color: #111; margin-bottom: 8px; }
+
+.empty .btn { width: auto; margin-top: 18px; padding: 12px 24px; }
+
+</style>
+</head>
+
+<body>
+
+<header class="site-header">
+    <a class="logo" href="index.html">POUND<span>TECH</span></a>
+    <a class="back" href="index.html">&larr; Back to marketplace</a>
+</header>
+
+<section class="page-hero">
+    <h1>Saved Items</h1>
+    <p id="hero-sub">Products you've saved to come back to.</p>
+</section>
+
+<main class="page-main">
+
+    <div class="toolbar" id="toolbar" hidden>
+
+        <div class="toolbar-top">
+            <h2 id="list-title">Saved items</h2>
+            <button type="button" class="btn btn-dark mechanic-btn" id="send-list-btn">
+                Send list to my mechanic
+            </button>
+        </div>
+
+        <div id="login-note" class="message message-info" hidden>
+            These are saved on this device only.
+            <a href="customer-login.html" style="color:#e00000;font-weight:bold;">Log in</a>
+            to keep them on your account and see which ones fit your car.
+        </div>
+
+        <div class="chips" id="vehicle-chips" hidden></div>
+
+    </div>
+
+    <div class="grid" id="grid">
+        <div class="empty">Loading&hellip;</div>
+    </div>
+
+</main>
+
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="pt-share.js"></script>
+
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const esc = PT.esc;
+
+let products = {};          // id -> product, for everything we have loaded
+let vehicles = [];
+let selectedVehicleId = "";  // "" = all saved items
+
+
+function money(value) {
+    const n = Number(value);
+    return "R" + n.toLocaleString("en-ZA", {
+        minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function vehicleName(v) {
+    return (v.nickname ? v.nickname + " - " : "") + v.year + " " + v.make + " " + v.model;
+}
+
+function selectedVehicle() {
+    return vehicles.find(function (v) { return String(v.id) === selectedVehicleId; }) || null;
+}
+
+
+async function loadProducts() {
+
+    const missing = PT.favouriteIds().filter(function (id) { return !products[id]; });
+
+    if (missing.length === 0) { return; }
+
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select("*")
+        .in("id", missing)
+        .eq("status", "Active");
+
+    if (error) {
+        console.error(error);
+        document.getElementById("grid").innerHTML =
+            '<div class="empty">We couldn\'t load your saved items. Please try again shortly.</div>';
+        return false;
+    }
+
+    (data || []).forEach(function (p) { products[p.id] = p; });
+
+    return true;
+}
+
+
+function visibleItems() {
+
+    const vehicle = selectedVehicle();
+
+    return PT.favouriteIds()
+        .map(function (id) { return products[id]; })
+        .filter(Boolean)
+        .filter(function (p) {
+            if (!vehicle) { return true; }
+            const fit = PT.fit(p, vehicle);
+            return fit === "match" || fit === "universal";
+        });
+}
+
+
+function render() {
+
+    const grid = document.getElementById("grid");
+    const total = PT.count();
+
+    document.getElementById("toolbar").hidden = total === 0;
+    document.getElementById("login-note").hidden = PT.isLoggedIn() || total === 0;
+    document.getElementById("list-title").textContent =
+        total + " saved item" + (total === 1 ? "" : "s");
+
+    if (total === 0) {
+        grid.innerHTML = `
+            <div class="empty">
+                <h2>Nothing saved yet</h2>
+                <p>Tap the heart on any product to save it here.</p>
+                <a class="btn" href="index.html">Browse products</a>
+            </div>`;
+        return;
+    }
+
+    const items = visibleItems();
+    const vehicle = selectedVehicle();
+
+    if (items.length === 0) {
+        grid.innerHTML = `
+            <div class="empty">
+                <h2>${vehicle ? "Nothing saved fits this vehicle" : "These items are no longer available"}</h2>
+                <p>${vehicle ? "Try another vehicle, or choose All saved." : "Some products may have been removed by the seller."}</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = items.map(function (p) {
+
+        let fitHtml = "";
+
+        if (vehicle) {
+            fitHtml = PT.fit(p, vehicle) === "match"
+                ? '<div class="fit fit-match">Fits your ' + esc(vehicle.make + " " + vehicle.model) + '</div>'
+                : '<div class="fit fit-universal">Universal &middot; check fitment</div>';
+        }
+
+        return `
+            <div class="item" data-open="${esc(p.id)}">
+
+                <div class="item-image">
+                    ${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}">` : "No image"}
+                    ${PT.cardActions({ id: p.id, name: p.name, price: p.price })}
+                </div>
+
+                <div class="item-info">
+                    <h3>${esc(p.name)}</h3>
+                    <div class="item-cat">${esc(p.category)}</div>
+                    ${fitHtml}
+                    <div class="item-price">${esc(money(p.price))}</div>
+                    <button type="button" class="btn" data-cart="${esc(p.id)}"
+                            ${Number(p.stock) > 0 ? "" : "disabled"}>
+                        ${Number(p.stock) > 0 ? "Add to Cart" : "Out of stock"}
+                    </button>
+                </div>
+
+            </div>`;
+    }).join("");
+
+    PT.refresh();
+}
+
+
+function renderChips() {
+
+    const box = document.getElementById("vehicle-chips");
+
+    if (vehicles.length === 0) {
+        box.hidden = true;
+        return;
+    }
+
+    box.hidden = false;
+
+    box.innerHTML =
+        '<button type="button" class="chip ' + (selectedVehicleId === "" ? "active" : "") + '" data-vehicle="">All saved</button>' +
+        vehicles.map(function (v) {
+            return '<button type="button" class="chip ' + (String(v.id) === selectedVehicleId ? "active" : "") +
+                   '" data-vehicle="' + esc(v.id) + '">Fits my ' + esc(vehicleName(v)) + '</button>';
+        }).join("");
+}
+
+
+function addToCart(id) {
+
+    const product = products[id];
+
+    if (!product) { return; }
+
+    let cart = [];
+
+    try {
+        cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+    } catch (e) {
+        cart = [];
+    }
+
+    const existing = cart.find(function (item) { return item.product_id === product.id; });
+
+    if (existing) {
+        existing.quantity = Number(existing.quantity || 1) + 1;
+    } else {
+        cart.push({
+            product_id: product.id,
+            supplier_id: product.supplier_id,
+            name: product.name,
+            price: Number(product.price),
+            quantity: 1,
+            image_url: product.image_url || ""
+        });
+    }
+
+    localStorage.setItem("poundtechCart", JSON.stringify(cart));
+
+    PT.toast(product.name + " added to cart");
+}
+
+
+function sendListToMechanic() {
+
+    const items = visibleItems().slice(0, 10);
+
+    if (items.length === 0) { return; }
+
+    const vehicle = selectedVehicle();
+
+    const lines = items.map(function (p) {
+        return "- " + p.name + " (" + money(p.price) + ")\n  " +
+               new URL("product.html?id=" + encodeURIComponent(p.id), window.location.href).href;
+    });
+
+    const text =
+        "Hi, I'm planning to buy these parts" +
+        (vehicle ? " for my " + vehicleName(vehicle) : "") +
+        ". Can you confirm they're right and quote me to fit them?\n\n" +
+        lines.join("\n");
+
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank", "noopener");
+}
+
+
+async function start() {
+
+    await PT.init(supabaseClient);
+
+    document.getElementById("hero-sub").textContent = PT.isLoggedIn()
+        ? "Saved to your account. Filter by the cars in My Garage."
+        : "Saved on this device. Log in to keep them on your account.";
+
+    if (PT.isLoggedIn()) {
+
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+
+        const result = await supabaseClient
+            .from("customer_vehicles")
+            .select("id, make, model, year, engine, nickname")
+            .eq("user_id", sessionData.session.user.id)
+            .order("created_at", { ascending: false });
+
+        if (!result.error) { vehicles = result.data || []; }
+    }
+
+    await loadProducts();
+
+    renderChips();
+    render();
+}
+
+
+document.getElementById("grid").addEventListener("click", function (e) {
+
+    const cartButton = e.target.closest("[data-cart]");
+
+    if (cartButton) {
+        addToCart(cartButton.getAttribute("data-cart"));
+        return;
+    }
+
+    const card = e.target.closest("[data-open]");
+
+    if (card) {
+        window.location.href = "product.html?id=" + encodeURIComponent(card.getAttribute("data-open"));
+    }
+});
+
+document.getElementById("vehicle-chips").addEventListener("click", function (e) {
+
+    const chip = e.target.closest("[data-vehicle]");
+
+    if (!chip) { return; }
+
+    selectedVehicleId = chip.getAttribute("data-vehicle");
+
+    renderChips();
+    render();
+});
+
+document.getElementById("send-list-btn").addEventListener("click", sendListToMechanic);
+
+// Removing a heart takes the item off the page straight away.
+PT.onChange(function () {
+
+    if (Object.keys(products).length || PT.count() === 0) { render(); }
+});
+
+start();
+
+</script>
+
+</body>
+</html>
