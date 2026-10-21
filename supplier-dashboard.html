@@ -832,6 +832,19 @@ async function addProductInner() {
                     ${product.image_url ? "Change Photo" : "Add Photo"}
                 </button>
 
+${
+    product.image_url
+    ? `
+        <button
+            onclick="deleteProductPhoto('${esc(product.id)}')"
+            style="background:#555; margin-left:10px;"
+        >
+            Delete Photo
+        </button>
+    `
+    : ""
+}
+
                 <button
                     onclick="editProduct('${esc(product.id)}')"
                     style="margin-left:10px;"
@@ -971,7 +984,50 @@ async function editProduct(productId) {
 
     loadSupplierProducts();
 }
-   
+
+    async function deleteProductPhoto(productId) {
+    const confirmed = confirm(
+        "Remove this photo? The product will not be deleted."
+    );
+
+    if (!confirmed) return;
+
+    const { data: { user }, error: userError } =
+        await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        alert("Please log in first.");
+        return;
+    }
+
+    const { data: supplier, error: supplierError } =
+        await supabaseClient
+            .from("suppliers")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+    if (supplierError || !supplier) {
+        alert("Unable to verify your supplier account.");
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("products")
+        .update({ image_url: null })
+        .eq("id", productId)
+        .eq("supplier_id", supplier.id);
+
+    if (error) {
+        console.error("Photo deletion error:", error);
+        alert("Could not remove photo: " + error.message);
+        return;
+    }
+
+    alert("Photo removed successfully!");
+    await loadSupplierProducts();
+}
+    
 async function deleteProduct(productId) {
 
     const confirmed = confirm(
