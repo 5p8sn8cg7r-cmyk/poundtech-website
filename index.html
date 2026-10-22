@@ -7,6 +7,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>PoundTech | South Africa's Automotive Marketplace</title>
+<link rel="canonical" href="https://poundtech.co.za/">
+<script>
+// Show poundtech.co.za instead of poundtech.co.za/index.html in the address bar.
+if (/\/index\.html$/.test(location.pathname)) {
+    history.replaceState(null, "", location.pathname.replace(/index\.html$/, "") + location.search + location.hash);
+}
+</script>
 
 <style>
 * {
@@ -103,21 +110,21 @@ nav a:hover {
         url("sa-map.svg") no-repeat center 55% / auto 92%,
         linear-gradient(135deg, #090b0e, #1b1e23);
     color: white;
-    padding: 90px 6%;
+    padding: 64px 6% 58px;
     text-align: center;
     overflow: hidden;
 }
 
 @media (max-width: 700px) {
     .hero {
-        background-size: 80% auto, auto;
-        background-position: center 25%, center;
+        background-size: auto 86%, auto;
+        background-position: center 70%, center;
     }
 }
 
 
 .hero h1 {
-    font-size: 52px;
+    font-size: 46px;
     max-width: 850px;
     margin: auto;
     line-height: 1.1;
@@ -128,11 +135,17 @@ nav a:hover {
 }
 
 .hero p {
-    margin: 22px auto 32px;
+    margin: 16px auto 26px;
     max-width: 650px;
     color: #c7c7c7;
-    font-size: 18px;
-    line-height: 1.6;
+    font-size: 17px;
+    line-height: 1.55;
+}
+
+.hero-garage {
+    max-width: 750px;
+    margin: 16px auto 0;
+    text-align: left;
 }
 
 .search {
@@ -608,16 +621,46 @@ footer {
         display: none;
     }
     
+    .hero {
+        padding: 30px 5% 28px;
+    }
+
     .hero h1 {
-        font-size: 38px;
+        font-size: 28px;
+        line-height: 1.15;
+    }
+
+    .hero p {
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 10px auto 18px;
     }
 
     .search {
         flex-direction: column;
     }
 
+    .search input {
+        padding: 14px 16px;
+        font-size: 15px;
+    }
+
     .search button {
-        padding: 17px;
+        padding: 13px;
+    }
+
+    .hero-garage {
+        margin-top: 12px;
+    }
+
+    .hero-garage label {
+        margin-bottom: 6px !important;
+        font-size: 14px;
+    }
+
+    .hero-garage select {
+        padding: 11px !important;
+        font-size: 14px !important;
     }
 
     .mechanic {
@@ -921,7 +964,7 @@ footer {
                 <span class="ha-count">(<span data-pt-saved-count>0</span>)</span>
             </a>
             <a href="customer-login.html" id="garage-link" aria-label="My Garage">
-                <svg class="ha-icon" viewBox="0 0 24 24"><path d="M5 16l1.5-5.5A2 2 0 0 1 8.4 9h7.2a2 2 0 0 1 1.9 1.5L19 16"/><path d="M3 16h18v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3z"/><circle cx="7.5" cy="13" r=".6"/><circle cx="16.5" cy="13" r=".6"/></svg>
+                <svg class="ha-icon" viewBox="0 0 24 24"><path d="M3 20V9.5l9-6 9 6V20"/><path d="M7 20v-8h10v8"/><path d="M7 14.67h10M7 17.33h10"/></svg>
                 <span class="ha-label">My Garage</span>
             </a>
             <a href="#" class="cart-btn" onclick="showCart(); return false;" aria-label="Cart">
@@ -934,9 +977,9 @@ footer {
     </div>
 
 <nav>
-    <a href="index.html">Home</a>
-    <a href="index.html?view=parts">Parts</a>
-    <a href="index.html?view=accessories">Accessories</a>
+    <a href="/">Home</a>
+    <a href="/?view=parts">Parts</a>
+    <a href="/?view=accessories">Accessories</a>
     <a href="mechanics.html">Mechanics</a>
     <a href="supplier.html">Sell</a>
 </nav>
@@ -969,7 +1012,7 @@ Find car parts, accessories and automotive services from businesses across South
 </div>
 
 <div id="search-status"></div>
-<div style="max-width:750px; margin:18px auto 0; text-align:left;">
+<div class="hero-garage">
 
     <label for="garage-vehicle-select"
            style="display:block; margin-bottom:8px; color:white; font-weight:bold;">
@@ -1298,8 +1341,8 @@ Already approved?
 
     <div class="footer-col">
         <h4>Shop</h4>
-        <a href="index.html?view=parts">Parts</a>
-        <a href="index.html?view=accessories">Accessories</a>
+        <a href="/?view=parts">Parts</a>
+        <a href="/?view=accessories">Accessories</a>
         <a href="mechanics.html">Mechanics</a>
         <a href="supplier.html">Sell on PoundTech</a>
     </div>
