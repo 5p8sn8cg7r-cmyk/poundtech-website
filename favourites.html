@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://uezacbssvvvtlosnaroh.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Saved Items | PoundTech</title>
@@ -114,11 +116,7 @@
 .fit-match { color: #16803c; }
 .fit-universal { color: #777; font-weight: normal; }
 
-.item-price {
-    font-size: 20px;
-    font-weight: bold;
-    margin: 12px 0;
-}
+.item .pt-pricebox { margin: 12px 0 4px; }
 
 .item .btn {
     margin-top: auto;
@@ -208,13 +206,7 @@ let vehicles = [];
 let selectedVehicleId = "";  // "" = all saved items
 
 
-function money(value) {
-    const n = Number(value);
-    return "R" + n.toLocaleString("en-ZA", {
-        minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
-        maximumFractionDigits: 2
-    });
-}
+function money(value) { return PT.money(value); }
 
 function vehicleName(v) {
     return (v.nickname ? v.nickname + " - " : "") + v.year + " " + v.make + " " + v.model;
@@ -245,6 +237,8 @@ async function loadProducts() {
     }
 
     (data || []).forEach(function (p) { products[p.id] = p; });
+
+    PT.stash(data || []);
 
     return true;
 }
@@ -311,15 +305,16 @@ function render() {
             <div class="item" data-open="${esc(p.id)}">
 
                 <div class="item-image">
-                    ${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}">` : "No image"}
-                    ${PT.cardActions({ id: p.id, name: p.name, price: p.price })}
+                    ${p.image_url ? PT.img(p.image_url, p.name) : "No image"}
+                    ${PT.ribbons(p)}
+                    ${PT.cardActions(p)}
                 </div>
 
                 <div class="item-info">
                     <h3>${esc(p.name)}</h3>
                     <div class="item-cat">${esc(p.category)}</div>
                     ${fitHtml}
-                    <div class="item-price">${esc(money(p.price))}</div>
+                    ${PT.price(p)}
                     <button type="button" class="btn" data-cart="${esc(p.id)}"
                             ${Number(p.stock) > 0 ? "" : "disabled"}>
                         ${Number(p.stock) > 0 ? "Add to Cart" : "Out of stock"}
@@ -376,7 +371,7 @@ function addToCart(id) {
             product_id: product.id,
             supplier_id: product.supplier_id,
             name: product.name,
-            price: Number(product.price),
+            price: PT.sale(product).now,
             quantity: 1,
             image_url: product.image_url || ""
         });
@@ -397,7 +392,7 @@ function sendListToMechanic() {
     const vehicle = selectedVehicle();
 
     const lines = items.map(function (p) {
-        return "- " + p.name + " (" + money(p.price) + ")\n  " +
+        return "- " + p.name + " (" + money(PT.sale(p).now) + ")\n  " +
                new URL("product.html?id=" + encodeURIComponent(p.id), window.location.href).href;
     });
 
@@ -451,7 +446,7 @@ document.getElementById("grid").addEventListener("click", function (e) {
     const card = e.target.closest("[data-open]");
 
     if (card) {
-        window.location.href = "product.html?id=" + encodeURIComponent(card.getAttribute("data-open"));
+        PT.open(card.getAttribute("data-open"));
     }
 });
 
