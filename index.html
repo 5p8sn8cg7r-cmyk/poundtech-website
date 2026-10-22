@@ -487,6 +487,97 @@ footer {
     color: #9a6700;
 }
     
+
+/* MOBILE HEADER: icons with count badges, evenly spaced menu */
+
+.ha-icon { display: none; }
+
+@media (max-width: 700px) {
+
+    header { padding: 0 5%; }
+
+    .header-top {
+        flex-wrap: nowrap;
+        padding: 12px 0;
+        border-bottom: 1px solid #1f2227;
+    }
+
+    .logo { font-size: 21px; white-space: nowrap; }
+
+    .header-actions { gap: 4px; margin-left: 12px; }
+
+    .header-actions a,
+    .header-actions .cart-btn {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        color: #e6e6e6;
+        background: transparent;
+    }
+
+    .header-actions .cart-btn { background: #e00000; color: #fff; margin-left: 4px; }
+
+    .ha-label { display: none; }
+
+    .ha-icon {
+        display: block;
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .header-actions .cart-btn .cart-icon { width: 22px; height: 22px; flex-shrink: 0; }
+
+    .ha-icon { flex-shrink: 0; }
+
+    .ha-count { font-size: 0; }
+
+    .ha-count span {
+        position: absolute;
+        top: 1px;
+        right: 0;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        box-sizing: border-box;
+        border-radius: 9px;
+        background: #e00000;
+        color: #fff;
+        font-size: 11px;
+        font-weight: bold;
+        line-height: 17px;
+        text-align: center;
+        border: 2px solid #08090b;
+        line-height: 13px;
+    }
+
+    .cart-btn .ha-count span { background: #fff; color: #e00000; border-color: #e00000; }
+
+    .ha-count.is-zero { display: none; }
+
+    nav {
+        justify-content: space-between;
+        gap: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    nav a {
+        padding: 13px 0;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+}
+
 /* MOBILE */
 
 @media (max-width: 700px) {
@@ -820,13 +911,24 @@ footer {
         </div>
 
         <div class="header-actions">
-            <a href="track-order.html">Track Order</a>
-            <a href="favourites.html">Saved (<span data-pt-saved-count>0</span>)</a>
-            <a href="customer-login.html" id="garage-link">My Garage</a>
-           <a href="#" class="cart-btn" onclick="showCart()">
-    <svg class="cart-icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 7H6"/></svg>
-    Cart (<span id="cart-count">0</span>)
-</a>
+            <a href="track-order.html" aria-label="Track order">
+                <svg class="ha-icon" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+                <span class="ha-label">Track Order</span>
+            </a>
+            <a href="favourites.html" aria-label="Saved items">
+                <svg class="ha-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span class="ha-label">Saved</span>
+                <span class="ha-count">(<span data-pt-saved-count>0</span>)</span>
+            </a>
+            <a href="customer-login.html" id="garage-link" aria-label="My Garage">
+                <svg class="ha-icon" viewBox="0 0 24 24"><path d="M5 16l1.5-5.5A2 2 0 0 1 8.4 9h7.2a2 2 0 0 1 1.9 1.5L19 16"/><path d="M3 16h18v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3z"/><circle cx="7.5" cy="13" r=".6"/><circle cx="16.5" cy="13" r=".6"/></svg>
+                <span class="ha-label">My Garage</span>
+            </a>
+            <a href="#" class="cart-btn" onclick="showCart(); return false;" aria-label="Cart">
+                <svg class="cart-icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 7H6"/></svg>
+                <span class="ha-label">Cart</span>
+                <span class="ha-count">(<span id="cart-count">0</span>)</span>
+            </a>
         </div>
 
     </div>
@@ -1310,6 +1412,19 @@ PT.init(supabaseClient);
 }
 
 updateGarageLink();
+
+// Count badges on the mobile header are hidden while they read 0.
+function syncBadges() {
+    document.querySelectorAll(".ha-count").forEach(function (el) {
+        const n = parseInt(el.textContent.replace(/[^0-9]/g, ""), 10) || 0;
+        el.classList.toggle("is-zero", n === 0);
+    });
+}
+
+syncBadges();
+
+new MutationObserver(syncBadges).observe(document.querySelector(".header-actions"),
+    { childList: true, characterData: true, subtree: true });
     
     let toastTimer;
 
