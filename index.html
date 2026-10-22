@@ -389,25 +389,60 @@ nav a:hover {
         font-size: 23px;
     }
 
+    /* Swipeable service cards on mobile */
     .services-discovery-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 2px 2px 12px;
+        margin-right: -1px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .services-discovery-grid::-webkit-scrollbar {
+        display: none;
     }
 
     .service-discovery-card {
+        flex: 0 0 min(82vw, 310px);
+        min-width: 0;
         padding: 15px;
+        scroll-snap-align: start;
     }
 
-    .services-nav-link {
-        padding: 0;
+    /* Keep the mobile navigation links in one clean, swipeable row */
+    nav {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 18px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    nav a {
+        flex: 0 0 auto;
+        padding: 12px 0;
+    }
+
+    nav .services-nav-link {
+        flex: 0 0 auto;
+        padding: 8px 11px;
         margin: 0;
-        background: transparent;
+        border-radius: 6px;
+        background: #e00000;
         color: #fff;
+        font-weight: bold;
     }
 
-    .services-nav-link:hover {
-        background: transparent;
-        color: #e00000;
+    nav .services-nav-link:hover {
+        background: #b80000;
+        color: #fff;
     }
 }
 
