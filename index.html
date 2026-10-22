@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://uezacbssvvvtlosnaroh.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -1491,7 +1493,49 @@ function addCart(product_id, supplier_id, name, price, image_url) {
 }
 
 
-function showCart() {
+// The cart keeps the price from when an item was added. Before showing it, pick up
+// any price change or ended special so customers see what they will really be charged.
+async function refreshCartPrices() {
+
+    let cart = [];
+
+    try { cart = JSON.parse(localStorage.getItem("poundtechCart")) || []; } catch (e) { return; }
+
+    if (cart.length === 0) { return; }
+
+    const ids = cart.map(function (item) { return item.product_id; });
+
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select("*")
+        .in("id", ids);
+
+    if (error || !data) { return; }
+
+    const byId = {};
+    data.forEach(function (p) { byId[p.id] = p; });
+
+    let changed = false;
+
+    cart.forEach(function (item) {
+        const fresh = byId[item.product_id];
+        if (!fresh) { return; }
+        const now = PT.sale(fresh).now;
+        if (Number(item.price) !== now) { item.price = now; changed = true; }
+    });
+
+    if (changed) {
+        localStorage.setItem("poundtechCart", JSON.stringify(cart));
+        showToast("Some prices in your cart have been updated");
+    }
+}
+
+async function showCart() {
+    await refreshCartPrices();
+    renderCart();
+}
+
+function renderCart() {
 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
@@ -1545,7 +1589,7 @@ function showCart() {
                         margin:0 0 10px 0;
                         font-weight:bold;
                     ">
-                        R${itemTotal}
+                        ${PT.money(itemTotal)}
                     </p>
 
                     <div style="
@@ -1619,7 +1663,7 @@ function showCart() {
         `;
     });
 
-    cartTotal.innerText = "Total: R" + total;
+    cartTotal.innerText = "Total: " + PT.money(total);
 
     document.getElementById("cart-panel").style.display = "block";
 }
@@ -1642,7 +1686,7 @@ function showCart() {
 
     document.getElementById("cart-count").innerText = totalItems;
 
-    showCart();
+    renderCart();
 }
 
 function closeCart() {
@@ -1651,7 +1695,12 @@ function closeCart() {
 
 }
 
-function checkout() {
+async function checkout() {
+    await refreshCartPrices();
+    renderCheckout();
+}
+
+function renderCheckout() {
 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
@@ -1680,12 +1729,12 @@ function checkout() {
                 border-bottom:1px solid #ddd;
             ">
                 <strong>${esc(item.name)}</strong>
-                <p>R${item.price} × ${quantity} = R${itemTotal}</p>
+                <p>${PT.money(item.price)} × ${quantity} = ${PT.money(itemTotal)}</p>
             </div>
         `;
     });
 
-    checkoutTotal.innerText = "Total: R" + total;
+    checkoutTotal.innerText = "Total: " + PT.money(total);
 
     document.getElementById("cart-panel").style.display = "none";
     document.getElementById("checkout-panel").style.display = "block";
@@ -1705,7 +1754,7 @@ function removeFromCart(index) {
 
     document.getElementById("cart-count").innerText = totalItems;
 
-    showCart();
+    renderCart();
 
 }
 
@@ -1979,25 +2028,25 @@ function renderProductCard(product, status) {
             '<p class="fit-badge fit-unknown">Fitment not specified — check before buying</p>';
     }
 
+    PT.stash(product);
+
     const handler =
         "event.stopPropagation(); addCart('" +
         js(product.id) + "', '" +
         js(product.supplier_id) + "', '" +
         js(product.name) + "', " +
-        Number(product.price) + ", '" +
+        Number(PT.sale(product).now) + ", '" +
         js(product.image_url) + "')";
 
     return `
         <div class="product"
-             onclick="window.location.href='product.html?id=${esc(product.id)}'"
+             onclick="PT.open('${esc(product.id)}')"
              style="cursor:pointer;">
 
             <div class="product-image">
                 ${
                     product.image_url
-                    ? `<img src="${esc(product.image_url)}"
-                           alt="${esc(product.name)}"
-                           style="width:100%; height:100%; object-fit:cover;">`
+                    ? PT.img(product.image_url, product.name)
                     : `<div style="
                             width:100%;
                             height:100%;
@@ -2008,7 +2057,8 @@ function renderProductCard(product, status) {
                             No Image
                        </div>`
                 }
-                ${PT.cardActions({ id: product.id, name: product.name, price: product.price })}
+                ${PT.ribbons(product)}
+                ${PT.cardActions(product)}
             </div>
 
             <div class="product-info">
@@ -2016,7 +2066,7 @@ function renderProductCard(product, status) {
                 <p>${esc(product.category || "")}</p>
                 ${fitmentLabel}
 
-                <div class="price">R${esc(product.price)}</div>
+                ${PT.price(product)}
 
                 <button onclick="${esc(handler)}">
                     Add to Cart
