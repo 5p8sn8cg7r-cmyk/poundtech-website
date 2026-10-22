@@ -156,8 +156,6 @@ Manage your products and stock below.
 Add Product
 </button>
     
-<p id="photo-status" style="color:#555; margin-top:14px;"></p>
-
 <dialog id="special-dialog" style="border:none; border-radius:12px; padding:22px; width:min(420px, 92vw);">
 
     <h3 id="special-title" style="margin-top:0;">Special offer</h3>
@@ -199,6 +197,23 @@ Add Product
     accept="image/*"
     style="display:none;"
 >
+
+<dialog id="photos-dialog" style="border:none; border-radius:12px; padding:22px; width:min(460px, 94vw);">
+
+    <h3 id="photos-title" style="margin-top:0;">Photos</h3>
+
+    <p style="color:#666; font-size:13px; margin-top:0;">
+        Up to 3 photos. The main photo shows on product cards; customers swipe to see the rest.
+    </p>
+
+    <div id="photos-list"></div>
+
+    <p id="photos-message" style="color:#555; min-height:20px; margin:10px 0;"></p>
+
+    <button type="button" id="photos-add">Add photo</button>
+    <button type="button" id="photos-close" style="background:#555; margin-left:8px;">Done</button>
+
+</dialog>
 
 <div id="supplier-products" style="margin-top:20px;">
     <p>Loading your products...</p>
@@ -296,28 +311,35 @@ Add Product
 
     </div>
 
-    <label for="product-image-file"
-           style="display:block; font-weight:bold; margin-bottom:6px;">
-        Product photo
-    </label>
+    <strong style="display:block; margin-bottom:4px;">Product photos</strong>
 
-    <input
-        type="file"
-        id="product-image-file"
-        accept="image/*"
-        style="display:block; margin-bottom:8px; width:100%;"
-    >
-
-    <img
-        id="product-image-preview"
-        alt="Photo preview"
-        style="display:none; max-width:220px; max-height:220px; border-radius:8px; margin-bottom:8px; border:1px solid #ddd; object-fit:cover;"
-    >
-
-    <p style="color:#777; font-size:13px; margin:0 0 12px;">
-        Choose a photo from your phone's gallery, take one with your camera, or pick a file.
-        It is resized automatically.
+    <p style="color:#777; font-size:13px; margin:0 0 10px;">
+        Add up to 3 photos from your gallery, camera or files. The first is the main photo;
+        customers can swipe to see the others. Photos are resized automatically.
     </p>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
+        <div style="flex:1; min-width:160px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Main photo</label>
+            <input type="file" class="new-photo" accept="image/*" style="display:block; width:100%; margin-bottom:6px;">
+            <img class="new-photo-preview" alt="Photo preview"
+                 style="display:none; width:100%; max-width:160px; height:110px; border-radius:8px; border:1px solid #ddd; object-fit:cover;">
+        </div>
+
+        <div style="flex:1; min-width:160px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Photo 2 (optional)</label>
+            <input type="file" class="new-photo" accept="image/*" style="display:block; width:100%; margin-bottom:6px;">
+            <img class="new-photo-preview" alt="Photo preview"
+                 style="display:none; width:100%; max-width:160px; height:110px; border-radius:8px; border:1px solid #ddd; object-fit:cover;">
+        </div>
+
+        <div style="flex:1; min-width:160px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Photo 3 (optional)</label>
+            <input type="file" class="new-photo" accept="image/*" style="display:block; width:100%; margin-bottom:6px;">
+            <img class="new-photo-preview" alt="Photo preview"
+                 style="display:none; width:100%; max-width:160px; height:110px; border-radius:8px; border:1px solid #ddd; object-fit:cover;">
+        </div>
+    </div>
 
     <input
         type="text"
@@ -574,12 +596,12 @@ async function getSupplierId() {
     return supplier ? supplier.id : null;
 }
 
-// Live preview in the Add Product form.
+// Live previews in the Add Product form.
 document.addEventListener("change", function (e) {
 
-    if (!e.target || e.target.id !== "product-image-file") { return; }
+    if (!e.target || !e.target.classList.contains("new-photo")) { return; }
 
-    const preview = document.getElementById("product-image-preview");
+    const preview = e.target.parentNode.querySelector(".new-photo-preview");
     const file = e.target.files && e.target.files[0];
 
     if (preview.dataset.url) {
@@ -756,7 +778,9 @@ async function addProductInner() {
     const description = document.getElementById("product-description").value;
     const price = document.getElementById("product-price").value;
     const stock = document.getElementById("product-stock").value;
-    const imageFile = document.getElementById("product-image-file").files[0] || null;
+    const imageFiles = Array.from(document.querySelectorAll(".new-photo"))
+        .map(function (input) { return input.files[0] || null; })
+        .filter(Boolean);
 
     const message = document.getElementById("product-message");
 
@@ -800,16 +824,18 @@ async function addProductInner() {
         return;
     }
 
-    let image_url = "";
+    const uploadedUrls = [];
 
-    if (imageFile) {
-
-        message.textContent = "Uploading photo...";
+    if (imageFiles.length > 0) {
 
         try {
-            image_url = await uploadProductImage(imageFile, supplier.id);
+            for (let i = 0; i < imageFiles.length; i++) {
+                message.textContent = "Uploading photo " + (i + 1) + " of " + imageFiles.length + "...";
+                uploadedUrls.push(await uploadProductImage(imageFiles[i], supplier.id));
+            }
         } catch (uploadError) {
             console.error(uploadError);
+            for (const url of uploadedUrls) { await removeStoredImage(url); }
             message.textContent = "Photo upload failed: " + uploadError.message;
             return;
         }
@@ -826,7 +852,8 @@ async function addProductInner() {
             description: description,
             price: Number(price),
             stock: Number(stock) || 0,
-            image_url: image_url,
+            image_url: uploadedUrls[0] || "",
+            extra_images: uploadedUrls.slice(1),
             vehicle_compatibility: vehicle_compatibility,
             sale_price: special.sale_price,
             sale_ends_at: special.sale_ends_at,
@@ -836,6 +863,7 @@ async function addProductInner() {
 
     if (error) {
         console.error(error);
+        for (const url of uploadedUrls) { await removeStoredImage(url); }
         message.textContent = "Error saving product: " + error.message;
         return;
     }
@@ -850,9 +878,11 @@ async function addProductInner() {
     document.getElementById("product-sale-price").value = "";
     document.getElementById("product-sale-ends").value = "";
     document.getElementById("product-sale-label").value = "";
-    document.getElementById("product-image-file").value = "";
-    document.getElementById("product-image-preview").style.display = "none";
-    document.getElementById("product-image-preview").removeAttribute("src");
+    document.querySelectorAll(".new-photo").forEach(function (input) { input.value = ""; });
+    document.querySelectorAll(".new-photo-preview").forEach(function (img) {
+        img.style.display = "none";
+        img.removeAttribute("src");
+    });
     document.getElementById("vehicle-compatibility").value = "";
 
     loadSupplierProducts();
@@ -957,8 +987,8 @@ async function addProductInner() {
                     ${product.sale_price != null || product.sale_label ? "Edit Special" : "Add Special"}
                 </button>
 
-                <button onclick="choosePhoto('${esc(product.id)}')">
-                    ${product.image_url ? "Change Photo" : "Add Photo"}
+                <button onclick="managePhotos('${esc(product.id)}')">
+                    Photos (${(product.image_url ? 1 : 0) + (Array.isArray(product.extra_images) ? product.extra_images.length : 0)})
                 </button>
 
                 <button
@@ -1148,65 +1178,214 @@ document.getElementById("special-cancel").addEventListener("click", function () 
 });
 
 
-let replacingProductId = null;
+/* ---------- PHOTO MANAGER (up to 3 photos per product) ---------- */
 
-function choosePhoto(productId) {
-    replacingProductId = productId;
+const MAX_PHOTOS = 3;
 
+let photoProductId = null;
+let photoList = [];
+let photoBusy = false;
+let pickCallback = null;
+
+function productPhotoList(product) {
+    const list = [];
+    if (product.image_url) { list.push(product.image_url); }
+    if (Array.isArray(product.extra_images)) {
+        product.extra_images.forEach(function (u) { if (u) { list.push(u); } });
+    }
+    return list.slice(0, MAX_PHOTOS);
+}
+
+function pickPhoto(callback) {
+    pickCallback = callback;
     const input = document.getElementById("replace-photo-input");
     input.value = "";
     input.click();
 }
 
-document.getElementById("replace-photo-input").addEventListener("change", async function (e) {
-
+document.getElementById("replace-photo-input").addEventListener("change", function (e) {
     const file = e.target.files && e.target.files[0];
-    const productId = replacingProductId;
-    const status = document.getElementById("photo-status");
+    const callback = pickCallback;
+    pickCallback = null;
+    if (file && callback) { callback(file); }
+});
 
-    if (!file || !productId) { return; }
+function renderPhotoList() {
 
-    status.textContent = "Uploading photo...";
+    const box = document.getElementById("photos-list");
+
+    if (photoList.length === 0) {
+        box.innerHTML = '<p style="color:#777;">No photos yet.</p>';
+    } else {
+        box.innerHTML = photoList.map(function (url, i) {
+            return `
+                <div style="display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+                    <img src="${esc(PT.thumb(url))}" alt="" style="width:64px; height:64px; object-fit:cover; border-radius:8px; background:#eee;">
+                    <div style="flex:1;">
+                        <strong>${i === 0 ? "Main photo" : "Photo " + (i + 1)}</strong>
+                        <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" data-photo-act="change" data-i="${i}" style="padding:6px 10px; font-size:13px;">Change</button>
+                            ${i > 0 ? `<button type="button" data-photo-act="main" data-i="${i}" style="padding:6px 10px; font-size:13px; background:#555;">Make main</button>` : ""}
+                            <button type="button" data-photo-act="remove" data-i="${i}" style="padding:6px 10px; font-size:13px; background:#999;">Remove</button>
+                        </div>
+                    </div>
+                </div>`;
+        }).join("");
+    }
+
+    document.getElementById("photos-add").style.display = photoList.length >= MAX_PHOTOS ? "none" : "";
+}
+
+async function managePhotos(productId) {
+
+    const { data: product, error } = await supabaseClient
+        .from("products")
+        .select("id, name, image_url, extra_images")
+        .eq("id", productId)
+        .maybeSingle();
+
+    if (error || !product) {
+        alert("Unable to load product.");
+        return;
+    }
+
+    photoProductId = productId;
+    photoList = productPhotoList(product);
+
+    document.getElementById("photos-title").textContent = product.name;
+    document.getElementById("photos-message").textContent = "";
+
+    renderPhotoList();
+
+    document.getElementById("photos-dialog").showModal();
+}
+
+// Saves the new order/list. Returns true when the database accepted it.
+async function savePhotoList(newList) {
+
+    const { error } = await supabaseClient
+        .from("products")
+        .update({
+            image_url: newList[0] || "",
+            extra_images: newList.slice(1)
+        })
+        .eq("id", photoProductId);
+
+    if (error) {
+        console.error(error);
+        document.getElementById("photos-message").textContent = "Could not save: " + error.message;
+        return false;
+    }
+
+    photoList = newList;
+    renderPhotoList();
+    loadSupplierProducts();
+
+    return true;
+}
+
+async function runPhotoAction(work) {
+
+    if (photoBusy) { return; }
+
+    photoBusy = true;
+
+    const msg = document.getElementById("photos-message");
 
     try {
-
-        const supplierId = await getSupplierId();
-
-        if (!supplierId) {
-            status.textContent = "Supplier account not found.";
-            return;
-        }
-
-        const { data: existing } = await supabaseClient
-            .from("products")
-            .select("image_url")
-            .eq("id", productId)
-            .maybeSingle();
-
-        const newUrl = await uploadProductImage(file, supplierId);
-
-        const { error } = await supabaseClient
-            .from("products")
-            .update({ image_url: newUrl })
-            .eq("id", productId);
-
-        if (error) {
-            await removeStoredImage(newUrl);
-            throw new Error(error.message);
-        }
-
-        if (existing && existing.image_url) {
-            await removeStoredImage(existing.image_url);
-        }
-
-        status.textContent = "Photo updated.";
-
-        loadSupplierProducts();
-
+        await work(msg);
     } catch (err) {
         console.error(err);
-        status.textContent = "Photo upload failed: " + err.message;
+        msg.textContent = "Photo upload failed: " + err.message;
+    } finally {
+        photoBusy = false;
     }
+}
+
+document.getElementById("photos-add").addEventListener("click", function () {
+
+    if (photoList.length >= MAX_PHOTOS) { return; }
+
+    pickPhoto(function (file) {
+        runPhotoAction(async function (msg) {
+
+            msg.textContent = "Uploading photo...";
+
+            const supplierId = await getSupplierId();
+
+            if (!supplierId) { msg.textContent = "Supplier account not found."; return; }
+
+            const url = await uploadProductImage(file, supplierId);
+
+            if (await savePhotoList(photoList.concat([url]))) {
+                msg.textContent = "Photo added.";
+            } else {
+                await removeStoredImage(url);
+            }
+        });
+    });
+});
+
+document.getElementById("photos-list").addEventListener("click", function (e) {
+
+    const btn = e.target.closest("[data-photo-act]");
+
+    if (!btn) { return; }
+
+    const act = btn.getAttribute("data-photo-act");
+    const i = Number(btn.getAttribute("data-i"));
+
+    if (act === "change") {
+
+        pickPhoto(function (file) {
+            runPhotoAction(async function (msg) {
+
+                msg.textContent = "Uploading photo...";
+
+                const supplierId = await getSupplierId();
+
+                if (!supplierId) { msg.textContent = "Supplier account not found."; return; }
+
+                const url = await uploadProductImage(file, supplierId);
+                const old = photoList[i];
+                const next = photoList.slice();
+                next[i] = url;
+
+                if (await savePhotoList(next)) {
+                    await removeStoredImage(old);
+                    msg.textContent = "Photo updated.";
+                } else {
+                    await removeStoredImage(url);
+                }
+            });
+        });
+
+    } else if (act === "main") {
+
+        runPhotoAction(async function (msg) {
+            const next = photoList.slice();
+            const moved = next.splice(i, 1)[0];
+            next.unshift(moved);
+            if (await savePhotoList(next)) { msg.textContent = "Main photo changed."; }
+        });
+
+    } else if (act === "remove") {
+
+        if (!confirm("Remove this photo?")) { return; }
+
+        runPhotoAction(async function (msg) {
+            const old = photoList[i];
+            const next = photoList.filter(function (u, k) { return k !== i; });
+            if (await savePhotoList(next)) {
+                await removeStoredImage(old);
+                msg.textContent = "Photo removed.";
+            }
+        });
+    }
+});
+
+document.getElementById("photos-close").addEventListener("click", function () {
+    document.getElementById("photos-dialog").close();
 });
 
 async function editProduct(productId) {
@@ -1283,7 +1462,7 @@ async function deleteProduct(productId) {
 
     const { data: existing } = await supabaseClient
         .from("products")
-        .select("image_url")
+        .select("image_url, extra_images")
         .eq("id", productId)
         .maybeSingle();
 
@@ -1298,8 +1477,10 @@ async function deleteProduct(productId) {
         return;
     }
 
-    if (existing && existing.image_url) {
-        await removeStoredImage(existing.image_url);
+    if (existing) {
+        for (const url of productPhotoList(existing)) {
+            await removeStoredImage(url);
+        }
     }
 
     alert("Product deleted successfully!");
