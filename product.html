@@ -278,52 +278,6 @@
     .product-info h1 { font-size: 24px; }
 }
 
-
-#add-cart-btn {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 6px;
-    background: #111 !important;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-#add-cart-btn:hover {
-    background: #333 !important;
-}
-
-#add-cart-btn:disabled {
-    background: #777 !important;
-    cursor: not-allowed;
-}
-
-.mc-add-cart {
-    display: block;
-    width: 100%;
-    margin-top: 12px;
-    padding: 11px 12px;
-    border: none;
-    border-radius: 6px;
-    background: #111;
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.mc-add-cart:hover {
-    background: #e00000;
-}
-
-.mc-add-cart:disabled {
-    background: #777;
-    cursor: not-allowed;
-}
-
-
 </style>
 </head>
 
@@ -372,8 +326,8 @@ const esc = PT.esc;
 
 let currentProduct = null;
 let selectedQuantity = 1;
-let similarProductsById = {};
-    
+
+
 function money(value) { return PT.money(value); }
 
 function notice(html) {
@@ -674,11 +628,10 @@ function changeQuantity(amount) {
     document.getElementById("qty-value").textContent = selectedQuantity;
 }
 
-function addToCart(productOverride, quantityOverride) {
-    const product = productOverride || currentProduct;
-    const quantityToAdd = Number(quantityOverride) > 0
-        ? Number(quantityOverride)
-        : selectedQuantity;
+
+function addToCart() {
+
+    const product = currentProduct;
 
     let cart = [];
 
@@ -691,14 +644,14 @@ function addToCart(productOverride, quantityOverride) {
     const existing = cart.find(function (item) { return item.product_id === product.id; });
 
     if (existing) {
-existing.quantity = Number(existing.quantity || 1) + quantityToAdd;
+        existing.quantity = Number(existing.quantity || 1) + selectedQuantity;
     } else {
         cart.push({
             product_id: product.id,
             supplier_id: product.supplier_id,
             name: product.name,
             price: PT.sale(product).now,
-          quantity: quantityToAdd,
+            quantity: selectedQuantity,
             image_url: product.image_url || ""
         });
     }
@@ -792,12 +745,7 @@ async function loadSimilar(product) {
         .slice(0, LIMIT);
 
     PT.stash(list.map(function (row) { return row.p; }));
-similarProductsById = {};
 
-list.forEach(function (row) {
-    similarProductsById[String(row.p.id)] = row.p;
-});
-    
     document.getElementById("more-sub").textContent = usedOthers
         ? "Other parts customers are looking at."
         : "More in " + product.category + ".";
@@ -815,12 +763,9 @@ list.forEach(function (row) {
                 </div>
                 <div class="mc-info">
                     ${row.v ? '<div class="mc-fit">Fits your ' + esc(row.v.make + " " + row.v.model) + '</div>' : ""}
-<h3>${esc(p.name)}</h3>
-${PT.price(p)}
-<button type="button" class="mc-add-cart" data-add-cart="${esc(p.id)}">
-    Add to Cart
-</button>
-  </div>
+                    <h3>${esc(p.name)}</h3>
+                    ${PT.price(p)}
+                </div>
             </div>`;
     }).join("");
 
@@ -832,35 +777,12 @@ ${PT.price(p)}
 
 document.getElementById("more-grid").addEventListener("click", function (e) {
 
-    const addButton = e.target.closest("[data-add-cart]");
-
-    if (addButton) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const productId = addButton.getAttribute("data-add-cart");
-        const product = similarProductsById[String(productId)];
-
-        if (!product || Number(product.stock) <= 0) {
-            PT.toast("This product is currently unavailable.");
-            return;
-        }
-
-        addToCart(product, 1);
-        return;
-    }
-
     const card = e.target.closest("[data-open]");
 
-    if (
-        card &&
-        !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")
-    ) {
+    if (card && !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")) {
         PT.open(card.getAttribute("data-open"));
     }
 });
-
-
 
 
 loadProduct();
