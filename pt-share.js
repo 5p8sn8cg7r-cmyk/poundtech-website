@@ -46,14 +46,7 @@
         try { localStorage.setItem(FAV_KEY, JSON.stringify(list)); } catch (e) { /* storage blocked */ }
     }
 
-    function money(value) {
-        var n = Number(value);
-        if (!isFinite(n)) { return ""; }
-        return "R" + n.toLocaleString("en-ZA", {
-            minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
-            maximumFractionDigits: 2
-        });
-    }
+    function money(value) { return PT.money(value); }
 
     function productUrl(id) {
         return new URL("product.html?id=" + encodeURIComponent(id), window.location.href).href;
@@ -108,6 +101,147 @@
     document.head.appendChild(style);
 
 
+
+    /* ---------- prices, specials and faster product opening ---------- */
+
+    function priceParts(value) {
+        var n = Math.round(Number(value) * 100) / 100;
+        var bits = n.toFixed(2).split(".");
+        return { whole: bits[0].replace(/\B(?=(\d{3})+(?!\d))/g, " "), cents: bits[1] };
+    }
+
+    // Plain text price: R1 299.00 (always two decimals).
+    PT.money = function (value) {
+        if (value == null || value === "" || !isFinite(Number(value))) { return ""; }
+        var p = priceParts(value);
+        return "R" + p.whole + "." + p.cents;
+    };
+
+    // Works out whether a product has a live special. Must match the rule the database uses:
+    // a special price below the normal price, and not past its end date.
+    PT.sale = function (product) {
+        var price = Number(product.price) || 0;
+        var sp = product.sale_price == null ? null : Number(product.sale_price);
+        var ends = product.sale_ends_at ? new Date(product.sale_ends_at) : null;
+        var live = !ends || isNaN(ends.getTime()) || ends.getTime() > Date.now();
+        var priced = live && sp != null && isFinite(sp) && sp > 0 && sp < price;
+        var pct = priced ? Math.round((price - sp) / price * 100) : 0;
+        return {
+            priced: priced,
+            now: priced ? sp : price,
+            was: price,
+            save: priced ? price - sp : 0,
+            pct: pct,
+            label: live && product.sale_label ? String(product.sale_label) : "",
+            ends: live && ends && !isNaN(ends.getTime()) ? ends : null
+        };
+    };
+
+    PT.endsText = function (product) {
+        var s = PT.sale(product);
+        if (!s.ends || !(s.priced || s.label)) { return ""; }
+        var ms = s.ends.getTime() - Date.now();
+        if (ms <= 24 * 3600 * 1000) { return "Ends today"; }
+        var days = Math.ceil(ms / (24 * 3600 * 1000));
+        if (days <= 7) { return "Ends in " + days + " days"; }
+        return "Ends " + s.ends.toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+    };
+
+    // Price block: big price with small cents, old price struck through on specials.
+    PT.price = function (product, opts) {
+        opts = opts || {};
+        var s = PT.sale(product);
+        var p = priceParts(s.now);
+
+        var html = '<div class="pt-pricebox' + (opts.large ? " pt-large" : "") + '">' +
+            '<span class="pt-price' + (s.priced ? " pt-sale" : "") + '">' +
+            '<span class="pt-cur">R</span><span class="pt-whole">' + esc(p.whole) + '</span>' +
+            '<span class="pt-cents">.' + esc(p.cents) + '</span></span>';
+
+        if (s.priced) {
+            html += '<span class="pt-was">' + esc(PT.money(s.was)) + '</span>';
+            if (opts.large) { html += '<span class="pt-save">You save ' + esc(PT.money(s.save)) + '</span>'; }
+        }
+
+        html += '</div>';
+
+        var ends = PT.endsText(product);
+        if (ends) { html += '<div class="pt-ends">' + esc(ends) + '</div>'; }
+
+        return html;
+    };
+
+    // Corner tags for the image: percentage off, and the supplier's offer label.
+    PT.ribbons = function (product) {
+        var s = PT.sale(product);
+        var out = "";
+        if (s.priced && s.pct >= 1) { out += '<span class="pt-ribbon pt-red">-' + s.pct + '%</span>'; }
+        if (s.label) { out += '<span class="pt-ribbon pt-dark">' + esc(s.label) + '</span>'; }
+        return out ? '<div class="pt-ribbons">' + out + '</div>' : "";
+    };
+
+    // Small thumbnail for lists. New uploads have one (name ends _f.jpg -> _t.jpg).
+    PT.thumb = function (url) {
+        var u = String(url || "");
+        return /_f\.jpg(\?|$)/.test(u) ? u.replace(/_f\.jpg/, "_t.jpg") : u;
+    };
+
+    PT.img = function (url, alt) {
+        var thumb = PT.thumb(url);
+        return '<img src="' + esc(thumb) + '" data-full="' + esc(url) + '" alt="' + esc(alt) +
+               '" loading="lazy" decoding="async" onerror="PT.imgFallback(this)" ' +
+               'style="width:100%;height:100%;object-fit:cover;">';
+    };
+
+    PT.imgFallback = function (img) {
+        var full = img.getAttribute("data-full");
+        if (full && img.src !== full) { img.removeAttribute("onerror"); img.src = full; }
+    };
+
+    // Remember the product you tapped so the product page can show it straight away.
+    var stash = {};
+
+    PT.stash = function (items) {
+        (Array.isArray(items) ? items : [items]).forEach(function (p) { if (p && p.id) { stash[p.id] = p; } });
+    };
+
+    PT.open = function (id) {
+        try {
+            if (stash[id]) { sessionStorage.setItem("ptProduct:" + id, JSON.stringify({ t: Date.now(), p: stash[id] })); }
+        } catch (e) { /* storage blocked */ }
+        window.location.href = "product.html?id=" + encodeURIComponent(id);
+    };
+
+    PT.cached = function (id) {
+        try {
+            var raw = JSON.parse(sessionStorage.getItem("ptProduct:" + id));
+            if (raw && Date.now() - raw.t < 120000) { return raw.p; }
+        } catch (e) { /* ignore */ }
+        return null;
+    };
+
+    var priceStyle = document.createElement("style");
+    priceStyle.textContent =
+        ".pt-pricebox{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:12px 0 2px;}" +
+        ".pt-price{font-family:Arial,Helvetica,sans-serif;font-weight:700;color:#111;letter-spacing:-.02em;" +
+        "font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1;}" +
+        ".pt-cur{font-size:.62em;font-weight:700;margin-right:2px;vertical-align:.32em;}" +
+        ".pt-whole{font-size:1.5em;}" +
+        ".pt-cents{font-size:.62em;font-weight:700;vertical-align:.32em;margin-left:1px;}" +
+        ".pt-pricebox{font-size:15px;}" +
+        ".pt-pricebox.pt-large{font-size:22px;margin:16px 0 4px;}" +
+        ".pt-price.pt-sale{color:#d00000;}" +
+        ".pt-was{color:#888;text-decoration:line-through;font-size:.92em;font-variant-numeric:tabular-nums;}" +
+        ".pt-save{color:#16803c;font-weight:700;font-size:.8em;}" +
+        ".pt-ends{color:#b45f00;font-size:12px;font-weight:700;margin-bottom:6px;}" +
+        ".pt-ribbons{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;z-index:2;}" +
+        ".pt-ribbon{padding:4px 9px;border-radius:4px;font:bold 12px Arial,Helvetica,sans-serif;color:#fff;" +
+        "letter-spacing:.02em;text-transform:uppercase;box-shadow:0 1px 4px rgba(0,0,0,.25);}" +
+        ".pt-red{background:#e00000;}" +
+        ".pt-dark{background:#111;}" +
+        "@media(max-width:700px){.pt-ribbons{top:5px;left:5px;}.pt-ribbon{font-size:10px;padding:3px 7px;}}";
+    document.head.appendChild(priceStyle);
+
     /* ---------- icons ---------- */
 
     var HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
@@ -128,7 +262,7 @@
     // Round share button. Needs the product so the message can include name and price.
     PT.shareButton = function (product) {
         return '<button type="button" class="pt-btn" data-pt-share="' + esc(product.id) + '"' +
-               ' data-name="' + esc(product.name) + '" data-price="' + esc(product.price) + '"' +
+               ' data-name="' + esc(product.name) + '" data-price="' + esc(PT.sale(product).now) + '"' +
                ' aria-label="Share this product">' + SHARE_SVG + '</button>';
     };
 
@@ -145,7 +279,7 @@
 
     PT.sharePill = function (product) {
         return '<button type="button" class="pt-pill" data-pt-share="' + esc(product.id) + '"' +
-               ' data-name="' + esc(product.name) + '" data-price="' + esc(product.price) + '">' +
+               ' data-name="' + esc(product.name) + '" data-price="' + esc(PT.sale(product).now) + '">' +
                SHARE_SVG + 'Share</button>';
     };
 
