@@ -298,7 +298,31 @@
     background: #777;
     cursor: not-allowed;
 }
+
     
+.mc-add-cart {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #e00000;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.mc-add-cart:hover {
+    background: #b80000;
+}
+
+.mc-add-cart:disabled {
+    background: #777;
+    cursor: not-allowed;
+}
+
 </style>
 </head>
 
@@ -347,8 +371,8 @@ const esc = PT.esc;
 
 let currentProduct = null;
 let selectedQuantity = 1;
-
-
+let similarProductsById = {};
+    
 function money(value) { return PT.money(value); }
 
 function notice(html) {
@@ -649,10 +673,11 @@ function changeQuantity(amount) {
     document.getElementById("qty-value").textContent = selectedQuantity;
 }
 
-
-function addToCart() {
-
-    const product = currentProduct;
+function addToCart(productOverride, quantityOverride) {
+    const product = productOverride || currentProduct;
+    const quantityToAdd = Number(quantityOverride) > 0
+        ? Number(quantityOverride)
+        : selectedQuantity;
 
     let cart = [];
 
@@ -665,14 +690,14 @@ function addToCart() {
     const existing = cart.find(function (item) { return item.product_id === product.id; });
 
     if (existing) {
-        existing.quantity = Number(existing.quantity || 1) + selectedQuantity;
+existing.quantity = Number(existing.quantity || 1) + quantityToAdd;
     } else {
         cart.push({
             product_id: product.id,
             supplier_id: product.supplier_id,
             name: product.name,
             price: PT.sale(product).now,
-            quantity: selectedQuantity,
+          quantity: quantityToAdd,
             image_url: product.image_url || ""
         });
     }
@@ -766,7 +791,12 @@ async function loadSimilar(product) {
         .slice(0, LIMIT);
 
     PT.stash(list.map(function (row) { return row.p; }));
+similarProductsById = {};
 
+list.forEach(function (row) {
+    similarProductsById[String(row.p.id)] = row.p;
+});
+    
     document.getElementById("more-sub").textContent = usedOthers
         ? "Other parts customers are looking at."
         : "More in " + product.category + ".";
@@ -784,9 +814,12 @@ async function loadSimilar(product) {
                 </div>
                 <div class="mc-info">
                     ${row.v ? '<div class="mc-fit">Fits your ' + esc(row.v.make + " " + row.v.model) + '</div>' : ""}
-                    <h3>${esc(p.name)}</h3>
-                    ${PT.price(p)}
-                </div>
+<h3>${esc(p.name)}</h3>
+${PT.price(p)}
+<button type="button" class="mc-add-cart" data-add-cart="${esc(p.id)}">
+    Add to Cart
+</button>
+  </div>
             </div>`;
     }).join("");
 
@@ -797,6 +830,21 @@ async function loadSimilar(product) {
 
 
 document.getElementById("more-grid").addEventListener("click", function (e) {
+    const addButton = e.target.closest("[data-add-cart]");
+
+    if (addButton) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const productId = addButton.getAttribute("data-add-cart");
+        const product = similarProductsById[String(productId)];
+
+        if (product && Number(product.stock) > 0) {
+            addToCart(product, 1);
+        }
+
+        return;
+    }
 
     const card = e.target.closest("[data-open]");
 
@@ -804,6 +852,7 @@ document.getElementById("more-grid").addEventListener("click", function (e) {
         PT.open(card.getAttribute("data-open"));
     }
 });
+
 
 
 loadProduct();
