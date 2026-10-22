@@ -63,6 +63,17 @@
     flex-direction: column;
 }
 
+.biz-photo {
+    display: block;
+    width: calc(100% + 44px);
+    max-width: none;
+    height: 210px;
+    margin: -22px -22px 18px;
+    object-fit: cover;
+    border-radius: 12px 12px 0 0;
+    background: #f2f2f2;
+}
+
 .biz-top {
     display: flex;
     gap: 8px;
@@ -357,7 +368,7 @@ async function loadMechanics() {
     // Only the fields customers need to see. Contact details are not loaded here.
     const mechanicsQuery = supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, service_area, services, description, created_at")
+        .select("id, business_name, business_type, business_photo_url, service_area, services, description, created_at")
         .eq("status", "Approved")
         .order("created_at", { ascending: false });
 
@@ -527,8 +538,14 @@ function businessCard(mechanic) {
             </details>
         </div>`;
 
+    const photoHtml = mechanic.business_photo_url
+        ? `<img class="biz-photo" src="${esc(mechanic.business_photo_url)}" alt="${esc(mechanic.business_name)}" loading="lazy" referrerpolicy="no-referrer">`
+        : "";
+
     return `
         <div class="biz">
+
+            ${photoHtml}
 
             <div class="biz-top">
                 <span class="tag">${esc(TYPE_LABELS[mechanic.business_type] || "Mechanic")}</span>
