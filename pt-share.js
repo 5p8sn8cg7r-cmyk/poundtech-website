@@ -100,109 +100,6 @@
 
     document.head.appendChild(style);
 
-/* ---------- product photo gallery ---------- */
-
-var galleryStyle = document.createElement("style");
-
-galleryStyle.textContent = `
-    #pt-gallery {
-        position: fixed;
-        inset: 0;
-        z-index: 10000;
-        background: rgba(0, 0, 0, 0.94);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-
-    #pt-gallery img {
-        display: block;
-        max-width: 100%;
-        max-height: 88vh;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-    }
-
-    #pt-gallery-close {
-        position: absolute;
-        top: 16px;
-        right: 18px;
-        width: 44px;
-        height: 44px;
-        border: 0;
-        border-radius: 50%;
-        background: white;
-        color: #111;
-        font-size: 28px;
-        cursor: pointer;
-    }
-
-    #pt-gallery-hint {
-        position: absolute;
-        bottom: 16px;
-        color: white;
-        font: 14px Arial, sans-serif;
-        text-align: center;
-    }
-`;
-
-document.head.appendChild(galleryStyle);
-
-PT.gallery = function (url, alt) {
-    if (!url) return;
-
-    var old = document.getElementById("pt-gallery");
-    if (old) old.remove();
-
-    var overlay = document.createElement("div");
-    overlay.id = "pt-gallery";
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-label", "Product photo gallery");
-
-    var image = document.createElement("img");
-    image.src = url;
-    image.alt = alt || "Product photo";
-
-    var close = document.createElement("button");
-    close.id = "pt-gallery-close";
-    close.type = "button";
-    close.textContent = "\u00D7";
-    close.setAttribute("aria-label", "Close gallery");
-
-    var hint = document.createElement("div");
-    hint.id = "pt-gallery-hint";
-    hint.textContent = "Tap outside the photo or × to close";
-
-    function closeGallery() {
-        overlay.remove();
-        document.removeEventListener("keydown", onGalleryKey);
-    }
-
-    function onGalleryKey(event) {
-        if (event.key === "Escape") closeGallery();
-    }
-
-    close.addEventListener("click", closeGallery);
-
-    overlay.addEventListener("click", function (event) {
-        if (event.target === overlay) closeGallery();
-    });
-
-    image.addEventListener("click", function (event) {
-        event.stopPropagation();
-    });
-
-    overlay.appendChild(image);
-    overlay.appendChild(close);
-    overlay.appendChild(hint);
-    document.body.appendChild(overlay);
-
-    document.addEventListener("keydown", onGalleryKey);
-};
 
 
     /* ---------- prices, specials and faster product opening ---------- */
@@ -279,7 +176,7 @@ PT.gallery = function (url, alt) {
         var s = PT.sale(product);
         var out = "";
         if (s.priced && s.pct >= 1) { out += '<span class="pt-ribbon pt-red">-' + s.pct + '%</span>'; }
-        if (s.label) { out += '<span class="pt-ribbon pt-dark">' + esc(s.label) + '</span>'; }
+        if (s.label) { out += '<span class="pt-ribbon pt-red">' + esc(s.label) + '</span>'; }
         return out ? '<div class="pt-ribbons">' + out + '</div>' : "";
     };
 
@@ -688,18 +585,6 @@ PT.gallery = function (url, alt) {
     // Capture phase so a tap on a heart or share button never opens the product card underneath.
     document.addEventListener("click", function (e) {
 
-               var photo = e.target.closest && e.target.closest("img[data-full]");
-
-        if (photo) {
-            e.preventDefault();
-            e.stopPropagation();
-            PT.gallery(
-                photo.getAttribute("data-full") || photo.src,
-                photo.alt
-            );
-            return;
-        }
-       
         var heart = e.target.closest && e.target.closest("[data-pt-fav]");
 
         if (heart) {
