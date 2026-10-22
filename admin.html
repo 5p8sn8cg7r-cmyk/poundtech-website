@@ -100,6 +100,46 @@ input {
     margin-top: 15px;
 }
 
+.rev-title { margin: 0 0 14px; font-size: 20px; }
+
+.rev-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.rev-card {
+    background: white;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.rev-card small { display: block; color: #666; font-size: 13px; margin-bottom: 6px; }
+
+.rev-card b { font-size: 24px; letter-spacing: -0.01em; }
+
+.rev-card .sub { color: #666; font-size: 13px; margin-top: 4px; }
+
+.rev-card.accent { border-top: 4px solid #e00000; }
+
+.rev-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 14px; }
+
+.rev-table th, .rev-table td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+
+.rev-table th { background: #fafafa; color: #555; }
+
+.rev-table td.num, .rev-table th.num { text-align: right; }
+
+.rev-note { color: #777; font-size: 13px; margin: 0 0 24px; }
+
+@media (max-width: 760px) {
+    .rev-grid { grid-template-columns: repeat(2, 1fr); }
+    .rev-card b { font-size: 20px; }
+}
+
 .empty {
     text-align: center;
     background: white;
@@ -118,9 +158,9 @@ input {
     <p>Admin Dashboard</p>
 
     <div id="admin-nav" style="display:none; margin:20px 0;">
-        <button onclick="window.location.href='admin.html'">📦 Orders</button>
-        <button onclick="window.location.href='admin-mechanics.html'">🔧 Mechanic Applications</button>
-        <button onclick="window.location.href='admin-suppliers.html'">🏪 Supplier Applications</button>
+        <button onclick="window.location.href='admin.html'">Orders</button>
+        <button onclick="window.location.href='admin-mechanics.html'">Mechanic Applications</button>
+        <button onclick="window.location.href='admin-suppliers.html'">Supplier Applications</button>
     </div>
 
     <button onclick="adminLogout()">Logout</button>
@@ -141,6 +181,8 @@ input {
         <p id="login-error"></p>
 
     </div>
+
+    <div id="revenue" style="display:none;"></div>
 
     <div id="orders" style="display:none;"></div>
 
@@ -171,7 +213,9 @@ function esc(value) {
 function showDashboard() {
     document.getElementById("login").style.display = "none";
     document.getElementById("orders").style.display = "block";
+    document.getElementById("revenue").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
+    loadRevenue();
     loadOrders();
 }
 
@@ -187,6 +231,7 @@ async function adminLogout() {
 
     document.getElementById("login").style.display = "block";
     document.getElementById("orders").style.display = "none";
+    document.getElementById("revenue").style.display = "none";
     document.getElementById("admin-nav").style.display = "none";
 }
 
@@ -224,6 +269,104 @@ async function adminLogin() {
     }
 
     showDashboard();
+}
+
+
+function money(value) {
+    const n = Number(value) || 0;
+    const parts = n.toFixed(2).split(".");
+    return "R" + parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0") + "." + parts[1];
+}
+
+
+async function loadRevenue() {
+
+    const box = document.getElementById("revenue");
+
+    box.innerHTML = '<p class="rev-note">Loading revenue&hellip;</p>';
+
+    const { data, error } = await supabaseClient.rpc("get_admin_revenue");
+
+    if (error || !data) {
+        console.log("REVENUE ERROR:", error);
+        box.innerHTML = '<div class="empty"><h2>Revenue unavailable</h2><p>' +
+            esc(error ? error.message : "No data returned.") +
+            '</p><p>If this says the function does not exist, run 08_migration7_admin_revenue.sql in Supabase.</p></div>';
+        return;
+    }
+
+    const p = data.periods || {};
+    const all = p.all || {};
+
+    function periodRow(label, key) {
+        const r = p[key] || {};
+        return '<tr><td>' + label + '</td><td class="num">' + esc(r.transactions || 0) + '</td>' +
+               '<td class="num">' + esc(money(r.gross)) + '</td>' +
+               '<td class="num">' + esc(money(r.commission)) + '</td>' +
+               '<td class="num">' + esc(money(r.suppliers)) + '</td></tr>';
+    }
+
+    const topRows = (data.top_suppliers || []).map(function (t) {
+        return '<tr><td>' + esc(t.name) + '</td><td class="num">' + esc(money(t.gross)) +
+               '</td><td class="num">' + esc(money(t.commission)) + '</td></tr>';
+    }).join("") || '<tr><td colspan="3">No sales yet.</td></tr>';
+
+    const typeRows = (data.by_type || []).map(function (t) {
+        return '<tr><td>' + esc(t.type) + '</td><td class="num">' + esc(money(t.gross)) +
+               '</td><td class="num">' + esc(money(t.commission)) + '</td></tr>';
+    }).join("");
+
+    const statuses = data.orders && data.orders.by_status ? data.orders.by_status : {};
+    const statusText = Object.keys(statuses).map(function (k) { return esc(k) + ": " + esc(statuses[k]); }).join(" &middot; ");
+
+    box.innerHTML = `
+        <h2 class="rev-title">Revenue</h2>
+
+        <div class="rev-grid">
+            <div class="rev-card accent">
+                <small>PoundTech commission (all time)</small>
+                <b>${esc(money(all.commission))}</b>
+                <div class="sub">${esc(all.transactions || 0)} sales lines</div>
+            </div>
+            <div class="rev-card">
+                <small>Gross sales</small>
+                <b>${esc(money(all.gross))}</b>
+                <div class="sub">before supplier payouts</div>
+            </div>
+            <div class="rev-card">
+                <small>Owed to suppliers</small>
+                <b>${esc(money(data.owed_to_suppliers))}</b>
+                <div class="sub">not paid out yet</div>
+            </div>
+            <div class="rev-card">
+                <small>Paid to suppliers</small>
+                <b>${esc(money(data.paid_to_suppliers))}</b>
+                <div class="sub">${esc(data.orders ? data.orders.total : 0)} orders in total</div>
+            </div>
+        </div>
+
+        <table class="rev-table">
+            <tr><th>Period</th><th class="num">Sales</th><th class="num">Gross</th><th class="num">Commission</th><th class="num">Suppliers</th></tr>
+            ${periodRow("Today", "today")}
+            ${periodRow("Last 7 days", "week")}
+            ${periodRow("Last 30 days", "month")}
+            ${periodRow("All time", "all")}
+        </table>
+
+        <table class="rev-table">
+            <tr><th>Top suppliers</th><th class="num">Gross</th><th class="num">Commission</th></tr>
+            ${topRows}
+        </table>
+
+        ${typeRows ? `<table class="rev-table">
+            <tr><th>Income type</th><th class="num">Gross</th><th class="num">Commission</th></tr>
+            ${typeRows}
+        </table>` : ""}
+
+        <p class="rev-note">Cancelled orders are not counted. ${statusText ? "Orders by status: " + statusText + "." : ""}</p>
+
+        <h2 class="rev-title">Orders</h2>
+    `;
 }
 
 
