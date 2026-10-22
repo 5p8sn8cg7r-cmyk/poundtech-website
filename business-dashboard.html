@@ -192,6 +192,28 @@ input[type="checkbox"] {
             <button class="btn btn-dark btn-small" id="signout-btn">Sign out</button>
         </div>
 
+        <!-- Business photo -->
+        <div class="card">
+            <h2>Business photo</h2>
+            <p class="lead">Add a clear photo of your workshop, car wash or detailing studio. It will appear on your public PoundTech business card.</p>
+
+            <div id="business-photo-preview-wrap" style="margin:12px 0 16px;">
+                <img id="business-photo-preview" alt="Business photo preview"
+                     style="display:none; width:100%; max-width:420px; max-height:260px; object-fit:cover; border-radius:10px; border:1px solid #ddd;">
+                <p id="business-photo-empty" class="empty-note">No business photo uploaded yet.</p>
+            </div>
+
+            <label for="business-photo-input">Choose a photo</label>
+            <input type="file" id="business-photo-input" accept="image/*" style="display:block; margin:8px 0 14px; width:100%;">
+            <p class="hint" style="margin-top:0;">You can choose a photo from your phone gallery or computer. Please use an image under 15 MB.</p>
+
+            <div class="btn-row">
+                <button class="btn" id="upload-business-photo-btn">Upload photo</button>
+                <button class="btn btn-dark" id="remove-business-photo-btn" hidden>Remove photo</button>
+            </div>
+            <div id="business-photo-msg" role="status"></div>
+        </div>
+
         <!-- Business type -->
         <div class="card">
             <h2>Your business</h2>
@@ -423,7 +445,7 @@ async function init() {
 
     const { data, error } = await supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, status")
+        .select("id, business_name, business_type, business_photo_url, status")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: true })
         .limit(1);
@@ -447,6 +469,7 @@ async function init() {
     el("signed-in-as").textContent =
         "Signed in as " + (session.user.email || "your account");
     el("business-type").value = business.business_type || "mechanic";
+    renderBusinessPhoto(business.business_photo_url || "");
 
     show("app", true);
 
@@ -484,6 +507,174 @@ async function signOut() {
     await supabaseClient.auth.signOut();
     business = null;
     window.location.reload();
+}
+
+
+/* ---------- BUSINESS PHOTO ---------- */
+
+const BUSINESS_IMAGE_BUCKET = "business-photos";
+const MAX_BUSINESS_PHOTO_BYTES = 15 * 1024 * 1024;
+
+function renderBusinessPhoto(url) {
+    const preview = el("business-photo-preview");
+    const empty = el("business-photo-empty");
+
+    if (url) {
+        preview.src = url;
+        preview.style.display = "block";
+        empty.hidden = true;
+        el("remove-business-photo-btn").hidden = false;
+    } else {
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+        empty.hidden = false;
+        el("remove-business-photo-btn").hidden = true;
+    }
+}
+
+el("business-photo-input").addEventListener("change", () => {
+    const file = el("business-photo-input").files[0];
+    if (!file) {
+        renderBusinessPhoto(business ? business.business_photo_url : "");
+        return;
+    }
+
+    if (!file.type || !file.type.startsWith("image/")) {
+        msg("business-photo-msg", "Please choose an image file.", "error");
+        el("business-photo-input").value = "";
+        return;
+    }
+
+    if (file.size > MAX_BUSINESS_PHOTO_BYTES) {
+        msg("business-photo-msg", "That photo is too large. Please choose one under 15 MB.", "error");
+        el("business-photo-input").value = "";
+        return;
+    }
+
+    const preview = el("business-photo-preview");
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+    el("business-photo-empty").hidden = true;
+    msg("business-photo-msg", "Photo selected. Press Upload photo to publish it.", "info");
+});
+
+async function uploadBusinessPhoto() {
+    const file = el("business-photo-input").files[0];
+
+    if (!business) {
+        msg("business-photo-msg", "We couldn't identify your business. Please sign in again.", "error");
+        return;
+    }
+    if (!file) {
+        msg("business-photo-msg", "Choose a photo first.", "error");
+        return;
+    }
+    if (!file.type || !file.type.startsWith("image/") || file.size > MAX_BUSINESS_PHOTO_BYTES) {
+        msg("business-photo-msg", "Choose a valid image under 15 MB.", "error");
+        return;
+    }
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+        msg("business-photo-msg", "Your session has expired. Please sign in again.", "error");
+        return;
+    }
+
+    const button = el("upload-business-photo-btn");
+    button.disabled = true;
+    msg("business-photo-msg", "Uploading photo…", "info");
+
+    const extension = file.type === "image/png" ? "png" :
+        file.type === "image/webp" ? "webp" :
+        file.type === "image/gif" ? "gif" : "jpg";
+    const path = user.id + "/" + Date.now() + "-" +
+        Math.random().toString(36).slice(2) + "." + extension;
+
+    const { error: uploadError } = await supabaseClient.storage
+        .from(BUSINESS_IMAGE_BUCKET)
+        .upload(path, file, {
+            contentType: file.type,
+            cacheControl: "3600",
+            upsert: false
+        });
+
+    if (uploadError) {
+        button.disabled = false;
+        console.error(uploadError);
+        msg("business-photo-msg", "Upload failed: " + uploadError.message, "error");
+        return;
+    }
+
+    const { data: publicData } = supabaseClient.storage
+        .from(BUSINESS_IMAGE_BUCKET)
+        .getPublicUrl(path);
+
+    const newUrl = publicData.publicUrl;
+
+    const { error: saveError } = await supabaseClient
+        .from("mechanics")
+        .update({ business_photo_url: newUrl })
+        .eq("id", business.id);
+
+    if (saveError) {
+        await supabaseClient.storage.from(BUSINESS_IMAGE_BUCKET).remove([path]);
+        button.disabled = false;
+        console.error(saveError);
+        msg("business-photo-msg", "The photo uploaded, but we couldn't save it to your business: " + saveError.message, "error");
+        return;
+    }
+
+    const oldUrl = business.business_photo_url || "";
+    business.business_photo_url = newUrl;
+    renderBusinessPhoto(newUrl);
+    el("business-photo-input").value = "";
+    button.disabled = false;
+    msg("business-photo-msg", "Business photo saved.", "success");
+
+    if (oldUrl && oldUrl !== newUrl) {
+        const marker = "/storage/v1/object/public/" + BUSINESS_IMAGE_BUCKET + "/";
+        const oldIndex = oldUrl.indexOf(marker);
+        if (oldIndex !== -1) {
+            const oldPath = decodeURIComponent(oldUrl.slice(oldIndex + marker.length).split("?")[0]);
+            await supabaseClient.storage.from(BUSINESS_IMAGE_BUCKET).remove([oldPath]);
+        }
+    }
+}
+
+async function removeBusinessPhoto() {
+    if (!business || !business.business_photo_url) return;
+
+    const button = el("remove-business-photo-btn");
+    button.disabled = true;
+    msg("business-photo-msg", "Removing photo…", "info");
+
+    const oldUrl = business.business_photo_url;
+    const { error } = await supabaseClient
+        .from("mechanics")
+        .update({ business_photo_url: null })
+        .eq("id", business.id);
+
+    if (error) {
+        button.disabled = false;
+        console.error(error);
+        msg("business-photo-msg", "We couldn't remove the photo: " + error.message, "error");
+        return;
+    }
+
+    business.business_photo_url = null;
+    renderBusinessPhoto("");
+    el("business-photo-input").value = "";
+    button.disabled = false;
+    msg("business-photo-msg", "Business photo removed.", "success");
+
+    const marker = "/storage/v1/object/public/" + BUSINESS_IMAGE_BUCKET + "/";
+    const oldIndex = oldUrl.indexOf(marker);
+    if (oldIndex !== -1) {
+        const oldPath = decodeURIComponent(oldUrl.slice(oldIndex + marker.length).split("?")[0]);
+        const { error: removeError } = await supabaseClient.storage
+            .from(BUSINESS_IMAGE_BUCKET).remove([oldPath]);
+        if (removeError) console.error("Photo removed from profile but storage cleanup failed:", removeError);
+    }
 }
 
 
@@ -890,6 +1081,8 @@ el("login-password").addEventListener("keydown", e => {
 el("signout-btn").addEventListener("click", signOut);
 el("nobiz-signout").addEventListener("click", signOut);
 el("save-type-btn").addEventListener("click", saveType);
+el("upload-business-photo-btn").addEventListener("click", uploadBusinessPhoto);
+el("remove-business-photo-btn").addEventListener("click", removeBusinessPhoto);
 el("save-service-btn").addEventListener("click", saveService);
 el("cancel-edit-btn").addEventListener("click", () => {
     resetServiceForm();
