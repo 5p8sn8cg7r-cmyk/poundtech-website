@@ -284,8 +284,8 @@
 <body>
 
 <header class="site-header">
-    <a class="logo" href="index.html">POUND<span>TECH</span></a>
-    <a class="back" href="index.html">&larr; Back to marketplace</a>
+    <a class="logo" href="/">POUND<span>TECH</span></a>
+    <a class="back" href="/">&larr; Back to marketplace</a>
 </header>
 
 <main class="product-main">
@@ -401,7 +401,7 @@ async function loadProduct() {
     const productId = new URLSearchParams(window.location.search).get("id");
 
     if (!productId) {
-        notice("Product not found. <a href='index.html' style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
+        notice("Product not found. <a href='/' style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
         return;
     }
 
@@ -430,7 +430,7 @@ async function loadProduct() {
     }
 
     if (!product || (product.status && product.status !== "Active")) {
-        notice("This product is no longer available. <a href='index.html' style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
+        notice("This product is no longer available. <a href='/' style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
         return;
     }
 
