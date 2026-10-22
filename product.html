@@ -284,7 +284,7 @@
     padding: 14px;
     border: none;
     border-radius: 6px;
-    background: #111;
+    background: #111 !important;
     color: white;
     font-size: 16px;
     font-weight: bold;
@@ -292,15 +292,13 @@
 }
 
 #add-cart-btn:hover {
-    background: #e00000;
+    background: #333 !important;
 }
 
 #add-cart-btn:disabled {
-    background: #777;
+    background: #777 !important;
     cursor: not-allowed;
 }
-
-    
 
 .mc-add-cart {
     display: block;
@@ -833,6 +831,7 @@ ${PT.price(p)}
 
 
 document.getElementById("more-grid").addEventListener("click", function (e) {
+
     const addButton = e.target.closest("[data-add-cart]");
 
     if (addButton) {
@@ -842,19 +841,25 @@ document.getElementById("more-grid").addEventListener("click", function (e) {
         const productId = addButton.getAttribute("data-add-cart");
         const product = similarProductsById[String(productId)];
 
-        if (product && Number(product.stock) > 0) {
-            addToCart(product, 1);
+        if (!product || Number(product.stock) <= 0) {
+            PT.toast("This product is currently unavailable.");
+            return;
         }
 
+        addToCart(product, 1);
         return;
     }
 
     const card = e.target.closest("[data-open]");
 
-    if (card && !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")) {
+    if (
+        card &&
+        !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")
+    ) {
         PT.open(card.getAttribute("data-open"));
     }
 });
+
 
 
 
