@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://uezacbssvvvtlosnaroh.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Product | PoundTech</title>
@@ -241,16 +243,71 @@ let currentProduct = null;
 let selectedQuantity = 1;
 
 
-function money(value) {
-    const n = Number(value);
-    return "R" + n.toLocaleString("en-ZA", {
-        minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
-        maximumFractionDigits: 2
-    });
-}
+function money(value) { return PT.money(value); }
 
 function notice(html) {
     document.getElementById("product-container").innerHTML = '<div class="notice">' + html + '</div>';
+}
+
+
+function productKey(p) {
+    return [p.price, p.sale_price, p.sale_ends_at, p.sale_label, p.stock, p.status, p.name, p.image_url].join("|");
+}
+
+
+// Customer vehicles are fetched once and shared by the fit badges and "More like this".
+let vehiclesPromise = null;
+
+function getVehicles() {
+
+    if (!vehiclesPromise) {
+        vehiclesPromise = (async function () {
+
+            const { data: sessionData } = await supabaseClient.auth.getSession();
+
+            if (!sessionData || !sessionData.session) { return []; }
+
+            const result = await supabaseClient
+                .from("customer_vehicles")
+                .select("id, make, model, year, engine, nickname")
+                .eq("user_id", sessionData.session.user.id);
+
+            return result.error || !result.data ? [] : result.data;
+        })();
+    }
+
+    return vehiclesPromise;
+}
+
+
+async function fetchSupplier(supplierId) {
+
+    if (!supplierId) { return null; }
+
+    const result = await supabaseClient
+        .from("suppliers")
+        .select("business_name, status")
+        .eq("id", supplierId)
+        .maybeSingle();
+
+    if (result.error) {
+        console.error("SUPPLIER ERROR:", result.error);
+        return null;
+    }
+
+    return result.data;
+}
+
+
+function fillSupplier(product, supplier) {
+
+    const el = document.getElementById("sold-by");
+
+    if (!el) { return; }
+
+    el.innerHTML = supplier
+        ? 'Sold by <a href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '">' + esc(supplier.business_name) + '</a>'
+        : (product.supplier_id ? "&nbsp;" : "Supplier not available");
 }
 
 
@@ -263,6 +320,18 @@ async function loadProduct() {
         return;
     }
 
+    // If you tapped a card, we already have most of the product: show it now,
+    // and fetch everything else at the same time.
+    const cached = PT.cached(productId);
+
+    if (cached) {
+        renderProduct(cached);
+        getVehicles().then(function () { showFitBadges(cached); });
+    }
+
+    const supplierEarly = cached && cached.supplier_id ? fetchSupplier(cached.supplier_id) : null;
+    const similarEarly = cached ? loadSimilar(cached) : null;
+
     const { data: product, error } = await supabaseClient
         .from("products")
         .select("*")
@@ -271,7 +340,7 @@ async function loadProduct() {
 
     if (error) {
         console.error(error);
-        notice("We couldn't load this product right now. Please try again shortly.");
+        if (!cached) { notice("We couldn't load this product right now. Please try again shortly."); }
         return;
     }
 
@@ -284,22 +353,23 @@ async function loadProduct() {
 
     document.title = product.name + " | PoundTech";
 
-    let supplier = null;
-
-    if (product.supplier_id) {
-
-        const supplierResult = await supabaseClient
-            .from("suppliers")
-            .select("business_name, status")
-            .eq("id", product.supplier_id)
-            .maybeSingle();
-
-        if (supplierResult.error) {
-            console.error("SUPPLIER ERROR:", supplierResult.error);
-        } else {
-            supplier = supplierResult.data;
-        }
+    if (!cached || productKey(cached) !== productKey(product)) {
+        renderProduct(product);
     }
+
+    showFitBadges(product);
+
+    if (!similarEarly) { loadSimilar(product); }
+
+    const supplier = await (supplierEarly || fetchSupplier(product.supplier_id));
+
+    fillSupplier(product, supplier);
+}
+
+
+function renderProduct(product) {
+
+    currentProduct = product;
 
     const stock = Number(product.stock) || 0;
 
@@ -308,15 +378,16 @@ async function loadProduct() {
         stock <= 5  ? '<span class="stock-low">Only ' + esc(stock) + ' left</span>' :
                       '<span class="stock-in">In stock</span>';
 
-    selectedQuantity = stock > 0 ? 1 : 0;
+    selectedQuantity = stock > 0 ? Math.min(Math.max(1, selectedQuantity || 1), stock) : 0;
 
     document.getElementById("product-container").innerHTML = `
         <div class="product-page">
 
-            <div class="product-image">
+            <div class="product-image" style="position:relative;">
                 ${product.image_url
-                    ? `<img src="${esc(product.image_url)}" alt="${esc(product.name)}">`
+                    ? `<img src="${esc(product.image_url)}" alt="${esc(product.name)}" fetchpriority="high">`
                     : "No image"}
+                ${PT.ribbons(product)}
             </div>
 
             <div class="product-info">
@@ -325,13 +396,9 @@ async function loadProduct() {
 
                 <h1>${esc(product.name)}</h1>
 
-                <div class="sold-by">
-                    ${supplier
-                        ? 'Sold by <a href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '">' + esc(supplier.business_name) + '</a>'
-                        : "Supplier not available"}
-                </div>
+                <div class="sold-by" id="sold-by">&nbsp;</div>
 
-                <div class="price">${esc(money(product.price))}</div>
+                ${PT.price(product, { large: true })}
 
                 <p class="desc">${esc(product.description || "No description available.")}</p>
 
@@ -347,7 +414,7 @@ async function loadProduct() {
                 ${stock > 0 ? `
                     <div class="qty">
                         <button type="button" id="qty-minus" aria-label="Decrease quantity">&minus;</button>
-                        <span id="qty-value">1</span>
+                        <span id="qty-value">${selectedQuantity}</span>
                         <button type="button" id="qty-plus" aria-label="Increase quantity">+</button>
                     </div>
                 ` : ""}
@@ -358,7 +425,7 @@ async function loadProduct() {
 
                 <div class="actions-row">
                     ${PT.heartPill(product.id)}
-                    ${PT.sharePill({ id: product.id, name: product.name, price: product.price })}
+                    ${PT.sharePill(product)}
                 </div>
 
             </div>
@@ -373,138 +440,7 @@ async function loadProduct() {
         document.getElementById("qty-plus").addEventListener("click", function () { changeQuantity(1); });
         document.getElementById("add-cart-btn").addEventListener("click", addToCart);
     }
-
-    showFitBadges(product);
-    loadSimilar(product);
 }
-
-
-// "More like this": same category first, then other products to fill the row.
-// Items that fit one of the customer's garage vehicles are shown first.
-async function loadSimilar(product) {
-
-    const LIMIT = 6;
-
-    function inStock(p) { return Number(p.stock) > 0; }
-
-    let list = [];
-
-    const same = await supabaseClient
-        .from("products")
-        .select("*")
-        .eq("status", "Active")
-        .eq("category", product.category)
-        .neq("id", product.id)
-        .limit(24);
-
-    if (!same.error && same.data) { list = same.data.filter(inStock); }
-
-    let usedOthers = false;
-
-    if (list.length < LIMIT) {
-
-        const others = await supabaseClient
-            .from("products")
-            .select("*")
-            .eq("status", "Active")
-            .neq("id", product.id)
-            .limit(24);
-
-        if (!others.error && others.data) {
-            const have = {};
-            list.forEach(function (p) { have[p.id] = true; });
-            others.data.forEach(function (p) {
-                if (!have[p.id] && inStock(p)) { list.push(p); usedOthers = true; }
-            });
-        }
-    }
-
-    if (list.length === 0) { return; }
-
-    let vehicles = [];
-
-    const { data: sessionData } = await supabaseClient.auth.getSession();
-
-    if (sessionData && sessionData.session) {
-        const result = await supabaseClient
-            .from("customer_vehicles")
-            .select("id, make, model, year, engine, nickname")
-            .eq("user_id", sessionData.session.user.id);
-        if (!result.error && result.data) { vehicles = result.data; }
-    }
-
-    function fitVehicle(p) {
-        return vehicles.find(function (v) { return PT.fit(p, v) === "match"; }) || null;
-    }
-
-    // Same vehicle: fits one of the customer's cars, or lists a vehicle the viewed product lists too.
-    function words(text) {
-        return String(text || "").toLowerCase().split(/[^a-z0-9]+/).filter(function (w) { return w.length > 2 && w !== "universal" && w !== "all"; });
-    }
-
-    const baseWords = words(product.vehicle_compatibility);
-
-    function sharesVehicle(p) {
-        const w = words(p.vehicle_compatibility);
-        return w.some(function (x) { return baseWords.indexOf(x) !== -1; });
-    }
-
-    const base = Number(product.price) || 0;
-
-    list = list
-        .map(function (p) {
-            return {
-                p: p,
-                v: fitVehicle(p),
-                same: sharesVehicle(p),
-                sameCat: p.category === product.category ? 0 : 1,
-                gap: Math.abs((Number(p.price) || 0) - base)
-            };
-        })
-        .sort(function (a, b) {
-            if (a.sameCat !== b.sameCat) { return a.sameCat - b.sameCat; }
-            if (!!a.v !== !!b.v) { return a.v ? -1 : 1; }
-            if (a.same !== b.same) { return a.same ? -1 : 1; }
-            return a.gap - b.gap;
-        })
-        .slice(0, LIMIT);
-
-    document.getElementById("more-sub").textContent = usedOthers
-        ? "Other parts customers are looking at."
-        : "More in " + product.category + ".";
-
-    document.getElementById("more-grid").innerHTML = list.map(function (row) {
-
-        const p = row.p;
-
-        return `
-            <div class="more-card" data-open="${esc(p.id)}">
-                <div class="mc-image">
-                    ${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : "No image"}
-                    ${PT.cardActions({ id: p.id, name: p.name, price: p.price })}
-                </div>
-                <div class="mc-info">
-                    ${row.v ? '<div class="mc-fit">Fits your ' + esc(row.v.make + " " + row.v.model) + '</div>' : ""}
-                    <h3>${esc(p.name)}</h3>
-                    <div class="mc-price">${esc(money(p.price))}</div>
-                </div>
-            </div>`;
-    }).join("");
-
-    document.getElementById("more-section").hidden = false;
-
-    PT.refresh();
-}
-
-
-document.getElementById("more-grid").addEventListener("click", function (e) {
-
-    const card = e.target.closest("[data-open]");
-
-    if (card && !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")) {
-        window.location.href = "product.html?id=" + encodeURIComponent(card.getAttribute("data-open"));
-    }
-});
 
 
 function changeQuantity(amount) {
@@ -538,7 +474,7 @@ function addToCart() {
             product_id: product.id,
             supplier_id: product.supplier_id,
             name: product.name,
-            price: Number(product.price),
+            price: PT.sale(product).now,
             quantity: selectedQuantity,
             image_url: product.image_url || ""
         });
@@ -553,23 +489,124 @@ function addToCart() {
 // For logged-in customers: show which of their garage vehicles this fits.
 async function showFitBadges(product) {
 
-    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const vehicles = await getVehicles();
 
-    if (!sessionData || !sessionData.session) { return; }
+    const box = document.getElementById("fit-badges");
 
-    const { data: vehicles, error } = await supabaseClient
-        .from("customer_vehicles")
-        .select("id, make, model, year, engine, nickname")
-        .eq("user_id", sessionData.session.user.id);
-
-    if (error || !vehicles) { return; }
+    if (!box) { return; }
 
     const fits = vehicles.filter(function (v) { return PT.fit(product, v) === "match"; });
 
-    document.getElementById("fit-badges").innerHTML = fits.map(function (v) {
+    box.innerHTML = fits.map(function (v) {
         return '<span class="fit-ok">Fits your ' + esc(v.year + " " + v.make + " " + v.model) + '</span>';
     }).join("");
 }
+
+
+// "More like this": same category first, then the same vehicle, then anything else in stock.
+async function loadSimilar(product) {
+
+    const LIMIT = 6;
+
+    function inStock(p) { return Number(p.stock) > 0; }
+
+    const [sameResult, otherResult, vehicles] = await Promise.all([
+        supabaseClient.from("products").select("*")
+            .eq("status", "Active").eq("category", product.category).neq("id", product.id).limit(24),
+        supabaseClient.from("products").select("*")
+            .eq("status", "Active").neq("id", product.id)
+            .order("created_at", { ascending: false }).limit(24),
+        getVehicles()
+    ]);
+
+    let list = !sameResult.error && sameResult.data ? sameResult.data.filter(inStock) : [];
+
+    let usedOthers = false;
+
+    if (list.length < LIMIT && !otherResult.error && otherResult.data) {
+        const have = {};
+        list.forEach(function (p) { have[p.id] = true; });
+        otherResult.data.forEach(function (p) {
+            if (!have[p.id] && inStock(p)) { list.push(p); usedOthers = true; }
+        });
+    }
+
+    if (list.length === 0) { return; }
+
+    function fitVehicle(p) {
+        return vehicles.find(function (v) { return PT.fit(p, v) === "match"; }) || null;
+    }
+
+    function words(text) {
+        return String(text || "").toLowerCase().split(/[^a-z0-9]+/)
+            .filter(function (w) { return w.length > 2 && w !== "universal" && w !== "all"; });
+    }
+
+    const baseWords = words(product.vehicle_compatibility);
+
+    function sharesVehicle(p) {
+        return words(p.vehicle_compatibility).some(function (x) { return baseWords.indexOf(x) !== -1; });
+    }
+
+    const base = PT.sale(product).now;
+
+    list = list
+        .map(function (p) {
+            return {
+                p: p,
+                v: fitVehicle(p),
+                same: sharesVehicle(p),
+                sameCat: p.category === product.category ? 0 : 1,
+                gap: Math.abs(PT.sale(p).now - base)
+            };
+        })
+        .sort(function (a, b) {
+            if (a.sameCat !== b.sameCat) { return a.sameCat - b.sameCat; }
+            if (!!a.v !== !!b.v) { return a.v ? -1 : 1; }
+            if (a.same !== b.same) { return a.same ? -1 : 1; }
+            return a.gap - b.gap;
+        })
+        .slice(0, LIMIT);
+
+    PT.stash(list.map(function (row) { return row.p; }));
+
+    document.getElementById("more-sub").textContent = usedOthers
+        ? "Other parts customers are looking at."
+        : "More in " + product.category + ".";
+
+    document.getElementById("more-grid").innerHTML = list.map(function (row) {
+
+        const p = row.p;
+
+        return `
+            <div class="more-card" data-open="${esc(p.id)}">
+                <div class="mc-image">
+                    ${p.image_url ? PT.img(p.image_url, p.name) : "No image"}
+                    ${PT.ribbons(p)}
+                    ${PT.cardActions({ id: p.id, name: p.name, price: p.price, sale_price: p.sale_price, sale_ends_at: p.sale_ends_at })}
+                </div>
+                <div class="mc-info">
+                    ${row.v ? '<div class="mc-fit">Fits your ' + esc(row.v.make + " " + row.v.model) + '</div>' : ""}
+                    <h3>${esc(p.name)}</h3>
+                    ${PT.price(p)}
+                </div>
+            </div>`;
+    }).join("");
+
+    document.getElementById("more-section").hidden = false;
+
+    PT.refresh();
+}
+
+
+document.getElementById("more-grid").addEventListener("click", function (e) {
+
+    const card = e.target.closest("[data-open]");
+
+    if (card && !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")) {
+        PT.open(card.getAttribute("data-open"));
+    }
+});
 
 
 loadProduct();
