@@ -262,6 +262,155 @@ nav a:hover {
     cursor: pointer;
 }
 
+/* SERVICES DISCOVERY */
+
+.services-nav-link {
+    color: #fff;
+    background: #e00000;
+    padding: 8px 13px;
+    margin: -8px 0;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.services-nav-link:hover {
+    background: #b80000;
+    color: #fff;
+}
+
+.services-discovery {
+    padding: 38px 6%;
+    background: #fff;
+    border-bottom: 1px solid #e7e7e7;
+}
+
+.services-discovery-inner {
+    max-width: 1250px;
+    margin: 0 auto;
+}
+
+.services-discovery-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.services-discovery-heading h2 {
+    font-size: 27px;
+    margin-bottom: 5px;
+}
+
+.services-discovery-heading p {
+    color: #666;
+    line-height: 1.5;
+}
+
+.services-all-link {
+    color: #e00000;
+    font-weight: bold;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.services-discovery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.service-discovery-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid #e4e4e4;
+    border-radius: 12px;
+    background: #f8f8f9;
+    color: #111;
+    text-decoration: none;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+}
+
+.service-discovery-card:hover {
+    border-color: #e00000;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 18px rgba(0,0,0,.07);
+}
+
+.service-discovery-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 54px;
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
+    background: #111;
+    color: #fff;
+}
+
+.service-discovery-icon svg {
+    width: 29px;
+    height: 29px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.service-discovery-copy {
+    min-width: 0;
+}
+
+.service-discovery-copy strong {
+    display: block;
+    font-size: 17px;
+    margin-bottom: 4px;
+}
+
+.service-discovery-copy span {
+    display: block;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+    .services-discovery {
+        padding: 30px 5%;
+    }
+
+    .services-discovery-heading h2 {
+        font-size: 23px;
+    }
+
+    .services-discovery-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .service-discovery-card {
+        padding: 15px;
+    }
+
+    .services-nav-link {
+        padding: 0;
+        margin: 0;
+        background: transparent;
+        color: #fff;
+    }
+
+    .services-nav-link:hover {
+        background: transparent;
+        color: #e00000;
+    }
+}
+
 /* MECHANIC */
 
 .mechanic {
@@ -980,7 +1129,7 @@ footer {
     <a href="/">Home</a>
     <a href="/?view=parts">Parts</a>
     <a href="/?view=accessories">Accessories</a>
-    <a href="mechanics.html">Mechanics</a>
+    <a class="services-nav-link" href="mechanics.html">Find Services</a>
     <a href="supplier.html">Sell</a>
 </nav>
 
@@ -1036,6 +1185,49 @@ Find car parts, accessories and automotive services from businesses across South
     
 </section>
 
+<section class="services-discovery" aria-labelledby="services-discovery-title">
+    <div class="services-discovery-inner">
+        <div class="services-discovery-heading">
+            <div>
+                <h2 id="services-discovery-title">Need a service for your car?</h2>
+                <p>Find local professionals for repairs, car washes and detailing.</p>
+            </div>
+            <a class="services-all-link" href="mechanics.html">Explore all services &rarr;</a>
+        </div>
+
+        <div class="services-discovery-grid">
+            <a class="service-discovery-card" href="mechanics.html?type=mechanic">
+                <span class="service-discovery-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18l3 3 5.3-5.3a5 5 0 0 0 6.4-6.4l-3 3-3-3z"/></svg>
+                </span>
+                <span class="service-discovery-copy">
+                    <strong>Mechanics &amp; Repairs</strong>
+                    <span>Servicing, diagnostics and repairs</span>
+                </span>
+            </a>
+
+            <a class="service-discovery-card" href="mechanics.html?type=car_wash">
+                <span class="service-discovery-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9 15a3 3 0 0 0 3 3"/></svg>
+                </span>
+                <span class="service-discovery-copy">
+                    <strong>Car Washes</strong>
+                    <span>Find a convenient place to clean your car</span>
+                </span>
+            </a>
+
+            <a class="service-discovery-card" href="mechanics.html?type=detailer">
+                <span class="service-discovery-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg>
+                </span>
+                <span class="service-discovery-copy">
+                    <strong>Car Detailing</strong>
+                    <span>Interior cleaning and exterior finishes</span>
+                </span>
+            </a>
+        </div>
+    </div>
+</section>
 
 <section class="section" id="category-section">
 
@@ -1133,24 +1325,6 @@ Find car parts, accessories and automotive services from businesses across South
 </div>
 </section>
 
-
-<section class="section">
-
-<div class="mechanic">
-
-<h2>Need a Mechanic?</h2>
-
-<p>
-Connect with automotive professionals and find the right service for your vehicle.
-</p>
-
-<button onclick="findMechanic()">
-Find a Mechanic
-</button>
-
-</div>
-
-</section>
 
 <section class="sell">
 
