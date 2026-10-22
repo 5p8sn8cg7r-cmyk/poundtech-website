@@ -321,6 +321,70 @@
 
 .more { margin-top: 40px; }
 
+.product-reviews {
+    margin-top: 40px;
+    background: white;
+    padding: 26px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+.product-reviews h2 { margin: 0 0 8px; font-size: 22px; }
+
+.review-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 20px;
+}
+
+.review-average { font-size: 30px; font-weight: bold; }
+.review-stars { color: #e5a000; letter-spacing: 2px; }
+.review-muted { color: #666; font-size: 14px; }
+
+.product-review-item {
+    border-top: 1px solid #eee;
+    padding: 16px 0;
+}
+
+.product-review-item p { margin: 8px 0 0; color: #444; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.review-form {
+    border-top: 1px solid #eee;
+    margin-top: 22px;
+    padding-top: 22px;
+}
+
+.review-form input,
+.review-form select,
+.review-form textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    font: inherit;
+}
+
+.review-form textarea { resize: vertical; }
+.review-submit {
+    background: #111;
+    color: white;
+    border: 0;
+    border-radius: 7px;
+    padding: 12px 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.review-submit:disabled { opacity: 0.6; cursor: wait; }
+#product-review-message { margin-top: 12px; font-size: 14px; font-weight: bold; }
+
+@media (max-width: 800px) {
+    .product-reviews { padding: 20px; }
+}
+
 .more h2 { font-size: 22px; margin-bottom: 4px; }
 
 .more-sub { color: #666; font-size: 14px; margin-bottom: 16px; }
@@ -390,6 +454,32 @@
     <div id="product-container">
         <div class="notice">Loading product&hellip;</div>
     </div>
+
+    <section class="product-reviews" id="product-reviews-section">
+        <h2>Customer Reviews</h2>
+        <p class="review-muted">Reviews are verified against completed PoundTech orders.</p>
+        <div id="product-review-summary" class="review-muted">Loading reviews...</div>
+        <div id="product-reviews-list"></div>
+
+        <div class="review-form">
+            <h3>Write a Product Review</h3>
+            <p class="review-muted">Enter the order number and email address used at checkout. You can review a product only if it was included in a completed order.</p>
+            <input id="product-review-order" type="text" autocomplete="off" placeholder="Order number (e.g. PT1790465694633)" aria-label="Order number">
+            <input id="product-review-email" type="email" autocomplete="email" placeholder="Email used for your order" aria-label="Email used for your order">
+            <input id="product-review-name" type="text" maxlength="80" autocomplete="name" placeholder="Your name" aria-label="Your name">
+            <select id="product-review-rating" aria-label="Choose a rating">
+                <option value="">Select a star rating</option>
+                <option value="5">★★★★★ — Excellent</option>
+                <option value="4">★★★★☆ — Good</option>
+                <option value="3">★★★☆☆ — Average</option>
+                <option value="2">★★☆☆☆ — Poor</option>
+                <option value="1">★☆☆☆☆ — Very poor</option>
+            </select>
+            <textarea id="product-review-text" rows="4" maxlength="2000" placeholder="Share your experience with this product..." aria-label="Write your review"></textarea>
+            <button type="button" class="review-submit" id="submit-product-review">Submit Review</button>
+            <div id="product-review-message" role="status" aria-live="polite"></div>
+        </div>
+    </section>
 
     <section class="more" id="more-section" hidden>
         <h2>More like this</h2>
@@ -547,7 +637,136 @@ async function loadProduct() {
     const supplier = await (supplierEarly || fetchSupplier(product.supplier_id));
 
     fillSupplier(product, supplier);
+    loadProductReviews(product.id);
 }
+
+
+async function loadProductReviews(productId) {
+
+    const summary = document.getElementById("product-review-summary");
+    const list = document.getElementById("product-reviews-list");
+
+    summary.textContent = "Loading reviews...";
+    list.innerHTML = "";
+
+    const { data: reviews, error } = await supabaseClient
+        .from("product_reviews")
+        .select("id, customer_name, rating, review_text, created_at")
+        .eq("product_id", productId)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("PRODUCT REVIEWS ERROR:", error);
+        summary.textContent = "Reviews are temporarily unavailable.";
+        list.innerHTML = '<p class="review-muted">Please try again later.</p>';
+        return;
+    }
+
+    if (!reviews || reviews.length === 0) {
+        summary.innerHTML = '<p class="review-muted">No reviews yet. If you have purchased this product, you can be the first to review it below.</p>';
+        return;
+    }
+
+    const average = reviews.reduce(function (sum, review) {
+        return sum + Number(review.rating || 0);
+    }, 0) / reviews.length;
+
+    summary.innerHTML =
+        '<div class="review-summary">' +
+            '<div class="review-average">' + average.toFixed(1) + '<span class="review-muted"> / 5</span></div>' +
+            '<div><div class="review-stars" aria-label="' + average.toFixed(1) + ' out of 5 stars">' +
+                '★'.repeat(Math.round(average)) + '☆'.repeat(5 - Math.round(average)) +
+            '</div><div class="review-muted">' + reviews.length + (reviews.length === 1 ? ' review' : ' reviews') + '</div></div>' +
+        '</div>';
+
+    list.innerHTML = reviews.map(function (review) {
+        const rating = Math.max(1, Math.min(5, Number(review.rating) || 1));
+        const date = review.created_at
+            ? new Date(review.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+            : "";
+
+        return '<article class="product-review-item">' +
+            '<strong>' + esc(review.customer_name || "Verified customer") + '</strong>' +
+            '<div class="review-stars" aria-label="' + rating + ' out of 5 stars">' +
+                '★'.repeat(rating) + '☆'.repeat(5 - rating) +
+            '</div>' +
+            (date ? '<div class="review-muted">' + esc(date) + '</div>' : '') +
+            '<p>' + esc(review.review_text || "") + '</p>' +
+        '</article>';
+    }).join("");
+}
+
+
+async function submitProductReview() {
+
+    const orderNumber = document.getElementById("product-review-order").value.trim();
+    const email = document.getElementById("product-review-email").value.trim();
+    const customerName = document.getElementById("product-review-name").value.trim();
+    const rating = Number(document.getElementById("product-review-rating").value);
+    const reviewText = document.getElementById("product-review-text").value.trim();
+    const message = document.getElementById("product-review-message");
+    const button = document.getElementById("submit-product-review");
+
+    if (!currentProduct || !currentProduct.id) {
+        message.style.color = "#b80000";
+        message.textContent = "Product details are still loading. Please try again.";
+        return;
+    }
+
+    if (!orderNumber || !email || !customerName || !rating || !reviewText) {
+        message.style.color = "#b80000";
+        message.textContent = "Please complete every field before submitting.";
+        return;
+    }
+
+    if (rating < 1 || rating > 5 || !Number.isInteger(rating)) {
+        message.style.color = "#b80000";
+        message.textContent = "Please select a rating from 1 to 5 stars.";
+        return;
+    }
+
+    button.disabled = true;
+    message.style.color = "#555";
+    message.textContent = "Verifying your completed order...";
+
+    const { data, error } = await supabaseClient.rpc("submit_product_review", {
+        p_order_number: orderNumber,
+        p_email: email,
+        p_product_id: currentProduct.id,
+        p_customer_name: customerName,
+        p_rating: rating,
+        p_review_text: reviewText
+    });
+
+    button.disabled = false;
+
+    if (error) {
+        console.error("PRODUCT REVIEW SUBMISSION ERROR:", error);
+        message.style.color = "#b80000";
+        message.textContent = "Unable to submit your review right now. Please try again.";
+        return;
+    }
+
+    if (!data || !data.success) {
+        message.style.color = "#b80000";
+        message.textContent = data && data.message ? data.message : "Unable to verify this review.";
+        return;
+    }
+
+    message.style.color = "#16803c";
+    message.textContent = "Your review has been submitted successfully.";
+
+    document.getElementById("product-review-order").value = "";
+    document.getElementById("product-review-email").value = "";
+    document.getElementById("product-review-name").value = "";
+    document.getElementById("product-review-rating").value = "";
+    document.getElementById("product-review-text").value = "";
+
+    await loadProductReviews(currentProduct.id);
+}
+
+
+document.getElementById("submit-product-review").addEventListener("click", submitProductReview);
 
 
 function photosOf(product) {
