@@ -276,7 +276,8 @@ let allMechanics = [];
 let servicesByBusiness = {};
 let hoursByBusiness = {};
 let ratingsByBusiness = {};
-let currentType = "all";
+const requestedType = new URLSearchParams(window.location.search).get("type");
+let currentType = ["mechanic", "car_wash", "detailer"].includes(requestedType) ? requestedType : "all";
 
 
 /* ---------- helpers ---------- */
@@ -632,6 +633,11 @@ document.getElementById("mechanics-container").addEventListener("click", e => {
         window.location.href =
             "request-quote.html?mechanic_id=" + encodeURIComponent(button.dataset.id);
     }
+});
+
+// Respect service-category links from the homepage.
+document.querySelectorAll("#type-chips .chip").forEach(chip => {
+    chip.classList.toggle("active", chip.dataset.type === currentType);
 });
 
 loadMechanics();
