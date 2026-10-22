@@ -136,6 +136,91 @@
     box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
 }
 
+.gallery { min-width: 0; }
+
+.product-image { position: relative; }
+
+.pg-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+
+.pg-track::-webkit-scrollbar { display: none; }
+
+.pg-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+}
+
+.pg-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.pg-count {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: rgba(0, 0, 0, 0.68);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.pg-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    color: #111;
+    z-index: 3;
+}
+
+.pg-arrow:hover { background: white; }
+.pg-prev { left: 10px; }
+.pg-next { right: 10px; }
+
+@media (hover: none) { .pg-arrow { display: none; } }
+
+.pg-thumbs { display: flex; gap: 10px; margin-top: 12px; }
+
+.pg-thumb {
+    width: 72px;
+    height: 72px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #eee;
+    cursor: pointer;
+    opacity: 0.65;
+    transition: opacity 0.15s, border-color 0.15s;
+}
+
+.pg-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.pg-thumb.on { border-color: #e00000; opacity: 1; }
+
+.pg-hint { display: none; color: #777; font-size: 13px; margin-top: 8px; }
+
+@media (hover: none) { .pg-hint { display: block; } }
+
 .more { margin-top: 40px; }
 
 .more h2 { font-size: 22px; margin-bottom: 4px; }
@@ -251,7 +336,7 @@ function notice(html) {
 
 
 function productKey(p) {
-    return [p.price, p.sale_price, p.sale_ends_at, p.sale_label, p.stock, p.status, p.name, p.image_url].join("|");
+    return [p.price, p.sale_price, p.sale_ends_at, p.sale_label, p.stock, p.status, p.name, p.image_url, (p.extra_images || []).join(",")].join("|");
 }
 
 
@@ -367,6 +452,94 @@ async function loadProduct() {
 }
 
 
+function photosOf(product) {
+
+    const list = [];
+
+    if (product.image_url) { list.push(product.image_url); }
+
+    if (Array.isArray(product.extra_images)) {
+        product.extra_images.forEach(function (u) { if (u) { list.push(u); } });
+    }
+
+    return list.slice(0, 3);
+}
+
+
+function galleryHtml(product) {
+
+    const photos = photosOf(product);
+
+    if (photos.length === 0) { return "No image"; }
+
+    if (photos.length === 1) {
+        return '<img src="' + esc(photos[0]) + '" alt="' + esc(product.name) + '" fetchpriority="high" style="width:100%;height:100%;object-fit:cover;">';
+    }
+
+    return '<div class="pg-track" id="pg-track">' +
+        photos.map(function (url, i) {
+            return '<div class="pg-slide"><img src="' + esc(url) + '" alt="' + esc(product.name) + ' photo ' + (i + 1) + '"' +
+                   (i === 0 ? ' fetchpriority="high"' : ' loading="lazy"') + '></div>';
+        }).join("") +
+        '</div>' +
+        '<button type="button" class="pg-arrow pg-prev" id="pg-prev" aria-label="Previous photo">&lsaquo;</button>' +
+        '<button type="button" class="pg-arrow pg-next" id="pg-next" aria-label="Next photo">&rsaquo;</button>' +
+        '<span class="pg-count" id="pg-count">1 / ' + photos.length + '</span>';
+}
+
+
+function thumbsHtml(product) {
+
+    const photos = photosOf(product);
+
+    if (photos.length < 2) { return ""; }
+
+    return '<div class="pg-thumbs" id="pg-thumbs">' +
+        photos.map(function (url, i) {
+            return '<button type="button" class="pg-thumb' + (i === 0 ? " on" : "") + '" data-i="' + i + '" aria-label="Show photo ' + (i + 1) + '">' +
+                   '<img src="' + esc(PT.thumb(url)) + '" data-full="' + esc(url) + '" alt="" onerror="PT.imgFallback(this)"></button>';
+        }).join("") +
+        '</div><p class="pg-hint">Swipe the photo to see more</p>';
+}
+
+
+// Swipe (scroll-snap), arrows on desktop, and thumbnails all stay in step.
+function setupGallery() {
+
+    const track = document.getElementById("pg-track");
+
+    if (!track) { return; }
+
+    const thumbs = Array.from(document.querySelectorAll("#pg-thumbs .pg-thumb"));
+    const count = document.getElementById("pg-count");
+    const total = thumbs.length;
+
+    function current() {
+        return Math.max(0, Math.min(total - 1, Math.round(track.scrollLeft / track.clientWidth)));
+    }
+
+    function show(i) {
+        thumbs.forEach(function (t, k) { t.classList.toggle("on", k === i); });
+        count.textContent = (i + 1) + " / " + total;
+    }
+
+    function goTo(i) {
+        i = Math.max(0, Math.min(total - 1, i));
+        track.scrollTo({ left: i * track.clientWidth, behavior: "smooth" });
+        show(i);
+    }
+
+    track.addEventListener("scroll", function () { show(current()); }, { passive: true });
+
+    thumbs.forEach(function (t) {
+        t.addEventListener("click", function () { goTo(Number(t.getAttribute("data-i"))); });
+    });
+
+    document.getElementById("pg-prev").addEventListener("click", function () { goTo(current() - 1); });
+    document.getElementById("pg-next").addEventListener("click", function () { goTo(current() + 1); });
+}
+
+
 function renderProduct(product) {
 
     currentProduct = product;
@@ -383,11 +556,12 @@ function renderProduct(product) {
     document.getElementById("product-container").innerHTML = `
         <div class="product-page">
 
-            <div class="product-image" style="position:relative;">
-                ${product.image_url
-                    ? `<img src="${esc(product.image_url)}" alt="${esc(product.name)}" fetchpriority="high">`
-                    : "No image"}
-                ${PT.ribbons(product)}
+            <div class="gallery">
+                <div class="product-image">
+                    ${galleryHtml(product)}
+                    ${PT.ribbons(product)}
+                </div>
+                ${thumbsHtml(product)}
             </div>
 
             <div class="product-info">
@@ -434,6 +608,8 @@ function renderProduct(product) {
     `;
 
     PT.refresh();
+
+    setupGallery();
 
     if (stock > 0) {
         document.getElementById("qty-minus").addEventListener("click", function () { changeQuantity(-1); });
