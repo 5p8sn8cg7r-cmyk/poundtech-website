@@ -134,7 +134,53 @@
     box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
 }
 
+.more { margin-top: 40px; }
+
+.more h2 { font-size: 22px; margin-bottom: 4px; }
+
+.more-sub { color: #666; font-size: 14px; margin-bottom: 16px; }
+
+.more-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.more-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.more-card .mc-image {
+    position: relative;
+    height: 150px;
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.more-card .mc-image img { width: 100%; height: 100%; object-fit: cover; }
+
+.more-card .mc-info { padding: 12px 14px 14px; }
+
+.more-card h3 { font-size: 15px; margin-bottom: 4px; }
+
+.more-card .mc-fit { font-size: 12px; font-weight: bold; color: #16803c; margin-bottom: 4px; }
+
+.more-card .mc-price { font-weight: bold; font-size: 17px; }
+
 @media (max-width: 800px) {
+
+    .more-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+    .more-card .mc-image { height: 120px; }
 
     .product-page {
         grid-template-columns: 1fr;
@@ -159,6 +205,12 @@
     <div id="product-container">
         <div class="notice">Loading product&hellip;</div>
     </div>
+
+    <section class="more" id="more-section" hidden>
+        <h2>More like this</h2>
+        <p class="more-sub" id="more-sub"></p>
+        <div class="more-grid" id="more-grid"></div>
+    </section>
 </main>
 
 <footer class="site-footer">
@@ -323,7 +375,136 @@ async function loadProduct() {
     }
 
     showFitBadges(product);
+    loadSimilar(product);
 }
+
+
+// "More like this": same category first, then other products to fill the row.
+// Items that fit one of the customer's garage vehicles are shown first.
+async function loadSimilar(product) {
+
+    const LIMIT = 6;
+
+    function inStock(p) { return Number(p.stock) > 0; }
+
+    let list = [];
+
+    const same = await supabaseClient
+        .from("products")
+        .select("*")
+        .eq("status", "Active")
+        .eq("category", product.category)
+        .neq("id", product.id)
+        .limit(24);
+
+    if (!same.error && same.data) { list = same.data.filter(inStock); }
+
+    let usedOthers = false;
+
+    if (list.length < LIMIT) {
+
+        const others = await supabaseClient
+            .from("products")
+            .select("*")
+            .eq("status", "Active")
+            .neq("id", product.id)
+            .limit(24);
+
+        if (!others.error && others.data) {
+            const have = {};
+            list.forEach(function (p) { have[p.id] = true; });
+            others.data.forEach(function (p) {
+                if (!have[p.id] && inStock(p)) { list.push(p); usedOthers = true; }
+            });
+        }
+    }
+
+    if (list.length === 0) { return; }
+
+    let vehicles = [];
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+
+    if (sessionData && sessionData.session) {
+        const result = await supabaseClient
+            .from("customer_vehicles")
+            .select("id, make, model, year, engine, nickname")
+            .eq("user_id", sessionData.session.user.id);
+        if (!result.error && result.data) { vehicles = result.data; }
+    }
+
+    function fitVehicle(p) {
+        return vehicles.find(function (v) { return PT.fit(p, v) === "match"; }) || null;
+    }
+
+    // Same vehicle: fits one of the customer's cars, or lists a vehicle the viewed product lists too.
+    function words(text) {
+        return String(text || "").toLowerCase().split(/[^a-z0-9]+/).filter(function (w) { return w.length > 2 && w !== "universal" && w !== "all"; });
+    }
+
+    const baseWords = words(product.vehicle_compatibility);
+
+    function sharesVehicle(p) {
+        const w = words(p.vehicle_compatibility);
+        return w.some(function (x) { return baseWords.indexOf(x) !== -1; });
+    }
+
+    const base = Number(product.price) || 0;
+
+    list = list
+        .map(function (p) {
+            return {
+                p: p,
+                v: fitVehicle(p),
+                same: sharesVehicle(p),
+                sameCat: p.category === product.category ? 0 : 1,
+                gap: Math.abs((Number(p.price) || 0) - base)
+            };
+        })
+        .sort(function (a, b) {
+            if (a.sameCat !== b.sameCat) { return a.sameCat - b.sameCat; }
+            if (!!a.v !== !!b.v) { return a.v ? -1 : 1; }
+            if (a.same !== b.same) { return a.same ? -1 : 1; }
+            return a.gap - b.gap;
+        })
+        .slice(0, LIMIT);
+
+    document.getElementById("more-sub").textContent = usedOthers
+        ? "Other parts customers are looking at."
+        : "More in " + product.category + ".";
+
+    document.getElementById("more-grid").innerHTML = list.map(function (row) {
+
+        const p = row.p;
+
+        return `
+            <div class="more-card" data-open="${esc(p.id)}">
+                <div class="mc-image">
+                    ${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : "No image"}
+                    ${PT.cardActions({ id: p.id, name: p.name, price: p.price })}
+                </div>
+                <div class="mc-info">
+                    ${row.v ? '<div class="mc-fit">Fits your ' + esc(row.v.make + " " + row.v.model) + '</div>' : ""}
+                    <h3>${esc(p.name)}</h3>
+                    <div class="mc-price">${esc(money(p.price))}</div>
+                </div>
+            </div>`;
+    }).join("");
+
+    document.getElementById("more-section").hidden = false;
+
+    PT.refresh();
+}
+
+
+document.getElementById("more-grid").addEventListener("click", function (e) {
+
+    const card = e.target.closest("[data-open]");
+
+    if (card && !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")) {
+        window.location.href = "product.html?id=" + encodeURIComponent(card.getAttribute("data-open"));
+    }
+});
 
 
 function changeQuantity(amount) {
