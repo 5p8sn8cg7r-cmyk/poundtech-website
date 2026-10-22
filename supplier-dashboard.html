@@ -158,6 +158,41 @@ Add Product
     
 <p id="photo-status" style="color:#555; margin-top:14px;"></p>
 
+<dialog id="special-dialog" style="border:none; border-radius:12px; padding:22px; width:min(420px, 92vw);">
+
+    <h3 id="special-title" style="margin-top:0;">Special offer</h3>
+
+    <p id="special-normal" style="color:#555; margin-top:0;"></p>
+
+    <label for="special-price" style="display:block; font-size:13px; margin-bottom:4px;">Special price (R)</label>
+    <input type="number" id="special-price" step="0.01" min="0"
+           style="display:block; margin-bottom:10px; padding:10px; width:100%; box-sizing:border-box;">
+
+    <label for="special-ends" style="display:block; font-size:13px; margin-bottom:4px;">Ends on (optional)</label>
+    <input type="date" id="special-ends"
+           style="display:block; margin-bottom:10px; padding:10px; width:100%; box-sizing:border-box;">
+
+    <label for="special-label" style="display:block; font-size:13px; margin-bottom:4px;">Tag on the product card</label>
+    <select id="special-label"
+            style="display:block; margin-bottom:12px; padding:10px; width:100%; box-sizing:border-box;">
+        <option value="">No tag</option>
+            <option>Special</option>
+            <option>Weekend special</option>
+            <option>Clearance</option>
+            <option>Hot deal</option>
+            <option>End of line</option>
+            <option>Free fitting</option>
+            <option>Bundle deal</option>
+    </select>
+
+    <p id="special-message" style="color:#b80000; min-height:20px; margin:0 0 8px;"></p>
+
+    <button type="button" id="special-save">Save special</button>
+    <button type="button" id="special-remove" style="background:#555; margin-left:8px;">Remove special</button>
+    <button type="button" id="special-cancel" style="background:#999; margin-left:8px;">Cancel</button>
+
+</dialog>
+
 <input
     type="file"
     id="replace-photo-input"
@@ -218,6 +253,48 @@ Add Product
         placeholder="Stock quantity"
         style="display:block; margin-bottom:10px; padding:10px; width:100%;"
     >
+
+    <div style="border:1px dashed #ccc; border-radius:8px; padding:12px; margin-bottom:14px;">
+
+        <strong>Special offer (optional)</strong>
+
+        <p style="color:#777; font-size:13px; margin:4px 0 10px;">
+            Show a markdown on the product card. Customers see the normal price crossed out.
+            You can also add or change a special later with the Special button.
+        </p>
+
+        <input
+            type="number"
+            id="product-sale-price"
+            placeholder="Special price (R), lower than the normal price"
+            step="0.01"
+            min="0"
+            style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+        >
+
+        <label for="product-sale-ends" style="display:block; font-size:13px; margin-bottom:4px;">
+            Special ends on (optional)
+        </label>
+
+        <input
+            type="date"
+            id="product-sale-ends"
+            style="display:block; margin-bottom:10px; padding:10px; width:100%;"
+        >
+
+        <select id="product-sale-label"
+                style="display:block; padding:10px; width:100%;">
+            <option value="">No tag</option>
+            <option>Special</option>
+            <option>Weekend special</option>
+            <option>Clearance</option>
+            <option>Hot deal</option>
+            <option>End of line</option>
+            <option>Free fitting</option>
+            <option>Bundle deal</option>
+        </select>
+
+    </div>
 
     <label for="product-image-file"
            style="display:block; font-weight:bold; margin-bottom:6px;">
@@ -282,6 +359,7 @@ Your supplier orders will appear here.
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="pt-share.js"></script>
 
 
 <script>
@@ -348,7 +426,11 @@ async function readImage(file) {
 }
 
 // Shrinks the photo in the browser so uploads are quick and storage stays small.
-async function resizeImage(file) {
+async function resizeImage(file, maxSide, firstQuality, maxBytes) {
+
+    maxSide = maxSide || MAX_IMAGE_SIDE;
+    firstQuality = firstQuality || 0.82;
+    maxBytes = maxBytes || MAX_IMAGE_OUTPUT_BYTES;
 
     if (!file.type || file.type.indexOf("image/") !== 0) {
         throw new Error("Please choose a photo (JPG, PNG or WebP).");
@@ -363,7 +445,7 @@ async function resizeImage(file) {
     const width = img.width || img.naturalWidth;
     const height = img.height || img.naturalHeight;
 
-    const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(width, height));
+    const scale = Math.min(1, maxSide / Math.max(width, height));
     const outWidth = Math.max(1, Math.round(width * scale));
     const outHeight = Math.max(1, Math.round(height * scale));
 
@@ -386,13 +468,13 @@ async function resizeImage(file) {
         });
     }
 
-    let blob = await toBlob(0.82);
+    let blob = await toBlob(firstQuality);
 
-    if (blob && blob.size > MAX_IMAGE_OUTPUT_BYTES) {
+    if (blob && blob.size > maxBytes) {
         blob = await toBlob(0.6);
     }
 
-    if (!blob || blob.size > MAX_IMAGE_OUTPUT_BYTES) {
+    if (!blob || blob.size > maxBytes) {
         throw new Error("That photo could not be made small enough. Please try another.");
     }
 
@@ -403,8 +485,19 @@ async function uploadProductImage(file, supplierId) {
 
     const blob = await resizeImage(file);
 
+    // A small copy for product cards makes pages load much faster.
+    // Names end _f.jpg (full) and _t.jpg (thumbnail).
+    let thumb = null;
+
+    try {
+        thumb = await resizeImage(file, 480, 0.78, 300 * 1024);
+    } catch (e) {
+        console.error("Thumbnail skipped:", e);
+    }
+
     // Each supplier writes only inside their own folder.
-    const path = supplierId + "/" + uniqueName() + ".jpg";
+    const baseName = supplierId + "/" + uniqueName();
+    const path = baseName + "_f.jpg";
 
     const { error } = await supabaseClient.storage
         .from(PRODUCT_IMAGE_BUCKET)
@@ -416,6 +509,16 @@ async function uploadProductImage(file, supplierId) {
 
     if (error) {
         throw new Error(error.message);
+    }
+
+    if (thumb) {
+        await supabaseClient.storage
+            .from(PRODUCT_IMAGE_BUCKET)
+            .upload(baseName + "_t.jpg", thumb, {
+                contentType: "image/jpeg",
+                cacheControl: "31536000",
+                upsert: false
+            });
     }
 
     const { data } = supabaseClient.storage
@@ -443,9 +546,13 @@ async function removeStoredImage(url) {
 
     if (!path) { return; }
 
+    const paths = [path];
+
+    if (/_f\.jpg$/.test(path)) { paths.push(path.replace(/_f\.jpg$/, "_t.jpg")); }
+
     const { error } = await supabaseClient.storage
         .from(PRODUCT_IMAGE_BUCKET)
-        .remove([path]);
+        .remove(paths);
 
     if (error) {
         console.error("Could not remove old photo:", error);
@@ -650,9 +757,21 @@ async function addProductInner() {
     const price = document.getElementById("product-price").value;
     const stock = document.getElementById("product-stock").value;
     const imageFile = document.getElementById("product-image-file").files[0] || null;
-    const vehicle_compatibility = document.getElementById("vehicle-compatibility").value;
 
     const message = document.getElementById("product-message");
+
+    const special = readSpecial(
+        document.getElementById("product-sale-price").value,
+        document.getElementById("product-sale-ends").value,
+        document.getElementById("product-sale-label").value,
+        price
+    );
+
+    if (special.error) {
+        message.textContent = special.error;
+        return;
+    }
+    const vehicle_compatibility = document.getElementById("vehicle-compatibility").value;
 
     if (!name || !category || !price) {
         message.textContent = "Please fill in the product name, category and price.";
@@ -709,6 +828,9 @@ async function addProductInner() {
             stock: Number(stock) || 0,
             image_url: image_url,
             vehicle_compatibility: vehicle_compatibility,
+            sale_price: special.sale_price,
+            sale_ends_at: special.sale_ends_at,
+            sale_label: special.sale_label,
             status: "Active"
         }]);
 
@@ -725,6 +847,9 @@ async function addProductInner() {
     document.getElementById("product-description").value = "";
     document.getElementById("product-price").value = "";
     document.getElementById("product-stock").value = "";
+    document.getElementById("product-sale-price").value = "";
+    document.getElementById("product-sale-ends").value = "";
+    document.getElementById("product-sale-label").value = "";
     document.getElementById("product-image-file").value = "";
     document.getElementById("product-image-preview").style.display = "none";
     document.getElementById("product-image-preview").removeAttribute("src");
@@ -804,7 +929,7 @@ async function addProductInner() {
             ">
                 ${
                     product.image_url
-                    ? '<img src="' + esc(product.image_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
+                    ? '<img src="' + esc(PT.thumb(product.image_url)) + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
                     : "No photo"
                 }
             </div>
@@ -820,7 +945,7 @@ async function addProductInner() {
 
                 <p>
                     <strong>Price:</strong>
-                    R${esc(product.price)}
+                    ${priceSummary(product)}
                 </p>
 
                 <p>
@@ -828,22 +953,13 @@ async function addProductInner() {
                     ${esc(product.stock)}
                 </p>
 
+                <button onclick="openSpecial('${esc(product.id)}')" style="margin-right:10px;">
+                    ${product.sale_price != null || product.sale_label ? "Edit Special" : "Add Special"}
+                </button>
+
                 <button onclick="choosePhoto('${esc(product.id)}')">
                     ${product.image_url ? "Change Photo" : "Add Photo"}
                 </button>
-
-${
-    product.image_url
-    ? `
-        <button
-            onclick="deleteProductPhoto('${esc(product.id)}')"
-            style="background:#555; margin-left:10px;"
-        >
-            Delete Photo
-        </button>
-    `
-    : ""
-}
 
                 <button
                     onclick="editProduct('${esc(product.id)}')"
@@ -866,6 +982,172 @@ ${
 }
     loadSupplierProducts();
     
+/* ---------- SPECIALS ---------- */
+
+// Turns what the supplier typed into values for the database, or an error message.
+function readSpecial(priceText, endsText, label, normalPrice) {
+
+    const none = { sale_price: null, sale_ends_at: null, sale_label: label ? label : null, error: null };
+
+    if (String(priceText).trim() === "") {
+
+        if (endsText) {
+            return { error: "Enter a special price, or clear the end date." };
+        }
+
+        return none;
+    }
+
+    const salePrice = Number(priceText);
+    const normal = Number(normalPrice);
+
+    if (!isFinite(salePrice) || salePrice <= 0) {
+        return { error: "The special price must be more than R0." };
+    }
+
+    if (isFinite(normal) && salePrice >= normal) {
+        return { error: "The special price must be lower than the normal price (" + PT.money(normal) + ")." };
+    }
+
+    let endsAt = null;
+
+    if (endsText) {
+        // The special runs to the end of that day, South African time.
+        const d = new Date(endsText + "T23:59:59+02:00");
+
+        if (isNaN(d.getTime())) { return { error: "That end date is not valid." }; }
+
+        if (d.getTime() <= Date.now()) { return { error: "The end date must be today or later." }; }
+
+        endsAt = d.toISOString();
+    }
+
+    return {
+        sale_price: Math.round(salePrice * 100) / 100,
+        sale_ends_at: endsAt,
+        sale_label: label ? label : null,
+        error: null
+    };
+}
+
+function dateInputFromIso(iso) {
+    if (!iso) { return ""; }
+    // Show the end date as South African calendar date.
+    const d = new Date(new Date(iso).getTime() + 2 * 3600 * 1000);
+    return d.toISOString().slice(0, 10);
+}
+
+// "R1 299.00", with the special underneath when one is running (or has ended).
+function priceSummary(product) {
+
+    const s = PT.sale(product);
+
+    let html = esc(PT.money(product.price));
+
+    if (product.sale_price != null) {
+
+        if (s.priced) {
+            html = '<span style="text-decoration:line-through; color:#888;">' + esc(PT.money(product.price)) + '</span> ' +
+                   '<strong style="color:#d00000;">' + esc(PT.money(s.now)) + '</strong> ' +
+                   '<span style="color:#b45f00; font-size:13px;">' +
+                   (s.pct >= 1 ? "-" + s.pct + "% " : "") + esc(PT.endsText(product)) + '</span>';
+        } else {
+            html += ' <span style="color:#b80000; font-size:13px;">(special ended)</span>';
+        }
+    }
+
+    if (product.sale_label) {
+        html += ' <span style="background:#111; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">' +
+                esc(product.sale_label) + '</span>';
+    }
+
+    return html;
+}
+
+let specialProductId = null;
+let specialProduct = null;
+
+async function openSpecial(productId) {
+
+    const { data: product, error } = await supabaseClient
+        .from("products")
+        .select("*")
+        .eq("id", productId)
+        .maybeSingle();
+
+    if (error || !product) {
+        alert("Unable to load product.");
+        return;
+    }
+
+    specialProductId = productId;
+    specialProduct = product;
+
+    document.getElementById("special-title").textContent = product.name;
+    document.getElementById("special-normal").textContent = "Normal price: " + PT.money(product.price);
+    document.getElementById("special-price").value = product.sale_price == null ? "" : product.sale_price;
+    document.getElementById("special-ends").value = dateInputFromIso(product.sale_ends_at);
+    document.getElementById("special-label").value = product.sale_label || "";
+    document.getElementById("special-message").textContent = "";
+    document.getElementById("special-remove").style.display =
+        product.sale_price == null && !product.sale_label ? "none" : "";
+
+    document.getElementById("special-dialog").showModal();
+}
+
+async function saveSpecial(remove) {
+
+    const msg = document.getElementById("special-message");
+
+    if (!specialProductId || !specialProduct) { return; }
+
+    let values;
+
+    if (remove) {
+        values = { sale_price: null, sale_ends_at: null, sale_label: null, error: null };
+    } else {
+        values = readSpecial(
+            document.getElementById("special-price").value,
+            document.getElementById("special-ends").value,
+            document.getElementById("special-label").value,
+            specialProduct.price
+        );
+
+        if (values.error) { msg.textContent = values.error; return; }
+
+        if (values.sale_price == null && !values.sale_label) {
+            msg.textContent = "Enter a special price or choose a tag.";
+            return;
+        }
+    }
+
+    const { error } = await supabaseClient
+        .from("products")
+        .update({
+            sale_price: values.sale_price,
+            sale_ends_at: values.sale_ends_at,
+            sale_label: values.sale_label
+        })
+        .eq("id", specialProductId);
+
+    if (error) {
+        console.error(error);
+        msg.textContent = "Could not save the special: " + error.message;
+        return;
+    }
+
+    document.getElementById("special-dialog").close();
+
+    loadSupplierProducts();
+}
+
+document.getElementById("special-save").addEventListener("click", function () { saveSpecial(false); });
+document.getElementById("special-remove").addEventListener("click", function () { saveSpecial(true); });
+document.getElementById("special-cancel").addEventListener("click", function () {
+    document.getElementById("special-dialog").close();
+});
+
+
 let replacingProductId = null;
 
 function choosePhoto(productId) {
@@ -976,7 +1258,11 @@ async function editProduct(productId) {
 
     if (updateError) {
         console.error(updateError);
-        alert("Unable to update product.");
+        alert(
+            /sale_price|products_sale/i.test(updateError.message || "")
+            ? "The normal price must stay higher than the special price. Edit or remove the special first."
+            : "Unable to update product."
+        );
         return;
     }
 
@@ -984,50 +1270,7 @@ async function editProduct(productId) {
 
     loadSupplierProducts();
 }
-
-    async function deleteProductPhoto(productId) {
-    const confirmed = confirm(
-        "Remove this photo? The product will not be deleted."
-    );
-
-    if (!confirmed) return;
-
-    const { data: { user }, error: userError } =
-        await supabaseClient.auth.getUser();
-
-    if (userError || !user) {
-        alert("Please log in first.");
-        return;
-    }
-
-    const { data: supplier, error: supplierError } =
-        await supabaseClient
-            .from("suppliers")
-            .select("id")
-            .eq("user_id", user.id)
-            .single();
-
-    if (supplierError || !supplier) {
-        alert("Unable to verify your supplier account.");
-        return;
-    }
-
-    const { error } = await supabaseClient
-        .from("products")
-        .update({ image_url: null })
-        .eq("id", productId)
-        .eq("supplier_id", supplier.id);
-
-    if (error) {
-        console.error("Photo deletion error:", error);
-        alert("Could not remove photo: " + error.message);
-        return;
-    }
-
-    alert("Photo removed successfully!");
-    await loadSupplierProducts();
-}
-    
+   
 async function deleteProduct(productId) {
 
     const confirmed = confirm(
