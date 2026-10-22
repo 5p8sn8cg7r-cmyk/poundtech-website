@@ -58,6 +58,23 @@ button:hover {
     background: #c00000;
 }
 
+.row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.row-actions button {
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 14px;
+}
+
+@media (max-width: 520px) {
+    .row-actions button { flex: 1 1 calc(50% - 8px); }
+}
+
 .logout {
     float: right;
     background: #555;
@@ -185,9 +202,11 @@ Add Product
 
     <p id="special-message" style="color:#b80000; min-height:20px; margin:0 0 8px;"></p>
 
-    <button type="button" id="special-save">Save special</button>
-    <button type="button" id="special-remove" style="background:#555; margin-left:8px;">Remove special</button>
-    <button type="button" id="special-cancel" style="background:#999; margin-left:8px;">Cancel</button>
+    <div class="row-actions" style="margin-top:0;">
+        <button type="button" id="special-save">Save special</button>
+        <button type="button" id="special-remove" style="background:#555;">Remove special</button>
+        <button type="button" id="special-cancel" style="background:#999;">Cancel</button>
+    </div>
 
 </dialog>
 
@@ -210,8 +229,10 @@ Add Product
 
     <p id="photos-message" style="color:#555; min-height:20px; margin:10px 0;"></p>
 
-    <button type="button" id="photos-add">Add photo</button>
-    <button type="button" id="photos-close" style="background:#555; margin-left:8px;">Done</button>
+    <div class="row-actions" style="margin-top:0;">
+        <button type="button" id="photos-add">Add photo</button>
+        <button type="button" id="photos-close" style="background:#555;">Done</button>
+    </div>
 
 </dialog>
 
@@ -348,16 +369,18 @@ Add Product
         style="display:block; margin-bottom:10px; padding:10px; width:100%;"
     >
 
-    <button onclick="addProduct()">
-        Save Product
-    </button>
+    <div class="row-actions">
+        <button onclick="addProduct()">
+            Save Product
+        </button>
 
-    <button
-        onclick="hideAddProductForm()"
-        style="background:#555; margin-left:10px;"
-    >
-        Cancel
-    </button>
+        <button
+            onclick="hideAddProductForm()"
+            style="background:#555;"
+        >
+            Cancel
+        </button>
+    </div>
 
     <p id="product-message"></p>
 
@@ -983,27 +1006,25 @@ async function addProductInner() {
                     ${esc(product.stock)}
                 </p>
 
-                <button onclick="openSpecial('${esc(product.id)}')" style="margin-right:10px;">
-                    ${product.sale_price != null || product.sale_label ? "Edit Special" : "Add Special"}
-                </button>
+                <div class="row-actions">
 
-                <button onclick="managePhotos('${esc(product.id)}')">
-                    Photos (${(product.image_url ? 1 : 0) + (Array.isArray(product.extra_images) ? product.extra_images.length : 0)})
-                </button>
+                    <button onclick="openSpecial('${esc(product.id)}')">
+                        ${product.sale_price != null || product.sale_label ? "Edit Special" : "Add Special"}
+                    </button>
 
-                <button
-                    onclick="editProduct('${esc(product.id)}')"
-                    style="margin-left:10px;"
-                >
-                    Edit Product
-                </button>
+                    <button onclick="managePhotos('${esc(product.id)}')">
+                        Photos (${(product.image_url ? 1 : 0) + (Array.isArray(product.extra_images) ? product.extra_images.length : 0)})
+                    </button>
 
-                <button
-                    onclick="deleteProduct('${esc(product.id)}')"
-                    style="background:#555; margin-left:10px;"
-                >
-                    Delete Product
-                </button>
+                    <button onclick="editProduct('${esc(product.id)}')">
+                        Edit Product
+                    </button>
+
+                    <button onclick="deleteProduct('${esc(product.id)}')" style="background:#555;">
+                        Delete Product
+                    </button>
+
+                </div>
 
             </div>
 
