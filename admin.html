@@ -182,6 +182,18 @@ input {
 
     </div>
 
+    <div id="payments-setup" style="display:none;">
+        <div class="rev-card" style="margin-bottom:24px;">
+            <h2 class="rev-title" style="margin-bottom:8px;">Online payments (Yoco)</h2>
+            <p class="rev-note" style="margin-bottom:12px;">
+                One-time step after adding your Yoco secret key to Supabase: connect Yoco's
+                "payment succeeded" messages to your site. Run it again after switching from test to live keys.
+            </p>
+            <button onclick="connectYocoWebhook()" id="yoco-btn">Connect Yoco webhook</button>
+            <p id="yoco-msg" style="margin:10px 0 0; font-size:14px;"></p>
+        </div>
+    </div>
+
     <div id="revenue" style="display:none;"></div>
 
     <div id="orders" style="display:none;"></div>
@@ -214,6 +226,7 @@ function showDashboard() {
     document.getElementById("login").style.display = "none";
     document.getElementById("orders").style.display = "block";
     document.getElementById("revenue").style.display = "block";
+    document.getElementById("payments-setup").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
     loadRevenue();
     loadOrders();
@@ -232,6 +245,7 @@ async function adminLogout() {
     document.getElementById("login").style.display = "block";
     document.getElementById("orders").style.display = "none";
     document.getElementById("revenue").style.display = "none";
+    document.getElementById("payments-setup").style.display = "none";
     document.getElementById("admin-nav").style.display = "none";
 }
 
@@ -269,6 +283,36 @@ async function adminLogin() {
     }
 
     showDashboard();
+}
+
+
+async function connectYocoWebhook() {
+
+    const btn = document.getElementById("yoco-btn");
+    const msg = document.getElementById("yoco-msg");
+
+    btn.disabled = true;
+    msg.style.color = "#555";
+    msg.textContent = "Connecting...";
+
+    const { data, error } = await supabaseClient.functions.invoke("yoco-setup-webhook");
+
+    btn.disabled = false;
+
+    let result = data;
+
+    if (error && error.context && typeof error.context.json === "function") {
+        try { result = await error.context.json(); } catch (e) { /* keep */ }
+    }
+
+    if (result && result.ok) {
+        msg.style.color = "#16803c";
+        msg.textContent = "Connected (" + result.mode + " mode). Yoco will now tell your site when payments succeed.";
+        return;
+    }
+
+    msg.style.color = "#b80000";
+    msg.textContent = (result && result.error) ? result.error : "Could not connect. Check that the function is deployed.";
 }
 
 
@@ -434,6 +478,9 @@ async function loadOrders() {
                 <p>
                     <strong>Status:</strong>
                     <span class="status">${esc(order.status)}</span>
+                    <span class="status" style="background:${order.payment_status === "Paid" ? "#d4edda" : "#f8d7da"};">
+                        ${esc(order.payment_status || "Unpaid")}
+                    </span>
                 </p>
 
                 <h3>Customer</h3>
