@@ -11,7 +11,9 @@
 <script>
 // Show poundtech.co.za instead of poundtech.co.za/index.html in the address bar.
 if (/\/index\.html$/.test(location.pathname)) {
-    history.replaceState(null, "", location.pathname.replace(/index\.html$/, "") + location.search + location.hash);
+    try {
+        history.replaceState(null, "", location.pathname.replace(/index\.html$/, "") + location.search + location.hash);
+    } catch (e) { /* not allowed here; leave the address as is */ }
 }
 </script>
 
@@ -221,14 +223,6 @@ nav a:hover {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 3px 15px rgba(0,0,0,0.07);
-    transition: transform .2s ease, box-shadow .2s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .product:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 7px 22px rgba(0,0,0,0.12);
-    }
 }
 
 .product-image {
@@ -268,190 +262,6 @@ nav a:hover {
     background: #111;
     color: white;
     cursor: pointer;
-}
-
-/* SERVICES DISCOVERY */
-
-.services-nav-link {
-    color: #fff;
-    background: #e00000;
-    padding: 8px 13px;
-    margin: -8px 0;
-    border-radius: 6px;
-    font-weight: bold;
-}
-
-.services-nav-link:hover {
-    background: #b80000;
-    color: #fff;
-}
-
-.services-discovery {
-    padding: 38px 6%;
-    background: #fff;
-    border-bottom: 1px solid #e7e7e7;
-}
-
-.services-discovery-inner {
-    max-width: 1250px;
-    margin: 0 auto;
-}
-
-.services-discovery-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: end;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-
-.services-discovery-heading h2 {
-    font-size: 27px;
-    margin-bottom: 5px;
-}
-
-.services-discovery-heading p {
-    color: #666;
-    line-height: 1.5;
-}
-
-.services-all-link {
-    color: #e00000;
-    font-weight: bold;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.services-discovery-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.service-discovery-card {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    min-width: 0;
-    padding: 20px;
-    border: 1px solid #e4e4e4;
-    border-radius: 12px;
-    background: #f8f8f9;
-    color: #111;
-    text-decoration: none;
-    transition: border-color .2s, transform .2s, box-shadow .2s;
-}
-
-.service-discovery-card:hover {
-    border-color: #e00000;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 18px rgba(0,0,0,.07);
-}
-
-.service-discovery-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 54px;
-    width: 54px;
-    height: 54px;
-    border-radius: 10px;
-    background: #111;
-    color: #fff;
-}
-
-.service-discovery-icon svg {
-    width: 29px;
-    height: 29px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.service-discovery-copy {
-    min-width: 0;
-}
-
-.service-discovery-copy strong {
-    display: block;
-    font-size: 17px;
-    margin-bottom: 4px;
-}
-
-.service-discovery-copy span {
-    display: block;
-    color: #666;
-    font-size: 13px;
-    line-height: 1.45;
-}
-
-@media (max-width: 760px) {
-    .services-discovery {
-        padding: 30px 5%;
-    }
-
-    .services-discovery-heading h2 {
-        font-size: 23px;
-    }
-
-    /* Swipeable service cards on mobile */
-    .services-discovery-grid {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 2px 2px 12px;
-        margin-right: -1px;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-
-    .services-discovery-grid::-webkit-scrollbar {
-        display: none;
-    }
-
-    .service-discovery-card {
-        flex: 0 0 min(82vw, 310px);
-        min-width: 0;
-        padding: 15px;
-        scroll-snap-align: start;
-    }
-
-    /* Keep the mobile navigation links in one clean, swipeable row */
-    nav {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        gap: 18px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        white-space: nowrap;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    nav a {
-        flex: 0 0 auto;
-        padding: 12px 0;
-    }
-
-    nav .services-nav-link {
-        flex: 0 0 auto;
-        padding: 8px 11px;
-        margin: 0;
-        border-radius: 6px;
-        background: #e00000;
-        color: #fff;
-        font-weight: bold;
-    }
-
-    nav .services-nav-link:hover {
-        background: #b80000;
-        color: #fff;
-    }
 }
 
 /* MECHANIC */
@@ -692,6 +502,87 @@ footer {
     color: #9a6700;
 }
     
+
+/* CHECKOUT ADDRESS */
+
+.addr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 14px;
+    margin: 8px 0 6px;
+}
+
+.addr-wide { grid-column: 1 / -1; }
+
+.addr-grid label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.addr-grid input,
+.addr-grid select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px;
+    margin-bottom: 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    background: white;
+}
+
+.addr-grid .invalid { border-color: #e00000; }
+
+@media (max-width: 520px) {
+    .addr-grid { grid-template-columns: 1fr; }
+}
+
+/* SORT AND FILTER BAR */
+
+.sortbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+    margin: 0 0 20px;
+}
+
+.sortbar label { font-size: 14px; color: #555; font-weight: bold; }
+
+.sortbar select {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    font-size: 14px;
+}
+
+.sortbar .chip {
+    padding: 9px 16px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sortbar .chip:hover { border-color: #e00000; }
+
+.sortbar .chip.active {
+    background: #e00000;
+    border-color: #e00000;
+    color: white;
+    font-weight: bold;
+}
+
+.sortbar .result-count { margin-left: auto; color: #777; font-size: 13px; }
+
+@media (max-width: 700px) {
+    .sortbar .result-count { margin-left: 0; width: 100%; }
+}
 
 /* MOBILE HEADER: icons with count badges, evenly spaced menu */
 
@@ -1172,7 +1063,7 @@ footer {
     <a href="/">Home</a>
     <a href="/?view=parts">Parts</a>
     <a href="/?view=accessories">Accessories</a>
-    <a class="services-nav-link" href="mechanics.html">Find Services</a>
+    <a href="mechanics.html">Mechanics</a>
     <a href="supplier.html">Sell</a>
 </nav>
 
@@ -1228,49 +1119,6 @@ Find car parts, accessories and automotive services from businesses across South
     
 </section>
 
-<section class="services-discovery" aria-labelledby="services-discovery-title">
-    <div class="services-discovery-inner">
-        <div class="services-discovery-heading">
-            <div>
-                <h2 id="services-discovery-title">Need a service for your car?</h2>
-                <p>Find local professionals for repairs, car washes and detailing.</p>
-            </div>
-            <a class="services-all-link" href="mechanics.html">Explore all services &rarr;</a>
-        </div>
-
-        <div class="services-discovery-grid">
-            <a class="service-discovery-card" href="mechanics.html?type=mechanic">
-                <span class="service-discovery-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18l3 3 5.3-5.3a5 5 0 0 0 6.4-6.4l-3 3-3-3z"/></svg>
-                </span>
-                <span class="service-discovery-copy">
-                    <strong>Mechanics &amp; Repairs</strong>
-                    <span>Servicing, diagnostics and repairs</span>
-                </span>
-            </a>
-
-            <a class="service-discovery-card" href="mechanics.html?type=car_wash">
-                <span class="service-discovery-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9 15a3 3 0 0 0 3 3"/></svg>
-                </span>
-                <span class="service-discovery-copy">
-                    <strong>Car Washes</strong>
-                    <span>Find a convenient place to clean your car</span>
-                </span>
-            </a>
-
-            <a class="service-discovery-card" href="mechanics.html?type=detailer">
-                <span class="service-discovery-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg>
-                </span>
-                <span class="service-discovery-copy">
-                    <strong>Car Detailing</strong>
-                    <span>Interior cleaning and exterior finishes</span>
-                </span>
-            </a>
-        </div>
-    </div>
-</section>
 
 <section class="section" id="category-section">
 
@@ -1361,6 +1209,21 @@ Find car parts, accessories and automotive services from businesses across South
 
 <h2 id="products-heading">Featured Products</h2>
 
+<div class="sortbar" id="sortbar">
+    <label for="sort-select">Sort by</label>
+    <select id="sort-select">
+        <option value="recommended">Recommended</option>
+        <option value="newest">Newest</option>
+        <option value="price-asc">Price: low to high</option>
+        <option value="price-desc">Price: high to low</option>
+        <option value="rating">Top rated</option>
+        <option value="discount">Biggest discount</option>
+    </select>
+    <button type="button" class="chip" id="chip-deals">On special</button>
+    <button type="button" class="chip" id="chip-stock">In stock</button>
+    <span class="result-count" id="result-count"></span>
+</div>
+
 <div class="products" id="products-container">
 
     <p>Loading products...</p>
@@ -1368,6 +1231,24 @@ Find car parts, accessories and automotive services from businesses across South
 </div>
 </section>
 
+
+<section class="section">
+
+<div class="mechanic">
+
+<h2>Need a Mechanic?</h2>
+
+<p>
+Connect with automotive professionals and find the right service for your vehicle.
+</p>
+
+<button onclick="findMechanic()">
+Find a Mechanic
+</button>
+
+</div>
+
+</section>
 
 <section class="sell">
 
@@ -1379,7 +1260,7 @@ Join PoundTech and reach customers looking for automotive products and services.
 
 <div class="sell-steps">
     <div><span>1</span> Apply</div>
-    <div><span>2</span> We review it</div>
+    <div><span>2</span> We review your application</div>
     <div><span>3</span> Create your account</div>
 </div>
 
@@ -1486,53 +1367,57 @@ Already approved?
         "
     >
 
-    <h4 style="margin:8px 0 14px;">Delivery Address</h4>
-    <p style="color:#666; font-size:13px; margin:0 0 14px;">Enter your address in the fields below so the courier can find you. Fields marked * are required.</p>
+    <label style="display:block; font-weight:bold; margin-bottom:6px;">Delivery Address</label>
 
-    <label for="delivery-street-number">Street Number *</label>
-    <input id="delivery-street-number" type="text" autocomplete="address-line1" required
-        placeholder="e.g. 25"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+    <div class="addr-grid">
 
-    <label for="delivery-street">Street Name *</label>
-    <input id="delivery-street" type="text" required
-        placeholder="e.g. Rivonia Road"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+        <div>
+            <label for="addr-street-number">Street number *</label>
+            <input id="addr-street-number" type="text" autocomplete="off" placeholder="e.g. 24">
+        </div>
 
-    <label for="delivery-unit-number">Unit / Flat / Shop Number (if applicable)</label>
-    <input id="delivery-unit-number" type="text"
-        placeholder="e.g. Unit 12, Flat 4 or Shop 8"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+        <div>
+            <label for="addr-street-name">Street name *</label>
+            <input id="addr-street-name" type="text" autocomplete="off" placeholder="e.g. Jan Smuts Avenue">
+        </div>
 
-    <label for="delivery-complex-name">Complex / Building Name (if applicable)</label>
-    <input id="delivery-complex-name" type="text"
-        placeholder="e.g. Greenview Estate or building name"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+        <div class="addr-wide">
+            <label for="addr-unit">Unit / apartment number (optional)</label>
+            <input id="addr-unit" type="text" autocomplete="off" placeholder="e.g. Unit 7, Block B">
+        </div>
 
-    <label for="delivery-business-park">Office Park / Industrial Park Name (if applicable)</label>
-    <input id="delivery-business-park" type="text"
-        placeholder="Enter the office park or industrial park name"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+        <div>
+            <label for="addr-suburb">Suburb *</label>
+            <input id="addr-suburb" type="text" autocomplete="off" placeholder="e.g. Parkhurst">
+        </div>
 
-    <label for="delivery-suburb">Suburb / Area</label>
-    <input id="delivery-suburb" type="text"
-        placeholder="e.g. Sunninghill"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+        <div>
+            <label for="addr-city">Town / City *</label>
+            <input id="addr-city" type="text" autocomplete="off" placeholder="e.g. Johannesburg">
+        </div>
 
-    <label for="delivery-town">Town *</label>
-    <input id="delivery-town" type="text" required
-        placeholder="e.g. Sandton"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+        <div>
+            <label for="addr-postal">Postal code *</label>
+            <input id="addr-postal" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="e.g. 2193">
+        </div>
 
-    <label for="delivery-city">City (if applicable)</label>
-    <input id="delivery-city" type="text"
-        placeholder="e.g. Johannesburg"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 18px; border:1px solid #ddd; border-radius:6px;">
+        <div>
+            <label for="addr-province">Province *</label>
+            <select id="addr-province">
+                <option value="">Select province</option>
+                <option>Eastern Cape</option>
+                <option>Free State</option>
+                <option>Gauteng</option>
+                <option>KwaZulu-Natal</option>
+                <option>Limpopo</option>
+                <option>Mpumalanga</option>
+                <option>North West</option>
+                <option>Northern Cape</option>
+                <option>Western Cape</option>
+            </select>
+        </div>
 
-    <label for="delivery-postal-code">Postal Code *</label>
-    <input id="delivery-postal-code" type="text" inputmode="numeric" autocomplete="postal-code" required
-        placeholder="e.g. 2191" maxlength="10"
-        style="width:100%; box-sizing:border-box; padding:14px; margin:8px 0 5px; border:1px solid #ddd; border-radius:6px;">
+    </div>
 
 </div>
      
@@ -1556,8 +1441,11 @@ Already approved?
             font-weight:bold;
             cursor:pointer;
         ">
-            Place Order
+            Pay Now
         </button>
+        <p style="text-align:center; color:#777; font-size:13px; margin-top:10px;">
+            You will pay on Yoco's secure page. Your card details never touch PoundTech.
+        </p>
 
         <button onclick="closeCheckout()" style="
             margin-top:12px;
@@ -1704,6 +1592,13 @@ PT.init(supabaseClient);
 }
 
 updateGarageLink();
+
+// Links such as /?checkout=1 (Buy Now) or /?cart=1 (back from a cancelled payment).
+(function () {
+    const params = new URLSearchParams(location.search);
+    if (params.get("checkout") === "1") { checkout(); }
+    else if (params.get("cart") === "1") { showCart(); }
+})();
 
 // Count badges on the mobile header are hidden while they read 0.
 function syncBadges() {
@@ -2182,44 +2077,67 @@ function closeCheckout() {
 
 }
  
+// Checks each address field and joins them into one line for the order.
+function readDeliveryAddress() {
+
+    function val(id) { return document.getElementById(id).value.trim().replace(/\s+/g, " "); }
+
+    const fields = [
+        ["addr-street-number", "street number"],
+        ["addr-street-name", "street name"],
+        ["addr-suburb", "suburb"],
+        ["addr-city", "town or city"],
+        ["addr-postal", "postal code"],
+        ["addr-province", "province"]
+    ];
+
+    document.querySelectorAll(".addr-grid .invalid").forEach(function (el) { el.classList.remove("invalid"); });
+
+    for (const [id, label] of fields) {
+        if (!val(id)) {
+            const el = document.getElementById(id);
+            el.classList.add("invalid");
+            el.focus();
+            return { error: "Please enter your " + label + "." };
+        }
+    }
+
+    if (!/^\d{4}$/.test(val("addr-postal"))) {
+        const el = document.getElementById("addr-postal");
+        el.classList.add("invalid");
+        el.focus();
+        return { error: "Please enter a 4-digit postal code." };
+    }
+
+    const unit = val("addr-unit");
+
+    const streetLine = (unit ? unit + ", " : "") + val("addr-street-number") + " " + val("addr-street-name");
+
+    return {
+        text: [streetLine, val("addr-suburb"), val("addr-city"), val("addr-postal"), val("addr-province")].join(", "),
+        error: null
+    };
+}
+
 async function placeOrder() {
 
     let name = document.getElementById("customer-name").value.trim();
     let phone = document.getElementById("customer-phone").value.trim();
     let email = document.getElementById("customer-email").value.trim();
-    const addressFields = [
-        ["Street number", "delivery-street-number", true],
-        ["Street name", "delivery-street", true],
-        ["Unit / flat / shop number", "delivery-unit-number", false],
-        ["Complex / building", "delivery-complex-name", false],
-        ["Office / industrial park", "delivery-business-park", false],
-        ["Suburb / area", "delivery-suburb", false],
-        ["Town", "delivery-town", true],
-        ["City", "delivery-city", false],
-        ["Postal code", "delivery-postal-code", true]
-    ];
 
-    const missingAddressFields = addressFields
-        .filter(function(field) {
-            return field[2] && !document.getElementById(field[1]).value.trim();
-        })
-        .map(function(field) { return field[0]; });
-
-    if (name === "" || phone === "" || email === "" || missingAddressFields.length > 0) {
-        alert(
-            "Please complete your name, phone number, email address and these required delivery fields: " +
-            missingAddressFields.join(", ") + "."
-        );
+    if (name === "" || phone === "" || email === "") {
+        alert("Please complete all your details before placing the order.");
         return;
     }
 
-    const address = addressFields
-        .map(function(field) {
-            const value = document.getElementById(field[1]).value.trim();
-            return value ? field[0] + ": " + value : "";
-        })
-        .filter(Boolean)
-        .join("\n");
+    const addr = readDeliveryAddress();
+
+    if (addr.error) {
+        alert(addr.error);
+        return;
+    }
+
+    let address = addr.text;
 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
@@ -2249,56 +2167,71 @@ async function placeOrder() {
 
     const orderNumber = result.order_number;
 
-    document.getElementById("checkout-panel").innerHTML = `
-        <div style="
-            max-width:600px;
-            margin:80px auto;
-            background:white;
-            padding:40px 30px;
-            border-radius:12px;
-            text-align:center;
-            box-shadow:0 3px 20px rgba(0,0,0,0.1);
-        ">
-            <div style="font-size:60px; margin-bottom:15px;">✓</div>
+    await startPayment(orderNumber);
+}
 
-            <h2 style="margin-bottom:10px; font-size:28px;">
-                Order Confirmed!
-            </h2>
 
-            <p style="color:#666; margin-bottom:25px;">
-                Thank you, ${esc(name)}. Your PoundTech order has been received.
-            </p>
+// Sends the customer to Yoco's secure payment page for this order.
+// The cart is only cleared once payment is confirmed (on the payment complete page).
+async function startPayment(orderNumber) {
 
-            <div style="background:#f5f5f5; padding:18px; border-radius:8px; margin-bottom:25px;">
-                <p style="margin:0 0 8px; color:#666;">Order Number</p>
-                <strong style="font-size:22px;">${esc(orderNumber)}</strong>
-            </div>
+    const panel = document.getElementById("checkout-panel");
 
-            <p style="color:#666;">
-                We'll use the contact details you provided to follow up about your order.
-            </p>
-
-            <button
-                onclick="location.reload()"
-                style="
-                    margin-top:20px;
-                    width:100%;
-                    padding:15px;
-                    background:#e00000;
-                    color:white;
-                    border:none;
-                    border-radius:6px;
-                    font-size:16px;
-                    font-weight:bold;
-                    cursor:pointer;
-                "
-            >
-                Continue Shopping
-            </button>
+    panel.innerHTML = `
+        <div style="max-width:560px; margin:90px auto; background:white; padding:40px 30px;
+                    border-radius:12px; text-align:center; box-shadow:0 3px 20px rgba(0,0,0,0.1);">
+            <h2 style="margin-bottom:10px;">Taking you to secure payment&hellip;</h2>
+            <p style="color:#666;">Order ${esc(orderNumber)}. Please don't close this page.</p>
         </div>
     `;
 
-    localStorage.removeItem("poundtechCart");
+    let redirectUrl = null;
+    let message = "";
+
+    try {
+        const { data, error } = await supabaseClient.functions.invoke("create-yoco-checkout", {
+            body: { order_number: orderNumber }
+        });
+
+        if (error) {
+            message = "We couldn't start the payment.";
+            try {
+                const detail = await error.context.json();
+                if (detail && detail.error) { message = detail.error; }
+            } catch (e) { /* keep the general message */ }
+        } else if (data && data.redirectUrl) {
+            redirectUrl = data.redirectUrl;
+        } else {
+            message = "We couldn't start the payment.";
+        }
+    } catch (e) {
+        console.error(e);
+        message = "We couldn't start the payment.";
+    }
+
+    if (redirectUrl) {
+        window.location.href = redirectUrl;
+        return;
+    }
+
+    panel.innerHTML = `
+        <div style="max-width:560px; margin:90px auto; background:white; padding:40px 30px;
+                    border-radius:12px; text-align:center; box-shadow:0 3px 20px rgba(0,0,0,0.1);">
+            <h2 style="margin-bottom:10px;">Payment not started</h2>
+            <p style="color:#666; margin-bottom:6px;">${esc(message)}</p>
+            <p style="color:#666; margin-bottom:22px;">Your order ${esc(orderNumber)} is saved for 30 minutes.</p>
+            <button onclick="startPayment('${esc(orderNumber)}')"
+                    style="width:100%; padding:15px; background:#e00000; color:white; border:none;
+                           border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;">
+                Try again
+            </button>
+            <button onclick="location.href='/'"
+                    style="width:100%; padding:15px; margin-top:10px; background:#111; color:white; border:none;
+                           border-radius:6px; font-size:16px; cursor:pointer;">
+                Back to shop
+            </button>
+        </div>
+    `;
 }
 
 
@@ -2498,6 +2431,7 @@ function renderProductCard(product, status) {
             <div class="product-info">
                 <h3>${esc(product.name)}</h3>
                 <p>${esc(product.category || "")}</p>
+                <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
 
                 ${PT.price(product)}
@@ -2541,7 +2475,24 @@ async function loadProducts() {
         return;
     }
 
-     let displayedProducts = products.map(function(product) {
+    loadedProducts = products;
+
+    await renderLoaded();
+}
+
+
+let loadedProducts = [];
+let sortMode = "recommended";
+let onlyDeals = false;
+let onlyInStock = false;
+
+// Applies the garage vehicle, sort and filters to the products already loaded.
+async function renderLoaded() {
+
+    const container = document.getElementById("products-container");
+    const products = loadedProducts;
+
+    let displayedProducts = products.map(function(product) {
         return { product: product, status: null };
     });
 
@@ -2568,9 +2519,52 @@ async function loadProducts() {
     }
 
     if (displayedProducts.length === 0) {
+        document.getElementById("result-count").textContent = "";
         container.innerHTML = activeFilter
             ? "<p>No compatible products found in <strong>" + esc(activeFilter.title) + "</strong> for this vehicle.</p>"
             : "<p>No compatible products found for this vehicle.</p>";
+        return;
+    }
+
+    if (onlyDeals) {
+        displayedProducts = displayedProducts.filter(function (item) { return PT.sale(item.product).priced; });
+    }
+
+    if (onlyInStock) {
+        displayedProducts = displayedProducts.filter(function (item) { return Number(item.product.stock) > 0; });
+    }
+
+    if (sortMode === "rating") {
+        await PT.fetchRatings(displayedProducts.map(function (item) { return item.product.id; }));
+    }
+
+    const price = function (item) { return PT.sale(item.product).now; };
+    const rating = function (item) { return PT.ratings[item.product.id] || { avg: 0, count: 0 }; };
+
+    if (sortMode === "newest") {
+        displayedProducts = displayedProducts.slice().sort(function (a, b) {
+            return String(b.product.created_at).localeCompare(String(a.product.created_at));
+        });
+    } else if (sortMode === "price-asc") {
+        displayedProducts = displayedProducts.slice().sort(function (a, b) { return price(a) - price(b); });
+    } else if (sortMode === "price-desc") {
+        displayedProducts = displayedProducts.slice().sort(function (a, b) { return price(b) - price(a); });
+    } else if (sortMode === "rating") {
+        displayedProducts = displayedProducts.slice().sort(function (a, b) {
+            return (rating(b).avg - rating(a).avg) || (rating(b).count - rating(a).count);
+        });
+    } else if (sortMode === "discount") {
+        displayedProducts = displayedProducts.slice().sort(function (a, b) {
+            return PT.sale(b.product).pct - PT.sale(a.product).pct;
+        });
+    }
+
+    document.getElementById("result-count").textContent =
+        displayedProducts.length + (displayedProducts.length === 1 ? " product" : " products");
+
+    if (displayedProducts.length === 0) {
+        container.innerHTML = "<p>No products match these filters. " +
+            '<a href="#" onclick="resetViewOptions(); return false;" style="color:#e00000;font-weight:bold;">Clear filters</a></p>';
         return;
     }
 
@@ -2579,7 +2573,37 @@ async function loadProducts() {
             return renderProductCard(item.product, item.status);
         })
         .join("");
+
+    PT.fetchRatings(displayedProducts.map(function (item) { return item.product.id; })).then(PT.paintRatings);
 }
+
+
+function resetViewOptions() {
+    sortMode = "recommended";
+    onlyDeals = false;
+    onlyInStock = false;
+    document.getElementById("sort-select").value = "recommended";
+    document.getElementById("chip-deals").classList.remove("active");
+    document.getElementById("chip-stock").classList.remove("active");
+    renderLoaded();
+}
+
+document.getElementById("sort-select").addEventListener("change", function (e) {
+    sortMode = e.target.value;
+    renderLoaded();
+});
+
+document.getElementById("chip-deals").addEventListener("click", function (e) {
+    onlyDeals = !onlyDeals;
+    e.currentTarget.classList.toggle("active", onlyDeals);
+    renderLoaded();
+});
+
+document.getElementById("chip-stock").addEventListener("click", function (e) {
+    onlyInStock = !onlyInStock;
+    e.currentTarget.classList.toggle("active", onlyInStock);
+    renderLoaded();
+});
 
 async function filterCategory(category) {
 
