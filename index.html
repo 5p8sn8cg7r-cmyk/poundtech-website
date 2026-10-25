@@ -1567,7 +1567,7 @@ Already approved?
     <div id="toast"></div>
     
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="pt-share.js"></script>
+<script src="pt-share.js?v=20261025"></script>
  
 <script>
  
@@ -1580,6 +1580,12 @@ const supabaseClient = supabase.createClient(
 );
 
 PT.init(supabaseClient);
+
+// If an older pt-share.js is still cached, keep the shop working without ratings.
+if (!PT.ratingLine) { PT.ratingLine = function () { return ""; }; }
+if (!PT.fetchRatings) { PT.fetchRatings = async function () { return {}; }; }
+if (!PT.paintRatings) { PT.paintRatings = function () {}; }
+if (!PT.ratings) { PT.ratings = {}; }
 
     async function updateGarageLink() {
     const { data } = await supabaseClient.auth.getSession();
