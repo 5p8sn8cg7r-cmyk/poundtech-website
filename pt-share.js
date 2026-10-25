@@ -224,6 +224,46 @@
         return null;
     };
 
+    /* ---------- star ratings ---------- */
+
+    PT.ratings = {};
+
+    // avg 0-5 -> a row of five stars, filled to the average.
+    PT.stars = function (avg) {
+        var pct = Math.max(0, Math.min(5, Number(avg) || 0)) / 5 * 100;
+        return '<span class="pt-stars" style="--p:' + pct.toFixed(0) + '%" role="img" aria-label="' +
+               esc((Number(avg) || 0).toFixed(1)) + ' out of 5 stars">★★★★★</span>';
+    };
+
+    // Small "stars (12)" line for cards. Empty when a product has no reviews.
+    PT.ratingLine = function (id) {
+        var r = PT.ratings[id];
+        if (!r || !r.count) { return ""; }
+        return '<span class="pt-rating">' + PT.stars(r.avg) + '<span class="pt-rcount">(' + esc(r.count) + ')</span></span>';
+    };
+
+    // Looks up ratings for these products (ignored quietly if reviews are not set up yet).
+    PT.fetchRatings = async function (ids) {
+        if (!client || !ids || ids.length === 0) { return PT.ratings; }
+        try {
+            var res = await client.from("product_review_stats")
+                .select("product_id, review_count, avg_rating").in("product_id", ids);
+            if (!res.error && res.data) {
+                res.data.forEach(function (r) {
+                    PT.ratings[r.product_id] = { avg: Number(r.avg_rating), count: Number(r.review_count) };
+                });
+            }
+        } catch (e) { /* no ratings available */ }
+        return PT.ratings;
+    };
+
+    // Fills every <span data-rating-for="product id"> on the page.
+    PT.paintRatings = function () {
+        document.querySelectorAll("[data-rating-for]").forEach(function (el) {
+            el.innerHTML = PT.ratingLine(el.getAttribute("data-rating-for"));
+        });
+    };
+
     var priceStyle = document.createElement("style");
     priceStyle.textContent =
         ".pt-pricebox{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:12px 0 2px;}" +
@@ -243,6 +283,11 @@
         "letter-spacing:.02em;text-transform:uppercase;box-shadow:0 1px 4px rgba(0,0,0,.25);}" +
         ".pt-red{background:#e00000;}" +
         ".pt-dark{background:#111;}" +
+        ".pt-stars{display:inline-block;font-size:15px;letter-spacing:1px;line-height:1;" +
+        "background:linear-gradient(90deg,#f2a900 var(--p,0%),#d9d9d9 var(--p,0%));" +
+        "-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}" +
+        ".pt-rating{display:inline-flex;align-items:center;gap:5px;margin:4px 0 0;}" +
+        ".pt-rcount{color:#777;font-size:12px;}" +
         "@media(max-width:700px){.pt-ribbons{top:5px;left:5px;}.pt-ribbon{font-size:10px;padding:3px 7px;}}";
     document.head.appendChild(priceStyle);
 
