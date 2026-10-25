@@ -136,6 +136,110 @@
     box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
 }
 
+.reviews {
+    margin-top: 28px;
+    background: white;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+}
+
+.reviews h2 { font-size: 22px; margin-bottom: 16px; }
+
+.rev-summary { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+
+.rev-big { text-align: center; min-width: 110px; }
+
+.rev-big b { display: block; font-size: 44px; line-height: 1; }
+
+.rev-big .pt-stars { font-size: 20px; margin: 6px 0 4px; }
+
+.rev-big small { color: #666; }
+
+.rev-bars { flex: 1; min-width: 220px; }
+
+.rev-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; color: #555; }
+
+.rev-bar .track { flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+
+.rev-bar .fill { height: 100%; background: #f2a900; }
+
+.rev-bar .n { width: 24px; text-align: right; }
+
+.review { border-top: 1px solid #eee; padding: 16px 0; }
+
+.review-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+
+.review-head .pt-stars { font-size: 16px; }
+
+.review-title { font-weight: bold; }
+
+.review-meta { color: #777; font-size: 13px; margin-bottom: 6px; }
+
+.verified { color: #16803c; font-weight: bold; }
+
+.review p { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.review-mine { margin-top: 6px; }
+
+.review-mine button, .more-reviews {
+    background: none;
+    border: none;
+    color: #e00000;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 4px 0;
+    margin-right: 14px;
+    font-size: 14px;
+}
+
+.review-form { border-top: 1px solid #eee; margin-top: 8px; padding-top: 20px; }
+
+.review-form h3 { font-size: 18px; margin-bottom: 12px; }
+
+.review-form label { display: block; font-size: 13px; font-weight: bold; margin: 12px 0 4px; }
+
+.review-form input[type=text], .review-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.review-form textarea { min-height: 100px; resize: vertical; }
+
+.star-input { display: flex; gap: 4px; }
+
+.star-input button {
+    background: none;
+    border: none;
+    font-size: 34px;
+    line-height: 1;
+    color: #d9d9d9;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.star-input button.on { color: #f2a900; }
+
+.review-form .btn { width: auto; margin-top: 16px; padding: 12px 28px; }
+
+#review-message { margin-top: 10px; font-size: 14px; min-height: 20px; }
+
+#review-message.error { color: #b80000; }
+
+#review-message.ok { color: #16803c; }
+
+.rating-line { margin: 2px 0 6px; }
+
+.rating-line a { color: #555; font-size: 14px; text-decoration: none; margin-left: 6px; }
+
+.rating-line a:hover { color: #e00000; }
+
+@media (max-width: 800px) { .reviews { padding: 20px; } }
+
 .gallery { min-width: 0; }
 
 .product-image { position: relative; }
@@ -321,87 +425,6 @@
 
 .more { margin-top: 40px; }
 
-.product-reviews {
-    margin-top: 40px;
-    background: white;
-    padding: 26px;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-}
-
-.product-reviews h2 { margin: 0 0 8px; font-size: 22px; }
-
-.review-summary {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 12px 0 16px;
-}
-
-.review-average { font-size: 24px; font-weight: bold; }
-
-.reviews-expand {
-    border-top: 1px solid #eee;
-    margin-top: 14px;
-    padding-top: 14px;
-}
-
-.reviews-expand > summary {
-    cursor: pointer;
-    color: #111;
-    font-weight: bold;
-    padding: 8px 0;
-}
-
-.reviews-expand > summary::marker { color: #e00000; }
-
-.reviews-expand[open] > summary { margin-bottom: 10px; }
-.review-stars { color: #e5a000; letter-spacing: 2px; }
-.review-muted { color: #666; font-size: 14px; }
-
-.product-review-item {
-    border-top: 1px solid #eee;
-    padding: 16px 0;
-}
-
-.product-review-item p { margin: 8px 0 0; color: #444; white-space: pre-wrap; overflow-wrap: anywhere; }
-
-.review-form {
-    border-top: 1px solid #eee;
-    margin-top: 22px;
-    padding-top: 22px;
-}
-
-.review-form input,
-.review-form select,
-.review-form textarea {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 7px;
-    font: inherit;
-}
-
-.review-form textarea { resize: vertical; }
-.review-submit {
-    background: #111;
-    color: white;
-    border: 0;
-    border-radius: 7px;
-    padding: 12px 18px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.review-submit:disabled { opacity: 0.6; cursor: wait; }
-#product-review-message { margin-top: 12px; font-size: 14px; font-weight: bold; }
-
-@media (max-width: 800px) {
-    .product-reviews { padding: 20px; }
-}
-
 .more h2 { font-size: 22px; margin-bottom: 4px; }
 
 .more-sub { color: #666; font-size: 14px; margin-bottom: 16px; }
@@ -464,6 +487,7 @@
 
 <header class="site-header">
     <a class="logo" href="/">POUND<span>TECH</span></a>
+    <a class="back" href="/">&larr; Back to marketplace</a>
 </header>
 
 <main class="product-main">
@@ -471,34 +495,9 @@
         <div class="notice">Loading product&hellip;</div>
     </div>
 
-    <section class="product-reviews" id="product-reviews-section">
-        <h2>Customer Reviews</h2>
-        <p class="review-muted">Reviews are verified against completed PoundTech orders.</p>
-        <div id="product-review-summary" class="review-muted">Loading ratings...</div>
-
-        <details class="reviews-expand">
-            <summary>Read reviews or write a review</summary>
-            <div id="product-reviews-list"></div>
-
-            <div class="review-form">
-                <h3>Write a Product Review</h3>
-            <p class="review-muted">Enter the order number and email address used at checkout. You can review a product only if it was included in a completed order.</p>
-            <input id="product-review-order" type="text" autocomplete="off" placeholder="Order number (e.g. PT1790465694633)" aria-label="Order number">
-            <input id="product-review-email" type="email" autocomplete="email" placeholder="Email used for your order" aria-label="Email used for your order">
-            <input id="product-review-name" type="text" maxlength="80" autocomplete="name" placeholder="Your name" aria-label="Your name">
-            <select id="product-review-rating" aria-label="Choose a rating">
-                <option value="">Select a star rating</option>
-                <option value="5">★★★★★ — Excellent</option>
-                <option value="4">★★★★☆ — Good</option>
-                <option value="3">★★★☆☆ — Average</option>
-                <option value="2">★★☆☆☆ — Poor</option>
-                <option value="1">★☆☆☆☆ — Very poor</option>
-            </select>
-            <textarea id="product-review-text" rows="4" maxlength="2000" placeholder="Share your experience with this product..." aria-label="Write your review"></textarea>
-            <button type="button" class="review-submit" id="submit-product-review">Submit Review</button>
-                <div id="product-review-message" role="status" aria-live="polite"></div>
-            </div>
-        </details>
+    <section class="reviews" id="reviews" hidden>
+        <h2>Customer reviews</h2>
+        <div id="reviews-body"></div>
     </section>
 
     <section class="more" id="more-section" hidden>
@@ -652,148 +651,14 @@ async function loadProduct() {
 
     showFitBadges(product);
 
+    loadReviews(product);
+
     if (!similarEarly) { loadSimilar(product); }
 
     const supplier = await (supplierEarly || fetchSupplier(product.supplier_id));
 
     fillSupplier(product, supplier);
-    loadProductReviews(product.id);
 }
-
-
-async function loadProductReviews(productId) {
-
-    const summary = document.getElementById("product-review-summary");
-    const list = document.getElementById("product-reviews-list");
-
-    summary.textContent = "Loading ratings...";
-    list.innerHTML = "";
-
-    const { data: reviews, error } = await supabaseClient
-        .from("product_reviews")
-        .select("id, customer_name, rating, review_text, created_at")
-        .eq("product_id", productId)
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        console.error("PRODUCT REVIEWS ERROR:", error);
-        summary.textContent = "Reviews are temporarily unavailable.";
-        list.innerHTML = '<p class="review-muted">Please try again later.</p>';
-        return;
-    }
-
-    if (!reviews || reviews.length === 0) {
-        summary.innerHTML =
-            '<div class="review-summary">' +
-                '<strong class="review-average">—</strong>' +
-                '<span class="review-muted">/ 5</span>' +
-                '<span class="review-stars" aria-label="No ratings yet">☆☆☆☆☆</span>' +
-                '<span class="review-muted">0 ratings</span>' +
-            '</div>';
-        list.innerHTML = '<p class="review-muted">No reviews yet. If you have purchased this product, you can be the first to review it below.</p>';
-        return;
-    }
-
-    const average = reviews.reduce(function (sum, review) {
-        return sum + Number(review.rating || 0);
-    }, 0) / reviews.length;
-
-    summary.innerHTML =
-        '<div class="review-summary">' +
-            '<div class="review-average">' + average.toFixed(1) + '<span class="review-muted"> / 5</span></div>' +
-            '<div><div class="review-stars" aria-label="' + average.toFixed(1) + ' out of 5 stars">' +
-                '★'.repeat(Math.round(average)) + '☆'.repeat(5 - Math.round(average)) +
-            '</div><div class="review-muted">' + reviews.length + (reviews.length === 1 ? ' rating' : ' ratings') + '</div></div>' +
-        '</div>';
-
-    list.innerHTML = reviews.map(function (review) {
-        const rating = Math.max(1, Math.min(5, Number(review.rating) || 1));
-        const date = review.created_at
-            ? new Date(review.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
-            : "";
-
-        return '<article class="product-review-item">' +
-            '<strong>' + esc(review.customer_name || "Verified customer") + '</strong>' +
-            '<div class="review-stars" aria-label="' + rating + ' out of 5 stars">' +
-                '★'.repeat(rating) + '☆'.repeat(5 - rating) +
-            '</div>' +
-            (date ? '<div class="review-muted">' + esc(date) + '</div>' : '') +
-            '<p>' + esc(review.review_text || "") + '</p>' +
-        '</article>';
-    }).join("");
-}
-
-
-async function submitProductReview() {
-
-    const orderNumber = document.getElementById("product-review-order").value.trim();
-    const email = document.getElementById("product-review-email").value.trim();
-    const customerName = document.getElementById("product-review-name").value.trim();
-    const rating = Number(document.getElementById("product-review-rating").value);
-    const reviewText = document.getElementById("product-review-text").value.trim();
-    const message = document.getElementById("product-review-message");
-    const button = document.getElementById("submit-product-review");
-
-    if (!currentProduct || !currentProduct.id) {
-        message.style.color = "#b80000";
-        message.textContent = "Product details are still loading. Please try again.";
-        return;
-    }
-
-    if (!orderNumber || !email || !customerName || !rating || !reviewText) {
-        message.style.color = "#b80000";
-        message.textContent = "Please complete every field before submitting.";
-        return;
-    }
-
-    if (rating < 1 || rating > 5 || !Number.isInteger(rating)) {
-        message.style.color = "#b80000";
-        message.textContent = "Please select a rating from 1 to 5 stars.";
-        return;
-    }
-
-    button.disabled = true;
-    message.style.color = "#555";
-    message.textContent = "Verifying your completed order...";
-
-    const { data, error } = await supabaseClient.rpc("submit_product_review", {
-        p_order_number: orderNumber,
-        p_email: email,
-        p_product_id: currentProduct.id,
-        p_customer_name: customerName,
-        p_rating: rating,
-        p_review_text: reviewText
-    });
-
-    button.disabled = false;
-
-    if (error) {
-        console.error("PRODUCT REVIEW SUBMISSION ERROR:", error);
-        message.style.color = "#b80000";
-        message.textContent = "Unable to submit your review right now. Please try again.";
-        return;
-    }
-
-    if (!data || !data.success) {
-        message.style.color = "#b80000";
-        message.textContent = data && data.message ? data.message : "Unable to verify this review.";
-        return;
-    }
-
-    message.style.color = "#16803c";
-    message.textContent = "Your review has been submitted successfully.";
-
-    document.getElementById("product-review-order").value = "";
-    document.getElementById("product-review-email").value = "";
-    document.getElementById("product-review-name").value = "";
-    document.getElementById("product-review-rating").value = "";
-    document.getElementById("product-review-text").value = "";
-
-    await loadProductReviews(currentProduct.id);
-}
-
-
-document.getElementById("submit-product-review").addEventListener("click", submitProductReview);
 
 
 function photosOf(product) {
@@ -1014,6 +879,8 @@ function renderProduct(product) {
 
                 <h1>${esc(product.name)}</h1>
 
+                <div class="rating-line" id="rating-line"></div>
+
                 <div class="sold-by" id="sold-by">&nbsp;</div>
 
                 ${PT.price(product, { large: true })}
@@ -1041,6 +908,8 @@ function renderProduct(product) {
                     ${stock > 0 ? "Add to Cart" : "Out of stock"}
                 </button>
 
+                ${stock > 0 ? '<button type="button" class="btn btn-dark" id="buy-now-btn" style="margin-top:10px;">Buy Now</button>' : ""}
+
                 <div class="actions-row">
                     ${PT.heartPill(product.id)}
                     ${PT.sharePill(product)}
@@ -1060,6 +929,7 @@ function renderProduct(product) {
         document.getElementById("qty-minus").addEventListener("click", function () { changeQuantity(-1); });
         document.getElementById("qty-plus").addEventListener("click", function () { changeQuantity(1); });
         document.getElementById("add-cart-btn").addEventListener("click", addToCart);
+        document.getElementById("buy-now-btn").addEventListener("click", buyNow);
     }
 }
 
@@ -1076,6 +946,13 @@ function changeQuantity(amount) {
 
 function addToCart() {
     addProductToCart(currentProduct, selectedQuantity);
+}
+
+
+// Adds the item and goes straight to checkout.
+function buyNow() {
+    addProductToCart(currentProduct, selectedQuantity);
+    window.location.href = "/?checkout=1";
 }
 
 
@@ -1125,6 +1002,228 @@ async function showFitBadges(product) {
         return '<span class="fit-ok">Fits your ' + esc(v.year + " " + v.make + " " + v.model) + '</span>';
     }).join("");
 }
+
+
+
+/* ---------- REVIEWS ---------- */
+
+let reviewList = [];
+let reviewUser = null;
+let reviewProduct = null;
+let reviewsShown = 5;
+let reviewRating = 0;
+
+async function loadReviews(product) {
+
+    reviewProduct = product;
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    reviewUser = sessionData && sessionData.session ? sessionData.session.user : null;
+
+    const result = await supabaseClient
+        .from("product_reviews")
+        .select("id, user_id, reviewer_name, rating, title, body, verified_purchase, created_at, updated_at")
+        .eq("product_id", product.id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+    // Reviews not set up yet: leave the section out rather than show an error.
+    if (result.error) { console.error("REVIEWS:", result.error); return; }
+
+    reviewList = result.data || [];
+
+    renderReviews();
+}
+
+
+function reviewDate(iso) {
+    return new Date(iso).toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" });
+}
+
+
+function renderReviews() {
+
+    const section = document.getElementById("reviews");
+    const body = document.getElementById("reviews-body");
+    const count = reviewList.length;
+
+    const avg = count ? reviewList.reduce(function (t, r) { return t + r.rating; }, 0) / count : 0;
+
+    const line = document.getElementById("rating-line");
+
+    if (line) {
+        line.innerHTML = count
+            ? PT.stars(avg) + '<a href="#reviews">' + avg.toFixed(1) + " (" + count + (count === 1 ? " review" : " reviews") + ")</a>"
+            : '<a href="#reviews" style="margin-left:0;">Be the first to review</a>';
+    }
+
+    const mine = reviewUser ? reviewList.find(function (r) { return r.user_id === reviewUser.id; }) : null;
+
+    let html = "";
+
+    if (count) {
+
+        const bars = [5, 4, 3, 2, 1].map(function (n) {
+            const c = reviewList.filter(function (r) { return r.rating === n; }).length;
+            return '<div class="rev-bar"><span>' + n + ' star</span><span class="track"><span class="fill" style="display:block;width:' +
+                   Math.round(c / count * 100) + '%"></span></span><span class="n">' + c + '</span></div>';
+        }).join("");
+
+        html += '<div class="rev-summary">' +
+                '<div class="rev-big"><b>' + esc(avg.toFixed(1)) + '</b>' + PT.stars(avg) + '<small>' + count + (count === 1 ? " review" : " reviews") + '</small></div>' +
+                '<div class="rev-bars">' + bars + '</div></div>';
+
+        html += reviewList.slice(0, reviewsShown).map(function (r) {
+            return '<div class="review">' +
+                '<div class="review-head">' + PT.stars(r.rating) + (r.title ? '<span class="review-title">' + esc(r.title) + '</span>' : "") + '</div>' +
+                '<div class="review-meta">' + esc(r.reviewer_name) + " &middot; " + esc(reviewDate(r.created_at)) +
+                (r.verified_purchase ? ' &middot; <span class="verified">Verified purchase</span>' : "") + '</div>' +
+                (r.body ? '<p>' + esc(r.body) + '</p>' : "") +
+                (reviewUser && r.user_id === reviewUser.id
+                    ? '<div class="review-mine"><button type="button" id="edit-review">Edit</button><button type="button" id="delete-review">Delete</button></div>'
+                    : "") +
+                '</div>';
+        }).join("");
+
+        if (count > reviewsShown) {
+            html += '<button type="button" class="more-reviews" id="more-reviews">Show more reviews</button>';
+        }
+
+    } else {
+        html += '<p style="color:#666;margin-bottom:8px;">No reviews yet. Bought this? Tell other customers what you think.</p>';
+    }
+
+    html += reviewFormHtml(mine);
+
+    body.innerHTML = html;
+    section.hidden = false;
+
+    reviewRating = mine ? mine.rating : 0;
+    paintStarInput();
+}
+
+
+function reviewFormHtml(mine) {
+
+    if (!reviewUser) {
+        return '<div class="review-form"><p>Please <a href="customer-login.html" style="color:#e00000;font-weight:bold;">log in</a> to write a review.</p></div>';
+    }
+
+    let savedName = "";
+    try { savedName = localStorage.getItem("ptReviewerName") || ""; } catch (e) { /* ignore */ }
+
+    return '<div class="review-form" id="review-form">' +
+        '<h3>' + (mine ? "Edit your review" : "Write a review") + '</h3>' +
+        '<label>Your rating</label>' +
+        '<div class="star-input" id="star-input" role="radiogroup" aria-label="Your rating">' +
+        [1, 2, 3, 4, 5].map(function (n) {
+            return '<button type="button" data-star="' + n + '" role="radio" aria-label="' + n + ' star' + (n > 1 ? "s" : "") + '">★</button>';
+        }).join("") + '</div>' +
+        '<label for="rv-name">Your name (shown with the review)</label>' +
+        '<input type="text" id="rv-name" maxlength="40" value="' + esc(mine ? mine.reviewer_name : savedName) + '">' +
+        '<label for="rv-title">Title (optional)</label>' +
+        '<input type="text" id="rv-title" maxlength="80" value="' + esc(mine && mine.title ? mine.title : "") + '">' +
+        '<label for="rv-body">Your review (optional)</label>' +
+        '<textarea id="rv-body" maxlength="1500">' + esc(mine && mine.body ? mine.body : "") + '</textarea>' +
+        '<button type="button" class="btn" id="submit-review">' + (mine ? "Update review" : "Submit review") + '</button>' +
+        '<div id="review-message" role="status"></div>' +
+        '</div>';
+}
+
+
+function paintStarInput() {
+
+    document.querySelectorAll("#star-input button").forEach(function (b) {
+        const on = Number(b.getAttribute("data-star")) <= reviewRating;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-checked", on && Number(b.getAttribute("data-star")) === reviewRating ? "true" : "false");
+    });
+}
+
+
+function reviewMessage(text, kind) {
+    const el = document.getElementById("review-message");
+    if (el) { el.textContent = text; el.className = kind || ""; }
+}
+
+
+async function submitReview() {
+
+    if (!reviewUser || !reviewProduct) { return; }
+
+    if (!reviewRating) { reviewMessage("Please choose a star rating.", "error"); return; }
+
+    const name = document.getElementById("rv-name").value.trim();
+
+    if (!name) { reviewMessage("Please enter your name.", "error"); return; }
+
+    const button = document.getElementById("submit-review");
+    button.disabled = true;
+    reviewMessage("Saving your review...", "");
+
+    const { error } = await supabaseClient.rpc("submit_product_review", {
+        p_product_id: reviewProduct.id,
+        p_rating: reviewRating,
+        p_title: document.getElementById("rv-title").value,
+        p_body: document.getElementById("rv-body").value,
+        p_name: name
+    });
+
+    button.disabled = false;
+
+    if (error) {
+        console.error(error);
+        reviewMessage(error.message, "error");
+        return;
+    }
+
+    try { localStorage.setItem("ptReviewerName", name); } catch (e) { /* ignore */ }
+
+    await loadReviews(reviewProduct);
+
+    reviewMessage("Thank you, your review has been saved.", "ok");
+}
+
+
+async function deleteMyReview() {
+
+    const mine = reviewList.find(function (r) { return reviewUser && r.user_id === reviewUser.id; });
+
+    if (!mine || !confirm("Delete your review?")) { return; }
+
+    const { error } = await supabaseClient.from("product_reviews").delete().eq("id", mine.id);
+
+    if (error) { console.error(error); alert("We couldn't delete your review. Please try again."); return; }
+
+    await loadReviews(reviewProduct);
+}
+
+
+document.getElementById("reviews").addEventListener("click", function (e) {
+
+    const star = e.target.closest("[data-star]");
+
+    if (star) {
+        reviewRating = Number(star.getAttribute("data-star"));
+        paintStarInput();
+        return;
+    }
+
+    if (e.target.closest("#submit-review")) { submitReview(); return; }
+
+    if (e.target.closest("#delete-review")) { deleteMyReview(); return; }
+
+    if (e.target.closest("#edit-review")) {
+        const form = document.getElementById("review-form");
+        if (form) { form.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        return;
+    }
+
+    if (e.target.closest("#more-reviews")) {
+        reviewsShown += 10;
+        renderReviews();
+    }
+});
 
 
 let similarById = {};
@@ -1217,6 +1316,7 @@ async function loadSimilar(product) {
                 <div class="mc-info">
                     ${row.v ? '<div class="mc-fit">Fits your ' + esc(row.v.make + " " + row.v.model) + '</div>' : ""}
                     <h3>${esc(p.name)}</h3>
+                    <span data-rating-for="${esc(p.id)}"></span>
                     ${PT.price(p)}
                     <button type="button" class="mc-add" data-add="${esc(p.id)}">Add to Cart</button>
                 </div>
@@ -1226,6 +1326,8 @@ async function loadSimilar(product) {
     document.getElementById("more-section").hidden = false;
 
     PT.refresh();
+
+    PT.fetchRatings(list.map(function (row) { return row.p.id; })).then(PT.paintRatings);
 }
 
 
@@ -1251,6 +1353,5 @@ loadProduct();
 
 </script>
 
-    <script src="nav.js"></script>
 </body>
 </html>
