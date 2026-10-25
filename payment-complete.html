@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="preconnect" href="https://uezacbssvvvtlosnaroh.supabase.co" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Payment | PoundTech</title>
+<link rel="stylesheet" href="site.css">
+
+<style>
+
+.pay-main { max-width: 620px; margin: 40px auto 70px; padding: 0 20px; }
+
+.pay-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+}
+
+.pay-card h1 { font-size: 28px; margin-bottom: 10px; }
+
+.pay-card p { color: #555; margin-bottom: 16px; }
+
+.order-box { background: #f4f5f7; border-radius: 8px; padding: 16px; margin: 20px 0; }
+
+.order-box small { display: block; color: #666; margin-bottom: 6px; }
+
+.order-box strong { font-size: 22px; }
+
+.spinner {
+    width: 38px;
+    height: 38px;
+    border: 4px solid #eee;
+    border-top-color: #e00000;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.pay-card .btn { margin-top: 8px; }
+
+</style>
+</head>
+
+<body>
+
+<header class="site-header">
+    <a class="logo" href="/">POUND<span>TECH</span></a>
+    <a class="back" href="/">&larr; Back to marketplace</a>
+</header>
+
+<main class="pay-main">
+    <div class="pay-card" id="card">
+        <div class="spinner"></div>
+        <h1>Confirming your payment&hellip;</h1>
+        <p>This usually takes a few seconds. Please don't close this page.</p>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+const orderNumber = new URLSearchParams(location.search).get("order") || "";
+const card = document.getElementById("card");
+
+function show(html) { card.innerHTML = html; }
+
+function orderBox() {
+    return '<div class="order-box"><small>Order number</small><strong>' + esc(orderNumber) + '</strong></div>';
+}
+
+async function status() {
+    const { data, error } = await supabaseClient.rpc("get_order_payment_status", { p_order_number: orderNumber });
+    return error ? null : data;
+}
+
+async function check() {
+
+    if (!orderNumber) {
+        show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn" href="/">Back to marketplace</a>');
+        return;
+    }
+
+    // Yoco tells us about the payment a moment after the customer returns, so wait for it.
+    for (let attempt = 0; attempt < 20; attempt++) {
+
+        const current = await status();
+
+        if (current === "Paid") {
+            try { localStorage.removeItem("poundtechCart"); } catch (e) { /* ignore */ }
+            show('<h1>Payment received</h1><p>Thank you. Your PoundTech order is confirmed and the supplier has been notified.</p>' +
+                 orderBox() +
+                 '<p>Keep your order number to track your order. We will use the contact details you gave us for any updates.</p>' +
+                 '<a class="btn" href="track-order.html">Track your order</a>' +
+                 '<a class="btn btn-dark" href="/">Continue shopping</a>');
+            return;
+        }
+
+        if (current === "Expired" || current === "Refunded") { break; }
+
+        await new Promise(function (r) { setTimeout(r, 2000); });
+    }
+
+    show('<h1>We have not received your payment yet</h1>' +
+         '<p>If you were charged, don\'t pay again. Contact us with your order number and we will sort it out.</p>' +
+         orderBox() +
+         '<a class="btn" href="mailto:info@poundtech.co.za?subject=Payment%20for%20order%20' + encodeURIComponent(orderNumber) + '">Email us</a>' +
+         '<a class="btn btn-dark" href="/?cart=1">Back to my cart</a>');
+}
+
+check();
+
+</script>
+
+</body>
+</html>
