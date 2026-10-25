@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Payment | PoundTech</title>
+<link rel="stylesheet" href="site.css">
+
+<style>
+
+.pay-main { max-width: 620px; margin: 40px auto 70px; padding: 0 20px; }
+
+.pay-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.08);
+}
+
+.pay-card h1 { font-size: 28px; margin-bottom: 10px; }
+
+.pay-card p { color: #555; margin-bottom: 16px; }
+
+.pay-card .btn { margin-top: 8px; }
+
+</style>
+</head>
+
+<body>
+
+<header class="site-header">
+    <a class="logo" href="/">POUND<span>TECH</span></a>
+    <a class="back" href="/">&larr; Back to marketplace</a>
+</header>
+
+<main class="pay-main">
+    <div class="pay-card">
+        <h1 id="title">Payment cancelled</h1>
+        <p id="text">You have not been charged. Your items are still in your cart.</p>
+        <a class="btn" href="/?cart=1">Back to my cart</a>
+        <a class="btn btn-dark" href="/">Continue shopping</a>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script>
+if (new URLSearchParams(location.search).get("failed") === "1") {
+    document.getElementById("title").textContent = "Payment unsuccessful";
+    document.getElementById("text").textContent =
+        "Your payment didn't go through, so you have not been charged. Please try again or use a different card. Your items are still in your cart.";
+}
+</script>
+
+</body>
+</html>
