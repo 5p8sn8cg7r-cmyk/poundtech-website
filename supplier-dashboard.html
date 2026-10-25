@@ -1584,6 +1584,7 @@ async function loadSupplierOrders() {
         .from("orders")
         .select("*")
         .in("id", orderIds)
+        .eq("payment_status", "Paid")
         .order("created_at", {
             ascending: false
         });
@@ -1592,6 +1593,12 @@ async function loadSupplierOrders() {
         console.error(ordersError);
         container.innerHTML =
             "<p>Unable to load orders.</p>";
+        return;
+    }
+
+    if (!orders || orders.length === 0) {
+        container.innerHTML =
+            "<p>No paid orders for your products yet. Orders appear here once the customer has paid.</p>";
         return;
     }
 
