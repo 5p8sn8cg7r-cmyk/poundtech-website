@@ -148,6 +148,45 @@ input {
 }
 
 </style>
+<style>
+.od-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
+.od-cards button.od-card{display:block;width:100%;margin:0;text-align:left;background:#fff;color:#111;border:1px solid #e3e3e3;border-radius:12px;padding:14px 16px;cursor:pointer;font-weight:normal;transition:border-color .15s,box-shadow .15s}
+.od-cards button.od-card:hover{background:#fff;border-color:#111;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.od-card .n{display:block;font-size:28px;font-weight:700;line-height:1.1}
+.od-card .l{display:block;margin-top:4px;font-size:13px;color:#666}
+.od-card.hot{border-color:#e00000}
+.od-card.hot .n{color:#e00000}
+.od-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.od-tabs button.od-tab{flex:0 0 auto;margin:0;background:#fff;color:#111;border:1px solid #d8d8d8;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.od-tabs button.od-tab:hover{background:#f1f1f1}
+.od-tabs button.od-tab.on{background:#111;color:#fff;border-color:#111}
+.od-tab .c{display:inline-block;min-width:20px;margin-left:6px;padding:1px 7px;border-radius:999px;background:#eee;color:#111;font-size:12px}
+.od-tab.on .c{background:#fff;color:#111}
+.od-tab .c.hot{background:#e00000;color:#fff}
+.od-search{width:100%;padding:12px 14px;margin:0 0 14px;box-sizing:border-box;border:1px solid #d8d8d8;border-radius:10px;font-size:15px;background:#fff}
+.od-empty{background:#fff;border:1px dashed #ccc;border-radius:12px;padding:30px;text-align:center;color:#666}
+.od-item{background:#fff;border:1px solid #e3e3e3;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.od-item.late{border-left:4px solid #e00000}
+.od-item summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.od-item summary::-webkit-details-marker{display:none}
+.od-item .no{font-weight:700;font-size:16px}
+.od-item .meta{color:#777;font-size:13px}
+.od-item .sp{flex:1 1 auto}
+.od-item .tot{font-weight:700}
+.od-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#eee;color:#111}
+.od-pill.red{background:#e00000;color:#fff}
+.od-pill.green{background:#d4edda;color:#145c2a}
+.od-pill.amber{background:#fff3cd;color:#7a5a00}
+.od-pill.dark{background:#111;color:#fff}
+.od-body{padding:0 16px 16px;border-top:1px solid #eee}
+.od-body h4{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#666}
+.od-body p{margin:4px 0}
+.od-line{padding:10px;background:#f5f5f5;border-radius:8px;margin-bottom:6px;font-size:14px}
+.od-actions{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.od-actions select{padding:9px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
+.od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
+@media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}}
+</style>
 </head>
 
 <body>
@@ -439,6 +478,10 @@ async function loadRevenue() {
 }
 
 
+var ADM_ORDERS = [];
+var ADM_TAB = "attention";
+var ADM_QUERY = "";
+
 async function loadOrders() {
 
     const { data: orders, error } = await supabaseClient
@@ -453,8 +496,6 @@ async function loadOrders() {
     }
 
     const container = document.getElementById("orders");
-
-    container.innerHTML = "";
 
     if (!orders || orders.length === 0) {
         container.innerHTML = `
@@ -474,73 +515,157 @@ async function loadOrders() {
         });
     } catch (e) { /* supplier progress is optional */ }
 
-    let html = "";
-
-    orders.forEach(function(order) {
-
-        const supplierProgress = (statusByOrder[order.id] || []).map(function(r) {
-            return `<br><strong>${esc(r.supplier)}:</strong> ${esc(r.status)}`;
-        }).join("");
-
-        let productsHTML = "";
-
-        const items = Array.isArray(order.items) ? order.items : [];
-
-        items.forEach(function(item) {
-
-            const quantity = item.quantity || 1;
-
-            productsHTML += `
-                <div class="product">
-                    <strong>${esc(item.name)}</strong>
-                    <p>
-                        Quantity: ${esc(quantity)}
-                        <br>
-                        Price: R${esc(item.price)}
-                    </p>
-                </div>
-            `;
-        });
-
-        html += `
-            <div class="order">
-
-                <h2>Order #${esc(order.order_number)}</h2>
-
-                <p>
-                    <strong>Date:</strong>
-                    ${esc(new Date(order.created_at).toLocaleString())}
-                </p>
-
-                <p>
-                    <strong>Status:</strong>
-                    <span class="status">${esc(order.status)}</span>
-                    <span class="status" style="background:${order.payment_status === "Paid" ? "#d4edda" : "#f8d7da"};">
-                        ${esc(order.payment_status || "Unpaid")}
-                    </span>
-                    ${supplierProgress}
-                </p>
-
-                <h3>Customer</h3>
-
-                <p>
-                    <strong>Name:</strong> ${esc(order.customer_name)}<br>
-                    <strong>Phone:</strong> ${esc(order.phone)}<br>
-                    <strong>Email:</strong> ${esc(order.email)}<br>
-                    <strong>Address:</strong> ${esc(order.address)}
-                </p>
-
-                <h3>Products</h3>
-
-                ${productsHTML}
-
-                <div class="total">Total: R${esc(order.total)}</div>
-
-            </div>
-        `;
+    ADM_ORDERS = orders.map(function(o) {
+        const sup = statusByOrder[o.id] || [];
+        return { order: o, sup: sup, group: admGroup(o, sup) };
     });
 
-    container.innerHTML = html;
+    container.innerHTML = `
+        <h2 style="margin:30px 0 14px;">Orders</h2>
+        <div class="od-cards" id="ao-cards"></div>
+        <div class="od-tabs" id="ao-tabs"></div>
+        <input class="od-search" id="ao-search" type="search"
+               placeholder="Search by order number, customer, email or phone"
+               value="${esc(ADM_QUERY)}"
+               oninput="ADM_QUERY=this.value; renderAdminList();">
+        <div id="ao-list"></div>
+    `;
+
+    renderAdminOrders();
+}
+
+
+// Which tab an order belongs to.
+function admGroup(o, sup) {
+
+    if (o.status === "Cancelled" || o.payment_status === "Expired") { return "closed"; }
+    if ((o.payment_status || "Unpaid") !== "Paid") { return "unpaid"; }
+
+    if (sup.length === 0 || sup.some(function(r) { return r.status === "Pending"; })) { return "attention"; }
+    if (sup.every(function(r) { return r.status === "Completed"; })) { return "completed"; }
+    return "progress";
+}
+
+var ADM_TABS = [
+    { id: "attention", label: "Needs attention" },
+    { id: "progress",  label: "In progress" },
+    { id: "unpaid",    label: "Awaiting payment" },
+    { id: "completed", label: "Completed" },
+    { id: "closed",    label: "Expired / cancelled" },
+    { id: "all",       label: "All" }
+];
+
+function admCount(id) {
+    return ADM_ORDERS.filter(function(x) { return id === "all" || x.group === id; }).length;
+}
+
+function setAdminTab(id) {
+    ADM_TAB = id;
+    renderAdminOrders();
+}
+
+function renderAdminOrders() {
+
+    const cards = [
+        { id: "attention", label: "Need attention", hot: admCount("attention") > 0 },
+        { id: "progress",  label: "In progress",    hot: false },
+        { id: "unpaid",    label: "Awaiting payment", hot: false },
+        { id: "completed", label: "Completed",      hot: false }
+    ];
+
+    document.getElementById("ao-cards").innerHTML = cards.map(function(c) {
+        return `<button type="button" class="od-card ${c.hot ? "hot" : ""}" onclick="setAdminTab('${c.id}')">
+                    <span class="n">${admCount(c.id)}</span><span class="l">${c.label}</span>
+                </button>`;
+    }).join("");
+
+    document.getElementById("ao-tabs").innerHTML = ADM_TABS.map(function(t) {
+        const n = admCount(t.id);
+        const hot = t.id === "attention" && n > 0;
+        return `<button type="button" class="od-tab ${ADM_TAB === t.id ? "on" : ""}" onclick="setAdminTab('${t.id}')">
+                    ${t.label}<span class="c ${hot ? "hot" : ""}">${n}</span>
+                </button>`;
+    }).join("");
+
+    renderAdminList();
+}
+
+function renderAdminList() {
+
+    const list = document.getElementById("ao-list");
+    const q = ADM_QUERY.trim().toLowerCase();
+
+    const rows = ADM_ORDERS.filter(function(x) {
+
+        if (ADM_TAB !== "all" && x.group !== ADM_TAB) { return false; }
+        if (!q) { return true; }
+
+        const o = x.order;
+        return [o.order_number, o.customer_name, o.email, o.phone].join(" ").toLowerCase().indexOf(q) !== -1;
+    });
+
+    // Open work: oldest first so nothing sits forgotten. Everything else: newest first.
+    const oldestFirst = (ADM_TAB === "attention" || ADM_TAB === "progress");
+
+    rows.sort(function(a, b) {
+        const d = new Date(a.order.created_at) - new Date(b.order.created_at);
+        return oldestFirst ? d : -d;
+    });
+
+    if (rows.length === 0) {
+        list.innerHTML = `<div class="od-empty">${q ? "No orders match your search." : "Nothing here right now."}</div>`;
+        return;
+    }
+
+    list.innerHTML = rows.map(adminOrderHTML).join("");
+}
+
+function adminOrderHTML(x) {
+
+    const order = x.order;
+    const paid = order.payment_status === "Paid";
+    const hours = (Date.now() - new Date(order.created_at).getTime()) / 3600000;
+    const late = x.group === "attention" && hours >= 24;
+
+    const items = Array.isArray(order.items) ? order.items : [];
+
+    const productsHTML = items.map(function(item) {
+        return `<div class="od-line"><strong>${esc(item.name)}</strong><br>
+                Quantity: ${esc(item.quantity || 1)} &middot; R${esc(item.price)}</div>`;
+    }).join("");
+
+    const supplierHTML = x.sup.length
+        ? x.sup.map(function(r) {
+            return `<p><strong>${esc(r.supplier)}:</strong> ${esc(r.status)}</p>`;
+          }).join("")
+        : (paid ? `<p style="color:#b80000;">No supplier has responded yet.</p>` : `<p style="color:#777;">Not paid yet.</p>`);
+
+    return `
+        <details class="od-item ${late ? "late" : ""}">
+            <summary>
+                <span class="no">#${esc(order.order_number)}</span>
+                <span class="od-pill ${paid ? "green" : "amber"}">${esc(order.payment_status || "Unpaid")}</span>
+                ${late ? `<span class="od-pill red">Waiting ${Math.floor(hours / 24)}d ${Math.floor(hours % 24)}h</span>` : ""}
+                <span class="sp"></span>
+                <span class="meta">${esc(order.customer_name)} &middot; ${esc(new Date(order.created_at).toLocaleDateString())}</span>
+                <span class="tot">${money(order.total)}</span>
+            </summary>
+            <div class="od-body">
+                <h4>Supplier progress</h4>
+                ${supplierHTML}
+
+                <h4>Customer</h4>
+                <p><strong>${esc(order.customer_name)}</strong></p>
+                <p>${esc(order.phone)} &middot; ${esc(order.email)}</p>
+                <p>${esc(order.address)}</p>
+
+                <h4>Products</h4>
+                ${productsHTML}
+
+                <p class="meta" style="margin-top:10px;">${esc(new Date(order.created_at).toLocaleString())}</p>
+            </div>
+        </details>
+    `;
 }
 
 
