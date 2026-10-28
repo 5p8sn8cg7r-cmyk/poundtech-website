@@ -230,6 +230,7 @@ function showDashboard() {
     document.getElementById("admin-nav").style.display = "block";
     loadRevenue();
     loadOrders();
+    loadWebhookStatus();
 }
 
 
@@ -286,6 +287,29 @@ async function adminLogin() {
 }
 
 
+async function loadWebhookStatus() {
+
+    const btn = document.getElementById("yoco-btn");
+    const msg = document.getElementById("yoco-msg");
+    if (!btn || !msg) { return; }
+
+    try {
+        const { data, error } = await supabaseClient.rpc("get_payment_webhook_status");
+        if (error || !data) { return; }
+
+        const modes = Object.keys(data);
+        if (modes.length === 0) { return; }
+
+        const parts = modes.map(function(m) {
+            return m + " mode (connected " + new Date(data[m]).toLocaleDateString() + ")";
+        });
+        msg.style.color = "#16803c";
+        msg.textContent = "Already connected: " + parts.join(", ") + ". You only need to click again after switching to live keys.";
+        btn.textContent = "Reconnect Yoco webhook";
+    } catch (e) { /* status is optional */ }
+}
+
+
 async function connectYocoWebhook() {
 
     const btn = document.getElementById("yoco-btn");
@@ -308,6 +332,7 @@ async function connectYocoWebhook() {
     if (result && result.ok) {
         msg.style.color = "#16803c";
         msg.textContent = "Connected (" + result.mode + " mode). Yoco will now tell your site when payments succeed.";
+        loadWebhookStatus();
         return;
     }
 
