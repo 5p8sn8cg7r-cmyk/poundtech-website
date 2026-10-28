@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mechanic Dashboard | PoundTech</title>
+<title>Dashboard | PoundTech</title>
 <link rel="stylesheet" href="site.css">
 
 <style>
@@ -129,6 +129,49 @@
 
 [hidden] { display: none !important; }
 
+.od-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
+.od-cards button.od-card{display:block;width:100%;margin:0;text-align:left;background:#fff;color:#111;border:1px solid #e3e3e3;border-radius:12px;padding:14px 16px;cursor:pointer;font-weight:normal;transition:border-color .15s,box-shadow .15s}
+.od-cards button.od-card:hover{background:#fff;border-color:#111;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.od-card .n{display:block;font-size:28px;font-weight:700;line-height:1.1}
+.od-card .l{display:block;margin-top:4px;font-size:13px;color:#666}
+.od-card.hot{border-color:#e00000}
+.od-card.hot .n{color:#e00000}
+.od-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.od-tabs button.od-tab{flex:0 0 auto;margin:0;background:#fff;color:#111;border:1px solid #d8d8d8;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.od-tabs button.od-tab:hover{background:#f1f1f1}
+.od-tabs button.od-tab.on{background:#111;color:#fff;border-color:#111}
+.od-tab .c{display:inline-block;min-width:20px;margin-left:6px;padding:1px 7px;border-radius:999px;background:#eee;color:#111;font-size:12px}
+.od-tab.on .c{background:#fff;color:#111}
+.od-tab .c.hot{background:#e00000;color:#fff}
+.od-search{font-family:inherit;width:100%;padding:12px 14px;margin:0 0 14px;box-sizing:border-box;border:1px solid #d8d8d8;border-radius:10px;font-size:15px;background:#fff}
+.od-empty{background:#fff;border:1px dashed #ccc;border-radius:12px;padding:30px;text-align:center;color:#666}
+.od-item{background:#fff;border:1px solid #e3e3e3;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.od-item.late{border-left:4px solid #e00000}
+.od-item summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.od-item summary::-webkit-details-marker{display:none}
+.od-item .no{font-weight:700;font-size:16px}
+.od-item .meta{color:#777;font-size:13px}
+.od-item .sp{flex:1 1 auto}
+.od-item .tot{font-weight:700}
+.od-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#eee;color:#111}
+.od-pill.red{background:#e00000;color:#fff}
+.od-pill.green{background:#d4edda;color:#145c2a}
+.od-pill.amber{background:#fff3cd;color:#7a5a00}
+.od-pill.dark{background:#111;color:#fff}
+.od-body{padding:0 16px 16px;border-top:1px solid #eee}
+.od-body h4{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#666}
+.od-body p{margin:4px 0}
+.od-line{padding:10px;background:#f5f5f5;border-radius:8px;margin-bottom:6px;font-size:14px}
+.od-actions{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.od-actions select{padding:9px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
+.od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
+@media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}}
+
+.dash-nav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 20px;padding:6px;background:#fff;border:1px solid #e3e3e3;border-radius:12px}
+.dash-nav a{padding:10px 16px;border-radius:8px;color:#111;text-decoration:none;font-size:14px;font-weight:600}
+.dash-nav a:hover{background:#f1f1f1}
+.dash-nav a.on{background:#111;color:#fff}
+.od-cards button,.od-tabs button{font-family:inherit}
 </style>
 </head>
 
@@ -140,32 +183,34 @@
 </header>
 
 <section class="page-hero">
-    <h1 id="hero-title">Mechanic Dashboard</h1>
+    <h1 id="hero-title">Dashboard</h1>
     <p id="hero-sub">Loading your account…</p>
 </section>
 
 <main class="page-main">
 
+    <nav class="dash-nav" aria-label="Dashboard sections">
+        <a href="mechanic-dashboard.html" class="on">Bookings &amp; quotes</a>
+        <a href="business-dashboard.html#services">Services &amp; prices</a>
+        <a href="business-dashboard.html#hours">Opening hours</a>
+        <a href="business-dashboard.html#booking-settings">Booking settings</a>
+    </nav>
+
     <div class="top-bar">
-        <div class="btn-row">
-            <a class="btn btn-small" href="business-dashboard.html">Services &amp; hours</a>
-        </div>
+        <p id="today-line" style="margin:0;color:#666;"></p>
         <button class="btn btn-small btn-outline" id="logout-btn">Log out</button>
     </div>
 
     <div id="message" role="status"></div>
 
-    <div class="card">
-        <h2>Bookings</h2>
-        <p class="lead">Approve new requests, track upcoming work and mark jobs complete.</p>
-        <div id="bookings-container"><p class="empty">Loading bookings…</p></div>
-    </div>
+    <div class="od-cards" id="md-cards"></div>
+    <div class="od-tabs" id="md-tabs"></div>
+    <input class="od-search" id="md-search" type="search"
+           placeholder="Search by customer, vehicle, service or phone"
+           oninput="MD_QUERY=this.value; renderMechanicLists();">
 
-    <div class="card">
-        <h2>Quote requests</h2>
-        <p class="lead">Customers asking for a price on a job.</p>
-        <div id="quote-requests"><p class="empty">Loading quote requests…</p></div>
-    </div>
+    <div id="bookings-container"><p class="empty">Loading bookings…</p></div>
+    <div id="quote-requests" hidden><p class="empty">Loading quote requests…</p></div>
 
 </main>
 
@@ -400,47 +445,134 @@ async function loadBookings() {
         return;
     }
 
-    if (!bookings || bookings.length === 0) {
-        container.innerHTML = '<p class="empty">No bookings yet.</p>';
+    MD_BOOKINGS = bookings || [];
+    renderMechanicDashboard();
+}
+
+var MD_BOOKINGS = [];
+var MD_QUOTES = [];
+var MD_TAB = "attention";
+var MD_QUERY = "";
+
+function dayKey(d) {
+    return new Date(d).toLocaleDateString("en-CA", { timeZone: "Africa/Johannesburg" });
+}
+
+function bookingDay(b) {
+    if (b.start_time) { return dayKey(b.start_time); }
+    if (b.booking_date) { return String(b.booking_date).slice(0, 10); }
+    return null;
+}
+
+var ACTIVE_STATUSES = ["Accepted", "Scheduled", "In Progress"];
+
+// Which tab a booking belongs to.
+function bookingGroup(b) {
+
+    const today = dayKey(Date.now());
+    const day = bookingDay(b);
+
+    if (b.status === "Pending Approval") { return "attention"; }
+
+    if (ACTIVE_STATUSES.includes(b.status)) {
+        if (day && day < today) { return "attention"; }   // job date passed, status never updated
+        if (day === today) { return "today"; }
+        return "upcoming";
+    }
+
+    return "past";
+}
+
+function mdTabsDef() {
+    return [
+        { id: "attention", label: "Needs attention" },
+        { id: "today",     label: "Today" },
+        { id: "upcoming",  label: "Upcoming" },
+        { id: "past",      label: "Completed & past" },
+        { id: "quotes",    label: "Quote requests" }
+    ];
+}
+
+function mdCount(id) {
+    if (id === "quotes") { return MD_QUOTES.filter(q => q.status === "Pending").length; }
+    return MD_BOOKINGS.filter(b => bookingGroup(b) === id).length;
+}
+
+function setMechanicTab(id) {
+    MD_TAB = id;
+    renderMechanicDashboard();
+}
+
+function renderMechanicDashboard() {
+
+    const cards = [
+        { id: "attention", label: "Need your attention", hot: mdCount("attention") > 0 },
+        { id: "today",     label: "Jobs today",          hot: false },
+        { id: "upcoming",  label: "Upcoming",            hot: false },
+        { id: "quotes",    label: "Quotes to answer",    hot: mdCount("quotes") > 0 }
+    ];
+
+    $("md-cards").innerHTML = cards.map(c =>
+        `<button type="button" class="od-card ${c.hot ? "hot" : ""}" onclick="setMechanicTab('${c.id}')">
+            <span class="n">${mdCount(c.id)}</span><span class="l">${c.label}</span>
+        </button>`).join("");
+
+    $("md-tabs").innerHTML = mdTabsDef().map(t => {
+        const n = mdCount(t.id);
+        const hot = (t.id === "attention" || t.id === "quotes") && n > 0;
+        return `<button type="button" class="od-tab ${MD_TAB === t.id ? "on" : ""}" onclick="setMechanicTab('${t.id}')">
+                    ${t.label}<span class="c ${hot ? "hot" : ""}">${n}</span>
+                </button>`;
+    }).join("");
+
+    $("today-line").textContent = new Date().toLocaleDateString("en-ZA", {
+        timeZone: "Africa/Johannesburg", weekday: "long", day: "numeric", month: "long"
+    });
+
+    renderMechanicLists();
+}
+
+function mdMatches(text) {
+    const q = MD_QUERY.trim().toLowerCase();
+    return !q || text.toLowerCase().indexOf(q) !== -1;
+}
+
+function renderMechanicLists() {
+
+    const showQuotes = (MD_TAB === "quotes");
+
+    $("bookings-container").hidden = showQuotes;
+    $("quote-requests").hidden = !showQuotes;
+
+    if (showQuotes) {
+        renderQuoteList();
         return;
     }
 
-    const now = Date.now();
-    const activeStatuses = ["Accepted", "Scheduled", "In Progress"];
+    const rows = MD_BOOKINGS.filter(b =>
+        bookingGroup(b) === MD_TAB &&
+        mdMatches([b.customer_name, b.vehicle, b.service_required, b.customer_phone, b.customer_email].join(" "))
+    );
 
-    const needsApproval = bookings
-        .filter(b => b.status === "Pending Approval")
-        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    // Work still to do: soonest first. Finished work: most recent first.
+    const soonestFirst = (MD_TAB !== "past");
 
-    const upcoming = bookings
-        .filter(b => activeStatuses.includes(b.status) && (whenValue(b) === null || whenValue(b) >= now))
-        .sort((a, b) => (whenValue(a) || Infinity) - (whenValue(b) || Infinity));
+    rows.sort((a, b) => {
+        const av = whenValue(a) || new Date(a.created_at).getTime();
+        const bv = whenValue(b) || new Date(b.created_at).getTime();
+        return soonestFirst ? av - bv : bv - av;
+    });
 
-    const shown = new Set(needsApproval.concat(upcoming).map(b => b.id));
+    const container = $("bookings-container");
 
-    const past = bookings
-        .filter(b => !shown.has(b.id))
-        .sort((a, b) => (whenValue(b) || 0) - (whenValue(a) || 0));
-
-    let html = "";
-
-    if (needsApproval.length) {
-        html += '<h3 class="section-title">Needs your approval (' + needsApproval.length + ')</h3>';
-        html += needsApproval.map(bookingCard).join("");
+    if (rows.length === 0) {
+        container.innerHTML = `<div class="od-empty">${MD_QUERY.trim() ? "No bookings match your search." : "Nothing here right now."}</div>`;
+        return;
     }
 
-    if (upcoming.length) {
-        html += '<h3 class="section-title">Upcoming</h3>';
-        html += upcoming.map(bookingCard).join("");
-    }
-
-    if (past.length) {
-        html += '<h3 class="section-title">Completed &amp; past</h3>';
-        html += past.map(bookingCard).join("");
-    }
-
-    container.innerHTML = html;
+    container.innerHTML = rows.map(bookingCard).join("");
 }
+
 
 async function setBookingStatus(bookingId, newStatus) {
 
@@ -483,8 +615,25 @@ async function loadQuoteRequests() {
         return;
     }
 
-    if (!requests || requests.length === 0) {
-        container.innerHTML = '<p class="empty">No quote requests yet.</p>';
+    MD_QUOTES = requests || [];
+    renderMechanicDashboard();
+}
+
+function renderQuoteList() {
+
+    const container = $("quote-requests");
+
+    const order = { "Pending": 0, "Quoted": 1, "Accepted": 2, "Declined": 3 };
+
+    const requests = MD_QUOTES.filter(q =>
+        mdMatches([q.customer_name, q.vehicle, q.service_required, q.customer_phone, q.customer_email].join(" "))
+    ).sort((a, b) =>
+        (order[a.status] ?? 9) - (order[b.status] ?? 9) ||
+        new Date(a.created_at) - new Date(b.created_at)
+    );
+
+    if (requests.length === 0) {
+        container.innerHTML = `<div class="od-empty">${MD_QUERY.trim() ? "No quote requests match your search." : "No quote requests yet."}</div>`;
         return;
     }
 
@@ -497,7 +646,7 @@ async function loadQuoteRequests() {
             .join("");
 
         return `
-            <div class="item">
+            <div class="item ${request.status === 'Pending' ? 'needs-action' : ''}">
 
                 <div class="item-head">
                     <h3>${esc(request.customer_name)}</h3>
