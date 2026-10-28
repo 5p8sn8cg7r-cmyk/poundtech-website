@@ -1881,47 +1881,78 @@ loadSupplierEarnings();
         return;
     }
 
-    container.innerHTML = data.map(function(payout) {
+    SUP_PAYOUTS = data;
+    SUP_PAYTAB = "due";
+    buildPayoutsShell(container);
+    renderPayouts();
+}
 
-        return `
-            <div style="
-                background:#f5f5f5;
-                padding:15px;
-                border-radius:8px;
-                margin-top:10px;
-            ">
+var SUP_PAYOUTS = [];
+var SUP_PAYTAB = "due";
 
-                <strong>
-                    R${Number(payout.amount).toFixed(2)}
-                </strong>
+function payoutIsPaid(p) { return String(p.status || "").toLowerCase() === "paid"; }
 
-                <span style="
-                    margin-left:10px;
-                    color:#666;
-                ">
-                    ${esc(payout.status)}
-                </span>
+function sumPayouts(rows) {
+    return rows.reduce(function(t, p) { return t + Number(p.amount || 0); }, 0);
+}
 
-                ${
-                    payout.paid_at
-                    ? `<p style="margin:8px 0 0; color:#666;">
-                        Paid: ${new Date(payout.paid_at).toLocaleDateString()}
-                       </p>`
-                    : ""
-                }
+function buildPayoutsShell(container) {
+    container.innerHTML = `
+        <div class="od-cards" id="po-cards" style="grid-template-columns:repeat(3,1fr);"></div>
+        <div class="od-tabs" id="po-tabs"></div>
+        <div id="po-list"></div>
+    `;
+}
 
-                ${
-                    payout.payout_reference
-                    ? `<p style="margin:8px 0 0; color:#666;">
-                        Reference: ${esc(payout.payout_reference)}
-                       </p>`
-                    : ""
-                }
+function setPayoutTab(id) { SUP_PAYTAB = id; renderPayouts(); }
 
-            </div>
-        `;
+function renderPayouts() {
 
+    const due = SUP_PAYOUTS.filter(function(p) { return !payoutIsPaid(p); });
+    const paid = SUP_PAYOUTS.filter(payoutIsPaid);
+
+    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+    const paidThisMonth = paid.filter(function(p) { return p.paid_at && new Date(p.paid_at) >= monthStart; });
+
+    document.getElementById("po-cards").innerHTML = `
+        <button type="button" class="od-card ${due.length ? "hot" : ""}" onclick="setPayoutTab('due')">
+            <span class="n">R${sumPayouts(due).toFixed(2)}</span><span class="l">Due to you (${due.length})</span></button>
+        <button type="button" class="od-card" onclick="setPayoutTab('paid')">
+            <span class="n">R${sumPayouts(paidThisMonth).toFixed(2)}</span><span class="l">Paid this month</span></button>
+        <button type="button" class="od-card" onclick="setPayoutTab('paid')">
+            <span class="n">R${sumPayouts(paid).toFixed(2)}</span><span class="l">Paid to date</span></button>
+    `;
+
+    const tabs = [
+        { id: "due",  label: "Due",  n: due.length },
+        { id: "paid", label: "Paid", n: paid.length },
+        { id: "all",  label: "All",  n: SUP_PAYOUTS.length }
+    ];
+
+    document.getElementById("po-tabs").innerHTML = tabs.map(function(t) {
+        return `<button type="button" class="od-tab ${SUP_PAYTAB === t.id ? "on" : ""}" onclick="setPayoutTab('${t.id}')">
+                    ${t.label}<span class="c">${t.n}</span></button>`;
     }).join("");
+
+    const rows = SUP_PAYTAB === "due" ? due : SUP_PAYTAB === "paid" ? paid : SUP_PAYOUTS;
+
+    document.getElementById("po-list").innerHTML = rows.length === 0
+        ? `<div class="od-empty">${SUP_PAYTAB === "due" ? "Nothing is waiting to be paid to you." : "No payouts here yet."}</div>`
+        : rows.map(function(payout) {
+            const isPaid = payoutIsPaid(payout);
+            return `
+                <div class="od-item">
+                    <div style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                        <span class="no">R${Number(payout.amount).toFixed(2)}</span>
+                        <span class="od-pill ${isPaid ? "green" : "amber"}">${esc(payout.status)}</span>
+                        <span class="sp"></span>
+                        <span class="meta">${isPaid && payout.paid_at
+                            ? "Paid " + esc(new Date(payout.paid_at).toLocaleDateString())
+                            : "Created " + esc(new Date(payout.created_at).toLocaleDateString())}
+                            ${payout.payout_reference ? " &middot; Ref " + esc(payout.payout_reference) : ""}</span>
+                    </div>
+                </div>`;
+        }).join("");
 }
 
 loadSupplierPayouts();
