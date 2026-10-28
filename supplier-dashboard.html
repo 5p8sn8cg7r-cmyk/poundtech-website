@@ -86,6 +86,45 @@ button:hover {
 
 </style>
 
+<style>
+.od-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 18px}
+.od-cards button.od-card{display:block;width:100%;margin:0;text-align:left;background:#fff;color:#111;border:1px solid #e3e3e3;border-radius:12px;padding:14px 16px;cursor:pointer;font-weight:normal;transition:border-color .15s,box-shadow .15s}
+.od-cards button.od-card:hover{background:#fff;border-color:#111;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.od-card .n{display:block;font-size:28px;font-weight:700;line-height:1.1}
+.od-card .l{display:block;margin-top:4px;font-size:13px;color:#666}
+.od-card.hot{border-color:#e00000}
+.od-card.hot .n{color:#e00000}
+.od-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.od-tabs button.od-tab{flex:0 0 auto;margin:0;background:#fff;color:#111;border:1px solid #d8d8d8;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.od-tabs button.od-tab:hover{background:#f1f1f1}
+.od-tabs button.od-tab.on{background:#111;color:#fff;border-color:#111}
+.od-tab .c{display:inline-block;min-width:20px;margin-left:6px;padding:1px 7px;border-radius:999px;background:#eee;color:#111;font-size:12px}
+.od-tab.on .c{background:#fff;color:#111}
+.od-tab .c.hot{background:#e00000;color:#fff}
+.od-search{width:100%;padding:12px 14px;margin:0 0 14px;box-sizing:border-box;border:1px solid #d8d8d8;border-radius:10px;font-size:15px;background:#fff}
+.od-empty{background:#fff;border:1px dashed #ccc;border-radius:12px;padding:30px;text-align:center;color:#666}
+.od-item{background:#fff;border:1px solid #e3e3e3;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.od-item.late{border-left:4px solid #e00000}
+.od-item summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.od-item summary::-webkit-details-marker{display:none}
+.od-item .no{font-weight:700;font-size:16px}
+.od-item .meta{color:#777;font-size:13px}
+.od-item .sp{flex:1 1 auto}
+.od-item .tot{font-weight:700}
+.od-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#eee;color:#111}
+.od-pill.red{background:#e00000;color:#fff}
+.od-pill.green{background:#d4edda;color:#145c2a}
+.od-pill.amber{background:#fff3cd;color:#7a5a00}
+.od-pill.dark{background:#111;color:#fff}
+.od-body{padding:0 16px 16px;border-top:1px solid #eee}
+.od-body h4{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#666}
+.od-body p{margin:4px 0}
+.od-line{padding:10px;background:#f5f5f5;border-radius:8px;margin-bottom:6px;font-size:14px}
+.od-actions{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.od-actions select{padding:9px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
+.od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
+@media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}}
+</style>
 </head>
 
 
@@ -404,7 +443,7 @@ Your supplier orders will appear here.
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="pt-share.js?v=20261025"></script>
+<script src="pt-share.js?v=20261026"></script>
 
 
 <script>
@@ -1615,141 +1654,176 @@ async function loadSupplierOrders() {
         return;
     }
 
-    let html = "";
+    SUP_ORDERS = [];
 
     for (const order of orders) {
 
-        const supplierItems =
-            orderItems.filter(item =>
-                item.order_id === order.id
-            );
+        const supplierItems = orderItems.filter(item => item.order_id === order.id);
 
-        if (supplierItems.length === 0) {
-            continue;
-        }
+        if (supplierItems.length === 0) { continue; }
 
-        const supplierStatusRecord =
-            supplierStatuses.find(status =>
-                status.order_id === order.id
-            );
+        const rec = supplierStatuses.find(st => st.order_id === order.id);
 
-        const supplierStatus =
-            supplierStatusRecord
-            ? supplierStatusRecord.status
-            : "Pending";
+        SUP_ORDERS.push({
+            order: order,
+            items: supplierItems,
+            status: rec ? rec.status : "Pending",
+            total: supplierItems.reduce((t, i) => t + (Number(i.price) * Number(i.quantity)), 0)
+        });
+    }
 
-        const supplierTotal =
-            supplierItems.reduce(
-                (total, item) =>
-                    total + (item.price * item.quantity),
-                0
-            );
+    if (SUP_ORDERS.length === 0) {
+        container.innerHTML = "<p>No orders for your products yet.</p>";
+        return;
+    }
 
-        html += `
-            <div style="
-                background:white;
-                padding:20px;
-                margin-bottom:15px;
-                border-radius:10px;
-                border:1px solid #ddd;
-            ">
+    buildSupplierOrdersShell(container);
+    renderSupplierOrders();
+}
 
-                <h3>
-                    Order ${esc(order.order_number)}
-                </h3>
 
-                <p>
-                    <strong>Status:</strong>
+var SUP_ORDERS = [];
+var SUP_TAB = "new";
+var SUP_QUERY = "";
 
-                    <select
-                        onchange="updateSupplierOrderStatus('${order.id}', this.value)"
-                        style="
-                            padding:6px;
-                            margin-left:5px;
-                            border:1px solid #ccc;
-                            border-radius:5px;
-                        "
-                    >
+var SUP_TABS = [
+    { id: "new",       label: "New",         match: function(s) { return s === "Pending"; } },
+    { id: "toship",    label: "To ship",     match: function(s) { return s === "Accepted" || s === "Processing"; } },
+    { id: "shipped",   label: "Shipped",     match: function(s) { return s === "Shipped"; } },
+    { id: "completed", label: "Completed",   match: function(s) { return s === "Completed"; } },
+    { id: "all",       label: "All",         match: function() { return true; } }
+];
 
-                        <option value="Pending"
-                            ${supplierStatus === "Pending" ? "selected" : ""}>
-                            Pending
-                        </option>
+function supTab(id) { return SUP_TABS.find(function(t) { return t.id === id; }); }
 
-                        <option value="Accepted"
-                            ${supplierStatus === "Accepted" ? "selected" : ""}>
-                            Accepted
-                        </option>
+function supCount(id) {
+    const t = supTab(id);
+    return SUP_ORDERS.filter(function(o) { return t.match(o.status); }).length;
+}
 
-                        <option value="Processing"
-                            ${supplierStatus === "Processing" ? "selected" : ""}>
-                            Processing
-                        </option>
+function hoursSince(iso) { return (Date.now() - new Date(iso).getTime()) / 3600000; }
 
-                        <option value="Shipped"
-                            ${supplierStatus === "Shipped" ? "selected" : ""}>
-                            Shipped
-                        </option>
+function buildSupplierOrdersShell(container) {
 
-                        <option value="Completed"
-                            ${supplierStatus === "Completed" ? "selected" : ""}>
-                            Completed
-                        </option>
+    container.innerHTML = `
+        <div class="od-cards" id="so-cards"></div>
+        <div class="od-tabs" id="so-tabs"></div>
+        <input class="od-search" id="so-search" type="search"
+               placeholder="Search by order number, customer or product" value="${esc(SUP_QUERY)}"
+               oninput="SUP_QUERY=this.value; renderSupplierList();">
+        <div id="so-list"></div>
+    `;
+}
 
-                    </select>
-                </p>
+function setSupplierTab(id) {
+    SUP_TAB = id;
+    renderSupplierOrders();
+}
 
-                <p>
-                    <strong>Customer:</strong>
-                    ${esc(order.customer_name)}
-                </p>
+function renderSupplierOrders() {
 
-                <p>
-                    <strong>Phone:</strong>
-                    ${esc(order.phone)}
-                </p>
+    const cards = [
+        { id: "new",     label: "New orders to accept", hot: supCount("new") > 0 },
+        { id: "toship",  label: "To pack and ship",     hot: false },
+        { id: "shipped", label: "Shipped, not completed", hot: false },
+        { id: "completed", label: "Completed",          hot: false }
+    ];
 
-                <p>
-                    <strong>Delivery Address:</strong>
-                    ${esc(order.address)}
-                </p>
+    document.getElementById("so-cards").innerHTML = cards.map(function(c) {
+        return `<button type="button" class="od-card ${c.hot ? "hot" : ""}" onclick="setSupplierTab('${c.id}')">
+                    <span class="n">${supCount(c.id)}</span><span class="l">${c.label}</span>
+                </button>`;
+    }).join("");
 
-                <h4>Products</h4>
+    document.getElementById("so-tabs").innerHTML = SUP_TABS.map(function(t) {
+        const n = supCount(t.id);
+        const hot = t.id === "new" && n > 0;
+        return `<button type="button" class="od-tab ${SUP_TAB === t.id ? "on" : ""}" onclick="setSupplierTab('${t.id}')">
+                    ${t.label}<span class="c ${hot ? "hot" : ""}">${n}</span>
+                </button>`;
+    }).join("");
 
-                ${supplierItems.map(item => `
-                    <div style="
-                        padding:10px;
-                        background:#f5f5f5;
-                        margin-bottom:8px;
-                        border-radius:6px;
-                    ">
-                        <strong>${esc(item.product_name)}</strong>
-                        <br>
-                        Quantity: ${item.quantity}
-                        <br>
-                        Price: R${item.price}
-                    </div>
-                `).join("")}
+    renderSupplierList();
+}
 
-                <p>
-                    <strong>Your total:</strong>
-                    R${supplierTotal.toFixed(2)}
-                </p>
+function renderSupplierList() {
 
-                <p style="color:#777;">
-                    ${new Date(order.created_at).toLocaleString()}
-                </p>
+    const list = document.getElementById("so-list");
+    const tab = supTab(SUP_TAB);
+    const q = SUP_QUERY.trim().toLowerCase();
 
+    let rows = SUP_ORDERS.filter(function(o) {
+
+        if (!tab.match(o.status)) { return false; }
+        if (!q) { return true; }
+
+        const hay = [o.order.order_number, o.order.customer_name]
+            .concat(o.items.map(function(i) { return i.product_name; }))
+            .join(" ").toLowerCase();
+
+        return hay.indexOf(q) !== -1;
+    });
+
+    // Work that needs doing: oldest first, so nothing is forgotten. Finished work: newest first.
+    const oldestFirst = (SUP_TAB === "new" || SUP_TAB === "toship" || SUP_TAB === "shipped");
+
+    rows.sort(function(a, b) {
+        const d = new Date(a.order.created_at) - new Date(b.order.created_at);
+        return oldestFirst ? d : -d;
+    });
+
+    if (rows.length === 0) {
+        list.innerHTML = `<div class="od-empty">${q ? "No orders match your search." : "Nothing here right now."}</div>`;
+        return;
+    }
+
+    list.innerHTML = rows.map(supplierOrderHTML).join("");
+}
+
+function supplierOrderHTML(o) {
+
+    const order = o.order;
+    const waiting = o.status === "Pending" ? hoursSince(order.created_at) : 0;
+    const late = waiting >= 24;
+
+    const pillClass = o.status === "Completed" ? "green"
+                    : o.status === "Pending" ? (late ? "red" : "amber")
+                    : "dark";
+
+    const options = ["Pending", "Accepted", "Processing", "Shipped", "Completed"].map(function(st) {
+        return `<option value="${st}" ${o.status === st ? "selected" : ""}>${st}</option>`;
+    }).join("");
+
+    return `
+        <details class="od-item ${late ? "late" : ""}">
+            <summary>
+                <span class="no">Order ${esc(order.order_number)}</span>
+                <span class="od-pill ${pillClass}">${esc(o.status)}</span>
+                ${late ? `<span class="od-pill red">Waiting ${Math.floor(waiting / 24)}d ${Math.floor(waiting % 24)}h</span>` : ""}
+                <span class="sp"></span>
+                <span class="meta">${esc(order.customer_name)} &middot; ${esc(new Date(order.created_at).toLocaleDateString())}</span>
+                <span class="tot">R${o.total.toFixed(2)}</span>
+            </summary>
+            <div class="od-body">
+                <h4>Customer</h4>
+                <p><strong>${esc(order.customer_name)}</strong></p>
+                <p>${esc(order.phone)}</p>
+                <p>${esc(order.address)}</p>
+
+                <h4>Your products</h4>
+                ${o.items.map(function(i) {
+                    return `<div class="od-line"><strong>${esc(i.product_name)}</strong><br>
+                            Quantity: ${esc(i.quantity)} &middot; R${esc(i.price)} each</div>`;
+                }).join("")}
+
+                <div class="od-actions">
+                    <label for="st-${esc(order.id)}"><strong>Status</strong></label>
+                    <select id="st-${esc(order.id)}" onchange="updateSupplierOrderStatus('${esc(order.id)}', this.value)">${options}</select>
+                    <span class="meta">${esc(new Date(order.created_at).toLocaleString())}</span>
+                </div>
             </div>
-        `;
-    }
-
-    if (html === "") {
-        container.innerHTML =
-            "<p>No orders for your products yet.</p>";
-    } else {
-        container.innerHTML = html;
-    }
+        </details>
+    `;
 }
 
         
@@ -1852,7 +1926,15 @@ loadSupplierEarnings();
 
 loadSupplierPayouts();
         
-       async function updateSupplierOrderStatus(orderId, newStatus) {
+       function showOrderToast(text) {
+    const t = document.createElement("div");
+    t.className = "od-toast";
+    t.textContent = text;
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 2500);
+}
+
+async function updateSupplierOrderStatus(orderId, newStatus) {
 
     const { data: { user }, error: userError } =
         await supabaseClient.auth.getUser();
@@ -1941,7 +2023,7 @@ loadSupplierPayouts();
         }
     }
 
-alert("Order status updated!");
+showOrderToast("Status updated to " + newStatus);
 
 loadSupplierOrders();
 }
