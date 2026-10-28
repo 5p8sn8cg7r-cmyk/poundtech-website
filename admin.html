@@ -387,6 +387,40 @@ function money(value) {
 }
 
 
+const VAT_RATE = 0.15;
+
+function vatSplit(commission) {
+    const c = Number(commission) || 0;
+    const vat = Math.round((c * VAT_RATE / (1 + VAT_RATE)) * 100) / 100;
+    return { vat: vat, net: Math.round((c - vat) * 100) / 100, total: c };
+}
+
+function vatTable(p) {
+
+    function row(label, key) {
+        const r = vatSplit((p[key] || {}).commission);
+        return '<tr><td>' + label + '</td><td class="num">' + esc(money(r.total)) + '</td>' +
+               '<td class="num">' + esc(money(r.net)) + '</td>' +
+               '<td class="num"><strong>' + esc(money(r.vat)) + '</strong></td></tr>';
+    }
+
+    return '<table class="rev-table" style="margin-top:12px;">' +
+           '<tr><th>Commission</th><th class="num">Incl. VAT</th><th class="num">Excl. VAT</th><th class="num">VAT to set aside</th></tr>' +
+           row("Last 30 days", "month") + row("All time", "all") + '</table>';
+}
+
+async function setVatRegistered(on) {
+
+    const { error } = await supabaseClient.rpc("set_vat_setting", { p_value: !!on });
+
+    if (error) {
+        alert("Could not save that setting: " + error.message + "\n\nRun 13_migration12_vat_setting.sql in Supabase if you haven't.");
+    }
+
+    loadRevenue();
+}
+
+
 async function loadRevenue() {
 
     const box = document.getElementById("revenue");
@@ -394,6 +428,12 @@ async function loadRevenue() {
     box.innerHTML = '<p class="rev-note">Loading revenue&hellip;</p>';
 
     const { data, error } = await supabaseClient.rpc("get_admin_revenue");
+
+    let vatOn = false;
+    try {
+        const v = await supabaseClient.rpc("get_vat_setting");
+        vatOn = (v.data === true);
+    } catch (e) { /* default: not registered */ }
 
     if (error || !data) {
         console.log("REVENUE ERROR:", error);
@@ -451,6 +491,15 @@ async function loadRevenue() {
                 <b>${esc(money(data.paid_to_suppliers))}</b>
                 <div class="sub">${esc(data.orders ? data.orders.total : 0)} orders in total</div>
             </div>
+        </div>
+
+        <div class="vat-panel" style="background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:16px 18px;margin:0 0 18px;">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;">
+                <input type="checkbox" style="width:auto;margin:0;" ${vatOn ? "checked" : ""} onchange="setVatRegistered(this.checked)">
+                PoundTech is VAT registered
+            </label>
+            ${vatOn ? vatTable(p) : `<p class="rev-note" style="margin:10px 0 0;">Not VAT registered, so no VAT is charged or owed on your commission. Tick the box if you register with SARS.</p>`}
+            <p class="rev-note" style="margin:10px 0 0;">Estimate only, not tax advice. It assumes your commission amount already includes 15% VAT. Check with your accountant before filing.</p>
         </div>
 
         <table class="rev-table">
@@ -521,7 +570,6 @@ async function loadOrders() {
     });
 
     container.innerHTML = `
-        <h2 style="margin:30px 0 14px;">Orders</h2>
         <div class="od-cards" id="ao-cards"></div>
         <div class="od-tabs" id="ao-tabs"></div>
         <input class="od-search" id="ao-search" type="search"
