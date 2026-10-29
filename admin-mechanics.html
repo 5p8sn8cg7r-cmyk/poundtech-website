@@ -7,6 +7,7 @@
 <title>Admin - Mechanics | PoundTech</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin-review.js?v=1"></script>
 
 <style>
 
@@ -163,37 +164,7 @@ async function loadMechanics() {
         return;
     }
 
-    container.innerHTML = mechanics.map(mechanic => `
-
-        <div class="mechanic-card">
-
-            <h2>${esc(mechanic.business_name)}</h2>
-
-            <p><strong>Contact:</strong> ${esc(mechanic.contact_name)}</p>
-            <p><strong>Phone:</strong> ${esc(mechanic.phone)}</p>
-            <p><strong>Email:</strong> ${esc(mechanic.email)}</p>
-            <p><strong>Address:</strong> ${esc(mechanic.address || "Not provided")}</p>
-            <p><strong>Service Area:</strong> ${esc(mechanic.service_area || "Not provided")}</p>
-            <p><strong>Services:</strong> ${esc(mechanic.services || "Not provided")}</p>
-            <p><strong>Description:</strong> ${esc(mechanic.description || "Not provided")}</p>
-
-            <p>
-                <strong>Status:</strong>
-
-                <select onchange="updateMechanicStatus('${esc(mechanic.id)}', this.value)">
-                    <option value="Pending" ${mechanic.status === "Pending" ? "selected" : ""}>Pending</option>
-                    <option value="Approved" ${mechanic.status === "Approved" ? "selected" : ""}>Approved</option>
-                    <option value="Rejected" ${mechanic.status === "Rejected" ? "selected" : ""}>Rejected</option>
-                </select>
-            </p>
-
-            <p style="color:#777;">
-                Applied: ${esc(new Date(mechanic.created_at).toLocaleString())}
-            </p>
-
-        </div>
-
-    `).join("");
+    renderApplications("mechanics", mechanics, container, loadMechanics);
 }
 
 
