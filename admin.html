@@ -235,6 +235,8 @@ input {
 
     <div id="revenue" style="display:none;"></div>
 
+    <div id="payouts-admin" style="display:none;"></div>
+
     <div id="orders" style="display:none;"></div>
 
 </div>
@@ -265,9 +267,11 @@ function showDashboard() {
     document.getElementById("login").style.display = "none";
     document.getElementById("orders").style.display = "block";
     document.getElementById("revenue").style.display = "block";
+    document.getElementById("payouts-admin").style.display = "block";
     document.getElementById("payments-setup").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
     loadRevenue();
+    loadPayoutsAdmin();
     loadOrders();
     loadWebhookStatus();
 }
@@ -284,6 +288,7 @@ async function adminLogout() {
 
     document.getElementById("login").style.display = "block";
     document.getElementById("orders").style.display = "none";
+    document.getElementById("payouts-admin").style.display = "none";
     document.getElementById("revenue").style.display = "none";
     document.getElementById("payments-setup").style.display = "none";
     document.getElementById("admin-nav").style.display = "none";
@@ -526,6 +531,123 @@ async function loadRevenue() {
     `;
 }
 
+
+
+var ADM_PAYOUTS = { ready: [], payouts: [] };
+
+async function loadPayoutsAdmin() {
+
+    const box = document.getElementById("payouts-admin");
+
+    const { data, error } = await supabaseClient.rpc("get_admin_payout_overview");
+
+    if (error || !data) {
+        box.innerHTML = '<div class="empty"><h2>Supplier payouts unavailable</h2><p>' +
+            esc(error ? error.message : "No data.") +
+            '</p><p>Run 14_migration13_security2.sql in Supabase.</p></div>';
+        return;
+    }
+
+    ADM_PAYOUTS = data;
+    renderPayoutsAdmin();
+}
+
+function renderPayoutsAdmin() {
+
+    const box = document.getElementById("payouts-admin");
+    const ready = ADM_PAYOUTS.ready || [];
+    const all = ADM_PAYOUTS.payouts || [];
+    const pending = all.filter(function(p) { return p.status !== "Paid"; });
+    const paid = all.filter(function(p) { return p.status === "Paid"; });
+
+    const sum = function(rows, key) { return rows.reduce(function(t, r) { return t + Number(r[key] || 0); }, 0); };
+
+    const readyRows = ready.map(function(r) {
+        return `<div class="od-item"><div style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(r.name)}</span>
+                    <span class="od-pill amber">Ready</span>
+                    <span class="sp"></span>
+                    <span class="tot">${esc(money(r.amount))}</span>
+                    <button type="button" onclick="createPayout('${esc(r.supplier_id)}')">Create payout</button>
+                </div></div>`;
+    }).join("") || '<div class="od-empty">No supplier has completed orders waiting for a payout.</div>';
+
+    const pendingRows = pending.map(function(p) {
+        return `<div class="od-item"><div style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(p.supplier)}</span>
+                    <span class="od-pill amber">To pay</span>
+                    <span class="sp"></span>
+                    <span class="meta">${esc(new Date(p.created_at).toLocaleDateString())}</span>
+                    <span class="tot">${esc(money(p.amount))}</span>
+                    <input type="text" id="payref-${esc(p.id)}" placeholder="Payment reference" style="width:200px;margin:0;">
+                    <button type="button" onclick="markPayoutPaid('${esc(p.id)}')">Mark paid</button>
+                </div></div>`;
+    }).join("") || '<div class="od-empty">No payouts waiting to be paid.</div>';
+
+    const paidRows = paid.slice(0, 10).map(function(p) {
+        return `<div class="od-item"><div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(p.supplier)}</span>
+                    <span class="od-pill green">Paid</span>
+                    <span class="sp"></span>
+                    <span class="meta">${p.paid_at ? esc(new Date(p.paid_at).toLocaleDateString()) : ""}${p.reference ? " &middot; Ref " + esc(p.reference) : ""}</span>
+                    <span class="tot">${esc(money(p.amount))}</span>
+                </div></div>`;
+    }).join("");
+
+    box.innerHTML = `
+        <h2 class="rev-title">Supplier payouts</h2>
+        <div class="od-cards" style="grid-template-columns:repeat(3,1fr);">
+            <div class="od-card ${ready.length ? "hot" : ""}"><span class="n">${esc(money(sum(ready, "amount")))}</span><span class="l">Ready to create (${ready.length})</span></div>
+            <div class="od-card"><span class="n">${esc(money(sum(pending, "amount")))}</span><span class="l">To pay out (${pending.length})</span></div>
+            <div class="od-card"><span class="n">${esc(money(sum(paid, "amount")))}</span><span class="l">Paid to date</span></div>
+        </div>
+        <h4 class="rev-note" style="margin:16px 0 8px;">1. Ready: orders completed by the supplier</h4>
+        ${readyRows}
+        <h4 class="rev-note" style="margin:16px 0 8px;">2. Pay them, then record the reference</h4>
+        ${pendingRows}
+        ${paidRows ? '<h4 class="rev-note" style="margin:16px 0 8px;">Recently paid</h4>' + paidRows : ""}
+        <p class="rev-note">Only create a payout once the customer has received the goods. Pay the supplier from your bank, then click Mark paid with your bank reference.</p>
+    `;
+}
+
+async function createPayout(supplierId) {
+
+    const { error } = await supabaseClient.rpc("create_supplier_payout", { supplier_id_input: supplierId });
+
+    if (error) {
+        alert("Could not create the payout: " + error.message);
+    }
+
+    loadPayoutsAdmin();
+    loadRevenue();
+}
+
+async function markPayoutPaid(payoutId) {
+
+    const input = document.getElementById("payref-" + payoutId);
+    const ref = input ? input.value.trim() : "";
+
+    if (!ref) {
+        alert("Enter your bank payment reference first.");
+        return;
+    }
+
+    if (!confirm("Mark this payout as paid? Only do this after the money has left your bank account.")) {
+        return;
+    }
+
+    const { error } = await supabaseClient.rpc("mark_supplier_payout_paid", {
+        payout_id_input: payoutId,
+        payout_reference_input: ref
+    });
+
+    if (error) {
+        alert("Could not mark it paid: " + error.message);
+    }
+
+    loadPayoutsAdmin();
+    loadRevenue();
+}
 
 var ADM_ORDERS = [];
 var ADM_TAB = "attention";
