@@ -172,6 +172,7 @@ button:hover {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin-review.js?v=1"></script>
 
 <script>
 
@@ -284,46 +285,7 @@ async function loadSuppliers() {
         return;
     }
 
-    let html = "";
-
-    suppliers.forEach(function(supplier) {
-
-        html += `
-            <div class="supplier">
-
-                <h2>${esc(supplier.business_name)}</h2>
-
-                <p><strong>Contact:</strong> ${esc(supplier.contact_name)}</p>
-                <p><strong>Phone:</strong> ${esc(supplier.phone)}</p>
-                <p><strong>Email:</strong> ${esc(supplier.email)}</p>
-                <p><strong>Business Type:</strong> ${esc(supplier.business_type)}</p>
-                <p><strong>Address:</strong> ${esc(supplier.address)}</p>
-                <p><strong>Date Applied:</strong> ${esc(new Date(supplier.created_at).toLocaleString())}</p>
-
-                <p>
-                    <strong>Status:</strong>
-                    <span class="${statusClass(supplier.status)}">${esc(supplier.status)}</span>
-                </p>
-
-                ${supplier.status === "Pending" ? `
-                    <div>
-                        <button onclick="updateSupplierStatus('${esc(supplier.id)}', 'Approved')">
-                            Approve
-                        </button>
-                        <button
-                            onclick="updateSupplierStatus('${esc(supplier.id)}', 'Rejected')"
-                            style="background:#555; margin-left:10px;"
-                        >
-                            Reject
-                        </button>
-                    </div>
-                ` : ""}
-
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
+    renderApplications("suppliers", suppliers, container, loadSuppliers);
 }
 
 
