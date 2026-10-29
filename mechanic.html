@@ -79,6 +79,34 @@
         #result {
             margin-top: 20px;
         }
+
+        .hint { font-size: 13px; color: #666; margin: 6px 0 0; }
+
+        .doc-box {
+            background: #f4f5f7;
+            border-radius: 10px;
+            padding: 4px 16px 14px;
+            margin-top: 14px;
+        }
+
+        .doc-box label { margin-top: 12px; }
+
+        .doc-box input[type="file"] { background: #fff; }
+
+        .check-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-top: 22px;
+            font-size: 14px;
+        }
+
+        .check-row input { width: auto; margin-top: 3px; }
+        .check-row label { margin: 0; font-weight: normal; }
+
+        .hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+
+        #result .err { color: #b80000; }
     </style>
 </head>
 
@@ -152,6 +180,56 @@
             placeholder="Tell customers about your business"
         ></textarea>
 
+        <label>Company registration number (optional)</label>
+        <input type="text" id="reg-number" maxlength="40" placeholder="e.g. 2020/123456/07">
+        <p class="hint">Leave blank if you trade as a sole proprietor.</p>
+
+        <h3 style="margin:28px 0 4px;">Documents we need to verify your business</h3>
+        <p class="hint" style="margin-top:0;">
+            PDF, JPG or PNG, up to 5 MB each. Only PoundTech's review team can open these files.
+            Customers book real jobs on your reputation, so we check every workshop.
+        </p>
+
+        <div class="doc-box">
+            <label for="doc-id">Owner's ID document *</label>
+            <input id="doc-id" type="file" accept="application/pdf,image/jpeg,image/png">
+        </div>
+
+        <div class="doc-box">
+            <label for="doc-address">Proof of workshop address *</label>
+            <input id="doc-address" type="file" accept="application/pdf,image/jpeg,image/png">
+            <p class="hint">A utility bill, lease or municipal account from the last 3 months.</p>
+        </div>
+
+        <div class="doc-box">
+            <label for="doc-insurance">Public liability insurance (recommended)</label>
+            <input id="doc-insurance" type="file" accept="application/pdf,image/jpeg,image/png">
+        </div>
+
+        <div class="doc-box">
+            <label for="doc-accreditation">RMI / MIBCO accreditation or trade qualification (if you have one)</label>
+            <input id="doc-accreditation" type="file" accept="application/pdf,image/jpeg,image/png">
+            <p class="hint">We confirm accreditation directly with the issuing body.</p>
+        </div>
+
+        <div class="doc-box">
+            <label for="doc-premises">Photo of your workshop (optional)</label>
+            <input id="doc-premises" type="file" accept="image/jpeg,image/png">
+        </div>
+
+        <div class="check-row">
+            <input type="checkbox" id="accept-terms">
+            <label for="accept-terms">
+                I confirm that the information and documents are genuine and that any accreditation I claim is real,
+                and I accept the <a href="terms.html" target="_blank" style="color:#e00000;">Terms &amp; Conditions</a>.
+            </label>
+        </div>
+
+        <div class="hp" aria-hidden="true">
+            <label for="website">Leave this empty</label>
+            <input id="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
         <button type="submit">
             Submit Application
         </button>
@@ -177,20 +255,97 @@ const supabaseClient =
     );
 
 
+const DOC_BUCKET = "applicant-documents";
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const OK_TYPES = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+
+async function uploadDoc(appId, type, file) {
+
+    const ext = OK_TYPES[file.type];
+
+    if (!ext) { throw new Error("Documents must be PDF, JPG or PNG files."); }
+    if (file.size > MAX_FILE_BYTES) { throw new Error(file.name + " is larger than 5 MB."); }
+
+    const path = appId + "/" + type + "-" + crypto.randomUUID().slice(0, 8) + "." + ext;
+
+    const { error } = await supabaseClient.storage
+        .from(DOC_BUCKET)
+        .upload(path, file, { contentType: file.type, upsert: false });
+
+    if (error) { throw error; }
+
+    return { type: type, path: path, name: file.name.slice(0, 80) };
+}
+
+
 document
 .getElementById("mechanic-form")
 .addEventListener("submit", async function(event) {
 
     event.preventDefault();
 
-    const result =
-        document.getElementById("result");
+    const result = document.getElementById("result");
+    const submitButton = document.querySelector("#mechanic-form button[type=submit]");
 
-    result.innerHTML =
-        "<p>Submitting your application...</p>";
+    function fail(text) {
+        result.innerHTML = "";
+        const p = document.createElement("p");
+        p.className = "err";
+        p.textContent = text;
+        result.appendChild(p);
+        submitButton.disabled = false;
+    }
 
+    // Bots fill hidden fields. Pretend it worked and do nothing.
+    if (document.getElementById("website").value) {
+        document.getElementById("mechanic-form").style.display = "none";
+        result.innerHTML = "<p>Thank you. Your application has been received.</p>";
+        return;
+    }
+
+    const idFile = document.getElementById("doc-id").files[0];
+    const addressFile = document.getElementById("doc-address").files[0];
+
+    if (!idFile || !addressFile) {
+        fail("Please upload your ID and proof of workshop address.");
+        return;
+    }
+
+    if (!document.getElementById("accept-terms").checked) {
+        fail("Please confirm the declaration and accept the Terms & Conditions.");
+        return;
+    }
+
+    submitButton.disabled = true;
+    result.innerHTML = "<p>Uploading your documents and submitting your application...</p>";
+
+    const appId = crypto.randomUUID();
+    const documents = [];
+
+    try {
+        documents.push(await uploadDoc(appId, "id", idFile));
+        documents.push(await uploadDoc(appId, "address", addressFile));
+
+        const optional = [
+            ["doc-insurance", "insurance"],
+            ["doc-accreditation", "accreditation"],
+            ["doc-premises", "premises"]
+        ];
+
+        for (const pair of optional) {
+            const file = document.getElementById(pair[0]).files[0];
+            if (file) { documents.push(await uploadDoc(appId, pair[1], file)); }
+        }
+    } catch (e) {
+        console.error(e);
+        const known = e && e.message && (e.message.indexOf("larger") !== -1 || e.message.indexOf("PDF") !== -1);
+        fail(known ? e.message : "We couldn't upload your documents. Please check the files and try again.");
+        return;
+    }
 
     const mechanic = {
+
+        id: appId,
 
         business_name:
             document.getElementById("business-name").value.trim(),
@@ -216,6 +371,13 @@ document
         description:
             document.getElementById("description").value.trim(),
 
+        registration_number:
+            document.getElementById("reg-number").value.trim() || null,
+
+        documents: documents,
+
+        terms_accepted_at: new Date().toISOString(),
+
         status: "Pending"
 
     };
@@ -231,8 +393,7 @@ document
 
         console.error(error);
 
-        result.innerHTML =
-            "<p style='color:red;'>Unable to submit application. Please try again.</p>";
+        fail("Unable to submit application. Please try again.");
 
         return;
     }
@@ -259,7 +420,8 @@ document
             </p>
 
             <p>
-                Your application is currently being reviewed.
+                We review your application and documents. We may contact you
+                on the details you gave us if we need anything else.
             </p>
 
         </div>
