@@ -63,17 +63,6 @@
     flex-direction: column;
 }
 
-.biz-photo {
-    display: block;
-    width: calc(100% + 44px);
-    max-width: none;
-    height: 210px;
-    margin: -22px -22px 18px;
-    object-fit: cover;
-    border-radius: 12px 12px 0 0;
-    background: #f2f2f2;
-}
-
 .biz-top {
     display: flex;
     gap: 8px;
@@ -287,8 +276,7 @@ let allMechanics = [];
 let servicesByBusiness = {};
 let hoursByBusiness = {};
 let ratingsByBusiness = {};
-const requestedType = new URLSearchParams(window.location.search).get("type");
-let currentType = ["mechanic", "car_wash", "detailer"].includes(requestedType) ? requestedType : "all";
+let currentType = "all";
 
 
 /* ---------- helpers ---------- */
@@ -368,7 +356,7 @@ async function loadMechanics() {
     // Only the fields customers need to see. Contact details are not loaded here.
     const mechanicsQuery = supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, business_photo_url, service_area, services, description, created_at")
+        .select("id, business_name, business_type, service_area, services, description, created_at, verified")
         .eq("status", "Approved")
         .order("created_at", { ascending: false });
 
@@ -538,17 +526,12 @@ function businessCard(mechanic) {
             </details>
         </div>`;
 
-    const photoHtml = mechanic.business_photo_url
-        ? `<img class="biz-photo" src="${esc(mechanic.business_photo_url)}" alt="${esc(mechanic.business_name)}" loading="lazy" referrerpolicy="no-referrer">`
-        : "";
-
     return `
         <div class="biz">
 
-            ${photoHtml}
-
             <div class="biz-top">
                 <span class="tag">${esc(TYPE_LABELS[mechanic.business_type] || "Mechanic")}</span>
+                ${mechanic.verified ? '<span class="tag tag-ok">Verified by PoundTech</span>' : ""}
                 ${hasInstant ? '<span class="tag tag-ok">Instant booking</span>' : ""}
             </div>
 
@@ -652,16 +635,9 @@ document.getElementById("mechanics-container").addEventListener("click", e => {
     }
 });
 
-// Respect service-category links from the homepage.
-document.querySelectorAll("#type-chips .chip").forEach(chip => {
-    chip.classList.toggle("active", chip.dataset.type === currentType);
-});
-
 loadMechanics();
 
 </script>
-
-<script src="nav.js"></script>
 
 </body>
 </html>
