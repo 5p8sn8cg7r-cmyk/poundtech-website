@@ -199,6 +199,20 @@ Checking...
 
 </div>
 
+<div class="card" id="delivery-settings-card">
+    <h2>Delivery &amp; Collection Settings</h2>
+    <p>Choose the delivery fee customers pay for orders from your business. If you allow collection, customers can choose to collect directly from you instead.</p>
+    <label for="supplier-delivery-fee" style="display:block;margin:14px 0 6px;font-weight:600;">Flat delivery fee per order (R)</label>
+    <input id="supplier-delivery-fee" type="number" min="0" step="0.01" value="0" inputmode="decimal" style="width:100%;max-width:320px;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:8px;">
+    <label style="display:flex;align-items:center;gap:10px;margin:16px 0;cursor:pointer;">
+        <input id="supplier-collection-available" type="checkbox" style="width:18px;height:18px;">
+        <span>Customers can collect orders from my business</span>
+    </label>
+    <p style="font-size:13px;color:#666;">The delivery fee applies once per supplier in each order, not once per product. Collection is free at checkout when enabled.</p>
+    <button type="button" id="save-delivery-settings" onclick="saveSupplierDeliverySettings()" style="background:#d71920;color:#fff;border:0;border-radius:8px;padding:12px 18px;font-weight:600;cursor:pointer;">Save delivery settings</button>
+    <p id="delivery-settings-message" role="status" aria-live="polite" style="margin-top:12px;"></p>
+</div>
+
 
 <div class="card">
 
@@ -757,17 +771,90 @@ if (supplierError) {
 document.getElementById("status").textContent =
 supplier.status;
 
+const deliveryFeeInput = document.getElementById("supplier-delivery-fee");
+const collectionInput = document.getElementById("supplier-collection-available");
+const saveDeliveryButton = document.getElementById("save-delivery-settings");
+if (deliveryFeeInput) deliveryFeeInput.value = Number(supplier.delivery_fee || 0).toFixed(2);
+if (collectionInput) collectionInput.checked = supplier.collection_available === true;
 
 if (supplier.status !== "Approved") {
-
     document.getElementById("status").textContent =
     supplier.status + " — awaiting approval";
-
+    if (deliveryFeeInput) deliveryFeeInput.disabled = true;
+    if (collectionInput) collectionInput.disabled = true;
+    if (saveDeliveryButton) saveDeliveryButton.disabled = true;
+    const settingsMessage = document.getElementById("delivery-settings-message");
+    if (settingsMessage) settingsMessage.textContent = "Delivery settings become editable after your supplier account is approved.";
 }
 
 }
 
 
+
+async function saveSupplierDeliverySettings() {
+    const feeInput = document.getElementById("supplier-delivery-fee");
+    const collectionInput = document.getElementById("supplier-collection-available");
+    const button = document.getElementById("save-delivery-settings");
+    const message = document.getElementById("delivery-settings-message");
+
+    if (!feeInput || !collectionInput || !button || !message) return;
+
+    const fee = Number(feeInput.value);
+    if (feeInput.value.trim() === "" || !Number.isFinite(fee) || fee < 0) {
+        message.textContent = "Enter a valid delivery fee of R0 or more.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+    message.textContent = "";
+
+    try {
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+        if (authError || !user) {
+            message.textContent = "Your session has expired. Please sign in again.";
+            return;
+        }
+
+        const { data: supplier, error: supplierError } = await supabaseClient
+            .from("suppliers")
+            .select("id, status")
+            .eq("user_id", user.id)
+            .single();
+
+        if (supplierError || !supplier) {
+            message.textContent = "Could not verify your supplier account.";
+            return;
+        }
+        if (supplier.status !== "Approved") {
+            message.textContent = "Only approved suppliers can change delivery settings.";
+            return;
+        }
+
+        const { error: updateError } = await supabaseClient
+            .from("suppliers")
+            .update({
+                delivery_fee: Math.round(fee * 100) / 100,
+                collection_available: collectionInput.checked
+            })
+            .eq("id", supplier.id)
+            .eq("user_id", user.id);
+
+        if (updateError) {
+            console.error("Delivery settings update failed:", updateError);
+            message.textContent = "Could not save settings: " + updateError.message;
+            return;
+        }
+
+        message.textContent = "Delivery settings saved.";
+    } catch (error) {
+        console.error("Unexpected delivery settings error:", error);
+        message.textContent = "Something went wrong. Please try again.";
+    } finally {
+        button.disabled = false;
+        button.textContent = "Save delivery settings";
+    }
+}
 
 async function logout() {
 
