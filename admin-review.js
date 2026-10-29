@@ -210,7 +210,12 @@
                 '<button type="button" class="sec" data-act="save" data-id="' + id + '">Save checks and notes</button>' +
                 (r.verified
                     ? '<button type="button" class="sec" data-act="unverify" data-id="' + id + '">Remove Verified badge</button>'
-                    : '<button type="button" data-act="verify" data-id="' + id + '">Mark Verified</button>');
+                    : '<button type="button" data-act="verify" data-id="' + id + '">Mark Verified</button>') +
+                (kind === "suppliers"
+                    ? (r.trusted
+                        ? '<button type="button" class="sec" data-act="untrust" data-id="' + id + '">Remove Trusted</button>'
+                        : '<button type="button" class="sec" data-act="trust" data-id="' + id + '">Mark Trusted (skip new-seller limits)</button>')
+                    : "");
         } else if (r.status === "Rejected") {
             actions =
                 '<button type="button" class="sec" data-act="save" data-id="' + id + '">Save notes</button>' +
@@ -226,6 +231,7 @@
         return '<div class="rv-card" id="rv-' + id + '">' +
             '<div class="rv-head"><h2>' + esc(r.business_name) + '</h2>' + statusPill(r) +
             (r.verified ? '<span class="rv-pill dark">Verified</span>' : "") +
+            (r.trusted ? '<span class="rv-pill green">Trusted</span>' : "") +
             '<span style="flex:1"></span><span style="color:#777;font-size:13px;">Applied ' +
             esc(new Date(r.created_at).toLocaleDateString()) + '</span></div>' +
 
@@ -299,6 +305,14 @@
             update.verified = false; update.verified_at = null;
         } else if (action === "save") {
             message = "Saved.";
+        }
+
+        if (action === "trust" || action === "untrust") {
+            if (action === "trust" && !confirm("Mark this supplier Trusted? New-seller payout holds, limits and listing review stop applying to them.")) { return; }
+            var tr = await supabaseClient.rpc("set_supplier_trusted", { p_supplier: id, p_trusted: action === "trust" });
+            if (tr.error) { alert("Could not save: " + tr.error.message + "\n\nRun 16_migration15_probation.sql in Supabase if you haven't."); return; }
+            s.reload();
+            return;
         }
 
         var r = await supabaseClient.from(table(kind)).update(update).eq("id", id);
