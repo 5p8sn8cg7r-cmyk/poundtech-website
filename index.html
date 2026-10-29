@@ -1425,11 +1425,16 @@ Already approved?
 
         <div id="checkout-items" style="margin-top:15px;"></div>
 
-        <h3 id="checkout-total" style="margin-top:20px;">
-            Total: R0
-        </h3>
+        <h3 style="margin-top:24px;">Delivery or Collection</h3>
+        <div id="checkout-delivery-options" style="margin-top:12px;"></div>
 
-        <button onclick="placeOrder()" style="
+        <div style="border-top:1px solid #ddd;margin-top:20px;padding-top:14px;">
+            <p id="checkout-subtotal" style="margin:6px 0;">Product subtotal: R0</p>
+            <p id="checkout-delivery-total" style="margin:6px 0;">Delivery total: R0</p>
+            <h3 id="checkout-total" style="margin-top:12px;">Total payable: R0</h3>
+        </div>
+
+        <button id="checkout-pay-button" onclick="placeOrder()" disabled style="
             margin-top:25px;
             width:100%;
             padding:15px;
@@ -2003,49 +2008,175 @@ function closeCart() {
 
 }
 
+let checkoutDeliveryOptions = {};
+let checkoutDeliveryChoices = {};
+let checkoutProductSupplierMap = {};
+let checkoutProductSubtotal = 0;
+let checkoutDeliveryReady = false;
+
 async function checkout() {
     await refreshCartPrices();
-    renderCheckout();
+    await renderCheckout();
 }
 
-function renderCheckout() {
-
+async function renderCheckout() {
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+
+    const checkoutItems = document.getElementById("checkout-items");
+    const deliveryContainer = document.getElementById("checkout-delivery-options");
+    const payButton = document.getElementById("checkout-pay-button");
 
     if (cart.length === 0) {
         alert("Your cart is empty!");
         return;
     }
 
-    let checkoutItems = document.getElementById("checkout-items");
-    let checkoutTotal = document.getElementById("checkout-total");
+    checkoutDeliveryReady = false;
+    payButton.disabled = true;
+    payButton.style.opacity = "0.65";
+    payButton.style.cursor = "not-allowed";
+    payButton.textContent = "Loading delivery options…";
+    deliveryContainer.innerHTML = '<p style="color:#666;">Checking supplier delivery options…</p>';
+
+    const productIds = Array.from(new Set(cart.map(function(item) {
+        return item.product_id;
+    }).filter(Boolean)));
+
+    const [productsResult, optionsResult] = await Promise.all([
+        supabaseClient.from("products").select("id, supplier_id").in("id", productIds),
+        supabaseClient.rpc("get_checkout_delivery_options", {
+            product_ids_input: productIds
+        })
+    ]);
+
+    if (productsResult.error || optionsResult.error || !productsResult.data || !optionsResult.data) {
+        console.error("CHECKOUT DELIVERY OPTIONS ERROR:", productsResult.error || optionsResult.error);
+        deliveryContainer.innerHTML = '<p style="color:#b00020;">We could not load delivery options. Please try again before paying.</p>';
+        payButton.textContent = "Delivery options unavailable";
+        document.getElementById("cart-panel").style.display = "none";
+        document.getElementById("checkout-panel").style.display = "block";
+        return;
+    }
+
+    checkoutProductSupplierMap = {};
+    productsResult.data.forEach(function(product) {
+        checkoutProductSupplierMap[product.id] = product.supplier_id;
+    });
+
+    const missingProduct = productIds.some(function(id) {
+        return !checkoutProductSupplierMap[id];
+    });
+
+    checkoutDeliveryOptions = {};
+    optionsResult.data.forEach(function(option) {
+        checkoutDeliveryOptions[option.supplier_id] = {
+            supplier_id: option.supplier_id,
+            business_name: option.business_name,
+            delivery_fee: Number(option.delivery_fee) || 0,
+            collection_available: option.collection_available === true
+        };
+    });
+
+    const supplierIds = Array.from(new Set(productIds.map(function(id) {
+        return checkoutProductSupplierMap[id];
+    }).filter(Boolean)));
+
+    const missingSupplierOptions = supplierIds.some(function(id) {
+        return !checkoutDeliveryOptions[id];
+    });
+
+    if (missingProduct || missingSupplierOptions || supplierIds.length === 0) {
+        deliveryContainer.innerHTML = '<p style="color:#b00020;">One or more products or suppliers are currently unavailable for checkout. Please return to your cart and remove or review those items.</p>';
+        payButton.textContent = "Checkout unavailable";
+        document.getElementById("cart-panel").style.display = "none";
+        document.getElementById("checkout-panel").style.display = "block";
+        return;
+    }
+
+    // Keep a customer's choices when checkout is refreshed, but remove choices
+    // for suppliers no longer represented in the cart.
+    Object.keys(checkoutDeliveryChoices).forEach(function(id) {
+        if (!checkoutDeliveryOptions[id]) delete checkoutDeliveryChoices[id];
+    });
+
+    supplierIds.forEach(function(id) {
+        if (!checkoutDeliveryChoices[id]) checkoutDeliveryChoices[id] = "delivery";
+    });
 
     checkoutItems.innerHTML = "";
-
-    let total = 0;
+    checkoutProductSubtotal = 0;
 
     cart.forEach(function(item) {
-
-        let quantity = item.quantity || 1;
-        let itemTotal = item.price * quantity;
-
-        total += itemTotal;
+        const quantity = item.quantity || 1;
+        const itemTotal = Number(item.price) * quantity;
+        checkoutProductSubtotal += itemTotal;
 
         checkoutItems.innerHTML += `
-            <div style="
-                padding:12px 0;
-                border-bottom:1px solid #ddd;
-            ">
+            <div style="padding:12px 0;border-bottom:1px solid #ddd;">
                 <strong>${esc(item.name)}</strong>
-                <p>${PT.money(item.price)} × ${quantity} = ${PT.money(itemTotal)}</p>
+                <p style="margin:6px 0 0;color:#555;">${PT.money(item.price)} × ${quantity} = ${PT.money(itemTotal)}</p>
             </div>
         `;
     });
 
-    checkoutTotal.innerText = "Total: " + PT.money(total);
+    deliveryContainer.innerHTML = '<p style="color:#666;margin-top:0;">Choose delivery or collection separately for each supplier in your order.</p>';
+
+    supplierIds.forEach(function(id) {
+        const supplier = checkoutDeliveryOptions[id];
+        const selected = checkoutDeliveryChoices[id] || "delivery";
+        const selectId = "checkout-delivery-" + id;
+
+        deliveryContainer.innerHTML += `
+            <div style="border:1px solid #e3e3e3;border-radius:8px;padding:14px;margin:12px 0;">
+                <strong>${esc(supplier.business_name)}</strong>
+                <label for="${selectId}" style="display:block;margin-top:10px;font-size:14px;color:#555;">Fulfilment method</label>
+                <select id="${selectId}" onchange="updateCheckoutDeliveryChoice('${id}', this.value)"
+                    style="width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid #ccc;border-radius:6px;background:white;">
+                    <option value="delivery" ${selected === "delivery" ? "selected" : ""}>Deliver to my address — ${PT.money(supplier.delivery_fee)}</option>
+                    ${supplier.collection_available ? '<option value="collection" ' + (selected === "collection" ? "selected" : "") + '>Collect from supplier — Free</option>' : ""}
+                </select>
+            </div>
+        `;
+    });
+
+    checkoutDeliveryReady = true;
+    updateCheckoutTotals();
+
+    payButton.disabled = false;
+    payButton.style.opacity = "1";
+    payButton.style.cursor = "pointer";
+    payButton.textContent = "Pay Now";
 
     document.getElementById("cart-panel").style.display = "none";
     document.getElementById("checkout-panel").style.display = "block";
+}
+
+function updateCheckoutDeliveryChoice(supplierId, method) {
+    if (!checkoutDeliveryOptions[supplierId]) return;
+    if (method !== "delivery" && method !== "collection") return;
+    if (method === "collection" && !checkoutDeliveryOptions[supplierId].collection_available) return;
+
+    checkoutDeliveryChoices[supplierId] = method;
+    updateCheckoutTotals();
+}
+
+function updateCheckoutTotals() {
+    let deliveryTotal = 0;
+
+    Object.keys(checkoutDeliveryOptions).forEach(function(id) {
+        const supplier = checkoutDeliveryOptions[id];
+        if ((checkoutDeliveryChoices[id] || "delivery") === "delivery") {
+            deliveryTotal += Number(supplier.delivery_fee) || 0;
+        }
+    });
+
+    const subtotalEl = document.getElementById("checkout-subtotal");
+    const deliveryEl = document.getElementById("checkout-delivery-total");
+    const totalEl = document.getElementById("checkout-total");
+
+    if (subtotalEl) subtotalEl.textContent = "Product subtotal: " + PT.money(checkoutProductSubtotal);
+    if (deliveryEl) deliveryEl.textContent = "Delivery total: " + PT.money(deliveryTotal);
+    if (totalEl) totalEl.textContent = "Total payable: " + PT.money(checkoutProductSubtotal + deliveryTotal);
 }
  
 function removeFromCart(index) {
@@ -2152,7 +2283,19 @@ async function placeOrder() {
         return;
     }
 
-    const { data: result, error } = await supabaseClient.rpc("place_order", {
+    if (!checkoutDeliveryReady) {
+        alert("Please wait until delivery options have loaded.");
+        return;
+    }
+
+    const deliveryChoices = Object.keys(checkoutDeliveryOptions).map(function(supplierId) {
+        return {
+            supplier_id: supplierId,
+            method: checkoutDeliveryChoices[supplierId] || "delivery"
+        };
+    });
+
+    const { data: result, error } = await supabaseClient.rpc("place_order_with_delivery", {
         customer_name_input: name,
         phone_input: phone,
         email_input: email,
@@ -2162,7 +2305,8 @@ async function placeOrder() {
                 product_id: item.product_id,
                 quantity: item.quantity || 1
             };
-        })
+        }),
+        delivery_choices_input: deliveryChoices
     });
 
     if (error) {
