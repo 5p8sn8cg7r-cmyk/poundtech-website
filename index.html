@@ -1023,6 +1023,99 @@ footer {
     color: #e00000;
     font-weight: bold;
 }
+
+/* Mobile shopping-first homepage refinements */
+@media (max-width: 700px) {
+    .hero {
+        padding: 20px 5% 18px;
+        background-size: auto 78%, auto;
+        background-position: center 68%, center;
+    }
+
+    .hero h1 {
+        font-size: 25px;
+        line-height: 1.12;
+    }
+
+    .hero p {
+        font-size: 13px;
+        line-height: 1.4;
+        margin: 8px auto 12px;
+    }
+
+    .search {
+        flex-direction: row;
+        border-radius: 8px;
+    }
+
+    .search input {
+        min-width: 0;
+        padding: 12px 10px;
+        font-size: 13px;
+    }
+
+    .search button {
+        flex: 0 0 auto;
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+
+    .hero-garage {
+        margin-top: 9px;
+    }
+
+    .hero-garage label {
+        margin-bottom: 4px !important;
+        font-size: 12px;
+    }
+
+    .hero-garage select {
+        padding: 9px !important;
+        font-size: 13px !important;
+    }
+
+    .hero-garage #garage-vehicle-status {
+        margin-top: 5px !important;
+        font-size: 11px !important;
+    }
+
+    /* Only the main Featured Products row becomes a swipe carousel.
+       Category-filtered and searched results remain a normal grid. */
+    #products-container.featured-carousel {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 2px 2px 12px;
+        margin-right: -5%;
+        padding-right: 5%;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+    }
+
+    #products-container.featured-carousel .product {
+        flex: 0 0 68%;
+        width: 68%;
+        min-width: 0;
+        scroll-snap-align: start;
+    }
+
+    #products-container.featured-carousel::-webkit-scrollbar {
+        display: none;
+    }
+
+    #products-heading {
+        font-size: 22px;
+    }
+
+    #sortbar {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
+
 </style>
 </head>
 
@@ -2642,6 +2735,9 @@ async function renderLoaded() {
     const container = document.getElementById("products-container");
     const products = loadedProducts;
 
+    // Keep the homepage featured view swipeable; category results stay in a grid.
+    container.classList.toggle("featured-carousel", !activeFilter);
+
     let displayedProducts = products.map(function(product) {
         return { product: product, status: null };
     });
@@ -2880,6 +2976,7 @@ searchStatus.innerHTML = `
 
  const container =
     document.getElementById("products-container");
+    container.classList.remove("featured-carousel");
 
     if (!data || data.length === 0) {
         container.innerHTML =
