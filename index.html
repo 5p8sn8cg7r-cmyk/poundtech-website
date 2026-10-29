@@ -2828,6 +2828,8 @@ async function renderLoaded() {
             ? new Date(item.product.promotion_expires_at).getTime()
             : null;
         return item.product.is_promoted === true &&
+            String(item.product.status || "").toLowerCase() === "active" &&
+            String(item.product.listing_review || "").toLowerCase() === "approved" &&
             (expiry === null || (Number.isFinite(expiry) && expiry > now));
     };
 
