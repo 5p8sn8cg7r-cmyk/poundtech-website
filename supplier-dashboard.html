@@ -2011,50 +2011,9 @@ async function updateSupplierOrderStatus(orderId, newStatus) {
         return;
     }
 
-    /*
-       Create supplier payout when
-       this supplier completes the order.
-    */
+    // Payouts are created and paid by PoundTech (admin), not by the supplier.
 
-    if (newStatus === "Completed") {
-
-        const { error: payoutError } =
-            await supabaseClient.rpc(
-                "create_supplier_payout",
-                {
-                    supplier_id_input: supplier.id
-                }
-            );
-
-        if (payoutError) {
-
-            /*
-               No eligible payout simply means
-               there is nothing new to pay.
-            */
-
-            if (
-                !payoutError.message.includes(
-                    "No eligible payout available"
-                )
-            ) {
-                console.error(
-                    "PAYOUT ERROR:",
-                    payoutError
-                );
-
-                alert(
-                    "Order completed, but payout creation failed: " +
-                    payoutError.message
-                );
-
-                loadSupplierOrders();
-                return;
-            }
-        }
-    }
-
-showOrderToast("Status updated to " + newStatus);
+showOrderToast(newStatus === "Completed" ? "Marked completed. PoundTech will schedule your payout." : "Status updated to " + newStatus);
 
 loadSupplierOrders();
 }
