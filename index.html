@@ -1079,9 +1079,8 @@ footer {
         font-size: 11px !important;
     }
 
-    /* Only the main Featured Products row becomes a swipe carousel.
-       Category-filtered and searched results remain a normal grid. */
-    #products-container.featured-carousel {
+    /* Promoted products use a swipe carousel; the catalogue stays a grid. */
+    #promoted-products-container.promoted-carousel {
         display: flex;
         gap: 12px;
         overflow-x: auto;
@@ -1095,19 +1094,65 @@ footer {
         scrollbar-width: none;
     }
 
-    #products-container.featured-carousel .product {
+    #promoted-products-container.promoted-carousel .product {
         flex: 0 0 68%;
         width: 68%;
         min-width: 0;
         scroll-snap-align: start;
     }
 
-    #products-container.featured-carousel::-webkit-scrollbar {
+    #promoted-products-container.promoted-carousel::-webkit-scrollbar {
         display: none;
     }
 
+    #promoted-heading,
     #products-heading {
         font-size: 22px;
+    }
+
+    .promoted-heading-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .promoted-heading-row h2 {
+        margin-bottom: 0;
+    }
+
+    .sponsored-label {
+        background: #111;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+
+    #catalogue-section .products {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    #catalogue-section .product-info {
+        padding: 12px;
+    }
+
+    #catalogue-section .product-image {
+        height: 130px;
+    }
+
+    #catalogue-section .product h3 {
+        font-size: 14px;
+        line-height: 1.3;
+    }
+
+    #catalogue-section .price {
+        font-size: 17px;
     }
 
     #sortbar {
@@ -1298,9 +1343,20 @@ Find car parts, accessories and automotive services from businesses across South
 
 </section>
 
-<section class="section">
+<section class="section" id="promoted-section" style="display:none;">
 
-<h2 id="products-heading">Featured Products</h2>
+<div class="promoted-heading-row">
+    <h2 id="promoted-heading">Promoted Products</h2>
+    <span class="sponsored-label">Sponsored</span>
+</div>
+
+<div class="products promoted-carousel" id="promoted-products-container"></div>
+
+</section>
+
+<section class="section" id="catalogue-section">
+
+<h2 id="products-heading">Explore Products</h2>
 
 <div class="sortbar" id="sortbar">
     <label for="sort-select">Sort by</label>
@@ -2735,8 +2791,8 @@ async function renderLoaded() {
     const container = document.getElementById("products-container");
     const products = loadedProducts;
 
-    // Keep the homepage featured view swipeable; category results stay in a grid.
-    container.classList.toggle("featured-carousel", !activeFilter);
+    const promotedSection = document.getElementById("promoted-section");
+    const promotedContainer = document.getElementById("promoted-products-container");
 
     let displayedProducts = products.map(function(product) {
         return { product: product, status: null };
@@ -2764,11 +2820,40 @@ async function renderLoaded() {
         displayedProducts = [...matches, ...universal, ...unknown];
     }
 
+    // Promotions appear only on the unfiltered homepage. Expired promotions
+    // automatically return to the regular catalogue.
+    const now = Date.now();
+    const isCurrentlyPromoted = function(item) {
+        const expiry = item.product.promotion_expires_at
+            ? new Date(item.product.promotion_expires_at).getTime()
+            : null;
+        return item.product.is_promoted === true &&
+            (expiry === null || (Number.isFinite(expiry) && expiry > now));
+    };
+
+    const showPromotions = !activeFilter;
+    const promotedProducts = showPromotions
+        ? displayedProducts.filter(isCurrentlyPromoted)
+        : [];
+    displayedProducts = showPromotions
+        ? displayedProducts.filter(function(item) { return !isCurrentlyPromoted(item); })
+        : displayedProducts;
+
+    promotedSection.style.display = promotedProducts.length ? "" : "none";
+    promotedContainer.innerHTML = promotedProducts.map(function(item) {
+        return renderProductCard(item.product, item.status);
+    }).join("");
+
+    if (promotedProducts.length) {
+        PT.fetchRatings(promotedProducts.map(function(item) { return item.product.id; }))
+            .then(PT.paintRatings);
+    }
+
     if (displayedProducts.length === 0) {
-        document.getElementById("result-count").textContent = "";
+        document.getElementById("result-count").textContent = "0 products";
         container.innerHTML = activeFilter
             ? "<p>No compatible products found in <strong>" + esc(activeFilter.title) + "</strong> for this vehicle.</p>"
-            : "<p>No compatible products found for this vehicle.</p>";
+            : "<p>No other products to show right now.</p>";
         return;
     }
 
@@ -2882,7 +2967,7 @@ function updateCategoryUI() {
             esc(activeFilter.title) +
             ' <button class="clear-filter" onclick="clearCategoryFilter()">Clear ✕</button>';
     } else {
-        heading.textContent = "Featured Products";
+        heading.textContent = "Explore Products";
     }
 
     document.querySelectorAll(".category").forEach(function(tile) {
@@ -2976,6 +3061,7 @@ searchStatus.innerHTML = `
 
  const container =
     document.getElementById("products-container");
+    document.getElementById("promoted-section").style.display = "none";
     container.classList.remove("featured-carousel");
 
     if (!data || data.length === 0) {
@@ -3000,7 +3086,8 @@ function clearSearch() {
 
     document.getElementById("category-section").style.display = "";
 
-    document.getElementById("products-heading").innerText = "Featured Products";
+    document.getElementById("promoted-section").style.display = "";
+    document.getElementById("products-heading").innerText = "Explore Products";
 
     loadProducts();
 }
