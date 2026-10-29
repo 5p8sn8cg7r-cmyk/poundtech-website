@@ -237,6 +237,10 @@ input {
 
     <div id="payouts-admin" style="display:none;"></div>
 
+    <div id="listings-admin" style="display:none;"></div>
+
+    <div id="rules-admin" style="display:none;"></div>
+
     <div id="orders" style="display:none;"></div>
 
 </div>
@@ -268,10 +272,14 @@ function showDashboard() {
     document.getElementById("orders").style.display = "block";
     document.getElementById("revenue").style.display = "block";
     document.getElementById("payouts-admin").style.display = "block";
+    document.getElementById("listings-admin").style.display = "block";
+    document.getElementById("rules-admin").style.display = "block";
     document.getElementById("payments-setup").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
     loadRevenue();
     loadPayoutsAdmin();
+    loadListingsAdmin();
+    loadRulesAdmin();
     loadOrders();
     loadWebhookStatus();
 }
@@ -289,6 +297,8 @@ async function adminLogout() {
     document.getElementById("login").style.display = "block";
     document.getElementById("orders").style.display = "none";
     document.getElementById("payouts-admin").style.display = "none";
+    document.getElementById("listings-admin").style.display = "none";
+    document.getElementById("rules-admin").style.display = "none";
     document.getElementById("revenue").style.display = "none";
     document.getElementById("payments-setup").style.display = "none";
     document.getElementById("admin-nav").style.display = "none";
@@ -562,6 +572,18 @@ function renderPayoutsAdmin() {
 
     const sum = function(rows, key) { return rows.reduce(function(t, r) { return t + Number(r[key] || 0); }, 0); };
 
+    const held = ADM_PAYOUTS.held || [];
+
+    const heldRows = held.map(function(r) {
+        return `<div class="od-item"><div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(r.name)}</span>
+                    <span class="od-pill">New seller hold</span>
+                    <span class="sp"></span>
+                    <span class="meta">Releases ${esc(new Date(r.release_on).toLocaleDateString())}</span>
+                    <span class="tot">${esc(money(r.amount))}</span>
+                </div></div>`;
+    }).join("");
+
     const readyRows = ready.map(function(r) {
         return `<div class="od-item"><div style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
                     <span class="no">${esc(r.name)}</span>
@@ -605,6 +627,7 @@ function renderPayoutsAdmin() {
         ${readyRows}
         <h4 class="rev-note" style="margin:16px 0 8px;">2. Pay them, then record the reference</h4>
         ${pendingRows}
+        ${heldRows ? '<h4 class="rev-note" style="margin:16px 0 8px;">Held until the new-seller period ends</h4>' + heldRows : ""}
         ${paidRows ? '<h4 class="rev-note" style="margin:16px 0 8px;">Recently paid</h4>' + paidRows : ""}
         <p class="rev-note">Only create a payout once the customer has received the goods. Pay the supplier from your bank, then click Mark paid with your bank reference.</p>
     `;
@@ -647,6 +670,103 @@ async function markPayoutPaid(payoutId) {
 
     loadPayoutsAdmin();
     loadRevenue();
+}
+
+
+// ---------- Listings waiting for review ----------
+async function loadListingsAdmin() {
+
+    const box = document.getElementById("listings-admin");
+
+    const { data, error } = await supabaseClient.rpc("get_pending_listings");
+
+    if (error) {
+        box.innerHTML = '<div class="empty"><h2>Listing review unavailable</h2><p>' + esc(error.message) +
+            '</p><p>Run 16_migration15_probation.sql in Supabase.</p></div>';
+        return;
+    }
+
+    const rows = data || [];
+
+    box.innerHTML = '<h2 class="rev-title">Listings to review (' + rows.length + ')</h2>' +
+        (rows.length === 0
+            ? '<div class="od-empty">No listings waiting. New sellers\' first listings appear here before going live.</div>'
+            : rows.map(function(p) {
+                return `<div class="od-item"><div style="padding:14px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;">
+                    <div style="width:96px;height:96px;border-radius:8px;background:#eee;overflow:hidden;flex-shrink:0;">
+                        ${p.image_url ? '<img src="' + esc(p.image_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;">' : ""}
+                    </div>
+                    <div style="flex:1;min-width:220px;">
+                        <div class="no">${esc(p.name)}</div>
+                        <div class="meta">${esc(p.supplier)} &middot; ${esc(p.category || "")} &middot; Stock ${esc(p.stock)}</div>
+                        <div class="tot" style="margin:4px 0;">${esc(money(p.price))}</div>
+                        <div style="font-size:14px;color:#333;">${esc((p.description || "").slice(0, 300))}</div>
+                        <div style="margin-top:10px;">
+                            <button type="button" onclick="reviewListing('${esc(p.id)}', true)">Approve</button>
+                            <button type="button" style="background:#555;" onclick="reviewListing('${esc(p.id)}', false)">Reject</button>
+                        </div>
+                    </div>
+                </div></div>`;
+            }).join("")) +
+        '<p class="rev-note">Check the photo is a real photo of the item (not copied or misleading), the description is honest, and the price is sensible. Rejected listings stay hidden.</p>';
+}
+
+async function reviewListing(id, approve) {
+
+    if (!approve && !confirm("Reject this listing? It will stay hidden from customers.")) { return; }
+
+    const { error } = await supabaseClient.rpc("review_listing", { p_product_id: id, p_approve: approve });
+
+    if (error) { alert("Could not save: " + error.message); }
+
+    loadListingsAdmin();
+}
+
+
+// ---------- Seller rules ----------
+async function loadRulesAdmin() {
+
+    const box = document.getElementById("rules-admin");
+
+    const { data, error } = await supabaseClient.rpc("get_seller_rules");
+
+    if (error || !data) {
+        box.innerHTML = "";
+        return;
+    }
+
+    box.innerHTML = `
+        <h2 class="rev-title">New seller rules</h2>
+        <div style="background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:16px 18px;margin-bottom:18px;">
+            <p class="rev-note" style="margin:0 0 12px;">
+                Until a seller has completed enough orders (or you mark them trusted), these limits apply.
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+                <div><label style="font-size:13px;font-weight:700;">Completed orders to graduate</label>
+                    <input type="number" min="0" id="rule-graduation_orders" value="${esc(data.graduation_orders)}" style="margin:4px 0 0;"></div>
+                <div><label style="font-size:13px;font-weight:700;">Payout hold (days after completion)</label>
+                    <input type="number" min="0" id="rule-probation_hold_days" value="${esc(data.probation_hold_days)}" style="margin:4px 0 0;"></div>
+                <div><label style="font-size:13px;font-weight:700;">Max live products</label>
+                    <input type="number" min="0" id="rule-new_seller_listing_limit" value="${esc(data.new_seller_listing_limit)}" style="margin:4px 0 0;"></div>
+                <div><label style="font-size:13px;font-weight:700;">Max price per item (R)</label>
+                    <input type="number" min="0" id="rule-new_seller_max_price" value="${esc(data.new_seller_max_price)}" style="margin:4px 0 0;"></div>
+            </div>
+            <button type="button" onclick="saveRulesAdmin()" style="margin:14px 0 0;">Save rules</button>
+            <span id="rules-msg" class="rev-note" style="margin-left:10px;"></span>
+        </div>
+    `;
+}
+
+async function saveRulesAdmin() {
+
+    const keys = ["graduation_orders", "probation_hold_days", "new_seller_listing_limit", "new_seller_max_price"];
+    const rules = {};
+
+    keys.forEach(function(k) { rules[k] = Number(document.getElementById("rule-" + k).value); });
+
+    const { error } = await supabaseClient.rpc("set_seller_rules", { p_rules: rules });
+
+    document.getElementById("rules-msg").textContent = error ? "Could not save: " + error.message : "Saved.";
 }
 
 var ADM_ORDERS = [];
