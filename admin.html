@@ -184,8 +184,15 @@ input {
 .od-line{padding:10px;background:#f5f5f5;border-radius:8px;margin-bottom:6px;font-size:14px}
 .od-actions{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .od-actions select{padding:9px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
-.od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
-@media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}}
+ .od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
+.promo-admin-row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:14px;margin-bottom:10px}
+.promo-admin-details{flex:1;min-width:210px}
+.promo-admin-controls{min-width:240px;flex:0 1 300px}
+.promo-admin-controls label{display:block;font-size:12px;font-weight:700;color:#555}
+.promo-admin-controls input{margin:5px 0 8px}
+.promo-admin-status{display:inline-block;border-radius:4px;padding:4px 7px;font-size:11px;font-weight:700;background:#eee}
+.promo-admin-status.live{background:#d4edda;color:#145c2a}
+@media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}.promo-admin-controls{flex-basis:100%;min-width:0}}
 </style>
 </head>
 
@@ -239,6 +246,8 @@ input {
 
     <div id="listings-admin" style="display:none;"></div>
 
+    <div id="promotions-admin" style="display:none;"></div>
+
     <div id="rules-admin" style="display:none;"></div>
 
     <div id="orders" style="display:none;"></div>
@@ -273,12 +282,14 @@ function showDashboard() {
     document.getElementById("revenue").style.display = "block";
     document.getElementById("payouts-admin").style.display = "block";
     document.getElementById("listings-admin").style.display = "block";
+    document.getElementById("promotions-admin").style.display = "block";
     document.getElementById("rules-admin").style.display = "block";
     document.getElementById("payments-setup").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
     loadRevenue();
     loadPayoutsAdmin();
     loadListingsAdmin();
+    loadPromotionsAdmin();
     loadRulesAdmin();
     loadOrders();
     loadWebhookStatus();
@@ -298,6 +309,7 @@ async function adminLogout() {
     document.getElementById("orders").style.display = "none";
     document.getElementById("payouts-admin").style.display = "none";
     document.getElementById("listings-admin").style.display = "none";
+    document.getElementById("promotions-admin").style.display = "none";
     document.getElementById("rules-admin").style.display = "none";
     document.getElementById("revenue").style.display = "none";
     document.getElementById("payments-setup").style.display = "none";
@@ -721,6 +733,94 @@ async function reviewListing(id, approve) {
 
     loadListingsAdmin();
 }
+
+// ---------- Sponsored product management ----------
+function promoDateInput(value) {
+    const date = value ? new Date(value) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return localDate.toISOString().slice(0, 16);
+}
+
+async function loadPromotionsAdmin() {
+    const box = document.getElementById("promotions-admin");
+    if (!box) return;
+
+    box.innerHTML = '<h2 class="rev-title">Sponsored products</h2><p class="rev-note">Choose an expiry date and activate sponsorship. Only active, approved products can be promoted.</p><p>Loading products…</p>';
+
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select("id,name,category,price,status,listing_review,is_promoted,promotion_expires_at,stock")
+        .eq("status", "Active")
+        .eq("listing_review", "approved")
+        .order("name", { ascending: true });
+
+    if (error) {
+        box.innerHTML = '<h2 class="rev-title">Sponsored products</h2><p>Could not load products: ' + esc(error.message) + '</p>';
+        return;
+    }
+
+    const products = data || [];
+    const now = Date.now();
+    const liveCount = products.filter(function(p) {
+        return p.is_promoted === true &&
+            (!p.promotion_expires_at || new Date(p.promotion_expires_at).getTime() > now);
+    }).length;
+
+    box.innerHTML = '<h2 class="rev-title">Sponsored products</h2>' +
+        '<p class="rev-note">Manage homepage sponsorship here instead of editing the Supabase table. A promotion expires automatically at the selected date and time.</p>' +
+        '<div class="rev-card" style="margin-bottom:14px;"><b style="font-size:22px;">' + liveCount + '</b><div class="sub">Currently sponsored products</div></div>' +
+        (products.length ? products.map(function(p) {
+            const expiry = p.promotion_expires_at ? new Date(p.promotion_expires_at).getTime() : null;
+            const live = p.is_promoted === true && (!expiry || expiry > now);
+            const expired = p.is_promoted === true && expiry && expiry <= now;
+            const expiryInput = promoDateInput(p.promotion_expires_at && !expired ? p.promotion_expires_at : null);
+            return '<div class="promo-admin-row">' +
+                '<div class="promo-admin-details">' +
+                    '<div style="font-weight:700;font-size:16px;margin-bottom:5px;">' + esc(p.name) + '</div>' +
+                    '<div class="meta">' + esc(p.category || "Uncategorised") + ' · Stock ' + esc(p.stock) + '</div>' +
+                    '<div style="font-weight:700;margin:7px 0;">' + esc(money(p.price)) + '</div>' +
+                    '<span class="promo-admin-status ' + (live ? 'live' : '') + '">' + (live ? 'SPONSORED' : (expired ? 'PROMOTION EXPIRED' : 'NOT SPONSORED')) + '</span>' +
+                '</div>' +
+                '<div class="promo-admin-controls">' +
+                    '<label for="promo-expiry-' + esc(p.id) + '">Promotion ends</label>' +
+                    '<input id="promo-expiry-' + esc(p.id) + '" type="datetime-local" value="' + esc(expiryInput) + '">' +
+                    '<button type="button" onclick="setProductPromotion(\'' + esc(p.id) + '\', true)">' + (live ? 'Update expiry' : 'Sponsor product') + '</button>' +
+                    (p.is_promoted === true ? '<button type="button" style="background:#555;" onclick="setProductPromotion(\'' + esc(p.id) + '\', false)">Remove sponsorship</button>' : '') +
+                '</div>' +
+            '</div>';
+        }).join("") : '<div class="od-empty">No active, approved products are available to sponsor yet.</div>');
+}
+
+async function setProductPromotion(productId, enabled) {
+    const input = document.getElementById("promo-expiry-" + productId);
+    let expiry = null;
+
+    if (enabled) {
+        if (!input || !input.value) {
+            alert("Choose when this promotion should end.");
+            return;
+        }
+        const parsed = new Date(input.value);
+        if (!Number.isFinite(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+            alert("Choose a future date and time for this promotion.");
+            return;
+        }
+        expiry = parsed.toISOString();
+    }
+
+    const { error } = await supabaseClient
+        .from("products")
+        .update({ is_promoted: enabled, promotion_expires_at: expiry })
+        .eq("id", productId);
+
+    if (error) {
+        alert("Could not update sponsorship: " + error.message);
+        return;
+    }
+
+    await loadPromotionsAdmin();
+}
+
 
 
 // ---------- Seller rules ----------
