@@ -930,7 +930,11 @@ async function addProductInner() {
         return;
     }
 
-    message.textContent = "Product added successfully!";
+    await loadSellerStatus();
+
+    message.textContent = (SELLER_STATUS && !SELLER_STATUS.graduated)
+        ? "Product added. New sellers' listings are reviewed before they go live."
+        : "Product added successfully!";
 
     document.getElementById("product-name").value = "";
     document.getElementById("product-category").value = "";
@@ -949,6 +953,25 @@ async function addProductInner() {
 
     loadSupplierProducts();
 }
+
+    var SELLER_STATUS = null;
+
+    async function loadSellerStatus() {
+        try {
+            const { data, error } = await supabaseClient.rpc("get_my_seller_status");
+            if (!error) { SELLER_STATUS = data || null; }
+        } catch (e) { /* optional */ }
+    }
+
+    function reviewBadge(product) {
+        if (product.listing_review === "pending") {
+            return '<span style="display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#fff3cd;color:#7a5a00;">Awaiting review</span>';
+        }
+        if (product.listing_review === "rejected") {
+            return '<span style="display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#fdecec;color:#8a1111;">Not approved</span>';
+        }
+        return "";
+    }
 
     async function loadSupplierProducts() {
 
@@ -994,7 +1017,18 @@ async function addProductInner() {
         return;
     }
 
-    productsContainer.innerHTML = products.map(product => `
+    await loadSellerStatus();
+
+    const probationNote = (SELLER_STATUS && !SELLER_STATUS.graduated)
+        ? `<div style="background:#f4f5f7;border-left:4px solid #e00000;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:14px;">
+               <strong>New seller period.</strong> Your listings are reviewed before they go live, you can list up to
+               ${esc(SELLER_STATUS.listing_limit)} live products, and items up to R${esc(SELLER_STATUS.max_price)}.
+               This ends after ${esc(SELLER_STATUS.orders_needed)} completed orders
+               (${esc(SELLER_STATUS.completed_orders)} so far).
+           </div>`
+        : "";
+
+    productsContainer.innerHTML = probationNote + products.map(product => `
         <div style="
             border:1px solid #ddd;
             padding:15px;
@@ -1028,7 +1062,7 @@ async function addProductInner() {
 
             <div style="flex:1; min-width:200px;">
 
-                <h3 style="margin-top:0;">${esc(product.name)}</h3>
+                <h3 style="margin-top:0;">${esc(product.name)}${reviewBadge(product)}</h3>
 
                 <p>
                     <strong>Category:</strong>
@@ -1500,6 +1534,8 @@ async function editProduct(productId) {
         alert(
             /sale_price|products_sale/i.test(updateError.message || "")
             ? "The normal price must stay higher than the special price. Edit or remove the special first."
+            : /New seller/i.test(updateError.message || "")
+            ? updateError.message
             : "Unable to update product."
         );
         return;
@@ -1883,6 +1919,7 @@ loadSupplierEarnings();
 
     SUP_PAYOUTS = data;
     SUP_PAYTAB = "due";
+    await loadSellerStatus();
     buildPayoutsShell(container);
     renderPayouts();
 }
@@ -1898,6 +1935,7 @@ function sumPayouts(rows) {
 
 function buildPayoutsShell(container) {
     container.innerHTML = `
+        <div id="po-hold"></div>
         <div class="od-cards" id="po-cards" style="grid-template-columns:repeat(3,1fr);"></div>
         <div class="od-tabs" id="po-tabs"></div>
         <div id="po-list"></div>
@@ -1913,6 +1951,19 @@ function renderPayouts() {
 
     const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
     const paidThisMonth = paid.filter(function(p) { return p.paid_at && new Date(p.paid_at) >= monthStart; });
+
+    const hold = SELLER_STATUS && !SELLER_STATUS.graduated
+        ? `<div style="background:#f4f5f7;border-left:4px solid #e00000;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:14px;">
+               <strong>New seller period.</strong> Payouts for completed orders are released ${esc(SELLER_STATUS.hold_days)} days after you mark them
+               completed, until you reach ${esc(SELLER_STATUS.orders_needed)} completed orders (${esc(SELLER_STATUS.completed_orders)} so far).
+               ${Number(SELLER_STATUS.held_amount) > 0
+                   ? "<br>R" + Number(SELLER_STATUS.held_amount).toFixed(2) + " is on hold, the first release is " +
+                     esc(new Date(SELLER_STATUS.release_on).toLocaleDateString()) + "."
+                   : ""}
+           </div>`
+        : "";
+
+    document.getElementById("po-hold").innerHTML = hold;
 
     document.getElementById("po-cards").innerHTML = `
         <button type="button" class="od-card ${due.length ? "hot" : ""}" onclick="setPayoutTab('due')">
