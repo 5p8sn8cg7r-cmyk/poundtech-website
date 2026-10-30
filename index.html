@@ -2500,11 +2500,27 @@ async function placeOrder() {
         };
     });
 
-    // Reuse the same token if this exact checkout is retried after a timeout.
+    // Reuse a token only when the checkout details are unchanged.
     const checkoutTokenKey = "poundtechCheckoutToken";
-    let checkoutToken = localStorage.getItem(checkoutTokenKey);
+    const checkoutRequestKey = "poundtechCheckoutRequest";
+    const checkoutRequest = JSON.stringify({
+        customer_name: name,
+        phone: phone,
+        email: email.toLowerCase(),
+        address: address,
+        items: cart.map(function(item) {
+            return {
+                product_id: item.product_id,
+                quantity: item.quantity || 1
+            };
+        }),
+        delivery_choices: deliveryChoices
+    });
 
-    if (!checkoutToken) {
+    let checkoutToken = localStorage.getItem(checkoutTokenKey);
+    const savedCheckoutRequest = localStorage.getItem(checkoutRequestKey);
+
+    if (!checkoutToken || savedCheckoutRequest !== checkoutRequest) {
         if (!window.crypto || typeof window.crypto.randomUUID !== "function") {
             alert("Your browser could not create a secure checkout reference. Please update your browser and try again.");
             resetPlaceOrderButton();
@@ -2513,6 +2529,7 @@ async function placeOrder() {
 
         checkoutToken = window.crypto.randomUUID();
         localStorage.setItem(checkoutTokenKey, checkoutToken);
+        localStorage.setItem(checkoutRequestKey, checkoutRequest);
     }
 
     try {
