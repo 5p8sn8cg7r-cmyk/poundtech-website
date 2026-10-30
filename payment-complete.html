@@ -114,7 +114,10 @@ async function check() {
         const current = await status();
 
         if (current === "Paid") {
-            try { localStorage.removeItem("poundtechCart"); } catch (e) { /* ignore */ }
+            try {
+                localStorage.removeItem("poundtechCart");
+                localStorage.removeItem("poundtechCheckoutToken");
+            } catch (e) { /* ignore */ }
             show('<h1>Payment received</h1><p>Thank you. Your PoundTech order is confirmed and the supplier has been notified.</p>' +
                  orderBox() +
                  '<p>Keep your order number to track your order. We will use the contact details you gave us for any updates.</p>' +
