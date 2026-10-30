@@ -2500,6 +2500,21 @@ async function placeOrder() {
         };
     });
 
+    // Reuse the same token if this exact checkout is retried after a timeout.
+    const checkoutTokenKey = "poundtechCheckoutToken";
+    let checkoutToken = localStorage.getItem(checkoutTokenKey);
+
+    if (!checkoutToken) {
+        if (!window.crypto || typeof window.crypto.randomUUID !== "function") {
+            alert("Your browser could not create a secure checkout reference. Please update your browser and try again.");
+            resetPlaceOrderButton();
+            return;
+        }
+
+        checkoutToken = window.crypto.randomUUID();
+        localStorage.setItem(checkoutTokenKey, checkoutToken);
+    }
+
     try {
         const { data: result, error } = await supabaseClient.rpc("place_order_with_delivery", {
             customer_name_input: name,
@@ -2512,7 +2527,8 @@ async function placeOrder() {
                     quantity: item.quantity || 1
                 };
             }),
-            delivery_choices_input: deliveryChoices
+            delivery_choices_input: deliveryChoices,
+            checkout_token_input: checkoutToken
         });
 
         if (error) {
