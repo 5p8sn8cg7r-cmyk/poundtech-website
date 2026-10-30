@@ -184,15 +184,8 @@ input {
 .od-line{padding:10px;background:#f5f5f5;border-radius:8px;margin-bottom:6px;font-size:14px}
 .od-actions{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .od-actions select{padding:9px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
- .od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
-.promo-admin-row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;background:#fff;border:1px solid #e3e3e3;border-radius:12px;padding:14px;margin-bottom:10px}
-.promo-admin-details{flex:1;min-width:210px}
-.promo-admin-controls{min-width:240px;flex:0 1 300px}
-.promo-admin-controls label{display:block;font-size:12px;font-weight:700;color:#555}
-.promo-admin-controls input{margin:5px 0 8px}
-.promo-admin-status{display:inline-block;border-radius:4px;padding:4px 7px;font-size:11px;font-weight:700;background:#eee}
-.promo-admin-status.live{background:#d4edda;color:#145c2a}
-@media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}.promo-admin-controls{flex-basis:100%;min-width:0}}
+.od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
+@media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 
@@ -246,9 +239,9 @@ input {
 
     <div id="listings-admin" style="display:none;"></div>
 
-    <div id="promotions-admin" style="display:none;"></div>
-
     <div id="rules-admin" style="display:none;"></div>
+
+    <div id="plans-admin" style="display:none;"></div>
 
     <div id="orders" style="display:none;"></div>
 
@@ -282,15 +275,15 @@ function showDashboard() {
     document.getElementById("revenue").style.display = "block";
     document.getElementById("payouts-admin").style.display = "block";
     document.getElementById("listings-admin").style.display = "block";
-    document.getElementById("promotions-admin").style.display = "block";
     document.getElementById("rules-admin").style.display = "block";
+    document.getElementById("plans-admin").style.display = "block";
     document.getElementById("payments-setup").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
     loadRevenue();
     loadPayoutsAdmin();
     loadListingsAdmin();
-    loadPromotionsAdmin();
     loadRulesAdmin();
+    loadPlansAdmin();
     loadOrders();
     loadWebhookStatus();
 }
@@ -309,8 +302,8 @@ async function adminLogout() {
     document.getElementById("orders").style.display = "none";
     document.getElementById("payouts-admin").style.display = "none";
     document.getElementById("listings-admin").style.display = "none";
-    document.getElementById("promotions-admin").style.display = "none";
     document.getElementById("rules-admin").style.display = "none";
+    document.getElementById("plans-admin").style.display = "none";
     document.getElementById("revenue").style.display = "none";
     document.getElementById("payments-setup").style.display = "none";
     document.getElementById("admin-nav").style.display = "none";
@@ -734,94 +727,6 @@ async function reviewListing(id, approve) {
     loadListingsAdmin();
 }
 
-// ---------- Sponsored product management ----------
-function promoDateInput(value) {
-    const date = value ? new Date(value) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return localDate.toISOString().slice(0, 16);
-}
-
-async function loadPromotionsAdmin() {
-    const box = document.getElementById("promotions-admin");
-    if (!box) return;
-
-    box.innerHTML = '<h2 class="rev-title">Sponsored products</h2><p class="rev-note">Choose an expiry date and activate sponsorship. Only active, approved products can be promoted.</p><p>Loading products…</p>';
-
-    const { data, error } = await supabaseClient
-        .from("products")
-        .select("id,name,category,price,status,listing_review,is_promoted,promotion_expires_at,stock")
-        .eq("status", "Active")
-        .eq("listing_review", "approved")
-        .order("name", { ascending: true });
-
-    if (error) {
-        box.innerHTML = '<h2 class="rev-title">Sponsored products</h2><p>Could not load products: ' + esc(error.message) + '</p>';
-        return;
-    }
-
-    const products = data || [];
-    const now = Date.now();
-    const liveCount = products.filter(function(p) {
-        return p.is_promoted === true &&
-            (!p.promotion_expires_at || new Date(p.promotion_expires_at).getTime() > now);
-    }).length;
-
-    box.innerHTML = '<h2 class="rev-title">Sponsored products</h2>' +
-        '<p class="rev-note">Manage homepage sponsorship here instead of editing the Supabase table. A promotion expires automatically at the selected date and time.</p>' +
-        '<div class="rev-card" style="margin-bottom:14px;"><b style="font-size:22px;">' + liveCount + '</b><div class="sub">Currently sponsored products</div></div>' +
-        (products.length ? products.map(function(p) {
-            const expiry = p.promotion_expires_at ? new Date(p.promotion_expires_at).getTime() : null;
-            const live = p.is_promoted === true && (!expiry || expiry > now);
-            const expired = p.is_promoted === true && expiry && expiry <= now;
-            const expiryInput = promoDateInput(p.promotion_expires_at && !expired ? p.promotion_expires_at : null);
-            return '<div class="promo-admin-row">' +
-                '<div class="promo-admin-details">' +
-                    '<div style="font-weight:700;font-size:16px;margin-bottom:5px;">' + esc(p.name) + '</div>' +
-                    '<div class="meta">' + esc(p.category || "Uncategorised") + ' · Stock ' + esc(p.stock) + '</div>' +
-                    '<div style="font-weight:700;margin:7px 0;">' + esc(money(p.price)) + '</div>' +
-                    '<span class="promo-admin-status ' + (live ? 'live' : '') + '">' + (live ? 'SPONSORED' : (expired ? 'PROMOTION EXPIRED' : 'NOT SPONSORED')) + '</span>' +
-                '</div>' +
-                '<div class="promo-admin-controls">' +
-                    '<label for="promo-expiry-' + esc(p.id) + '">Promotion ends</label>' +
-                    '<input id="promo-expiry-' + esc(p.id) + '" type="datetime-local" value="' + esc(expiryInput) + '">' +
-                    '<button type="button" onclick="setProductPromotion(\'' + esc(p.id) + '\', true)">' + (live ? 'Update expiry' : 'Sponsor product') + '</button>' +
-                    (p.is_promoted === true ? '<button type="button" style="background:#555;" onclick="setProductPromotion(\'' + esc(p.id) + '\', false)">Remove sponsorship</button>' : '') +
-                '</div>' +
-            '</div>';
-        }).join("") : '<div class="od-empty">No active, approved products are available to sponsor yet.</div>');
-}
-
-async function setProductPromotion(productId, enabled) {
-    const input = document.getElementById("promo-expiry-" + productId);
-    let expiry = null;
-
-    if (enabled) {
-        if (!input || !input.value) {
-            alert("Choose when this promotion should end.");
-            return;
-        }
-        const parsed = new Date(input.value);
-        if (!Number.isFinite(parsed.getTime()) || parsed.getTime() <= Date.now()) {
-            alert("Choose a future date and time for this promotion.");
-            return;
-        }
-        expiry = parsed.toISOString();
-    }
-
-    const { error } = await supabaseClient
-        .from("products")
-        .update({ is_promoted: enabled, promotion_expires_at: expiry })
-        .eq("id", productId);
-
-    if (error) {
-        alert("Could not update sponsorship: " + error.message);
-        return;
-    }
-
-    await loadPromotionsAdmin();
-}
-
-
 
 // ---------- Seller rules ----------
 async function loadRulesAdmin() {
@@ -851,6 +756,20 @@ async function loadRulesAdmin() {
                 <div><label style="font-size:13px;font-weight:700;">Max price per item (R)</label>
                     <input type="number" min="0" id="rule-new_seller_max_price" value="${esc(data.new_seller_max_price)}" style="margin:4px 0 0;"></div>
             </div>
+            <p class="rev-note" style="margin:16px 0 8px;">Commission &amp; plans</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+                <div><label style="font-size:13px;font-weight:700;">Standard commission (%)</label>
+                    <input type="number" min="0" max="50" step="0.1" id="rule-standard_commission_pct" value="${esc(data.standard_commission_pct)}" style="margin:4px 0 0;"></div>
+                <div><label style="font-size:13px;font-weight:700;">Pro plan commission (%)</label>
+                    <input type="number" min="0" max="50" step="0.1" id="rule-pro_commission_pct" value="${esc(data.pro_commission_pct)}" style="margin:4px 0 0;"></div>
+                <div><label style="font-size:13px;font-weight:700;">Pro plan price (R / month)</label>
+                    <input type="number" min="0" id="rule-pro_price_monthly" value="${esc(data.pro_price_monthly)}" style="margin:4px 0 0;"></div>
+                <div><label style="font-size:13px;font-weight:700;">Launch commission (%)</label>
+                    <input type="number" min="0" max="50" step="0.1" id="rule-launch_commission_pct" value="${esc(data.launch_commission_pct)}" style="margin:4px 0 0;"></div>
+                <div><label style="font-size:13px;font-weight:700;">Launch deal length (months)</label>
+                    <input type="number" min="0" id="rule-launch_months" value="${esc(data.launch_months)}" style="margin:4px 0 0;"></div>
+            </div>
+            <p class="rev-note" style="margin:8px 0 0;">The launch commission applies automatically to Verified suppliers for this many months after approval. Set it to 0 to switch it off.</p>
             <button type="button" onclick="saveRulesAdmin()" style="margin:14px 0 0;">Save rules</button>
             <span id="rules-msg" class="rev-note" style="margin-left:10px;"></span>
         </div>
@@ -859,7 +778,8 @@ async function loadRulesAdmin() {
 
 async function saveRulesAdmin() {
 
-    const keys = ["graduation_orders", "probation_hold_days", "new_seller_listing_limit", "new_seller_max_price"];
+    const keys = ["graduation_orders", "probation_hold_days", "new_seller_listing_limit", "new_seller_max_price",
+                  "standard_commission_pct", "pro_commission_pct", "pro_price_monthly", "launch_commission_pct", "launch_months"];
     const rules = {};
 
     keys.forEach(function(k) { rules[k] = Number(document.getElementById("rule-" + k).value); });
@@ -867,6 +787,68 @@ async function saveRulesAdmin() {
     const { error } = await supabaseClient.rpc("set_seller_rules", { p_rules: rules });
 
     document.getElementById("rules-msg").textContent = error ? "Could not save: " + error.message : "Saved.";
+}
+
+
+// ---------- Plans ----------
+async function loadPlansAdmin() {
+
+    const box = document.getElementById("plans-admin");
+
+    const [rev, req] = await Promise.all([
+        supabaseClient.rpc("get_plan_revenue"),
+        supabaseClient.from("suppliers").select("id, business_name, plan, plan_ends_at, plan_requested_at")
+            .not("plan_requested_at", "is", null)
+    ]);
+
+    if (rev.error) {
+        box.innerHTML = '<div class="empty"><h2>Plans unavailable</h2><p>' + esc(rev.error.message) +
+            '</p><p>Run 17_migration16_commission_plans.sql in Supabase.</p></div>';
+        return;
+    }
+
+    const revenue = rev.data || {};
+    const requests = (req.data || []).filter(function(s) { return s.plan !== "pro" || !s.plan_ends_at || new Date(s.plan_ends_at) < new Date(); });
+
+    const reqRows = requests.map(function(s) {
+        return `<div class="od-item"><div style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(s.business_name)}</span>
+                    <span class="od-pill amber">Wants Pro</span>
+                    <span class="sp"></span>
+                    <input type="number" min="1" max="24" value="1" id="pm-${esc(s.id)}" style="width:70px;margin:0;" title="Months paid">
+                    <input type="text" placeholder="Amount received (R)" id="pa-${esc(s.id)}" style="width:170px;margin:0;">
+                    <button type="button" onclick="activatePro('${esc(s.id)}')">Activate Pro</button>
+                </div></div>`;
+    }).join("") || '<div class="od-empty">No one has asked for the Pro plan.</div>';
+
+    box.innerHTML = `
+        <h2 class="rev-title">Plans</h2>
+        <div class="od-cards" style="grid-template-columns:repeat(3,1fr);">
+            <div class="od-card ${requests.length ? "hot" : ""}"><span class="n">${requests.length}</span><span class="l">Pro requests waiting</span></div>
+            <div class="od-card"><span class="n">${esc(revenue.active_pro || 0)}</span><span class="l">Active Pro suppliers</span></div>
+            <div class="od-card"><span class="n">${esc(money(revenue.last_30_days))}</span><span class="l">Plan revenue, 30 days</span></div>
+        </div>
+        <h4 class="rev-note" style="margin:16px 0 8px;">Activate once you've received their payment by EFT or your own invoice</h4>
+        ${reqRows}
+        <p class="rev-note">Total plan revenue to date: ${esc(money(revenue.total))}. This is a taxable sale like your commission.</p>
+    `;
+}
+
+async function activatePro(id) {
+
+    const months = Number(document.getElementById("pm-" + id).value);
+    const amount = Number(document.getElementById("pa-" + id).value);
+
+    if (!months || months < 1) { alert("Enter how many months were paid for."); return; }
+    if (!amount && amount !== 0) { alert("Enter the amount received."); return; }
+
+    const { error } = await supabaseClient.rpc("set_supplier_plan", {
+        p_supplier: id, p_plan: "pro", p_months: months, p_amount: amount
+    });
+
+    if (error) { alert("Could not activate: " + error.message); }
+
+    loadPlansAdmin();
 }
 
 var ADM_ORDERS = [];
