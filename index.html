@@ -2431,7 +2431,33 @@ function readDeliveryAddress() {
     };
 }
 
+let isPlacingOrder = false;
+
+function resetPlaceOrderButton() {
+    isPlacingOrder = false;
+
+    const payButton = document.getElementById("checkout-pay-button");
+    if (payButton) {
+        payButton.disabled = false;
+        payButton.textContent = "Pay Now";
+        payButton.style.opacity = "1";
+        payButton.style.cursor = "pointer";
+    }
+}
+
 async function placeOrder() {
+
+    // Prevent rapid clicks from creating multiple orders.
+    if (isPlacingOrder) return;
+    isPlacingOrder = true;
+
+    const payButton = document.getElementById("checkout-pay-button");
+    if (payButton) {
+        payButton.disabled = true;
+        payButton.textContent = "Creating order…";
+        payButton.style.opacity = "0.65";
+        payButton.style.cursor = "not-allowed";
+    }
 
     let name = document.getElementById("customer-name").value.trim();
     let phone = document.getElementById("customer-phone").value.trim();
@@ -2439,6 +2465,7 @@ async function placeOrder() {
 
     if (name === "" || phone === "" || email === "") {
         alert("Please complete all your details before placing the order.");
+        resetPlaceOrderButton();
         return;
     }
 
@@ -2446,6 +2473,7 @@ async function placeOrder() {
 
     if (addr.error) {
         alert(addr.error);
+        resetPlaceOrderButton();
         return;
     }
 
@@ -2455,11 +2483,13 @@ async function placeOrder() {
 
     if (cart.length === 0) {
         alert("Your cart is empty!");
+        resetPlaceOrderButton();
         return;
     }
 
     if (!checkoutDeliveryReady) {
         alert("Please wait until delivery options have loaded.");
+        resetPlaceOrderButton();
         return;
     }
 
@@ -2470,29 +2500,43 @@ async function placeOrder() {
         };
     });
 
-    const { data: result, error } = await supabaseClient.rpc("place_order_with_delivery", {
-        customer_name_input: name,
-        phone_input: phone,
-        email_input: email,
-        address_input: address,
-        items_input: cart.map(function(item) {
-            return {
-                product_id: item.product_id,
-                quantity: item.quantity || 1
-            };
-        }),
-        delivery_choices_input: deliveryChoices
-    });
+    try {
+        const { data: result, error } = await supabaseClient.rpc("place_order_with_delivery", {
+            customer_name_input: name,
+            phone_input: phone,
+            email_input: email,
+            address_input: address,
+            items_input: cart.map(function(item) {
+                return {
+                    product_id: item.product_id,
+                    quantity: item.quantity || 1
+                };
+            }),
+            delivery_choices_input: deliveryChoices
+        });
 
-    if (error) {
-        console.error("PLACE ORDER ERROR:", error);
-        alert("Order error: " + error.message);
-        return;
+        if (error) {
+            console.error("PLACE ORDER ERROR:", error);
+            alert("Order error: " + error.message);
+            resetPlaceOrderButton();
+            return;
+        }
+
+        if (!result || !result.order_number) {
+            console.error("PLACE ORDER ERROR: No order number returned.", result);
+            alert("We couldn't confirm your order was created. Please contact PoundTech before trying again.");
+            resetPlaceOrderButton();
+            return;
+        }
+
+        // Keep the lock active while the existing Yoco hand-off runs.
+        await startPayment(result.order_number);
+
+    } catch (e) {
+        console.error("PLACE ORDER ERROR:", e);
+        alert("We couldn't complete checkout. Please try again.");
+        resetPlaceOrderButton();
     }
-
-    const orderNumber = result.order_number;
-
-    await startPayment(orderNumber);
 }
 
 
