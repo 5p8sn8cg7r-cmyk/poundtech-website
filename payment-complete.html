@@ -117,6 +117,7 @@ async function check() {
             try {
                 localStorage.removeItem("poundtechCart");
                 localStorage.removeItem("poundtechCheckoutToken");
+                localStorage.removeItem("poundtechCheckoutRequest");
             } catch (e) { /* ignore */ }
             show('<h1>Payment received</h1><p>Thank you. Your PoundTech order is confirmed and the supplier has been notified.</p>' +
                  orderBox() +
