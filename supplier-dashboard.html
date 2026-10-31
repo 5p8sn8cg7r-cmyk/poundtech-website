@@ -1692,6 +1692,19 @@ async function loadSupplierOrders() {
         return;
     }
 
+    const { data: deliveries, error: deliveriesError } =
+        await supabaseClient
+        .from("order_deliveries")
+        .select("*")
+        .eq("supplier_id", supplier.id)
+        .in("order_id", orderIds);
+
+    if (deliveriesError) {
+        console.error(deliveriesError);
+        container.innerHTML = "<p>Unable to load delivery details.</p>";
+        return;
+    }
+
     SUP_ORDERS = [];
 
     for (const order of orders) {
@@ -1706,6 +1719,7 @@ async function loadSupplierOrders() {
             order: order,
             items: supplierItems,
             status: rec ? rec.status : "Pending",
+            delivery: (deliveries || []).find(d => d.order_id === order.id) || null,
             total: supplierItems.reduce((t, i) => t + (Number(i.price) * Number(i.quantity)), 0)
         });
     }
@@ -1855,10 +1869,36 @@ function supplierOrderHTML(o) {
                 }).join("")}
 
                 <div class="od-actions">
-                    <label for="st-${esc(order.id)}"><strong>Status</strong></label>
+                    <label for="st-${esc(order.id)}"><strong>Order status</strong></label>
                     <select id="st-${esc(order.id)}" onchange="updateSupplierOrderStatus('${esc(order.id)}', this.value)">${options}</select>
                     <span class="meta">${esc(new Date(order.created_at).toLocaleString())}</span>
                 </div>
+
+                ${o.delivery ? `
+                    <h4>Delivery and tracking</h4>
+                    <p style="font-size:13px;color:#666;">Enter the courier and tracking details customers will use to follow this delivery.</p>
+                    <label for="courier-${esc(order.id)}"><strong>Courier name</strong></label>
+                    <input id="courier-${esc(order.id)}" type="text" maxlength="120"
+                           value="${esc(o.delivery.courier_name || "")}"
+                           placeholder="e.g. The Courier Guy, Pargo, RAM"
+                           style="display:block;width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px;">
+                    <label for="tracking-${esc(order.id)}"><strong>Waybill / tracking reference</strong></label>
+                    <input id="tracking-${esc(order.id)}" type="text" maxlength="160"
+                           value="${esc(o.delivery.tracking_reference || "")}"
+                           placeholder="Enter tracking or waybill number"
+                           style="display:block;width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px;">
+                    <label for="delivery-status-${esc(order.id)}"><strong>Delivery status</strong></label>
+                    <select id="delivery-status-${esc(order.id)}"
+                            style="display:block;padding:10px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px;">
+                        ${["Pending","Ready for collection","Shipped","In transit","Out for delivery","Delivered","Collected","Exception"].map(function(st) {
+                            return `<option value="${st}" ${(o.delivery.status || "Pending") === st ? "selected" : ""}>${st}</option>`;
+                        }).join("")}
+                    </select>
+                    <button type="button" onclick="saveSupplierDelivery('${esc(order.id)}')">Save delivery details</button>
+                ` : `
+                    <h4>Delivery and tracking</h4>
+                    <p style="color:#777;font-size:13px;">No delivery record has been created for this order yet. PoundTech will need to create its delivery record before tracking details can be added.</p>
+                `}
             </div>
         </details>
     `;
@@ -2075,6 +2115,34 @@ loadSupplierPayouts();
     t.textContent = text;
     document.body.appendChild(t);
     setTimeout(function() { t.remove(); }, 2500);
+}
+
+async function saveSupplierDelivery(orderId) {
+
+    const courierInput = document.getElementById("courier-" + orderId);
+    const trackingInput = document.getElementById("tracking-" + orderId);
+    const statusInput = document.getElementById("delivery-status-" + orderId);
+
+    if (!courierInput || !trackingInput || !statusInput) {
+        alert("Delivery fields could not be found. Please refresh the page.");
+        return;
+    }
+
+    const { error } = await supabaseClient.rpc("update_supplier_order_delivery", {
+        p_order_id: Number(orderId),
+        p_courier_name: courierInput.value.trim(),
+        p_tracking_reference: trackingInput.value.trim(),
+        p_status: statusInput.value
+    });
+
+    if (error) {
+        console.error("DELIVERY UPDATE ERROR:", error);
+        alert("Unable to save delivery details: " + error.message);
+        return;
+    }
+
+    showOrderToast("Delivery details saved.");
+    loadSupplierOrders();
 }
 
 async function updateSupplierOrderStatus(orderId, newStatus) {
