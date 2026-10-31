@@ -168,6 +168,49 @@ async function trackOrder() {
 
     const order = data[0];
 
+    // Fetch courier and delivery information separately from the overall order status.
+    const { data: deliveries, error: deliveryError } =
+        await supabaseClient.rpc(
+            "track_poundtech_deliveries",
+            {
+                lookup_order_number: orderNumber,
+                lookup_email: email
+            }
+        );
+
+    if (deliveryError) {
+        console.error("DELIVERY TRACKING ERROR:", deliveryError);
+    }
+
+    function escapeHTML(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    const deliveryHTML = deliveryError
+        ? `<p style="color:#a00;">Delivery tracking is temporarily unavailable. Please try again later.</p>`
+        : deliveries && deliveries.length
+            ? deliveries.map(function(d, index) {
+                const tracking = d.tracking_reference
+                    ? `<p><strong>Waybill / tracking reference:</strong><br>${escapeHTML(d.tracking_reference)}</p>`
+                    : `<p style="color:#777;">A tracking reference has not been added yet.</p>`;
+
+                return `
+                    <div style="background:white;border:1px solid #ddd;border-radius:8px;padding:16px;margin-top:12px;">
+                        <h4 style="margin:0 0 10px;">Delivery ${index + 1}${d.supplier_name ? " — " + escapeHTML(d.supplier_name) : ""}</h4>
+                        <p><strong>Delivery method:</strong> ${escapeHTML(d.delivery_method || "Not specified")}</p>
+                        <p><strong>Courier:</strong> ${escapeHTML(d.courier_name || "Not yet assigned")}</p>
+                        ${tracking}
+                        <p style="margin-bottom:0;"><strong>Delivery progress:</strong> ${escapeHTML(d.delivery_status || "Pending")}</p>
+                    </div>
+                `;
+            }).join("")
+            : `<p style="color:#777;">No courier or tracking details have been added yet. Please check again later.</p>`;
+
     result.innerHTML = `
         <div style="
             background:#f5f5f5;
@@ -176,22 +219,25 @@ async function trackOrder() {
         ">
 
             <h3 style="margin-top:0;">
-                Order ${order.order_number}
+                Order ${escapeHTML(order.order_number)}
             </h3>
 
             <p>
-                <strong>Status:</strong>
-                ${order.status}
+                <strong>Order status:</strong>
+                ${escapeHTML(order.status)}
             </p>
 
             <p>
                 <strong>Total:</strong>
-                R${order.total}
+                R${Number(order.total || 0).toFixed(2)}
             </p>
 
             <p style="color:#777;">
-                ${new Date(order.created_at).toLocaleString()}
+                ${escapeHTML(new Date(order.created_at).toLocaleString())}
             </p>
+
+            <h3 style="margin:22px 0 8px;">Delivery tracking</h3>
+            ${deliveryHTML}
 
         </div>
     `;
