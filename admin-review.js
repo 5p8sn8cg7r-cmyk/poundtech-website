@@ -57,6 +57,10 @@
             ["address", "Business address confirmed"],
             ["contact", "Phone and email reach the applicant"]
         ],
+        private_sellers: [
+            ["id", "ID document checked and matches the applicant's name"],
+            ["contact", "Phone and email reach the applicant"]
+        ],
         mechanics: [
             ["id", "Owner ID checked and matches the contact person"],
             ["reg", "Business registration checked on CIPC (or sole proprietor confirmed)"],
@@ -187,7 +191,7 @@
                    esc(DOC_LABELS[d.type] || d.type) + '</button>';
         }).join("");
 
-        var required = kind === "suppliers" ? ["id", "bank", "address"] : ["id", "address"];
+        var required = kind === "suppliers" ? ["id", "bank", "address"] : kind === "private_sellers" ? ["id"] : ["id", "address"];
         var have = docs.map(function (d) { return d.type; });
         var missing = required.filter(function (t) { return have.indexOf(t) === -1; });
 
@@ -197,6 +201,8 @@
 
         var details = kind === "suppliers"
             ? '<p><strong>Business type:</strong> ' + esc(r.business_type) + '</p>'
+            : kind === "private_sellers"
+            ? ''
             : '<p><strong>Service area:</strong> ' + esc(r.service_area || "Not provided") + '</p>' +
               '<p><strong>Services:</strong> ' + esc(r.services || "Not provided") + '</p>';
 
@@ -264,7 +270,7 @@
         return { checks: checks, notes: card.querySelector("[data-notes]").value.trim() };
     }
 
-    function table(kind) { return kind === "suppliers" ? "suppliers" : "mechanics"; }
+    function table(kind) { return kind === "suppliers" ? "suppliers" : kind === "private_sellers" ? "private_sellers" : "mechanics"; }
 
     async function act(kind, id, action, path) {
 
