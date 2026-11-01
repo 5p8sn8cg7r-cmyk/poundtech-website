@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Pre-Owned Listings | PoundTech</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f5f7;
+    margin: 0;
+    color: #222;
+}
+
+header {
+    background: #111;
+    color: white;
+    padding: 22px 25px;
+    text-align: center;
+}
+
+header h1 { margin: 0; font-size: 28px; }
+header span { color: #e00000; }
+header p { margin: 4px 0 0; color: #ccc; font-size: 14px; }
+
+.container {
+    max-width: 960px;
+    margin: 30px auto;
+    padding: 0 20px 60px;
+}
+
+#login {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 400px;
+    margin: 60px auto;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+}
+
+#login h2 { margin-top: 0; }
+
+input, textarea, select {
+    width: 100%;
+    padding: 11px;
+    margin-top: 8px;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+label { font-weight: bold; font-size: 14px; display: block; margin-top: 10px; }
+
+button, .btn {
+    padding: 11px 18px;
+    background: #e00000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+button:hover, .btn:hover { background: #c00000; }
+
+button.secondary { background: #eee; color: #222; }
+button.secondary:hover { background: #ddd; }
+
+#error { color: #c62828; }
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+}
+
+.card h2 { margin-top: 0; }
+
+.notice-box {
+    background: #fff3cd;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: #7a5a00;
+}
+
+.listing-row {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+}
+
+.listing-row:last-child { border-bottom: none; }
+
+.listing-row img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #eee;
+    flex-shrink: 0;
+}
+
+.listing-row .info { flex: 1; min-width: 180px; }
+.listing-row .info strong { display: block; }
+.listing-row .info .meta { font-size: 12px; color: #777; margin-top: 2px; }
+
+.pill {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    background: #eee;
+    color: #555;
+}
+
+.pill-active { background: #e6f4ea; color: #16803c; }
+.pill-pending { background: #fff3cd; color: #856404; }
+.pill-reserved { background: #fde7d9; color: #a04a00; }
+.pill-sold { background: #e8e8e8; color: #555; }
+.pill-removed { background: #fdecec; color: #8a1111; }
+
+.empty {
+    text-align: center;
+    color: #777;
+    padding: 30px 10px;
+}
+
+.sales-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.sales-row:last-child { border-bottom: none; }
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 14px;
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.back-link:hover { color: #e00000; }
+
+#new-listing-form { display: none; }
+
+.hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>POUND<span>TECH</span></h1>
+    <p>My Pre-Owned Listings</p>
+</header>
+
+<div class="container">
+
+    <a class="back-link" href="/">&larr; Back to marketplace</a>
+
+    <div id="login">
+        <h2>Seller Login</h2>
+        <input id="login-email" type="email" placeholder="Your email">
+        <input id="login-password" type="password" placeholder="Password">
+        <button onclick="sellerLogin()">Login</button>
+        <p id="error"></p>
+        <p style="font-size:13px; margin-top:16px;">
+            Not approved yet? <a href="sell-preowned-apply.html" style="color:#e00000;">Apply here</a>
+        </p>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+
+        <div class="topbar">
+            <div>
+                <strong id="seller-name-label"></strong>
+                <span id="status-pill"></span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button id="add-listing-btn" onclick="toggleNewListingForm()">+ Add a listing</button>
+                <button class="secondary" onclick="sellerLogout()">Logout</button>
+            </div>
+        </div>
+
+        <div id="pending-notice" class="notice-box" style="display:none;">
+            Your application is still being reviewed. You'll be able to list items once PoundTech approves it.
+        </div>
+
+        <div class="card" id="new-listing-form">
+            <h2>Add a Listing</h2>
+
+            <div id="listing-message"></div>
+
+            <label for="l-title">Title</label>
+            <input id="l-title" type="text" placeholder="e.g. Used Alternator - Toyota Corolla">
+
+            <label for="l-category">Category</label>
+            <select id="l-category">
+                <option>Engine Parts</option>
+                <option>Body Parts</option>
+                <option>Electrical</option>
+                <option>Suspension &amp; Brakes</option>
+                <option>Interior</option>
+                <option>Wheels &amp; Tyres</option>
+                <option>Tools &amp; Accessories</option>
+                <option>Other</option>
+            </select>
+
+            <label for="l-condition">Condition</label>
+            <select id="l-condition">
+                <option>Like New</option>
+                <option selected>Good</option>
+                <option>Fair</option>
+                <option>For Parts</option>
+            </select>
+
+            <label for="l-price">Price (R)</label>
+            <input id="l-price" type="number" min="1" step="1" placeholder="e.g. 450">
+
+            <label for="l-compat">Vehicle compatibility (optional)</label>
+            <input id="l-compat" type="text" placeholder="e.g. Toyota Corolla 2010-2016">
+
+            <label for="l-description">Description</label>
+            <textarea id="l-description" rows="4" placeholder="Condition, why you're selling, any flaws..."></textarea>
+
+            <label for="l-photo">Photo</label>
+            <input id="l-photo" type="file" accept="image/*">
+
+            <div class="hp" aria-hidden="true">
+                <label for="l-website">Leave this empty</label>
+                <input id="l-website" type="text" tabindex="-1" autocomplete="off">
+            </div>
+
+            <div style="margin-top:16px; display:flex; gap:10px;">
+                <button id="save-listing-btn" onclick="createListing()">Publish Listing</button>
+                <button class="secondary" onclick="toggleNewListingForm()">Cancel</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Your Listings</h2>
+            <div id="listings-list"><div class="empty">Loading&hellip;</div></div>
+        </div>
+
+        <div class="card">
+            <h2>Your Sales &amp; Payouts</h2>
+            <p style="font-size:13px; color:#777; margin-top:-8px;">
+                Payouts are held for a short period after a sale, then PoundTech pays you by EFT.
+            </p>
+            <div id="sales-list"><div class="empty">Loading&hellip;</div></div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const IMAGE_BUCKET = "preowned-images";
+const MAX_IMAGE_SIDE = 1200;
+const MAX_IMAGE_INPUT_BYTES = 15 * 1024 * 1024;
+const MAX_IMAGE_OUTPUT_BYTES = 2 * 1024 * 1024;
+
+let currentSeller = null;
+
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function money(value) {
+    const n = Number(value) || 0;
+    return "R" + n.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function uniqueName() {
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+
+
+// ---------- Image resize/upload (same pipeline as the supplier dashboard) ----------
+
+function readImage(file) {
+    return new Promise(function (resolve, reject) {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = function () {
+            URL.revokeObjectURL(url);
+            reject(new Error("That file could not be read as a photo."));
+        };
+        img.src = url;
+    });
+}
+
+async function resizeImage(file, maxSide, firstQuality, maxBytes) {
+
+    maxSide = maxSide || MAX_IMAGE_SIDE;
+    firstQuality = firstQuality || 0.82;
+    maxBytes = maxBytes || MAX_IMAGE_OUTPUT_BYTES;
+
+    if (!file.type || file.type.indexOf("image/") !== 0) {
+        throw new Error("Please choose a photo (JPG, PNG or WebP).");
+    }
+    if (file.size > MAX_IMAGE_INPUT_BYTES) {
+        throw new Error("That photo is too large. Please choose one under 15 MB.");
+    }
+
+    const img = await readImage(file);
+    const width = img.width || img.naturalWidth;
+    const height = img.height || img.naturalHeight;
+
+    const scale = Math.min(1, maxSide / Math.max(width, height));
+    const outWidth = Math.max(1, Math.round(width * scale));
+    const outHeight = Math.max(1, Math.round(height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = outWidth;
+    canvas.height = outHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, outWidth, outHeight);
+    ctx.drawImage(img, 0, 0, outWidth, outHeight);
+
+    if (img.close) { img.close(); }
+
+    function toBlob(quality) {
+        return new Promise(function (resolve) {
+            canvas.toBlob(resolve, "image/jpeg", quality);
+        });
+    }
+
+    let blob = await toBlob(firstQuality);
+    if (blob && blob.size > maxBytes) { blob = await toBlob(0.6); }
+    if (!blob || blob.size > maxBytes) {
+        throw new Error("That photo could not be made small enough. Please try another.");
+    }
+
+    return blob;
+}
+
+async function uploadListingImage(file, sellerId) {
+
+    const blob = await resizeImage(file);
+    const path = sellerId + "/" + uniqueName() + ".jpg";
+
+    const { error } = await supabaseClient.storage
+        .from(IMAGE_BUCKET)
+        .upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000", upsert: false });
+
+    if (error) { throw new Error(error.message); }
+
+    const { data } = supabaseClient.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+}
+
+
+// ---------- Auth ----------
+
+async function sellerLogin() {
+
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+
+    if (error) {
+        document.getElementById("error").textContent = "Login failed. Please check your email and password.";
+        return;
+    }
+
+    await loadSellerAndShow(data.user.id);
+}
+
+async function sellerLogout() {
+    await supabaseClient.auth.signOut();
+    document.getElementById("login").style.display = "block";
+    document.getElementById("dashboard").style.display = "none";
+}
+
+async function loadSellerAndShow(userId) {
+
+    const { data: seller, error } = await supabaseClient
+        .from("private_sellers")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+    if (error || !seller) {
+        document.getElementById("error").textContent = "We couldn't find a private-seller application for this account.";
+        await supabaseClient.auth.signOut();
+        return;
+    }
+
+    currentSeller = seller;
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("seller-name-label").textContent = seller.business_name || "Your account";
+
+    const statusPill = document.getElementById("status-pill");
+    const addBtn = document.getElementById("add-listing-btn");
+    const pendingNotice = document.getElementById("pending-notice");
+
+    if (seller.status === "Approved") {
+        statusPill.innerHTML = '<span class="pill pill-active">Approved seller</span>';
+        addBtn.style.display = "inline-block";
+        pendingNotice.style.display = "none";
+    } else if (seller.status === "Pending") {
+        statusPill.innerHTML = '<span class="pill pill-pending">Application pending</span>';
+        addBtn.style.display = "none";
+        pendingNotice.style.display = "block";
+    } else {
+        statusPill.innerHTML = '<span class="pill pill-removed">Application rejected</span>';
+        addBtn.style.display = "none";
+        pendingNotice.style.display = "none";
+    }
+
+    loadListings();
+    loadSales();
+}
+
+
+// ---------- Listings ----------
+
+function toggleNewListingForm() {
+    const form = document.getElementById("new-listing-form");
+    form.style.display = form.style.display === "block" ? "none" : "block";
+}
+
+function listingPillClass(status, review) {
+    if (status === "Sold") return "pill-sold";
+    if (status === "Removed") return "pill-removed";
+    if (status === "Reserved") return "pill-reserved";
+    if (review === "pending") return "pill-pending";
+    if (review === "rejected") return "pill-removed";
+    return "pill-active";
+}
+
+function listingLabel(status, review) {
+    if (status === "Sold") return "Sold";
+    if (status === "Removed") return "Removed";
+    if (status === "Reserved") return "Reserved (sale in progress)";
+    if (review === "pending") return "Awaiting review";
+    if (review === "rejected") return "Not approved";
+    return "Live";
+}
+
+async function loadListings() {
+
+    const { data: listings, error } = await supabaseClient
+        .from("preowned_listings")
+        .select("*")
+        .eq("seller_id", currentSeller.id)
+        .order("created_at", { ascending: false });
+
+    const container = document.getElementById("listings-list");
+
+    if (error) {
+        container.innerHTML = '<div class="empty">Could not load your listings.</div>';
+        console.log("SUPABASE ERROR:", error.message);
+        return;
+    }
+
+    if (!listings || listings.length === 0) {
+        container.innerHTML = '<div class="empty">You haven\'t listed anything yet.</div>';
+        return;
+    }
+
+    container.innerHTML = listings.map(function (l) {
+        return `
+            <div class="listing-row">
+                <img src="${esc(l.image_url || '')}" alt="">
+                <div class="info">
+                    <strong>${esc(l.title)}</strong>
+                    <div class="meta">${esc(l.category)} &middot; ${esc(l.condition)} &middot; ${money(l.price)}</div>
+                </div>
+                <span class="pill ${listingPillClass(l.status, l.listing_review)}">${listingLabel(l.status, l.listing_review)}</span>
+                ${l.status === "Active" ? `<button class="secondary" onclick="removeListing('${l.id}')">Remove</button>` : ""}
+            </div>
+        `;
+    }).join("");
+}
+
+async function removeListing(id) {
+
+    if (!confirm("Remove this listing? Buyers will no longer be able to see or buy it.")) { return; }
+
+    const { error } = await supabaseClient
+        .from("preowned_listings")
+        .update({ status: "Removed" })
+        .eq("id", id);
+
+    if (error) {
+        alert("Could not remove the listing: " + error.message);
+        return;
+    }
+
+    loadListings();
+}
+
+async function createListing() {
+
+    if (document.getElementById("l-website").value) { return; }
+
+    const title = document.getElementById("l-title").value.trim();
+    const category = document.getElementById("l-category").value;
+    const condition = document.getElementById("l-condition").value;
+    const price = Number(document.getElementById("l-price").value);
+    const compat = document.getElementById("l-compat").value.trim();
+    const description = document.getElementById("l-description").value.trim();
+    const photoFile = document.getElementById("l-photo").files[0];
+
+    const msg = document.getElementById("listing-message");
+    const button = document.getElementById("save-listing-btn");
+
+    if (!title || !description || !price || price <= 0) {
+        msg.innerHTML = '<p style="color:#c62828;">Please fill in a title, description and a valid price.</p>';
+        return;
+    }
+
+    if (!photoFile) {
+        msg.innerHTML = '<p style="color:#c62828;">Please add a photo.</p>';
+        return;
+    }
+
+    button.disabled = true;
+    msg.innerHTML = '<p>Uploading photo and publishing your listing&hellip;</p>';
+
+    let imageUrl;
+    try {
+        imageUrl = await uploadListingImage(photoFile, currentSeller.id);
+    } catch (e) {
+        button.disabled = false;
+        msg.innerHTML = '<p style="color:#c62828;">' + esc(e.message || "Could not upload that photo.") + '</p>';
+        return;
+    }
+
+    const { error } = await supabaseClient.from("preowned_listings").insert([{
+        seller_id: currentSeller.id,
+        title: title,
+        description: description,
+        category: category,
+        condition: condition,
+        price: price,
+        image_url: imageUrl,
+        vehicle_compatibility: compat || null,
+        status: "Active"
+    }]);
+
+    button.disabled = false;
+
+    if (error) {
+        console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
+        msg.innerHTML = '<p style="color:#c62828;">' + esc(error.message) + '</p>';
+        return;
+    }
+
+    msg.innerHTML = '<p style="color:#16803c;">Listing submitted. PoundTech will review it before it goes live.</p>';
+    document.getElementById("l-title").value = "";
+    document.getElementById("l-price").value = "";
+    document.getElementById("l-compat").value = "";
+    document.getElementById("l-description").value = "";
+    document.getElementById("l-photo").value = "";
+
+    loadListings();
+}
+
+
+// ---------- Sales / payouts ----------
+
+async function loadSales() {
+
+    const { data, error } = await supabaseClient.rpc("get_my_preowned_sales");
+    const container = document.getElementById("sales-list");
+
+    if (error) {
+        container.innerHTML = '<div class="empty">Could not load your sales.</div>';
+        console.log("SUPABASE ERROR:", error.message);
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="empty">No sales yet.</div>';
+        return;
+    }
+
+    container.innerHTML = data.map(function (s) {
+        let status;
+        if (s.payout_status === "Paid") {
+            status = '<span class="pill pill-active">Paid out</span>';
+        } else {
+            status = '<span class="pill pill-pending">Held until ' + esc(new Date(s.release_on).toLocaleDateString("en-ZA")) + '</span>';
+        }
+        return `
+            <div class="sales-row">
+                <span>${esc(s.title)} &middot; ${esc(s.order_number)}</span>
+                <span>${money(s.seller_amount)} ${status}</span>
+            </div>
+        `;
+    }).join("");
+}
+
+
+// ---------- Session restore ----------
+
+(async function restoreSession() {
+
+    const { data } = await supabaseClient.auth.getSession();
+
+    if (data && data.session) {
+        await loadSellerAndShow(data.session.user.id);
+    }
+})();
+
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>
