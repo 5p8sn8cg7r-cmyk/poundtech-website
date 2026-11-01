@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-Owned Parts | PoundTech</title>
+<link rel="stylesheet" href="site.css">
+
+<style>
+
+.preowned-hero {
+    background: #111;
+    color: white;
+    padding: 36px 20px;
+    text-align: center;
+}
+
+.preowned-hero h1 { margin: 0 0 8px; }
+.preowned-hero h1 span { color: #e00000; }
+.preowned-hero p { color: #ccc; max-width: 640px; margin: 0 auto; font-size: 14px; }
+
+.disclaimer-strip {
+    background: #fff3cd;
+    color: #7a5a00;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 22px auto 10px;
+    padding: 0 20px;
+}
+
+.filters select, .filters input {
+    padding: 9px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.filters input { flex: 1; min-width: 160px; }
+
+.grid {
+    max-width: 1100px;
+    margin: 20px auto 60px;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.po-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform .15s ease;
+}
+
+.po-card:hover { transform: translateY(-3px); }
+
+.po-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background: #eee;
+}
+
+.po-card .body { padding: 12px 14px; }
+.po-card h3 { margin: 0 0 4px; font-size: 15px; }
+.po-card .price { font-weight: bold; color: #e00000; font-size: 16px; }
+.po-card .meta { font-size: 12px; color: #777; margin-top: 4px; }
+
+.condition-tag {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    background: #f4f5f7;
+    color: #444;
+    margin-top: 6px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #777;
+}
+
+.cta-sell {
+    max-width: 1100px;
+    margin: 0 auto 10px;
+    padding: 0 20px;
+    text-align: right;
+}
+
+.cta-sell a {
+    color: #e00000;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header class="site-header">
+    <a class="logo" href="/">POUND<span>TECH</span></a>
+    <a class="back" href="/">&larr; Back to marketplace</a>
+</header>
+
+<section class="preowned-hero">
+    <h1>Pre-<span>Owned</span> Parts</h1>
+    <p>Used and refurbished parts listed directly by private sellers &mdash; often the most affordable way to get your car back on the road.</p>
+</section>
+
+<div class="disclaimer-strip">
+    Private seller listings &middot; sold as-is &middot; not inspected or guaranteed by PoundTech
+</div>
+
+<div class="cta-sell">
+    <a href="sell-preowned-apply.html">Have something to sell? Become a private seller &rarr;</a>
+</div>
+
+<div class="filters">
+    <input id="search-box" type="text" placeholder="Search pre-owned parts..." oninput="renderListings()">
+    <select id="category-filter" onchange="renderListings()">
+        <option value="">All categories</option>
+    </select>
+    <select id="condition-filter" onchange="renderListings()">
+        <option value="">Any condition</option>
+        <option>Like New</option>
+        <option>Good</option>
+        <option>Fair</option>
+        <option>For Parts</option>
+    </select>
+</div>
+
+<div class="grid" id="grid">
+    <div class="empty-state">Loading listings&hellip;</div>
+</div>
+
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allListings = [];
+
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function money(value) {
+    const n = Number(value) || 0;
+    return "R" + n.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+
+async function loadListings() {
+
+    const { data, error } = await supabaseClient
+        .from("preowned_listings")
+        .select("id, title, price, category, condition, image_url, status, listing_review")
+        .eq("status", "Active")
+        .eq("listing_review", "approved")
+        .order("created_at", { ascending: false });
+
+    const grid = document.getElementById("grid");
+
+    if (error) {
+        grid.innerHTML = '<div class="empty-state">Could not load listings right now.</div>';
+        console.log("SUPABASE ERROR:", error.message);
+        return;
+    }
+
+    allListings = data || [];
+
+    const categories = [...new Set(allListings.map(function (l) { return l.category; }))].sort();
+    const select = document.getElementById("category-filter");
+    select.innerHTML = '<option value="">All categories</option>' +
+        categories.map(function (c) { return `<option>${esc(c)}</option>`; }).join("");
+
+    renderListings();
+}
+
+function renderListings() {
+
+    const grid = document.getElementById("grid");
+    const search = document.getElementById("search-box").value.trim().toLowerCase();
+    const category = document.getElementById("category-filter").value;
+    const condition = document.getElementById("condition-filter").value;
+
+    const filtered = allListings.filter(function (l) {
+        if (category && l.category !== category) { return false; }
+        if (condition && l.condition !== condition) { return false; }
+        if (search && l.title.toLowerCase().indexOf(search) === -1) { return false; }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div class="empty-state">No pre-owned listings match that search yet. Check back soon.</div>';
+        return;
+    }
+
+    grid.innerHTML = filtered.map(function (l) {
+        return `
+            <a class="po-card" href="preowned-listing.html?id=${esc(l.id)}">
+                <img src="${esc(l.image_url || '')}" alt="${esc(l.title)}">
+                <div class="body">
+                    <h3>${esc(l.title)}</h3>
+                    <div class="price">${money(l.price)}</div>
+                    <div class="meta">${esc(l.category)}</div>
+                    <span class="condition-tag">${esc(l.condition)}</span>
+                </div>
+            </a>
+        `;
+    }).join("");
+}
+
+loadListings();
+
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>
