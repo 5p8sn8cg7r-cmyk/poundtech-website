@@ -200,6 +200,7 @@ input {
         <button onclick="window.location.href='admin.html'">Orders</button>
         <button onclick="window.location.href='admin-mechanics.html'">Mechanic Applications</button>
         <button onclick="window.location.href='admin-suppliers.html'">Supplier Applications</button>
+        <button onclick="window.location.href='admin-private-sellers.html'">Private Sellers</button>
     </div>
 
     <button onclick="adminLogout()">Logout</button>
@@ -239,6 +240,10 @@ input {
 
     <div id="listings-admin" style="display:none;"></div>
 
+    <div id="preowned-listings-admin" style="display:none;"></div>
+
+    <div id="preowned-payouts-admin" style="display:none;"></div>
+
     <div id="rules-admin" style="display:none;"></div>
 
     <div id="plans-admin" style="display:none;"></div>
@@ -277,6 +282,8 @@ function showDashboard() {
     document.getElementById("revenue").style.display = "block";
     document.getElementById("payouts-admin").style.display = "block";
     document.getElementById("listings-admin").style.display = "block";
+    document.getElementById("preowned-listings-admin").style.display = "block";
+    document.getElementById("preowned-payouts-admin").style.display = "block";
     document.getElementById("rules-admin").style.display = "block";
     document.getElementById("plans-admin").style.display = "block";
     document.getElementById("sponsor-admin").style.display = "block";
@@ -285,6 +292,8 @@ function showDashboard() {
     loadRevenue();
     loadPayoutsAdmin();
     loadListingsAdmin();
+    loadPreownedListingsAdmin();
+    loadPreownedPayoutsAdmin();
     loadRulesAdmin();
     loadPlansAdmin();
     loadSponsorAdmin();
@@ -306,6 +315,8 @@ async function adminLogout() {
     document.getElementById("orders").style.display = "none";
     document.getElementById("payouts-admin").style.display = "none";
     document.getElementById("listings-admin").style.display = "none";
+    document.getElementById("preowned-listings-admin").style.display = "none";
+    document.getElementById("preowned-payouts-admin").style.display = "none";
     document.getElementById("rules-admin").style.display = "none";
     document.getElementById("plans-admin").style.display = "none";
     document.getElementById("sponsor-admin").style.display = "none";
@@ -730,6 +741,147 @@ async function reviewListing(id, approve) {
     if (error) { alert("Could not save: " + error.message); }
 
     loadListingsAdmin();
+}
+
+
+// ---------- Pre-owned listings waiting for review ----------
+async function loadPreownedListingsAdmin() {
+
+    const box = document.getElementById("preowned-listings-admin");
+
+    const { data, error } = await supabaseClient.rpc("get_pending_preowned_listings");
+
+    if (error) {
+        box.innerHTML = '<div class="empty"><h2>Pre-owned review unavailable</h2><p>' + esc(error.message) +
+            '</p><p>Run 19_migration18_preowned.sql in Supabase.</p></div>';
+        return;
+    }
+
+    const rows = data || [];
+
+    box.innerHTML = '<h2 class="rev-title">Pre-owned listings to review (' + rows.length + ')</h2>' +
+        (rows.length === 0
+            ? '<div class="od-empty">No private-seller listings waiting. Every new pre-owned listing appears here before going live.</div>'
+            : rows.map(function(l) {
+                return `<div class="od-item"><div style="padding:14px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;">
+                    <div style="width:96px;height:96px;border-radius:8px;background:#eee;overflow:hidden;flex-shrink:0;">
+                        ${l.image_url ? '<img src="' + esc(l.image_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;">' : ""}
+                    </div>
+                    <div style="flex:1;min-width:220px;">
+                        <div class="no">${esc(l.title)}</div>
+                        <div class="meta">${esc(l.seller)} &middot; ${esc(l.category || "")} &middot; ${esc(l.condition || "")}</div>
+                        <div class="tot" style="margin:4px 0;">${esc(money(l.price))}</div>
+                        <div style="font-size:14px;color:#333;">${esc((l.description || "").slice(0, 300))}</div>
+                        <div style="margin-top:10px;">
+                            <button type="button" onclick="reviewPreownedListing('${esc(l.id)}', true)">Approve</button>
+                            <button type="button" style="background:#555;" onclick="reviewPreownedListing('${esc(l.id)}', false)">Reject</button>
+                        </div>
+                    </div>
+                </div></div>`;
+            }).join("")) +
+        '<p class="rev-note">These are private sales, not supplier stock. Check the photo is a real photo of the actual item, the description and condition are honest, and the price is reasonable, then approve or reject.</p>';
+}
+
+async function reviewPreownedListing(id, approve) {
+
+    if (!approve && !confirm("Reject this listing? It will stay hidden from buyers.")) { return; }
+
+    const { error } = await supabaseClient.rpc("review_preowned_listing", { p_listing_id: id, p_approve: approve });
+
+    if (error) { alert("Could not save: " + error.message); }
+
+    loadPreownedListingsAdmin();
+}
+
+
+// ---------- Pre-owned seller payouts ----------
+async function loadPreownedPayoutsAdmin() {
+
+    const box = document.getElementById("preowned-payouts-admin");
+
+    const { data, error } = await supabaseClient.rpc("get_admin_preowned_payouts");
+
+    if (error || !data) {
+        box.innerHTML = '<div class="empty"><h2>Pre-owned payouts unavailable</h2><p>' +
+            esc(error ? error.message : "No data.") +
+            '</p><p>Run 19_migration18_preowned.sql in Supabase.</p></div>';
+        return;
+    }
+
+    const ready = data.ready || [];
+    const held = data.held || [];
+    const paid = data.paid || [];
+
+    const sum = function(rows) { return rows.reduce(function(t, r) { return t + Number(r.amount || 0); }, 0); };
+
+    const readyRows = ready.map(function(r) {
+        return `<div class="od-item"><div style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(r.seller)}</span>
+                    <span class="od-pill amber">Ready</span>
+                    <span class="sp"></span>
+                    <span class="meta">${esc(r.title)} &middot; ${esc(r.order_number)}</span>
+                    <span class="tot">${esc(money(r.amount))}</span>
+                    <input type="text" id="po-payref-${esc(r.order_number)}" placeholder="Payment reference" style="width:200px;margin:0;">
+                    <button type="button" onclick="markPreownedPayoutPaid('${esc(r.order_number)}')">Mark paid</button>
+                </div></div>`;
+    }).join("") || '<div class="od-empty">No pre-owned sale is ready for payout yet.</div>';
+
+    const heldRows = held.map(function(r) {
+        return `<div class="od-item"><div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(r.seller)}</span>
+                    <span class="od-pill">Held</span>
+                    <span class="sp"></span>
+                    <span class="meta">${esc(r.title)} &middot; ${esc(r.order_number)} &middot; Releases ${esc(new Date(r.release_on).toLocaleDateString())}</span>
+                    <span class="tot">${esc(money(r.amount))}</span>
+                </div></div>`;
+    }).join("");
+
+    const paidRows = paid.slice(0, 10).map(function(r) {
+        return `<div class="od-item"><div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(r.seller)}</span>
+                    <span class="od-pill green">Paid</span>
+                    <span class="sp"></span>
+                    <span class="meta">${esc(r.title)} &middot; ${esc(r.order_number)}${r.reference ? " &middot; Ref " + esc(r.reference) : ""}</span>
+                    <span class="tot">${esc(money(r.amount))}</span>
+                </div></div>`;
+    }).join("");
+
+    box.innerHTML = `
+        <h2 class="rev-title">Pre-owned seller payouts</h2>
+        <div class="od-cards" style="grid-template-columns:repeat(3,1fr);">
+            <div class="od-card ${ready.length ? "hot" : ""}"><span class="n">${esc(money(sum(ready)))}</span><span class="l">Ready to pay (${ready.length})</span></div>
+            <div class="od-card"><span class="n">${esc(money(sum(held)))}</span><span class="l">Held (${held.length})</span></div>
+            <div class="od-card"><span class="n">${esc(money(data.commission_total))}</span><span class="l">Commission earned</span></div>
+        </div>
+        ${readyRows}
+        ${heldRows ? '<h4 class="rev-note" style="margin:16px 0 8px;">Held until the hold period ends</h4>' + heldRows : ""}
+        ${paidRows ? '<h4 class="rev-note" style="margin:16px 0 8px;">Recently paid</h4>' + paidRows : ""}
+        <p class="rev-note">Private sellers are paid by EFT, same as suppliers. Pay from your bank, then record the reference here.</p>
+    `;
+}
+
+async function markPreownedPayoutPaid(orderNumber) {
+
+    const input = document.getElementById("po-payref-" + orderNumber);
+    const ref = input ? input.value.trim() : "";
+
+    if (!ref) {
+        alert("Enter your bank payment reference first.");
+        return;
+    }
+
+    if (!confirm("Mark this payout as paid? Only do this after the money has left your bank account.")) {
+        return;
+    }
+
+    const { error } = await supabaseClient.rpc("mark_preowned_payout_paid", {
+        p_order_number: orderNumber,
+        p_reference: ref
+    });
+
+    if (error) { alert("Could not mark it paid: " + error.message); }
+
+    loadPreownedPayoutsAdmin();
 }
 
 
