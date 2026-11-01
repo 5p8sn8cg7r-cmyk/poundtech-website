@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sell on Pre-Owned | PoundTech</title>
+<link rel="stylesheet" href="site.css">
+<style>
+.preowned-wrap{max-width:680px;margin:32px auto;padding:0 16px 50px}
+.preowned-card{background:#fff;border-radius:12px;padding:26px;box-shadow:0 3px 18px #0000000d}
+.preowned-card h2{margin-top:0}
+.preowned-intro{color:#666;line-height:1.6}
+.preowned-tabs{display:flex;gap:8px;margin:20px 0}
+.preowned-tabs button{flex:1;padding:12px;border:1px solid #ddd;border-radius:7px;background:#f4f4f4;font-weight:bold;cursor:pointer}
+.preowned-tabs button.active{background:#111;color:#fff;border-color:#111}
+.preowned-card label{display:block;font-weight:600;margin:15px 0 6px}
+.preowned-card input:not([type=checkbox]):not([type=file]){width:100%;box-sizing:border-box;padding:13px;border:1px solid #ccc;border-radius:7px;font-size:16px}
+.preowned-card input[type=file]{display:block;width:100%;padding:12px;background:#f6f6f6;border-radius:7px;box-sizing:border-box}
+.preowned-hint{font-size:13px;color:#666;line-height:1.5;margin:6px 0}
+.preowned-check{display:flex;align-items:flex-start;gap:10px;margin:20px 0;font-size:14px;line-height:1.5}
+.preowned-check input{margin-top:4px}
+.preowned-submit{width:100%;padding:15px;border:0;border-radius:7px;background:#e00000;color:#fff;font-size:16px;font-weight:bold;cursor:pointer}
+.preowned-submit:disabled{opacity:.55;cursor:wait}
+#seller-message{padding:12px 0;line-height:1.5;overflow-wrap:anywhere}
+#seller-message.error{color:#b00020}
+#seller-message.success{color:#16783a}
+.notice{background:#f4f5f7;border-left:4px solid #e00000;padding:14px;border-radius:6px;margin:18px 0;line-height:1.5;font-size:14px}
+.hidden{display:none!important}
+@media(max-width:600px){.preowned-card{padding:19px}.preowned-wrap{margin-top:18px}}
+</style>
+</head>
+<body>
+<header class="site-header">
+<a class="logo" href="/">POUND<span>TECH</span></a>
+<a class="back" href="/">← Back to marketplace</a>
+</header>
+
+<section class="page-hero">
+<h1>Sell on PoundTech Pre-Owned</h1>
+<p>Create a private seller account and apply to list your pre-owned parts.</p>
+</section>
+
+<main class="preowned-wrap">
+<section class="preowned-card">
+<h2>Private seller registration</h2>
+<p class="preowned-intro">Set up your account, verify your identity and submit your application. Your identity document is stored privately and is only accessible to you and PoundTech's authorised reviewer.</p>
+
+<div class="preowned-tabs">
+<button type="button" id="tab-register" class="active">Create account</button>
+<button type="button" id="tab-login">I already have an account</button>
+</div>
+
+<div id="seller-message" role="status" aria-live="polite"></div>
+
+<form id="register-form">
+<label for="full-name">Full name</label>
+<input id="full-name" type="text" autocomplete="name" maxlength="120" required>
+
+<label for="phone">Mobile number</label>
+<input id="phone" type="tel" autocomplete="tel" placeholder="e.g. 082 123 4567" maxlength="30" required>
+
+<label for="register-email">Email address</label>
+<input id="register-email" type="email" autocomplete="email" required>
+
+<label for="register-password">Password</label>
+<input id="register-password" type="password" autocomplete="new-password" minlength="8" required>
+<p class="preowned-hint">Use at least 8 characters.</p>
+
+<label for="id-document">South African ID document</label>
+<input id="id-document" type="file" accept="application/pdf,image/jpeg,image/png" required>
+<p class="preowned-hint">PDF, JPG or PNG, maximum 5 MB. Upload a clear image or scan. Do not upload your ID number separately.</p>
+
+<div class="preowned-check">
+<input id="seller-terms" type="checkbox" required>
+<label for="seller-terms" style="margin:0;font-weight:normal">I confirm that the information and document I provide are accurate, that I am legally entitled to sell the items I list, and that I accept PoundTech's <a href="terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</label>
+</div>
+<button class="preowned-submit" id="register-button" type="submit">Create account and submit application</button>
+</form>
+
+<form id="login-form" class="hidden">
+<label for="login-email">Email address</label>
+<input id="login-email" type="email" autocomplete="email" required>
+<label for="login-password">Password</label>
+<input id="login-password" type="password" autocomplete="current-password" required>
+<button class="preowned-submit" id="login-button" type="submit">Log in and continue</button>
+</form>
+
+<div id="signed-in-panel" class="hidden">
+<div class="notice" id="account-status"></div>
+<button class="preowned-submit" id="logout-button" type="button">Log out</button>
+</div>
+
+<div class="notice">
+<strong>How verification works</strong><br>
+1. Create your PoundTech account and submit your ID document.<br>
+2. PoundTech reviews your application.<br>
+3. Once approved, you can create Pre-Owned listings.
+</div>
+</section>
+</main>
+
+<footer class="site-footer">
+<nav>
+<a href="terms.html">Terms &amp; Conditions</a>
+<a href="privacy.html">Privacy Policy</a>
+<a href="/">Marketplace</a>
+</nav>
+<p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const registerForm = document.getElementById("register-form");
+const loginForm = document.getElementById("login-form");
+const signedInPanel = document.getElementById("signed-in-panel");
+const messageBox = document.getElementById("seller-message");
+const registerTab = document.getElementById("tab-register");
+const loginTab = document.getElementById("tab-login");
+const BUCKET = "private-seller-documents";
+const MAX_BYTES = 5 * 1024 * 1024;
+const FILE_TYPES = {
+    "application/pdf": "pdf",
+    "image/jpeg": "jpg",
+    "image/png": "png"
+};
+
+function showMessage(message, type) {
+    messageBox.textContent = message || "";
+    messageBox.className = type || "";
+}
+
+function showTab(tab) {
+    const registering = tab === "register";
+    registerForm.classList.toggle("hidden", !registering);
+    loginForm.classList.toggle("hidden", registering);
+    signedInPanel.classList.add("hidden");
+    registerTab.classList.toggle("active", registering);
+    loginTab.classList.toggle("active", !registering);
+    showMessage("");
+}
+
+registerTab.addEventListener("click", () => showTab("register"));
+loginTab.addEventListener("click", () => showTab("login"));
+
+async function showApplication(user) {
+    registerForm.classList.add("hidden");
+    loginForm.classList.add("hidden");
+    signedInPanel.classList.remove("hidden");
+    registerTab.classList.remove("active");
+    loginTab.classList.add("active");
+
+    const { data, error } = await supabaseClient
+        .from("private_sellers")
+        .select("full_name,status,review_notes,created_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (error) {
+        document.getElementById("account-status").textContent =
+            "You are signed in, but we couldn't load your application status. Please refresh.";
+        showMessage(error.message, "error");
+        return;
+    }
+
+    if (data) {
+        let text = "Welcome, " + data.full_name + ". Your application status: " + data.status + ".";
+        if (data.review_notes) text += " Reviewer note: " + data.review_notes;
+        if (data.status === "Approved") text += " Your seller application is approved. Listing tools will be available once the seller dashboard is launched.";
+        document.getElementById("account-status").textContent = text;
+    } else {
+        document.getElementById("account-status").textContent =
+            "You are signed in. Complete the registration form to submit your private seller application.";
+        showMessage("Your account is ready. To submit an application, log out and return to Create account.", "success");
+    }
+}
+
+registerForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const button = document.getElementById("register-button");
+    const fullName = document.getElementById("full-name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("register-email").value.trim().toLowerCase();
+    const password = document.getElementById("register-password").value;
+    const file = document.getElementById("id-document").files[0];
+
+    if (!fullName || !phone || !email || password.length < 8 || !file ||
+        !document.getElementById("seller-terms").checked) {
+        showMessage("Please complete all fields, upload your ID document and accept the terms.", "error");
+        return;
+    }
+
+    const ext = FILE_TYPES[file.type];
+    if (!ext) {
+        showMessage("Your ID document must be a PDF, JPG or PNG file.", "error");
+        return;
+    }
+    if (file.size > MAX_BYTES) {
+        showMessage("Your ID document must be 5 MB or smaller.", "error");
+        return;
+    }
+
+    button.disabled = true;
+    showMessage("Creating your account...", "");
+
+    try {
+        const redirectTo = window.location.origin + window.location.pathname;
+        const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: redirectTo }
+        });
+
+        if (signUpError) throw signUpError;
+
+        if (!signUpData.session || !signUpData.user) {
+            showMessage("Your account has been created. Please confirm your email using the link we sent you. Then return to this page, choose “I already have an account” and log in to submit your application.", "success");
+            button.disabled = false;
+            return;
+        }
+
+        await submitSellerApplication(signUpData.user, fullName, phone, file);
+    } catch (error) {
+        console.error("PRIVATE SELLER REGISTRATION:", error);
+        showMessage(error.message || "We couldn't create your account. Please try again.", "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+loginForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const button = document.getElementById("login-button");
+    button.disabled = true;
+    showMessage("Logging in...", "");
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: document.getElementById("login-email").value.trim().toLowerCase(),
+        password: document.getElementById("login-password").value
+    });
+    button.disabled = false;
+    if (error) {
+        showMessage(error.message, "error");
+        return;
+    }
+    await showApplication(data.user);
+});
+
+async function submitSellerApplication(user, fullName, phone, file) {
+    const ext = FILE_TYPES[file.type];
+    const path = user.id + "/" + crypto.randomUUID() + "." + ext;
+
+    showMessage("Uploading your ID document securely...", "");
+    const { error: uploadError } = await supabaseClient.storage
+        .from(BUCKET)
+        .upload(path, file, { contentType: file.type, upsert: false });
+
+    if (uploadError) throw uploadError;
+
+    showMessage("Submitting your application...", "");
+    const { error: insertError } = await supabaseClient
+        .from("private_sellers")
+        .insert([{
+            user_id: user.id,
+            full_name: fullName,
+            phone: phone,
+            id_document_path: path,
+            terms_accepted_at: new Date().toISOString()
+        }]);
+
+    if (insertError) {
+        console.error("PRIVATE SELLER APPLICATION:", insertError);
+        showMessage("Your ID file uploaded, but the application could not be saved. Please contact PoundTech support before submitting again.", "error");
+        return;
+    }
+
+    showMessage("Your private seller application has been submitted. PoundTech will review it and update your application status here.", "success");
+    await showApplication(user);
+}
+
+document.getElementById("logout-button").addEventListener("click", async function() {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        showMessage(error.message, "error");
+        return;
+    }
+    signedInPanel.classList.add("hidden");
+    registerForm.classList.remove("hidden");
+    loginForm.classList.add("hidden");
+    registerTab.classList.add("active");
+    loginTab.classList.remove("active");
+    showMessage("You have logged out.", "success");
+});
+
+async function checkExistingSession() {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) {
+        showMessage(error.message, "error");
+        return;
+    }
+    if (data.session) await showApplication(data.session.user);
+}
+checkExistingSession();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>
