@@ -139,8 +139,9 @@
         <input id="email" type="email" placeholder="Your email" autocomplete="email">
         <p class="hint">We'll use this email to contact you and set up your seller login once you're approved.</p>
 
-        <label for="address">Your address</label>
-        <textarea id="address" placeholder="Where buyers can arrange collection, or where items will be couriered from"></textarea>
+        <label for="password">Create a password</label>
+        <input id="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8">
+        <p class="hint">This creates your secure PoundTech seller login.</p>
 
         <h3 class="section-head">Document we need to verify you</h3>
         <p class="hint" style="margin-top:0;">
@@ -223,7 +224,7 @@ function showMessage(text, type) {
 }
 
 
-const DOC_BUCKET = "applicant-documents";
+const DOC_BUCKET = "private-seller-documents";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const OK_TYPES = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
 
@@ -251,93 +252,137 @@ async function registerSeller() {
     const fullName = document.getElementById("full-name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const email = document.getElementById("email").value.trim().toLowerCase();
-    const address = document.getElementById("address").value.trim();
-
+    const password = document.getElementById("password").value;
     const button = document.getElementById("apply-button");
 
-    // Bots fill hidden fields. Pretend it worked and do nothing.
     if (document.getElementById("website").value) {
         showMessage("Thank you. Your application has been received.", "success");
         return;
     }
 
-    if (!fullName || !phone || !email || !address) {
-        showMessage("Please complete all fields.", "error");
+    if (!fullName || !phone || !email || !password) {
+        showMessage("Please complete your name, phone, email and password.", "error");
         return;
     }
-
     if (email.indexOf("@") < 1 || email.indexOf(".") < 0) {
         showMessage("Please enter a valid email address.", "error");
         return;
     }
-
+    if (password.length < 8) {
+        showMessage("Your password must be at least 8 characters.", "error");
+        return;
+    }
     const idFile = document.getElementById("doc-id").files[0];
-
     if (!idFile) {
         showMessage("Please upload your ID document.", "error");
         return;
     }
-
     if (!document.getElementById("accept-terms").checked) {
         showMessage("Please confirm the declaration and accept the Terms & Conditions.", "error");
         return;
     }
 
-    button.disabled = true;
-    showMessage("Uploading your document and submitting your application…", "info");
-
-    const appId = crypto.randomUUID();
-    let documents = [];
-
-    try {
-        documents.push(await uploadDoc(appId, "id", idFile));
-    } catch (e) {
-        console.log("UPLOAD ERROR:", e);
-        button.disabled = false;
-        showMessage((e && e.message) || "We couldn't upload your document. Please check the file and try again.", "error");
+    const ext = OK_TYPES[idFile.type];
+    if (!ext) {
+        showMessage("Documents must be PDF, JPG or PNG files.", "error");
+        return;
+    }
+    if (idFile.size > MAX_FILE_BYTES) {
+        showMessage("Your ID document must be 5 MB or smaller.", "error");
         return;
     }
 
-    const { error } = await supabaseClient
-        .from("private_sellers")
-        .insert([{
-            id: appId,
-            business_name: fullName,
-            contact_name: fullName,
-            phone: phone,
-            email: email,
-            address: address,
-            documents: documents,
-            terms_accepted_at: new Date().toISOString(),
-            status: "Pending"
-        }]);
+    button.disabled = true;
+    showMessage("Creating your secure seller account…", "info");
+
+    let user = null;
+    try {
+        // First try signing in. This supports applicants returning after email confirmation.
+        const signedIn = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+
+        if (!signedIn.error && signedIn.data && signedIn.data.user) {
+            user = signedIn.data.user;
+        } else {
+            const signUp = await supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: { emailRedirectTo: window.location.href.split("#")[0] }
+            });
+
+            if (signUp.error) {
+                throw new Error(signUp.error.message);
+            }
+            if (!signUp.data || !signUp.data.user) {
+                throw new Error("Your account could not be created. Please try again.");
+            }
+            if (!signUp.data.session) {
+                button.disabled = false;
+                showMessage("Your account has been created. Please confirm the email sent to " + email + ". Then return to this page, enter the same details and submit your application with your ID document.", "info");
+                return;
+            }
+            user = signUp.data.user;
+        }
+
+        const existing = await supabaseClient
+            .from("private_sellers")
+            .select("id,status")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (existing.error) throw new Error(existing.error.message);
+        if (existing.data) {
+            button.disabled = false;
+            showMessage("An application already exists for this account (" + existing.data.status + "). Please use the seller login page.", "info");
+            return;
+        }
+
+        const path = user.id + "/" + crypto.randomUUID() + "." + ext;
+        const upload = await supabaseClient.storage
+            .from(DOC_BUCKET)
+            .upload(path, idFile, { contentType: idFile.type, upsert: false });
+
+        if (upload.error) throw new Error(upload.error.message);
+
+        const insert = await supabaseClient
+            .from("private_sellers")
+            .insert([{
+                user_id: user.id,
+                full_name: fullName,
+                phone: phone,
+                id_document_path: path,
+                terms_accepted_at: new Date().toISOString(),
+                status: "Pending"
+            }]);
+
+        if (insert.error) {
+            // Remove the uploaded document if the application row could not be created.
+            await supabaseClient.storage.from(DOC_BUCKET).remove([path]);
+            throw new Error(insert.error.message);
+        }
+
+        document.getElementById("application-form").innerHTML = `
+            <div class="done">
+                <div class="tick">✓</div>
+                <h2>Application received</h2>
+                <p>Thank you, ${esc(fullName)}. Your PoundTech seller account has been created and your application is pending review.</p>
+            </div>
+            <div class="next-steps">
+                <strong>What happens next</strong>
+                <ol>
+                    <li>We review your ID and application.</li>
+                    <li>We'll contact you on <strong>${esc(phone)}</strong> if we need anything else.</li>
+                    <li>Once approved, log in to your seller dashboard to list your items.</li>
+                </ol>
+            </div>
+            <a class="btn btn-dark" href="sell-preowned.html">Go to seller login</a>
+        `;
+
+    } catch (e) {
+        console.log("PRIVATE SELLER APPLICATION ERROR:", e);
+        showMessage((e && e.message) || "We couldn't submit your application. Please try again.", "error");
+    }
 
     button.disabled = false;
-
-    if (error) {
-        console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
-        showMessage("There was a problem submitting your application. Please try again.", "error");
-        return;
-    }
-
-    document.getElementById("application-form").innerHTML = `
-        <div class="done">
-            <div class="tick">✓</div>
-            <h2>Application received</h2>
-            <p>Thank you, ${esc(fullName)}. PoundTech will review your application.</p>
-        </div>
-
-        <div class="next-steps">
-            <strong>What happens next</strong>
-            <ol>
-                <li>We review your ID and application.</li>
-                <li>Once it's approved, we'll contact you on <strong>${esc(email)}</strong> or <strong>${esc(phone)}</strong>.</li>
-                <li>Log in to list your first item.</li>
-            </ol>
-        </div>
-
-        <a class="btn btn-dark" href="/">Back to marketplace</a>
-    `;
 }
 
 </script>
