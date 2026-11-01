@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sell Your Pre-Owned Parts | PoundTech</title>
+<link rel="stylesheet" href="site.css">
+
+<style>
+.hint {
+    font-size: 13px;
+    color: #666;
+    margin: -10px 0 18px;
+}
+
+.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.steps div {
+    flex: 1 1 150px;
+    background: #f4f5f7;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.steps span {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    border-radius: 50%;
+    background: #e00000;
+    color: #fff;
+    text-align: center;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.next-steps {
+    text-align: left;
+    background: #f4f5f7;
+    border-left: 4px solid #e00000;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: 20px 0;
+}
+
+.next-steps ol {
+    margin: 8px 0 0 20px;
+}
+
+.next-steps li {
+    margin-bottom: 6px;
+}
+
+.doc-box {
+    background: #f4f5f7;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+.doc-box label { margin-top: 0; }
+
+.doc-box input[type="file"] {
+    background: #fff;
+    margin: 6px 0 0;
+}
+
+.doc-box .hint { margin: 6px 0 0; }
+
+.check-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 18px 0;
+    font-size: 14px;
+}
+
+.check-row input { width: auto; margin: 3px 0 0; }
+
+.notice-box {
+    background: #fff3cd;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #7a5a00;
+}
+
+.hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+</style>
+</head>
+
+<body>
+
+<header class="site-header">
+    <a class="logo" href="/">POUND<span>TECH</span></a>
+    <a class="back" href="/">&larr; Back to marketplace</a>
+</header>
+
+<section class="page-hero">
+    <h1>Sell Your Pre-Owned Parts</h1>
+    <p>List a used or refurbished part on PoundTech as a private seller.</p>
+</section>
+
+<main class="page-main">
+<div class="card" id="application-card">
+
+    <div id="application-form">
+
+        <div class="steps">
+            <div><span>1</span> Apply</div>
+            <div><span>2</span> We review it</div>
+            <div><span>3</span> List your items</div>
+        </div>
+
+        <div class="notice-box">
+            Pre-Owned listings are private sales, separate from PoundTech's supplier catalogue. Items are sold
+            as-is, and PoundTech does not inspect or guarantee them the way it does supplier products.
+            We check your ID so buyers know who they're dealing with.
+        </div>
+
+        <div id="message" role="status"></div>
+
+        <label for="full-name">Your full name</label>
+        <input id="full-name" type="text" placeholder="As it appears on your ID" autocomplete="name">
+
+        <label for="phone">Phone number</label>
+        <input id="phone" type="tel" placeholder="Your phone number" autocomplete="tel">
+
+        <label for="email">Email address</label>
+        <input id="email" type="email" placeholder="Your email" autocomplete="email">
+        <p class="hint">We'll use this email to contact you and set up your seller login once you're approved.</p>
+
+        <label for="address">Your address</label>
+        <textarea id="address" placeholder="Where buyers can arrange collection, or where items will be couriered from"></textarea>
+
+        <h3 class="section-head">Document we need to verify you</h3>
+        <p class="hint" style="margin-top:0;">
+            PDF, JPG or PNG, up to 5 MB. Only PoundTech's review team can open this file.
+        </p>
+
+        <div class="doc-box">
+            <label for="doc-id">Your ID document *</label>
+            <input id="doc-id" type="file" accept="application/pdf,image/jpeg,image/png">
+        </div>
+
+        <div class="check-row">
+            <input type="checkbox" id="accept-terms">
+            <label for="accept-terms" style="margin:0;font-weight:normal;">
+                I confirm that I am the true owner of anything I list, that it is genuine and accurately described,
+                and I accept the
+                <a href="terms.html" target="_blank" style="color:#e00000;">Terms &amp; Conditions</a>.
+            </label>
+        </div>
+
+        <div class="hp" aria-hidden="true">
+            <label for="website">Leave this empty</label>
+            <input id="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <button class="btn" id="apply-button" onclick="registerSeller()">
+            Apply to Sell Pre-Owned Parts
+        </button>
+
+        <p class="hint" style="margin-top:16px;">
+            Already approved? <a href="sell-preowned.html" style="color:#e00000; font-weight:bold;">Go to your seller page</a>
+        </p>
+
+    </div>
+
+</div>
+</main>
+
+<footer class="site-footer">
+    <nav>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="refunds.html">Refund &amp; Returns</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delivery.html">Delivery Policy</a>
+    </nav>
+    <p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+function esc(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+
+function showMessage(text, type) {
+
+    const message = document.getElementById("message");
+
+    if (!text) {
+        message.className = "";
+        message.textContent = "";
+        return;
+    }
+
+    message.className = "message message-" + (type || "info");
+    message.textContent = text;
+}
+
+
+const DOC_BUCKET = "applicant-documents";
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const OK_TYPES = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+
+async function uploadDoc(appId, type, file) {
+
+    const ext = OK_TYPES[file.type];
+
+    if (!ext) { throw new Error("Documents must be PDF, JPG or PNG files."); }
+    if (file.size > MAX_FILE_BYTES) { throw new Error(file.name + " is larger than 5 MB."); }
+
+    const path = appId + "/" + type + "-" + crypto.randomUUID().slice(0, 8) + "." + ext;
+
+    const { error } = await supabaseClient.storage
+        .from(DOC_BUCKET)
+        .upload(path, file, { contentType: file.type, upsert: false });
+
+    if (error) { throw error; }
+
+    return { type: type, path: path, name: file.name.slice(0, 80) };
+}
+
+
+async function registerSeller() {
+
+    const fullName = document.getElementById("full-name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const address = document.getElementById("address").value.trim();
+
+    const button = document.getElementById("apply-button");
+
+    // Bots fill hidden fields. Pretend it worked and do nothing.
+    if (document.getElementById("website").value) {
+        showMessage("Thank you. Your application has been received.", "success");
+        return;
+    }
+
+    if (!fullName || !phone || !email || !address) {
+        showMessage("Please complete all fields.", "error");
+        return;
+    }
+
+    if (email.indexOf("@") < 1 || email.indexOf(".") < 0) {
+        showMessage("Please enter a valid email address.", "error");
+        return;
+    }
+
+    const idFile = document.getElementById("doc-id").files[0];
+
+    if (!idFile) {
+        showMessage("Please upload your ID document.", "error");
+        return;
+    }
+
+    if (!document.getElementById("accept-terms").checked) {
+        showMessage("Please confirm the declaration and accept the Terms & Conditions.", "error");
+        return;
+    }
+
+    button.disabled = true;
+    showMessage("Uploading your document and submitting your application…", "info");
+
+    const appId = crypto.randomUUID();
+    let documents = [];
+
+    try {
+        documents.push(await uploadDoc(appId, "id", idFile));
+    } catch (e) {
+        console.log("UPLOAD ERROR:", e);
+        button.disabled = false;
+        showMessage((e && e.message) || "We couldn't upload your document. Please check the file and try again.", "error");
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("private_sellers")
+        .insert([{
+            id: appId,
+            business_name: fullName,
+            contact_name: fullName,
+            phone: phone,
+            email: email,
+            address: address,
+            documents: documents,
+            terms_accepted_at: new Date().toISOString(),
+            status: "Pending"
+        }]);
+
+    button.disabled = false;
+
+    if (error) {
+        console.log("SUPABASE ERROR:", error.message, error.details, error.hint);
+        showMessage("There was a problem submitting your application. Please try again.", "error");
+        return;
+    }
+
+    document.getElementById("application-form").innerHTML = `
+        <div class="done">
+            <div class="tick">✓</div>
+            <h2>Application received</h2>
+            <p>Thank you, ${esc(fullName)}. PoundTech will review your application.</p>
+        </div>
+
+        <div class="next-steps">
+            <strong>What happens next</strong>
+            <ol>
+                <li>We review your ID and application.</li>
+                <li>Once it's approved, we'll contact you on <strong>${esc(email)}</strong> or <strong>${esc(phone)}</strong>.</li>
+                <li>Log in to list your first item.</li>
+            </ol>
+        </div>
+
+        <a class="btn btn-dark" href="/">Back to marketplace</a>
+    `;
+}
+
+</script>
+
+    <script src="nav.js"></script>
+</body>
+</html>
