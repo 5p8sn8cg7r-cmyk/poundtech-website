@@ -965,6 +965,35 @@ async function addProductInner() {
         } catch (e) { /* optional */ }
     }
 
+    function sponsorBadge(product) {
+        const until = product.sponsored_until ? new Date(product.sponsored_until) : null;
+        if (product.sponsored && until && until > new Date()) {
+            return '<span style="display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#111;color:#fff;">Sponsored until ' + until.toLocaleDateString() + '</span>';
+        }
+        if (product.sponsored_requested_at) {
+            return '<span style="display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#fff3cd;color:#7a5a00;">Sponsorship requested</span>';
+        }
+        return "";
+    }
+
+    function sponsorButton(product) {
+        const until = product.sponsored_until ? new Date(product.sponsored_until) : null;
+        const isSponsored = product.sponsored && until && until > new Date();
+        if (isSponsored || product.sponsored_requested_at) { return ""; }
+        if (product.listing_review !== "approved" || product.status !== "Active") { return ""; }
+        return '<button onclick="requestSponsor(\'' + esc(product.id) + '\')">Ask to sponsor this product</button>';
+    }
+
+    async function requestSponsor(productId) {
+        const { error } = await supabaseClient.rpc("request_sponsorship", { p_product_id: productId });
+        if (error) {
+            alert("Could not send the request: " + error.message);
+            return;
+        }
+        alert("Thanks. We'll be in touch to arrange payment and put this product in the sponsored carousel.");
+        loadSupplierProducts();
+    }
+
     function reviewBadge(product) {
         if (product.listing_review === "pending") {
             return '<span style="display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#fff3cd;color:#7a5a00;">Awaiting review</span>';
@@ -1064,7 +1093,7 @@ async function addProductInner() {
 
             <div style="flex:1; min-width:200px;">
 
-                <h3 style="margin-top:0;">${esc(product.name)}${reviewBadge(product)}</h3>
+                <h3 style="margin-top:0;">${esc(product.name)}${reviewBadge(product)}${sponsorBadge(product)}</h3>
 
                 <p>
                     <strong>Category:</strong>
@@ -1098,6 +1127,8 @@ async function addProductInner() {
                     <button onclick="deleteProduct('${esc(product.id)}')" style="background:#555;">
                         Delete Product
                     </button>
+
+                    ${sponsorButton(product)}
 
                 </div>
 
@@ -1692,19 +1723,6 @@ async function loadSupplierOrders() {
         return;
     }
 
-    const { data: deliveries, error: deliveriesError } =
-        await supabaseClient
-        .from("order_deliveries")
-        .select("*")
-        .eq("supplier_id", supplier.id)
-        .in("order_id", orderIds);
-
-    if (deliveriesError) {
-        console.error(deliveriesError);
-        container.innerHTML = "<p>Unable to load delivery details.</p>";
-        return;
-    }
-
     SUP_ORDERS = [];
 
     for (const order of orders) {
@@ -1719,7 +1737,6 @@ async function loadSupplierOrders() {
             order: order,
             items: supplierItems,
             status: rec ? rec.status : "Pending",
-            delivery: (deliveries || []).find(d => d.order_id === order.id) || null,
             total: supplierItems.reduce((t, i) => t + (Number(i.price) * Number(i.quantity)), 0)
         });
     }
@@ -1869,36 +1886,10 @@ function supplierOrderHTML(o) {
                 }).join("")}
 
                 <div class="od-actions">
-                    <label for="st-${esc(order.id)}"><strong>Order status</strong></label>
+                    <label for="st-${esc(order.id)}"><strong>Status</strong></label>
                     <select id="st-${esc(order.id)}" onchange="updateSupplierOrderStatus('${esc(order.id)}', this.value)">${options}</select>
                     <span class="meta">${esc(new Date(order.created_at).toLocaleString())}</span>
                 </div>
-
-                ${o.delivery ? `
-                    <h4>Delivery and tracking</h4>
-                    <p style="font-size:13px;color:#666;">Enter the courier and tracking details customers will use to follow this delivery.</p>
-                    <label for="courier-${esc(order.id)}"><strong>Courier name</strong></label>
-                    <input id="courier-${esc(order.id)}" type="text" maxlength="120"
-                           value="${esc(o.delivery.courier_name || "")}"
-                           placeholder="e.g. The Courier Guy, Pargo, RAM"
-                           style="display:block;width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px;">
-                    <label for="tracking-${esc(order.id)}"><strong>Waybill / tracking reference</strong></label>
-                    <input id="tracking-${esc(order.id)}" type="text" maxlength="160"
-                           value="${esc(o.delivery.tracking_reference || "")}"
-                           placeholder="Enter tracking or waybill number"
-                           style="display:block;width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px;">
-                    <label for="delivery-status-${esc(order.id)}"><strong>Delivery status</strong></label>
-                    <select id="delivery-status-${esc(order.id)}"
-                            style="display:block;padding:10px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px;">
-                        ${["Pending","Ready for collection","Shipped","In transit","Out for delivery","Delivered","Collected","Exception"].map(function(st) {
-                            return `<option value="${st}" ${(o.delivery.status || "Pending") === st ? "selected" : ""}>${st}</option>`;
-                        }).join("")}
-                    </select>
-                    <button type="button" onclick="saveSupplierDelivery('${esc(order.id)}')">Save delivery details</button>
-                ` : `
-                    <h4>Delivery and tracking</h4>
-                    <p style="color:#777;font-size:13px;">No delivery record has been created for this order yet. PoundTech will need to create its delivery record before tracking details can be added.</p>
-                `}
             </div>
         </details>
     `;
@@ -2115,34 +2106,6 @@ loadSupplierPayouts();
     t.textContent = text;
     document.body.appendChild(t);
     setTimeout(function() { t.remove(); }, 2500);
-}
-
-async function saveSupplierDelivery(orderId) {
-
-    const courierInput = document.getElementById("courier-" + orderId);
-    const trackingInput = document.getElementById("tracking-" + orderId);
-    const statusInput = document.getElementById("delivery-status-" + orderId);
-
-    if (!courierInput || !trackingInput || !statusInput) {
-        alert("Delivery fields could not be found. Please refresh the page.");
-        return;
-    }
-
-    const { error } = await supabaseClient.rpc("update_supplier_order_delivery", {
-        p_order_id: Number(orderId),
-        p_courier_name: courierInput.value.trim(),
-        p_tracking_reference: trackingInput.value.trim(),
-        p_status: statusInput.value
-    });
-
-    if (error) {
-        console.error("DELIVERY UPDATE ERROR:", error);
-        alert("Unable to save delivery details: " + error.message);
-        return;
-    }
-
-    showOrderToast("Delivery details saved.");
-    loadSupplierOrders();
 }
 
 async function updateSupplierOrderStatus(orderId, newStatus) {
