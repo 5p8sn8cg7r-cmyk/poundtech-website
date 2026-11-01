@@ -435,7 +435,7 @@ async function loadSellerAndShow(userId) {
 
     document.getElementById("login").style.display = "none";
     document.getElementById("dashboard").style.display = "block";
-    document.getElementById("seller-name-label").textContent = seller.business_name || "Your account";
+    document.getElementById("seller-name-label").textContent = seller.full_name || "Your account";
 
     const statusPill = document.getElementById("status-pill");
     const addBtn = document.getElementById("add-listing-btn");
@@ -449,10 +449,16 @@ async function loadSellerAndShow(userId) {
         statusPill.innerHTML = '<span class="pill pill-pending">Application pending</span>';
         addBtn.style.display = "none";
         pendingNotice.style.display = "block";
+    } else if (seller.status === "More information required") {
+        statusPill.innerHTML = '<span class="pill pill-pending">More information required</span>';
+        addBtn.style.display = "none";
+        pendingNotice.textContent = seller.review_notes || "PoundTech needs more information before approving your application. Please contact our review team.";
+        pendingNotice.style.display = "block";
     } else {
         statusPill.innerHTML = '<span class="pill pill-removed">Application rejected</span>';
         addBtn.style.display = "none";
-        pendingNotice.style.display = "none";
+        pendingNotice.textContent = seller.review_notes || "Your application was not approved. Please contact PoundTech if you need clarification.";
+        pendingNotice.style.display = "block";
     }
 
     loadListings();
