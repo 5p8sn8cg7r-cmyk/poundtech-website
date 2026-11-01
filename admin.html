@@ -243,6 +243,8 @@ input {
 
     <div id="plans-admin" style="display:none;"></div>
 
+    <div id="sponsor-admin" style="display:none;"></div>
+
     <div id="orders" style="display:none;"></div>
 
 </div>
@@ -277,6 +279,7 @@ function showDashboard() {
     document.getElementById("listings-admin").style.display = "block";
     document.getElementById("rules-admin").style.display = "block";
     document.getElementById("plans-admin").style.display = "block";
+    document.getElementById("sponsor-admin").style.display = "block";
     document.getElementById("payments-setup").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
     loadRevenue();
@@ -284,6 +287,7 @@ function showDashboard() {
     loadListingsAdmin();
     loadRulesAdmin();
     loadPlansAdmin();
+    loadSponsorAdmin();
     loadOrders();
     loadWebhookStatus();
 }
@@ -304,6 +308,7 @@ async function adminLogout() {
     document.getElementById("listings-admin").style.display = "none";
     document.getElementById("rules-admin").style.display = "none";
     document.getElementById("plans-admin").style.display = "none";
+    document.getElementById("sponsor-admin").style.display = "none";
     document.getElementById("revenue").style.display = "none";
     document.getElementById("payments-setup").style.display = "none";
     document.getElementById("admin-nav").style.display = "none";
@@ -849,6 +854,90 @@ async function activatePro(id) {
     if (error) { alert("Could not activate: " + error.message); }
 
     loadPlansAdmin();
+}
+
+
+// ---------- Sponsored products ----------
+async function loadSponsorAdmin() {
+
+    const box = document.getElementById("sponsor-admin");
+
+    const { data, error } = await supabaseClient.rpc("get_sponsorship_admin");
+
+    if (error) {
+        box.innerHTML = '<div class="empty"><h2>Sponsored products unavailable</h2><p>' + esc(error.message) +
+            '</p><p>Run 18_migration17_sponsored.sql in Supabase.</p></div>';
+        return;
+    }
+
+    const active = data.active || [];
+    const requests = data.requests || [];
+    const freeSlots = Math.max(0, data.slot_limit - active.length);
+
+    const activeRows = active.map(function(p) {
+        return `<div class="od-item"><div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
+                    <span class="no">${esc(p.name)}</span>
+                    <span class="od-pill green">Sponsored</span>
+                    <span class="sp"></span>
+                    <span class="meta">${esc(p.supplier)} &middot; until ${esc(new Date(p.until).toLocaleDateString())}</span>
+                    <button type="button" class="sec" onclick="clearSponsorship('${esc(p.id)}')">Stop</button>
+                </div></div>`;
+    }).join("") || '<div class="od-empty">No products are sponsored right now.</div>';
+
+    const reqRows = requests.map(function(p) {
+        return `<div class="od-item"><div style="padding:14px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+                    <div style="width:64px;height:64px;border-radius:8px;background:#eee;overflow:hidden;flex-shrink:0;">
+                        ${p.image_url ? '<img src="' + esc(p.image_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;">' : ""}
+                    </div>
+                    <div style="flex:1;min-width:200px;">
+                        <div class="no">${esc(p.name)}</div>
+                        <div class="meta">${esc(p.supplier)} &middot; ${esc(money(p.price))}</div>
+                    </div>
+                    <input type="number" min="1" max="52" value="1" id="sw-${esc(p.id)}" style="width:70px;margin:0;" title="Weeks">
+                    <input type="text" placeholder="Amount received (R)" id="sa-${esc(p.id)}" style="width:170px;margin:0;">
+                    <button type="button" onclick="activateSponsorship('${esc(p.id)}')">Activate</button>
+                </div></div>`;
+    }).join("") || '<div class="od-empty">No sponsorship requests waiting.</div>';
+
+    box.innerHTML = `
+        <h2 class="rev-title">Sponsored products</h2>
+        <div class="od-cards" style="grid-template-columns:repeat(3,1fr);">
+            <div class="od-card ${requests.length ? "hot" : ""}"><span class="n">${requests.length}</span><span class="l">Requests waiting</span></div>
+            <div class="od-card"><span class="n">${active.length} / ${esc(data.slot_limit)}</span><span class="l">Slots in use (${freeSlots} free)</span></div>
+            <div class="od-card"><span class="n">${esc(money(data.revenue_30d))}</span><span class="l">Revenue, 30 days</span></div>
+        </div>
+        <h4 class="rev-note" style="margin:16px 0 8px;">Requests</h4>
+        ${reqRows}
+        <h4 class="rev-note" style="margin:16px 0 8px;">Currently sponsored</h4>
+        ${activeRows}
+        <p class="rev-note">Total sponsorship revenue to date: ${esc(money(data.revenue_total))}. Only sponsor products from Verified suppliers with honest listings — this is paid placement, not an endorsement, but customers will read it as one.</p>
+    `;
+}
+
+async function activateSponsorship(id) {
+
+    const weeks = Number(document.getElementById("sw-" + id).value);
+    const amount = Number(document.getElementById("sa-" + id).value);
+
+    if (!weeks || weeks < 1) { alert("Enter how many weeks were paid for."); return; }
+    if (!amount && amount !== 0) { alert("Enter the amount received."); return; }
+
+    const { error } = await supabaseClient.rpc("set_product_sponsored", { p_product_id: id, p_weeks: weeks, p_amount: amount });
+
+    if (error) { alert("Could not activate: " + error.message); }
+
+    loadSponsorAdmin();
+}
+
+async function clearSponsorship(id) {
+
+    if (!confirm("Stop sponsoring this product now?")) { return; }
+
+    const { error } = await supabaseClient.rpc("clear_product_sponsorship", { p_product_id: id });
+
+    if (error) { alert("Could not update: " + error.message); }
+
+    loadSponsorAdmin();
 }
 
 var ADM_ORDERS = [];
