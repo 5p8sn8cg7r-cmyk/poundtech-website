@@ -173,27 +173,25 @@ button:hover {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="admin-review.js?v=1"></script>
+
 
 <script>
 
 const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
-
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Cosmetic check only. The database enforces who is really admin (is_admin()).
 const ADMIN_UID = "dd66c237-95cb-44c8-a43a-be823026fba8";
-
+const DOC_BUCKET = "private-seller-documents";
 
 function esc(value) {
     return String(value == null ? "" : value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function showError(message) {
+    document.getElementById("error").textContent = message || "";
+}
 
 function showPrivateSellers() {
     document.getElementById("login").style.display = "none";
@@ -201,56 +199,29 @@ function showPrivateSellers() {
     loadPrivateSellers();
 }
 
-
 async function adminLogin() {
-
-    const email = document.getElementById("admin-email").value;
+    showError("");
+    const email = document.getElementById("admin-email").value.trim();
     const password = document.getElementById("admin-password").value;
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
-
-    if (error) {
-        document.getElementById("error").textContent =
-            "Login failed. Please check your email and password.";
-        console.log("LOGIN ERROR:", error);
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+        showError("Login failed. Please check your email and password.");
         return;
     }
-
-    const user = data.user;
-
-    if (!user) {
-        document.getElementById("error").textContent =
-            "No user account was returned after login.";
-        return;
-    }
-
-    if (user.id.trim() !== ADMIN_UID.trim()) {
-        document.getElementById("error").textContent =
-            "You do not have permission to access the admin dashboard.";
+    if (data.user.id !== ADMIN_UID) {
+        showError("You do not have permission to access this page.");
         await supabaseClient.auth.signOut();
         return;
     }
-
     showPrivateSellers();
 }
 
-
 async function adminLogout() {
-
-    const { error } = await supabaseClient.auth.signOut();
-
-    if (error) {
-        console.log("LOGOUT ERROR:", error);
-        return;
-    }
-
+    await supabaseClient.auth.signOut();
     document.getElementById("login").style.display = "block";
     document.getElementById("private_sellers").style.display = "none";
+    showError("");
 }
-
 
 function statusClass(status) {
     if (status === "Approved") return "status status-approved";
@@ -258,49 +229,98 @@ function statusClass(status) {
     return "status";
 }
 
-
 async function loadPrivateSellers() {
+    const container = document.getElementById("private_sellers");
+    container.innerHTML = '<div class="empty">Loading applications…</div>';
 
-    const { data: private_sellers, error } = await supabaseClient
+    const { data, error } = await supabaseClient
         .from("private_sellers")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("id,full_name,phone,id_document_path,status,review_notes,terms_accepted_at,created_at")
+        .order("created_at", { ascending: true });
 
     if (error) {
-        console.log("SUPABASE ERROR:", error.message, error.details, error.hint, error.code);
-        alert("Could not load private_sellers.");
+        container.innerHTML = '<div class="empty">Could not load applications: ' + esc(error.message) + '</div>';
+        return;
+    }
+    if (!data || !data.length) {
+        container.innerHTML = '<div class="empty"><h2>No private-seller applications yet</h2><p>New applications will appear here.</p></div>';
         return;
     }
 
-    const container = document.getElementById("private_sellers");
+    container.innerHTML = data.map(function (s) {
+        return '<section class="supplier" data-id="' + esc(s.id) + '">' +
+            '<h2>' + esc(s.full_name) + ' <span class="' + statusClass(s.status) + '">' + esc(s.status) + '</span></h2>' +
+            '<p><strong>Phone:</strong> ' + esc(s.phone) + '</p>' +
+            '<p><strong>Applied:</strong> ' + esc(new Date(s.created_at).toLocaleString("en-ZA")) + '</p>' +
+            '<p><strong>Terms accepted:</strong> ' + esc(new Date(s.terms_accepted_at).toLocaleString("en-ZA")) + '</p>' +
+            '<p><button type="button" data-action="document" data-path="' + esc(s.id_document_path) + '">Open ID document securely</button></p>' +
+            '<label>Internal review notes</label>' +
+            '<textarea class="review-notes" style="width:100%;min-height:75px;padding:10px;box-sizing:border-box;">' + esc(s.review_notes || "") + '</textarea>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">' +
+            '<button type="button" data-action="approve">Approve</button>' +
+            '<button type="button" data-action="more-info" style="background:#777;">Request more information</button>' +
+            '<button type="button" data-action="reject" style="background:#8a1111;">Reject</button>' +
+            '<button type="button" data-action="save" style="background:#333;">Save notes</button>' +
+            '</div></section>';
+    }).join("");
 
-    container.innerHTML = "";
-
-    if (!private_sellers || private_sellers.length === 0) {
-        container.innerHTML = `
-            <div class="empty">
-                <h2>No private-seller applications yet</h2>
-                <p>Applications from private sellers wanting to list pre-owned parts will appear here.</p>
-            </div>
-        `;
-        return;
-    }
-
-    renderApplications("private_sellers", private_sellers, container, loadPrivateSellers);
+    container.querySelectorAll("button[data-action]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const card = button.closest("[data-id]");
+            reviewAction(card, button.dataset.action, button.dataset.path);
+        });
+    });
 }
 
+async function reviewAction(card, action, path) {
+    const id = card.dataset.id;
 
-// Keep the admin signed in after a page refresh.
+    if (action === "document") {
+        const { data, error } = await supabaseClient.storage
+            .from(DOC_BUCKET).createSignedUrl(path, 120);
+        if (error || !data || !data.signedUrl) {
+            alert("Could not open the ID document: " + (error ? error.message : "No signed link returned."));
+            return;
+        }
+        window.open(data.signedUrl, "_blank", "noopener");
+        return;
+    }
+
+    const notes = card.querySelector(".review-notes").value.trim();
+    const update = { review_notes: notes || null };
+
+    if (action === "approve") {
+        if (!confirm("Approve this private seller?")) return;
+        update.status = "Approved";
+    } else if (action === "reject") {
+        if (!confirm("Reject this application?")) return;
+        update.status = "Rejected";
+    } else if (action === "more-info") {
+        update.status = "More information required";
+    }
+
+    const { error } = await supabaseClient
+        .from("private_sellers")
+        .update(update)
+        .eq("id", id);
+
+    if (error) {
+        alert("Could not update the application: " + error.message);
+        return;
+    }
+    await loadPrivateSellers();
+}
+
 (async function restoreSession() {
-
     const { data } = await supabaseClient.auth.getSession();
-
     if (data && data.session && data.session.user.id === ADMIN_UID) {
         showPrivateSellers();
+    } else if (data && data.session) {
+        await supabaseClient.auth.signOut();
     }
 })();
 
-</script>
+</script>>
 
 </body>
 </html>
