@@ -87,7 +87,9 @@ function esc(value) {
         .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-const orderNumber = new URLSearchParams(location.search).get("order") || "";
+const params = new URLSearchParams(location.search);
+const orderNumber = params.get("order") || "";
+const bookingId = params.get("booking") || "";
 const card = document.getElementById("card");
 
 function show(html) { card.innerHTML = html; }
@@ -101,7 +103,18 @@ async function status() {
     return error ? null : data;
 }
 
-async function check() {
+async function checkBooking() {
+    // The signed Yoco webhook is the authority for payment status.
+    // This return page does not mark a booking as paid.
+    show('<h1>Payment submitted</h1>' +
+         '<p>Thank you. Your service booking payment is being verified by PoundTech. Your booking will update once the payment notification has been processed.</p>' +
+         '<div class="order-box"><small>Booking reference</small><strong>' + esc(bookingId) + '</strong></div>' +
+         '<p><strong>Please do not pay again</strong> if your account has been charged. If your booking does not update, contact us with your booking reference.</p>' +
+         '<a class="btn" href="mailto:info@poundtech.co.za?subject=Service%20booking%20payment%20' + encodeURIComponent(bookingId) + '">Contact PoundTech</a>' +
+         '<a class="btn btn-dark" href="/">Back to marketplace</a>');
+}
+
+async function checkOrder() {
 
     if (!orderNumber) {
         show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn" href="/">Back to marketplace</a>');
@@ -139,7 +152,11 @@ async function check() {
          '<a class="btn btn-dark" href="/?cart=1">Back to my cart</a>');
 }
 
-check();
+if (bookingId) {
+    checkBooking();
+} else {
+    checkOrder();
+}
 
 </script>
 
