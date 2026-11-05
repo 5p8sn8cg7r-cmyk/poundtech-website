@@ -1547,6 +1547,8 @@ Already approved?
 
     <div id="cart-items"></div>
 
+    <div id="cart-recommendations" style="display:none; margin-top:24px;"></div>
+
     <h3 id="cart-total" style="margin-top:20px;">
         Total: R0
     </h3>
@@ -1857,6 +1859,150 @@ async function refreshCartPrices() {
     }
 }
 
+
+let cartRecommendationRequest = 0;
+let cartRecommendationProducts = {};
+
+async function loadCartRecommendations(cart) {
+    const section = document.getElementById("cart-recommendations");
+    if (!section) return;
+
+    const requestId = ++cartRecommendationRequest;
+    const cartIds = (cart || []).map(function (item) { return item.product_id; });
+
+    if (!cartIds.length) {
+        section.style.display = "none";
+        section.innerHTML = "";
+        return;
+    }
+
+    section.style.display = "block";
+    section.innerHTML = '<p style="color:#777;font-size:13px;">Finding useful extras for your order...</p>';
+
+    const [cartResult, productResult] = await Promise.all([
+        supabaseClient.from("products").select("id, category").in("id", cartIds),
+        supabaseClient.from("products").select("*")
+            .eq("status", "Active")
+            .gt("stock", 0)
+            .order("created_at", { ascending: false })
+            .limit(80)
+    ]);
+
+    if (requestId !== cartRecommendationRequest) return;
+
+    if (productResult.error || !productResult.data) {
+        section.style.display = "none";
+        return;
+    }
+
+    const cartCategories = (cartResult.data || []).map(function (p) {
+        return p.category;
+    }).filter(Boolean);
+
+    const complementaryCategories = {
+        "Engine Parts": ["Oils & Maintenance"],
+        "Oils & Maintenance": ["Engine Parts", "Batteries & Electrical"],
+        "Wheels & Tyres": ["Brakes", "Suspension & Steering"],
+        "Brakes": ["Wheels & Tyres", "Suspension & Steering"],
+        "Suspension & Steering": ["Wheels & Tyres", "Brakes"],
+        "Batteries & Electrical": ["Lighting"],
+        "Lighting": ["Batteries & Electrical"],
+        "Car Audio": ["Interior"],
+        "Interior": ["Car Audio"],
+        "4x4 & Off-Road": ["Exterior"],
+        "Exterior": ["4x4 & Off-Road"],
+        "Performance & Exhaust": ["Engine Parts"]
+    };
+
+    const preferredCategories = [];
+    cartCategories.forEach(function (category) {
+        (complementaryCategories[category] || []).forEach(function (related) {
+            if (preferredCategories.indexOf(related) === -1) preferredCategories.push(related);
+        });
+    });
+
+    const excluded = {};
+    cartIds.forEach(function (id) { excluded[id] = true; });
+
+    let candidates = productResult.data.filter(function (p) {
+        return !excluded[p.id] && Number(p.stock) > 0;
+    });
+
+    if (selectedGarageVehicle) {
+        candidates = candidates.filter(function (p) {
+            const fit = getCompatibility(p, selectedGarageVehicle);
+            return fit === "match" || fit === "universal";
+        });
+    } else if (preferredCategories.length) {
+        const complementary = candidates.filter(function (p) {
+            return preferredCategories.indexOf(p.category) !== -1;
+        });
+        if (complementary.length) candidates = complementary;
+    } else if (cartCategories.length) {
+        const sameCategory = candidates.filter(function (p) {
+            return cartCategories.indexOf(p.category) !== -1;
+        });
+        if (sameCategory.length) candidates = sameCategory;
+    }
+
+    candidates.sort(function (a, b) {
+        const aDeal = PT.sale(a).priced ? 1 : 0;
+        const bDeal = PT.sale(b).priced ? 1 : 0;
+        if (aDeal !== bDeal) return bDeal - aDeal;
+        return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+    });
+
+    candidates = candidates.slice(0, 4);
+    cartRecommendationProducts = {};
+    candidates.forEach(function (p) { cartRecommendationProducts[p.id] = p; });
+
+    if (!candidates.length) {
+        section.style.display = "none";
+        section.innerHTML = "";
+        return;
+    }
+
+    const heading = selectedGarageVehicle
+        ? "Recommended for your vehicle"
+        : "Recommended with your items";
+
+    section.innerHTML = `
+        <div style="border-top:1px solid #e5e5e5;padding-top:18px;">
+            <h3 style="font-size:17px;margin:0 0 4px;">${heading}</h3>
+            <p style="font-size:12px;color:#777;margin:0 0 12px;">
+                Useful extras and available offers you may like.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                ${candidates.map(function (p) {
+                    const sale = PT.sale(p);
+                    return `
+                        <div style="min-width:0;border:1px solid #e5e5e5;border-radius:9px;padding:9px;background:#fff;">
+                            ${p.image_url
+                                ? '<img src="' + esc(p.image_url) + '" alt="' + esc(p.name) + '" loading="lazy" style="width:100%;height:82px;object-fit:contain;border-radius:5px;">'
+                                : '<div style="height:82px;background:#f2f2f2;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#888;font-size:11px;">No image</div>'}
+                            ${sale.priced ? '<span style="display:inline-block;margin-top:6px;padding:3px 6px;background:#fff0f0;color:#c00;border-radius:4px;font-size:10px;font-weight:bold;">SPECIAL OFFER</span>' : ''}
+                            <p style="font-size:12px;font-weight:bold;line-height:1.35;margin:6px 0;min-height:32px;">${esc(p.name)}</p>
+                            <p style="font-size:13px;font-weight:bold;margin:0 0 8px;">${PT.money(sale.now)}</p>
+                            <button type="button" data-cart-rec-add="${esc(p.id)}" style="width:100%;padding:8px 5px;background:#111;color:#fff;border:0;border-radius:5px;font-size:12px;font-weight:bold;cursor:pointer;">Add to cart</button>
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        </div>
+    `;
+
+    section.onclick = function (event) {
+        const button = event.target.closest("[data-cart-rec-add]");
+        if (!button) return;
+
+        const product = cartRecommendationProducts[button.getAttribute("data-cart-rec-add")];
+        if (!product) return;
+
+        addCart(product.id, product.supplier_id, product.name, PT.sale(product).now, product.image_url || "");
+        renderCart();
+    };
+}
+
 async function showCart() {
     await refreshCartPrices();
     renderCart();
@@ -1989,6 +2135,8 @@ function renderCart() {
             </div>
         `;
     });
+
+    loadCartRecommendations(cart);
 
     cartTotal.innerText = "Total: " + PT.money(total);
 
