@@ -1549,9 +1549,14 @@ Already approved?
 
     <div id="cart-recommendations" style="display:none; margin-top:24px;"></div>
 
-    <h3 id="cart-total" style="margin-top:20px;">
-        Total: R0
-    </h3>
+    <div id="cart-total" style="margin-top:22px;padding:18px 16px;background:#f7f7f7;border:1px solid #d5d5d5;border-radius:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <span style="font-size:14px;font-weight:600;color:#444;">Subtotal</span>
+            <strong style="font-size:23px;line-height:1.2;color:#111;">R0</strong>
+        </div>
+        <div style="height:1px;background:#d8d8d8;margin:13px 0 10px;"></div>
+        <p style="margin:0;font-size:12px;color:#666;">Delivery is calculated at checkout.</p>
+    </div>
 
  <button onclick="checkout()" style="
     margin-top:20px;
@@ -2143,7 +2148,14 @@ function renderCart() {
 
     loadCartRecommendations(cart);
 
-    cartTotal.innerText = "Total: " + PT.money(total);
+    cartTotal.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <span style="font-size:14px;font-weight:600;color:#444;">Subtotal</span>
+            <strong style="font-size:23px;line-height:1.2;color:#111;">${PT.money(total)}</strong>
+        </div>
+        <div style="height:1px;background:#d8d8d8;margin:13px 0 10px;"></div>
+        <p style="margin:0;font-size:12px;color:#666;">Delivery is calculated at checkout.</p>
+    `;
 
     document.getElementById("cart-panel").style.display = "block";
 }
