@@ -1881,11 +1881,12 @@ async function loadCartRecommendations(cart) {
 
     const [cartResult, productResult] = await Promise.all([
         supabaseClient.from("products").select("id, category").in("id", cartIds),
-        supabaseClient.from("products").select("*")
-            .eq("status", "Active")
-            .gt("stock", 0)
-            .order("created_at", { ascending: false })
-            .limit(80)
+        loadedProducts && loadedProducts.length
+            ? Promise.resolve({ data: loadedProducts, error: null })
+            : supabaseClient.from("products").select("*")
+                .eq("status", "Active")
+                .order("created_at", { ascending: false })
+                .limit(80)
     ]);
 
     if (requestId !== cartRecommendationRequest) return;
@@ -1925,15 +1926,18 @@ async function loadCartRecommendations(cart) {
     cartIds.forEach(function (id) { excluded[id] = true; });
 
     let candidates = productResult.data.filter(function (p) {
-        return !excluded[p.id] && Number(p.stock) > 0;
+        return !excluded[p.id];
     });
 
     if (selectedGarageVehicle) {
-        candidates = candidates.filter(function (p) {
+        const vehicleMatches = candidates.filter(function (p) {
             const fit = getCompatibility(p, selectedGarageVehicle);
             return fit === "match" || fit === "universal";
         });
-    } else if (preferredCategories.length) {
+        if (vehicleMatches.length) candidates = vehicleMatches;
+    }
+
+    if (!selectedGarageVehicle && preferredCategories.length) {
         const complementary = candidates.filter(function (p) {
             return preferredCategories.indexOf(p.category) !== -1;
         });
