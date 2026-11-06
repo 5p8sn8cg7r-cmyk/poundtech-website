@@ -52,6 +52,17 @@
         return new URL("product.html?id=" + encodeURIComponent(id), window.location.href).href;
     }
 
+    // Facebook/X/Reddit/WhatsApp etc. generate their link previews by fetching the URL
+    // themselves, without running any JavaScript -- so a plain product.html link never
+    // shows a photo (the page is empty until JS fills it in). This points shares at a
+    // small server-side page that has the real photo/title baked into its HTML and
+    // instantly forwards a visitor on to the actual product page.
+    var SHARE_FN_URL = "https://uezacbssvvvtlosnaroh.supabase.co/functions/v1/share-preview";
+
+    function previewUrl(id) {
+        return SHARE_FN_URL + "?id=" + encodeURIComponent(id);
+    }
+
 
     /* ---------- styles ---------- */
 
@@ -298,6 +309,9 @@
     var CHAT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5A8.4 8.4 0 1 1 21 11.5z"/></svg>';
     var WRENCH_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3l8.7-8.7z"/><path d="M14.7 6.3a4 4 0 0 1 5-1.6l-2.5 2.5.6 1.9 1.9.6 2.5-2.5a4 4 0 0 1-1.6 5"/></svg>';
     var LINK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/></svg>';
+    var FB_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><text x="12" y="16.5" text-anchor="middle" font-size="12" font-weight="700" stroke="none" fill="currentColor">f</text></svg>';
+    var X_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="700" stroke="none" fill="currentColor">X</text></svg>';
+    var REDDIT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="700" stroke="none" fill="currentColor">r</text></svg>';
 
 
     /* ---------- buttons you place on pages ---------- */
@@ -515,7 +529,7 @@
 
         closeSheet();
 
-        var url = productUrl(product.id);
+        var url = previewUrl(product.id);
         var name = product.name || "this product";
         var price = money(product.price);
 
@@ -526,6 +540,12 @@
         var mechanicText =
             "Hi, can you check if this part fits my car and let me know what it would cost to fit?\n" +
             headline + "\n" + url;
+
+        var fbShareUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url);
+        var xShareUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(headline) +
+            "&url=" + encodeURIComponent(url);
+        var redditShareUrl = "https://www.reddit.com/submit?url=" + encodeURIComponent(url) +
+            "&title=" + encodeURIComponent(headline);
 
         var canNativeShare = typeof navigator.share === "function";
 
@@ -544,6 +564,12 @@
                 '<a class="pt-opt" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=' +
                     encodeURIComponent(mechanicText) + '">' + WRENCH_SVG +
                     '<span>Ask my mechanic<small>Sends a WhatsApp asking if it fits and what fitting costs</small></span></a>' +
+                '<a class="pt-opt" target="_blank" rel="noopener noreferrer" href="' + fbShareUrl + '">' +
+                    FB_SVG + '<span>Facebook</span></a>' +
+                '<a class="pt-opt" target="_blank" rel="noopener noreferrer" href="' + xShareUrl + '">' +
+                    X_SVG + '<span>X (Twitter)</span></a>' +
+                '<a class="pt-opt" target="_blank" rel="noopener noreferrer" href="' + redditShareUrl + '">' +
+                    REDDIT_SVG + '<span>Reddit</span></a>' +
                 '<button type="button" class="pt-opt" data-act="copy">' + LINK_SVG + '<span>Copy link</span></button>' +
                 '<button type="button" class="pt-close" data-act="close">Close</button>' +
             '</div>';
