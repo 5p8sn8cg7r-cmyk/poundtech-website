@@ -8,6 +8,7 @@
     <title>My Orders | PoundTech</title>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="pt-share.js?v=20261106"></script>
 </head>
 
 <body style="
@@ -59,6 +60,8 @@ const supabaseClient =
         SUPABASE_URL,
         SUPABASE_KEY
     );
+
+PT.init(supabaseClient);
 
 async function loadOrders() {
 
@@ -120,10 +123,99 @@ async function loadOrders() {
                     ${new Date(order.created_at).toLocaleString()}
                 </p>
 
+                <button type="button" data-buy-again="${order.id}" style="margin-top:8px;padding:11px 16px;background:#111;color:#fff;border:0;border-radius:7px;font-weight:bold;cursor:pointer;">
+                    Buy these items again
+                </button>
+
             </div>
 
         `).join("");
 }
+
+async function buyAgain(orderId, button) {
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Loading items...";
+
+    try {
+        const { data: items, error: itemError } = await supabaseClient
+            .from("order_items")
+            .select("product_id, quantity")
+            .eq("order_id", orderId);
+
+        if (itemError) throw itemError;
+        if (!items || !items.length) {
+            PT.toast("No products were found for this order.");
+            return;
+        }
+
+        const ids = Array.from(new Set(items.map(function (item) { return item.product_id; }).filter(Boolean)));
+        const { data: products, error: productError } = await supabaseClient
+            .from("products")
+            .select("*")
+            .in("id", ids)
+            .eq("status", "Active");
+
+        if (productError) throw productError;
+
+        const byId = {};
+        (products || []).forEach(function (product) { byId[String(product.id)] = product; });
+        let cart = [];
+        try { cart = JSON.parse(localStorage.getItem("poundtechCart")) || []; } catch (e) { cart = []; }
+        let added = 0;
+        let unavailable = 0;
+
+        items.forEach(function (item) {
+            const product = byId[String(item.product_id)];
+            const stock = product ? Number(product.stock) || 0 : 0;
+            if (!product || stock < 1) {
+                unavailable++;
+                return;
+            }
+
+            const quantity = Math.min(Math.max(1, Number(item.quantity) || 1), stock);
+            const existing = cart.find(function (row) { return String(row.product_id) === String(product.id); });
+            if (existing) {
+                existing.quantity = Math.min((Number(existing.quantity) || 1) + quantity, stock);
+                existing.price = PT.sale(product).now;
+                existing.name = product.name;
+                existing.supplier_id = product.supplier_id;
+                existing.image_url = product.image_url || "";
+            } else {
+                cart.push({
+                    product_id: product.id,
+                    supplier_id: product.supplier_id,
+                    name: product.name,
+                    price: PT.sale(product).now,
+                    quantity: quantity,
+                    image_url: product.image_url || ""
+                });
+            }
+            added++;
+        });
+
+        localStorage.setItem("poundtechCart", JSON.stringify(cart));
+        if (added) {
+            PT.toast(added + " product" + (added === 1 ? "" : "s") + " added to your cart" +
+                (unavailable ? ". " + unavailable + " unavailable or out of stock." : "."));
+            window.location.href = "/?cart=1";
+        } else {
+            PT.toast("Those products are no longer available.");
+        }
+    } catch (error) {
+        console.error("BUY AGAIN ERROR:", error);
+        PT.toast("We couldn't reload these items. Please try again.");
+    } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+}
+
+document.getElementById("orders-container").addEventListener("click", function (event) {
+    const button = event.target.closest("[data-buy-again]");
+    if (!button) return;
+    buyAgain(button.getAttribute("data-buy-again"), button);
+});
 
 loadOrders();
 
