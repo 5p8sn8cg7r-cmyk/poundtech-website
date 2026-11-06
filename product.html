@@ -991,15 +991,35 @@ function addProductToCart(product, quantity) {
 async function showFitBadges(product) {
 
     const vehicles = await getVehicles();
-
     const box = document.getElementById("fit-badges");
-
     if (!box) { return; }
 
-    const fits = vehicles.filter(function (v) { return PT.fit(product, v) === "match"; });
+    if (!vehicles.length) {
+        box.innerHTML = '<div style="margin:10px 0;padding:12px;border:1px solid #ddd;border-radius:8px;background:#fafafa;font-size:13px;color:#555;">Check whether this part fits your car. <a href="customer-login.html" style="color:#c00;font-weight:bold;">Add a vehicle to My Garage</a> for a fitment check.</div>';
+        return;
+    }
 
-    box.innerHTML = fits.map(function (v) {
-        return '<span class="fit-ok">Fits your ' + esc(v.year + " " + v.make + " " + v.model) + '</span>';
+    box.innerHTML = vehicles.slice(0, 3).map(function (vehicle) {
+        const fit = PT.fit(product, vehicle);
+        const name = esc((vehicle.nickname ? vehicle.nickname + " · " : "") +
+            vehicle.year + " " + vehicle.make + " " + vehicle.model);
+        let label = "";
+        let style = "";
+        if (fit === "match") {
+            label = "Fits " + name;
+            style = "background:#e8f5ec;color:#176b36;border:1px solid #b9dfc5;";
+        } else if (fit === "universal") {
+            label = "Universal fitment — verify specifications";
+            style = "background:#eef3f8;color:#34516b;border:1px solid #cbd8e5;";
+        } else if (fit === "mismatch") {
+            label = "Not listed for " + name + " — confirm with supplier";
+            style = "background:#fff5e8;color:#875500;border:1px solid #ead3a9;";
+        } else {
+            label = "Fitment not confirmed for " + name;
+            style = "background:#f4f4f4;color:#555;border:1px solid #ddd;";
+        }
+        return '<div style="font-size:13px;line-height:1.4;padding:8px 10px;border-radius:7px;margin:6px 0;' +
+            style + '">' + label + '</div>';
     }).join("");
 }
 
