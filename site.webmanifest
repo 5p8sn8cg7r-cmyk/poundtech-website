@@ -7,10 +7,16 @@
   "theme_color": "#0A0A0A",
   "icons": [
     {
+      "src": "/poundtech-app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/poundtech-app-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
