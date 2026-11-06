@@ -1546,6 +1546,8 @@ Already approved?
 </p>
 
     <div id="cart-items"></div>
+    <div id="cart-fitment-summary" style="margin:10px 0 0;"></div>
+    <div id="cart-delivery-info" style="margin:14px 0 0;"></div>
 
     <div id="cart-recommendations" style="display:none; margin-top:24px;"></div>
 
@@ -2013,6 +2015,124 @@ async function loadCartRecommendations(cart) {
     };
 }
 
+let cartVehicleDetailsRequest = 0;
+let cartDeliveryFees = [];
+
+async function loadCartContext(cart) {
+    const requestId = ++cartVehicleDetailsRequest;
+    const ids = Array.from(new Set((cart || []).map(function (item) { return item.product_id; }).filter(Boolean)));
+    const supplierIds = Array.from(new Set((cart || []).map(function (item) { return item.supplier_id; }).filter(Boolean)));
+    const fitmentBox = document.getElementById("cart-fitment-summary");
+    const deliveryBox = document.getElementById("cart-delivery-info");
+    if (!ids.length) {
+        if (fitmentBox) fitmentBox.innerHTML = "";
+        if (deliveryBox) deliveryBox.innerHTML = "";
+        cartDeliveryFees = [];
+        return;
+    }
+
+    const tasks = [
+        supabaseClient.from("products").select("id, vehicle_compatibility, stock, status").in("id", ids),
+        supabaseClient.from("customer_vehicles").select("id, make, model, year, engine, nickname")
+            .order("created_at", { ascending: false }),
+        supplierIds.length
+            ? supabaseClient.from("suppliers").select("id, business_name, delivery_fee, collection_available").in("id", supplierIds)
+            : Promise.resolve({ data: [], error: null })
+    ];
+    const results = await Promise.all(tasks);
+    if (requestId !== cartVehicleDetailsRequest) return;
+
+    const products = {};
+    (results[0].data || []).forEach(function (p) { products[String(p.id)] = p; });
+
+    const vehicles = results[1].error ? [] : (results[1].data || []);
+    const fitmentLines = [];
+    if (vehicles.length) {
+        (cart || []).forEach(function (item) {
+            const product = products[String(item.product_id)];
+            if (!product) return;
+            vehicles.slice(0, 2).forEach(function (vehicle) {
+                const fit = PT.fit(product, vehicle);
+                const vehicleLabel = (vehicle.nickname ? vehicle.nickname + " · " : "") +
+                    vehicle.year + " " + vehicle.make + " " + vehicle.model;
+                let label = "";
+                let style = "";
+                if (fit === "match") {
+                    label = "Fits " + vehicleLabel;
+                    style = "background:#e8f5ec;color:#176b36;border:1px solid #b9dfc5;";
+                } else if (fit === "universal") {
+                    label = "Universal fitment — verify specifications";
+                    style = "background:#eef3f8;color:#34516b;border:1px solid #cbd8e5;";
+                } else if (fit === "mismatch") {
+                    label = "Not listed for " + vehicleLabel + " — confirm with supplier";
+                    style = "background:#fff5e8;color:#875500;border:1px solid #ead3a9;";
+                } else {
+                    label = "Fitment not confirmed for " + vehicleLabel;
+                    style = "background:#f4f4f4;color:#555;border:1px solid #ddd;";
+                }
+                fitmentLines.push('<div style="font-size:11px;line-height:1.4;padding:5px 8px;border-radius:6px;margin-top:5px;' +
+                    style + '">' + esc(label) + '</div>');
+            });
+        });
+        if (fitmentBox) fitmentBox.innerHTML = fitmentLines.length
+            ? '<p style="font-size:12px;font-weight:bold;margin:0 0 5px;">Vehicle fitment checks</p>' + fitmentLines.join("")
+            : "";
+    } else if (fitmentBox) {
+        fitmentBox.innerHTML = '<p style="font-size:12px;color:#666;margin:0;">Want to check fitment? <a href="customer-login.html" style="color:#c00;font-weight:bold;">Sign in and add a vehicle to My Garage.</a></p>';
+    }
+
+    cartDeliveryFees = [];
+    if (!results[2].error && results[2].data) {
+        const suppliers = {};
+        results[2].data.forEach(function (s) { suppliers[String(s.id)] = s; });
+        supplierIds.forEach(function (id) {
+            const supplier = suppliers[String(id)];
+            if (!supplier) return;
+            const fee = Number(supplier.delivery_fee);
+            cartDeliveryFees.push({
+                id: id,
+                name: supplier.business_name || "Supplier",
+                fee: Number.isFinite(fee) && fee > 0 ? fee : null,
+                collection: supplier.collection_available === true
+            });
+        });
+    }
+
+    if (deliveryBox) {
+        if (cartDeliveryFees.length) {
+            deliveryBox.innerHTML = '<div style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:12px;">' +
+                '<p style="font-size:13px;font-weight:bold;margin:0 0 7px;">Delivery by supplier</p>' +
+                cartDeliveryFees.map(function (s) {
+                    return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:4px 0;">' +
+                        '<span>' + esc(s.name) + (s.collection ? '<br><span style="color:#666;">Collection offered — confirm arrangements with supplier</span>' : '') + '</span>' +
+                        '<strong style="white-space:nowrap;">' + (s.fee === null ? 'To be confirmed' : PT.money(s.fee)) + '</strong></div>';
+                }).join("") + '</div>';
+        } else {
+            deliveryBox.innerHTML = '<p style="font-size:12px;color:#666;margin:0;">Delivery fees will be confirmed at checkout.</p>';
+        }
+    }
+}
+
+async function saveCartItemForLater(index) {
+    let cart = [];
+    try { cart = JSON.parse(localStorage.getItem("poundtechCart")) || []; } catch (e) { return; }
+    const item = cart[index];
+    if (!item) return;
+
+    if (!PT.isFavourite(item.product_id)) {
+        await PT.toggle(item.product_id);
+        if (!PT.isFavourite(item.product_id)) return;
+    }
+
+    cart.splice(index, 1);
+    localStorage.setItem("poundtechCart", JSON.stringify(cart));
+    document.getElementById("cart-count").innerText = cart.reduce(function (sum, row) {
+        return sum + Number(row.quantity || 1);
+    }, 0);
+    renderCart();
+    PT.toast("Moved to Saved Items");
+}
+
 async function showCart() {
     await refreshCartPrices();
     renderCart();
@@ -2125,6 +2245,8 @@ function renderCart() {
 
                     </div>
 
+                    <button type="button" onclick="saveCartItemForLater(${index})" style="margin:10px 12px 0 0;background:none;border:none;color:#333;padding:0;cursor:pointer;font-size:13px;text-decoration:underline;">Save for later</button>
+
                     <button
                         onclick="removeFromCart(${index})"
                         style="
@@ -2147,6 +2269,7 @@ function renderCart() {
     });
 
     loadCartRecommendations(cart);
+    loadCartContext(cart);
 
     cartTotal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
