@@ -57,7 +57,7 @@
     // shows a photo (the page is empty until JS fills it in). This points shares at a
     // small server-side page that has the real photo/title baked into its HTML and
     // instantly forwards a visitor on to the actual product page.
-    var SHARE_FN_URL = "https://uezacbssvvvtlosnaroh.supabase.co/functions/v1/share-preview";
+    var SHARE_FN_URL = "https://poundtech-share.5p8sn8cg7r.workers.dev";
 
     function previewUrl(id) {
         return SHARE_FN_URL + "?id=" + encodeURIComponent(id);
