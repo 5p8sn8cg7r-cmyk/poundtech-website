@@ -637,6 +637,36 @@
         return String(value || "").trim().toLowerCase().replace(/[-_]/g, " ").replace(/\s+/g, " ");
     }
 
+    // Year handling, pulled out so both the range and single-year cases share it.
+    // IMPORTANT: this runs on the RAW (un-normalised) entry text, because normalise()
+    // turns "-" into a space -- "2016-2020" would become "2016 2020" and look just
+    // like two standalone years, silently breaking every ranged fitment.
+    function yearMatches(rawEntry, vehicleYear) {
+
+        var year = parseInt(vehicleYear, 10);
+        if (!Number.isFinite(year)) { return true; } // no usable vehicle year: don't exclude on it
+
+        // "2016-2020", "2016 - 2020", "2016 to 2020", or an en/em dash.
+        var range = rawEntry.match(/\b((?:19|20)\d{2})\s*(?:-|–|—|to)\s*((?:19|20)\d{2})\b/i);
+        if (range) {
+            var lo = parseInt(range[1], 10), hi = parseInt(range[2], 10);
+            if (lo > hi) { var t = lo; lo = hi; hi = t; }
+            return year >= lo && year <= hi;
+        }
+
+        // Open-ended: "2016+", "2016 onwards", "2016 and up", "2016 or newer/later".
+        // (no trailing \b after "+" -- a non-word character at end of string never
+        // satisfies \b, so that branch would otherwise silently never match)
+        var open = rawEntry.match(/\b((?:19|20)\d{2})\s*(?:\+|(?:onwards?|and up|or (?:newer|later))\b)/i);
+        if (open) {
+            return year >= parseInt(open[1], 10);
+        }
+
+        // Otherwise, a plain list of individual years, e.g. "2016, 2018, 2020".
+        var years = rawEntry.match(/\b(?:19|20)\d{2}\b/g);
+        return !years || years.map(Number).indexOf(year) !== -1;
+    }
+
     // Returns "match", "universal", "unknown" or "mismatch".
     PT.fit = function (product, vehicle) {
 
@@ -644,17 +674,18 @@
 
         if (!raw) { return "unknown"; }
 
-        var entries = raw.split(/[,;\n]+/).map(normalise).filter(Boolean);
+        var rawEntries = raw.split(/[,;\n]+/).map(function (e) { return e.trim(); }).filter(Boolean);
 
-        if (entries.some(function (e) { return e === "universal"; })) { return "universal"; }
+        if (rawEntries.some(function (e) { return normalise(e) === "universal"; })) { return "universal"; }
 
         var make = normalise(vehicle.make);
         var model = normalise(vehicle.model);
-        var year = normalise(vehicle.year);
         var makes = MAKE_ALIASES[make] || [make];
         var vehicleName = normalise(vehicle.make + " " + vehicle.model);
 
-        var matches = entries.some(function (entry) {
+        var matches = rawEntries.some(function (rawEntry) {
+
+            var entry = normalise(rawEntry);
 
             var nameMatches = entry.indexOf(vehicleName) !== -1 ||
                 (makes.some(function (alias) { return entry.indexOf(alias) !== -1; }) &&
@@ -662,9 +693,7 @@
 
             if (!nameMatches) { return false; }
 
-            var years = entry.match(/\b(?:19|20)\d{2}\b/g);
-
-            return !years || years.indexOf(year) !== -1;
+            return yearMatches(rawEntry, vehicle.year);
         });
 
         return matches ? "match" : "mismatch";
