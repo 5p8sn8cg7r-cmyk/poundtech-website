@@ -6,6 +6,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Product | PoundTech</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/favicon-180x180.png">
 <link rel="stylesheet" href="site.css">
 
 <style>
@@ -495,6 +499,12 @@
         <div class="notice">Loading product&hellip;</div>
     </div>
 
+    <section class="more" id="related-section" hidden>
+        <h2>Often bought together</h2>
+        <p class="more-sub">Customers who bought this also got these.</p>
+        <div class="more-grid" id="related-grid"></div>
+    </section>
+
     <section class="reviews" id="reviews" hidden>
         <h2>Customer reviews</h2>
         <div id="reviews-body"></div>
@@ -518,7 +528,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="pt-share.js?v=20261025"></script>
+<script src="pt-share.js?v=20261026"></script>
 
 <script>
 
@@ -623,6 +633,7 @@ async function loadProduct() {
 
     const supplierEarly = cached && cached.supplier_id ? fetchSupplier(cached.supplier_id) : null;
     const similarEarly = cached ? loadSimilar(cached) : null;
+    if (cached) { loadRelated(cached.id); }
 
     const { data: product, error } = await supabaseClient
         .from("products")
@@ -654,6 +665,7 @@ async function loadProduct() {
     loadReviews(product);
 
     if (!similarEarly) { loadSimilar(product); }
+    if (!cached) { loadRelated(product.id); }
 
     const supplier = await (supplierEarly || fetchSupplier(product.supplier_id));
 
@@ -991,35 +1003,15 @@ function addProductToCart(product, quantity) {
 async function showFitBadges(product) {
 
     const vehicles = await getVehicles();
+
     const box = document.getElementById("fit-badges");
+
     if (!box) { return; }
 
-    if (!vehicles.length) {
-        box.innerHTML = '<div style="margin:10px 0;padding:12px;border:1px solid #ddd;border-radius:8px;background:#fafafa;font-size:13px;color:#555;">Check whether this part fits your car. <a href="customer-login.html" style="color:#c00;font-weight:bold;">Add a vehicle to My Garage</a> for a fitment check.</div>';
-        return;
-    }
+    const fits = vehicles.filter(function (v) { return PT.fit(product, v) === "match"; });
 
-    box.innerHTML = vehicles.slice(0, 3).map(function (vehicle) {
-        const fit = PT.fit(product, vehicle);
-        const name = esc((vehicle.nickname ? vehicle.nickname + " · " : "") +
-            vehicle.year + " " + vehicle.make + " " + vehicle.model);
-        let label = "";
-        let style = "";
-        if (fit === "match") {
-            label = "Fits " + name;
-            style = "background:#e8f5ec;color:#176b36;border:1px solid #b9dfc5;";
-        } else if (fit === "universal") {
-            label = "Universal fitment — verify specifications";
-            style = "background:#eef3f8;color:#34516b;border:1px solid #cbd8e5;";
-        } else if (fit === "mismatch") {
-            label = "Not listed for " + name + " — confirm with supplier";
-            style = "background:#fff5e8;color:#875500;border:1px solid #ead3a9;";
-        } else {
-            label = "Fitment not confirmed for " + name;
-            style = "background:#f4f4f4;color:#555;border:1px solid #ddd;";
-        }
-        return '<div style="font-size:13px;line-height:1.4;padding:8px 10px;border-radius:7px;margin:6px 0;' +
-            style + '">' + label + '</div>';
+    box.innerHTML = fits.map(function (v) {
+        return '<span class="fit-ok">Fits your ' + esc(v.year + " " + v.make + " " + v.model) + '</span>';
     }).join("");
 }
 
@@ -1357,6 +1349,69 @@ document.getElementById("more-grid").addEventListener("click", function (e) {
 
     if (add) {
         const product = similarById[add.getAttribute("data-add")];
+        if (product) { addProductToCart(product, 1); }
+        return;
+    }
+
+    const card = e.target.closest("[data-open]");
+
+    if (card && !e.target.closest("[data-pt-fav], [data-pt-share], .pt-actions")) {
+        PT.open(card.getAttribute("data-open"));
+    }
+});
+
+
+// "Often bought together": real co-purchase history from past orders, falling back
+// to same-category products when a product has no order history yet.
+let relatedById = {};
+
+async function loadRelated(productId) {
+
+    const { data, error } = await supabaseClient.rpc("get_related_products", { p_product_id: productId, p_limit: 6 });
+
+    const section = document.getElementById("related-section");
+    const grid = document.getElementById("related-grid");
+
+    if (error || !data || data.length === 0) {
+        section.hidden = true;
+        return;
+    }
+
+    PT.stash(data);
+
+    relatedById = {};
+    data.forEach(function (p) { relatedById[p.id] = p; });
+
+    grid.innerHTML = data.map(function (p) {
+        return `
+            <div class="more-card" data-open="${esc(p.id)}">
+                <div class="mc-image">
+                    ${p.image_url ? PT.img(p.image_url, p.name) : "No image"}
+                    ${PT.ribbons(p)}
+                    ${PT.cardActions({ id: p.id, name: p.name, price: p.price, sale_price: p.sale_price, sale_ends_at: p.sale_ends_at })}
+                </div>
+                <div class="mc-info">
+                    <h3>${esc(p.name)}</h3>
+                    <span data-rating-for="${esc(p.id)}"></span>
+                    ${PT.price(p)}
+                    <button type="button" class="mc-add" data-add="${esc(p.id)}">Add to Cart</button>
+                </div>
+            </div>`;
+    }).join("");
+
+    section.hidden = false;
+
+    PT.refresh();
+
+    PT.fetchRatings(data.map(function (p) { return p.id; })).then(PT.paintRatings);
+}
+
+document.getElementById("related-grid").addEventListener("click", function (e) {
+
+    const add = e.target.closest("[data-add]");
+
+    if (add) {
+        const product = relatedById[add.getAttribute("data-add")];
         if (product) { addProductToCart(product, 1); }
         return;
     }
