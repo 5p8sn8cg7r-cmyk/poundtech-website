@@ -10,6 +10,7 @@
 <title>Supplier | PoundTech</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="pt-share.js?v=20261107"></script>
 
 <style>
 
@@ -172,6 +173,15 @@ Loading supplier...
 Products from this supplier
 </h2>
 
+<div id="supplier-fit-filter" style="display:none;background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:14px 16px;margin:-8px 0 20px;">
+    <label for="supplier-vehicle-select" style="display:block;font-weight:bold;margin-bottom:8px;">Filter by My Garage vehicle</label>
+    <select id="supplier-vehicle-select" style="width:100%;max-width:420px;padding:11px;border:1px solid #ccc;border-radius:7px;background:#fff;color:#111;">
+        <option value="">All products</option>
+    </select>
+    <p id="supplier-fit-status" style="margin:9px 0 0;color:#666;font-size:13px;">Choose a saved vehicle to hide products known not to fit.</p>
+</div>
+
+
 
 <div
     id="products-container"
@@ -319,8 +329,110 @@ supabase.createClient(
     SUPABASE_KEY
 );
 
+PT.init(supabaseClient);
 
 let supplierId = null;
+let supplierProducts = [];
+let supplierVehicles = [];
+let selectedSupplierVehicle = null;
+
+async function loadSupplierVehicles() {
+    const filter = document.getElementById("supplier-fit-filter");
+    const select = document.getElementById("supplier-vehicle-select");
+    const status = document.getElementById("supplier-fit-status");
+    const { data: userData } = await supabaseClient.auth.getUser();
+
+    filter.style.display = "block";
+
+    if (!userData || !userData.user) {
+        select.disabled = true;
+        status.innerHTML = 'Sign in and add a vehicle to <a href="customer-login.html" style="color:#e00000;font-weight:bold;">My Garage</a> to filter by fitment.';
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("customer_vehicles")
+        .select("id, make, model, year, engine, nickname")
+        .eq("user_id", userData.user.id)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.error("SUPPLIER STORE GARAGE ERROR:", error);
+        status.textContent = "We couldn't load your saved vehicles. You can still browse all products.";
+        return;
+    }
+
+    supplierVehicles = data || [];
+    if (!supplierVehicles.length) {
+        status.innerHTML = 'Add a vehicle to <a href="garage.html" style="color:#e00000;font-weight:bold;">My Garage</a> to filter this supplier’s products.';
+        return;
+    }
+
+    select.innerHTML = '<option value="">All products</option>' + supplierVehicles.map(function (v) {
+        const label = (v.nickname ? v.nickname + " — " : "") + v.year + " " + v.make + " " + v.model + (v.engine ? " (" + v.engine + ")" : "");
+        return '<option value="' + PT.esc(v.id) + '">' + PT.esc(label) + '</option>';
+    }).join("");
+
+    select.addEventListener("change", function () {
+        selectedSupplierVehicle = supplierVehicles.find(function (v) {
+            return String(v.id) === select.value;
+        }) || null;
+        renderSupplierProducts();
+    });
+}
+
+function renderSupplierProducts() {
+    const container = document.getElementById("products-container");
+    const status = document.getElementById("supplier-fit-status");
+    let visible = supplierProducts;
+
+    if (selectedSupplierVehicle) {
+        visible = supplierProducts.filter(function (p) {
+            const fit = PT.fit(p, selectedSupplierVehicle);
+            return fit === "match" || fit === "universal" || fit === "unknown";
+        });
+        status.textContent = "Showing products that fit, may fit, or have no fitment details for your " +
+            selectedSupplierVehicle.year + " " + selectedSupplierVehicle.make + " " + selectedSupplierVehicle.model + ". Known mismatches are hidden.";
+    } else {
+        status.textContent = supplierVehicles.length
+            ? "Choose a saved vehicle to hide products known not to fit."
+            : "Add a vehicle to My Garage to filter by fitment.";
+    }
+
+    if (!visible.length) {
+        container.innerHTML = '<p>No products from this supplier match your selected vehicle.</p>';
+        return;
+    }
+
+    container.innerHTML = visible.map(function (product) {
+        const fit = selectedSupplierVehicle ? PT.fit(product, selectedSupplierVehicle) : "";
+        const vehicleName = selectedSupplierVehicle ? PT.esc(selectedSupplierVehicle.make + " " + selectedSupplierVehicle.model) : "";
+        const fitLabel = fit === "match"
+            ? '<p style="color:#16803c;font-weight:bold;font-size:13px;">✓ Fits your ' + vehicleName + '</p>'
+            : fit === "universal"
+                ? '<p style="color:#777;font-size:13px;">Universal fitment — please confirm before buying</p>'
+                : fit === "unknown"
+                    ? '<p style="color:#777;font-size:13px;">Fitment not specified — please confirm before buying</p>'
+                    : "";
+        return `
+            <div class="product" onclick="window.location.href='product.html?id=${encodeURIComponent(product.id)}'">
+                <div class="product-image">
+                    ${product.image_url ? '<img src="' + PT.esc(product.image_url) + '" alt="' + PT.esc(product.name) + '">' : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">No Image</div>'}
+                </div>
+                <div class="product-info">
+                    <h3>${PT.esc(product.name)}</h3>
+                    <p>${PT.esc(product.category || "")}</p>
+                    ${fitLabel}
+                    <div class="price">${PT.money(product.price)}</div>
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <button onclick="event.stopPropagation();window.location.href='product.html?id=${encodeURIComponent(product.id)}'">View Product</button>
+                        <button onclick="event.stopPropagation();addSupplierProductToCart(${JSON.stringify(String(product.id))},${JSON.stringify(String(product.supplier_id))},${JSON.stringify(String(product.name || ""))},${Number(product.price)||0},${JSON.stringify(String(product.image_url || ""))})" style="background:#111;">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
 
 
 async function loadSupplier() {
@@ -477,116 +589,13 @@ async function loadSupplierProducts() {
 
 
     if (!products || products.length === 0) {
-
-        container.innerHTML =
-            "<p>This supplier has no products listed yet.</p>";
-
+        supplierProducts = [];
+        container.innerHTML = "<p>This supplier has no products listed yet.</p>";
         return;
-
     }
 
-
-    container.innerHTML =
-
-        products.map(product => `
-
-            <div
-                class="product"
-                onclick="
-                    window.location.href=
-                    'product.html?id=${product.id}'
-                "
-            >
-
-                <div class="product-image">
-
-                    ${
-                        product.image_url
-
-                        ?
-
-                        `
-                        <img
-                            src="${product.image_url}"
-                            alt="${product.name}"
-                        >
-                        `
-
-                        :
-
-                        `
-                        <div style="
-                            width:100%;
-                            height:100%;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                        ">
-                            No Image
-                        </div>
-                        `
-                    }
-
-                </div>
-
-
-                <div class="product-info">
-
-                    <h3>
-                        ${product.name}
-                    </h3>
-
-
-                    <p>
-                        ${product.category}
-                    </p>
-
-
-                    <div class="price">
-                        R${product.price}
-                    </div>
-
-
-<div style="
-    display:flex;
-    gap:8px;
-    margin-top:10px;
-">
-
-    <button
-        onclick="
-            event.stopPropagation();
-            window.location.href=
-            'product.html?id=${product.id}'
-        "
-    >
-        View Product
-    </button>
-
-    <button
-        onclick="
-            event.stopPropagation();
-            addSupplierProductToCart(
-                '${product.id}',
-                '${product.supplier_id}',
-                '${product.name}',
-                ${product.price},
-                '${product.image_url || ""}'
-            )
-        "
-        style="
-            background:#111;
-        "
-    >
-        Add to Cart
-    </button>
-
-</div>
-                </div>
-
-            </div>
-
-        `).join("");
+    supplierProducts = products;
+    renderSupplierProducts();
 
 }
 
@@ -855,6 +864,7 @@ function addSupplierProductToCart(
     
 loadSupplier();
 loadSupplierReviews();
+loadSupplierVehicles();
 
 </script>
 
