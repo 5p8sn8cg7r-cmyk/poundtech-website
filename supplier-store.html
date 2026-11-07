@@ -390,6 +390,7 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
 }
 
 
+.supplier-rating-quick{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px;color:#e5e5e5;font-size:13px;font-weight:650}.supplier-rating-quick .rating-stars{color:#ffc247;font-size:17px;letter-spacing:1px;line-height:1}.supplier-rating-quick .rating-score{color:#fff;font-size:15px;font-weight:850}.supplier-rating-quick .rating-count{color:#c4c5c8;font-weight:500}.supplier-rating-quick.no-ratings .rating-stars{color:#9b9b9b}.supplier-rating-detail{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 18px;font-size:14px;color:#666}.supplier-rating-detail .rating-stars{color:#e5a51a;font-size:19px;letter-spacing:1px}.supplier-rating-detail strong{color:#171717;font-size:21px}.supplier-review-item{border-top:1px solid #eceef0;padding:15px 0}.supplier-review-stars{margin:5px 0;color:#e5a51a;letter-spacing:1px}.supplier-review-item p{margin:5px 0;color:#444;white-space:pre-wrap;overflow-wrap:anywhere}
 /* MAKE SUPPLIER LOCATION EASY TO SPOT */
 .supplier-location {
     display:flex; align-items:center; gap:12px; width:fit-content; max-width:100%;
@@ -848,6 +849,7 @@ async function loadSupplier() {
                 ? `<div class="verified">✓ Verified PoundTech Supplier</div>`
                 : ""
             }
+            <div id="supplier-rating-quick" class="supplier-rating-quick" aria-live="polite"><span class="rating-stars">★★★★★</span><span>Loading supplier rating…</span></div>
             <div class="supplier-location">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
                 <span class="supplier-location-copy">
@@ -998,7 +1000,14 @@ function addSupplierProductToCart(
         return;
     }
 
+    const quickRating = document.getElementById("supplier-rating-quick");
+
     if (!reviews || reviews.length === 0) {
+        if (quickRating) {
+            quickRating.classList.add("no-ratings");
+            quickRating.innerHTML = '<span class="rating-stars">☆☆☆☆☆</span><span>No customer ratings yet</span>';
+        }
+
 
         ratingContainer.innerHTML =
             "⭐ No ratings yet";
@@ -1016,50 +1025,24 @@ function addSupplierProductToCart(
             0
         ) / reviews.length;
 
-    ratingContainer.innerHTML = `
-        <div style="
-            font-size:20px;
-            font-weight:bold;
-            margin-bottom:20px;
-        ">
-            ⭐ ${average.toFixed(1)} / 5
-            <span style="
-                font-size:14px;
-                color:#666;
-                font-weight:normal;
-            ">
-                (${reviews.length} reviews)
-            </span>
-        </div>
-    `;
+    const roundedStars = Math.max(0, Math.min(5, Math.round(average)));
+    const stars = "★".repeat(roundedStars) + "☆".repeat(5 - roundedStars);
+    const reviewLabel = reviews.length === 1 ? "review" : "reviews";
+
+    if (quickRating) {
+        quickRating.classList.remove("no-ratings");
+        quickRating.innerHTML = '<span class="rating-stars">' + stars + '</span><span class="rating-score">' + average.toFixed(1) + '/5</span><span class="rating-count">(' + reviews.length + ' ' + reviewLabel + ')</span>';
+    }
+
+    ratingContainer.innerHTML = '<div class="supplier-rating-detail"><span class="rating-stars">' + stars + '</span><strong>' + average.toFixed(1) + ' / 5</strong><span>(' + reviews.length + ' ' + reviewLabel + ')</span></div>';
 
     reviewsContainer.innerHTML =
         reviews.map(review => `
-
-            <div style="
-                border-top:1px solid #eee;
-                padding:15px 0;
-            ">
-
-                <strong>
-                    ${review.customer_name}
-                </strong>
-
-                <div style="
-                    margin:5px 0;
-                ">
-                    ${"⭐".repeat(Number(review.rating))}
-                </div>
-
-                <p style="
-                    margin:5px 0;
-                    color:#444;
-                ">
-                    ${review.review_text || ""}
-                </p>
-
+            <div class="supplier-review-item">
+                <strong>${PT.esc(review.customer_name || "PoundTech customer")}</strong>
+                <div class="supplier-review-stars">${"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}</div>
+                <p>${PT.esc(review.review_text || "")}</p>
             </div>
-
         `).join("");
 }
 
