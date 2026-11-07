@@ -55,7 +55,8 @@
     // Facebook/X/Reddit/WhatsApp etc. generate their link previews by fetching the URL
     // themselves, without running any JavaScript -- so a plain product.html link never
     // shows a photo (the page is empty until JS fills it in). This points shares at a
-    // small server-side page that has the real photo/title baked into its HTML and
+    // small server-side page (a Cloudflare Worker -- Supabase Edge Functions can't serve
+    // real HTML on GET requests) that has the real photo/title baked into its HTML and
     // instantly forwards a visitor on to the actual product page.
     var SHARE_FN_URL = "https://poundtech-share.5p8sn8cg7r.workers.dev";
 
@@ -306,12 +307,27 @@
 
     var HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
     var SHARE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
-    var CHAT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5A8.4 8.4 0 1 1 21 11.5z"/></svg>';
+    var CHAT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="12" fill="#25D366" stroke="none"/>' +
+        '<path d="M12 5.5a6.5 6.5 0 0 0-5.6 9.8L5.5 18.5l3.3-.9A6.5 6.5 0 1 0 12 5.5z" fill="none" stroke="#fff" stroke-width="1.3"/>' +
+        '<path d="M9.2 9.6c.2-.4.4-.4.6-.4h.4c.2 0 .4 0 .5.4.2.4.6 1.3.6 1.4.1.1.1.3 0 .4-.1.2-.2.3-.3.4-.1.2-.3.3-.1.6.2.3.8 1.2 1.7 1.7.8.5 1 .4 1.2.2.2-.2.5-.6.7-.8.2-.2.3-.2.5-.1.2.1 1.2.6 1.4.7.2.1.3.1.4.2 0 .2 0 .8-.3 1.1-.3.4-1.1.8-1.8.8-.6 0-2-.2-3.4-1.4-1.6-1.4-2.3-2.6-2.4-2.9-.1-.3-.7-1.1-.7-2.1 0-1 .5-1.5.7-1.7z" fill="#fff" stroke="none"/>' +
+        '</svg>';
     var WRENCH_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3l8.7-8.7z"/><path d="M14.7 6.3a4 4 0 0 1 5-1.6l-2.5 2.5.6 1.9 1.9.6 2.5-2.5a4 4 0 0 1-1.6 5"/></svg>';
     var LINK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/></svg>';
     var FB_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1877F2" stroke="none"/><path d="M13.6 21v-7.3h2.4l.4-2.9h-2.8v-1.7c0-.8.2-1.4 1.4-1.4h1.5V5c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.1H8.2v2.9h2.4V21h3z" fill="#fff" stroke="none"/></svg>';
     var X_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#000" stroke="none"/><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>';
-    var REDDIT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#FF4500" stroke="none"/><text x="12" y="16.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#fff" stroke="none">r</text></svg>';
+    var REDDIT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="12" fill="#FF4500" stroke="none"/>' +
+        '<circle cx="12" cy="14" r="5" fill="#fff" stroke="none"/>' +
+        '<circle cx="18.5" cy="9.5" r="1.6" fill="#fff" stroke="none"/>' +
+        '<line x1="14.6" y1="10.2" x2="17.3" y2="9.8" stroke="#fff" stroke-width="0.9"/>' +
+        '<circle cx="18.5" cy="9.5" r="0.7" fill="#FF4500" stroke="none"/>' +
+        '<circle cx="9.8" cy="13.6" r="0.9" fill="#FF4500" stroke="none"/>' +
+        '<circle cx="14.2" cy="13.6" r="0.9" fill="#FF4500" stroke="none"/>' +
+        '<path d="M9.8 16c.6.5 1.4.8 2.2.8s1.6-.3 2.2-.8" fill="none" stroke="#FF4500" stroke-width="0.8" stroke-linecap="round"/>' +
+        '<ellipse cx="7.3" cy="12.6" rx="1.3" ry="1" fill="#fff" stroke="none"/>' +
+        '<ellipse cx="16.7" cy="12.6" rx="1.3" ry="1" fill="#fff" stroke="none"/>' +
+        '</svg>';
 
 
     /* ---------- buttons you place on pages ---------- */
