@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <title>PoundTech favicon</title>
-  <rect width="512" height="512" rx="76" fill="#0A0A0A"/>
-  <g font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="330">
-    <text x="48" y="376" fill="#E31B23">P</text>
-    <text x="254" y="376" fill="#FFFFFF">T</text>
-  </g>
+  <title>PoundTech</title>
+  <rect width="512" height="512" fill="#090909"/>
+  <path fill="#f20b20" d="M190 135H400c10 8 16 19 17 34H146z"/>
+  <path fill="#ed1025" d="M121 183h220l-8 17c-6 13-17 19-32 19H88z"/>
+  <path fill="#ed1025" d="M162 238h51l-66 99H96z"/>
+  <path fill="#fff" d="M360 183h56c-7 51-39 94-96 94h-65l-37 60h-52l42-67c10-17 20-32 43-32h57c24 0 37-15 44-35z"/>
 </svg>
