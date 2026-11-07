@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" href="/favicon.ico?v=8" sizes="any">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=8">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=8">
-<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png?v=8">
-<link rel="manifest" href="/site.webmanifest?v=8">
 <link rel="preconnect" href="https://uezacbssvvvtlosnaroh.supabase.co" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta charset="UTF-8">
@@ -13,10 +8,10 @@
 
 <title>PoundTech | South Africa's Automotive Marketplace</title>
 <link rel="canonical" href="https://poundtech.co.za/">
-
-
-
-
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/favicon-180x180.png">
 <script>
 // Show poundtech.co.za instead of poundtech.co.za/index.html in the address bar.
 if (/\/index\.html$/.test(location.pathname)) {
@@ -153,22 +148,21 @@ nav a:hover {
     line-height: 1.55;
 }
 
-.hero-garage {
+.shop-card {
     max-width: 750px;
-    margin: 16px auto 0;
+    margin: auto;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.35);
     text-align: left;
 }
 
-.search {
-    max-width: 750px;
-    margin: auto;
+.search-row {
     display: flex;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
 }
 
-.search input {
+.search-row input {
     flex: 1;
     border: none;
     outline: none;
@@ -176,13 +170,84 @@ nav a:hover {
     font-size: 16px;
 }
 
-.search button {
+.search-row button {
     background: #e00000;
     color: white;
     border: none;
     padding: 0 30px;
     font-weight: bold;
     cursor: pointer;
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+.garage-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid #ececec;
+    padding: 10px 16px;
+    background: #fafafa;
+    min-height: 44px;
+}
+
+.garage-row svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    stroke: #e00000;
+    fill: none;
+    stroke-width: 1.8;
+}
+
+.garage-row select {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #111;
+    padding: 6px 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    text-overflow: ellipsis;
+}
+
+.garage-row .gr-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.garage-row .gr-chev {
+    width: 16px;
+    height: 16px;
+    stroke: #999;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+.garage-row a.gr-cta {
+    flex: 1;
+    color: #e00000;
+    font-weight: 700;
+    font-size: 14.5px;
+    text-decoration: none;
+}
+
+#garage-vehicle-status {
+    max-width: 750px;
+    margin: 10px auto 0;
+    color: #8d8d8d;
+    font-size: 13px;
+    text-align: left;
 }
 
 /* SECTIONS */
@@ -728,31 +793,35 @@ footer {
         margin: 10px auto 18px;
     }
 
-    .search {
+    .search-row {
         flex-direction: column;
     }
 
-    .search input {
+    .search-row input {
         padding: 14px 16px;
         font-size: 15px;
     }
 
-    .search button {
+    .search-row button {
         padding: 13px;
     }
 
-    .hero-garage {
-        margin-top: 12px;
+    .garage-row {
+        gap: 8px;
+        padding: 10px 14px;
     }
 
-    .hero-garage label {
-        margin-bottom: 6px !important;
-        font-size: 14px;
+    .garage-row svg {
+        width: 18px;
+        height: 18px;
     }
 
-    .hero-garage select {
-        padding: 11px !important;
-        font-size: 14px !important;
+    .garage-row select {
+        font-size: 13.5px;
+    }
+
+    .garage-row .gr-label {
+        font-size: 10.5px;
     }
 
     .mechanic {
@@ -1090,42 +1159,51 @@ South Africa's <span>Automotive Marketplace</span>
 Find car parts, accessories and automotive services from businesses across South Africa.
 </p>
 
-<div class="search">
+<div class="shop-card">
 
-    <input
-        type="text"
-        placeholder="Search for parts, accessories or services..."
-        onkeydown="if(event.key === 'Enter') searchProducts()"
-    >
+    <div class="search-row">
 
-    <button onclick="searchProducts()">
-        Search
-    </button>
+        <input
+            type="text"
+            placeholder="Search for parts, accessories or services..."
+            onkeydown="if(event.key === 'Enter') searchProducts()"
+        >
+
+        <button onclick="searchProducts()">
+            Search
+        </button>
+
+    </div>
+
+    <div class="garage-row" id="garage-row">
+
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/>
+            <rect x="3.5" y="11" width="17" height="6" rx="2"/>
+            <circle cx="7.5" cy="17.5" r="1.6" fill="#e00000" stroke="none"/>
+            <circle cx="16.5" cy="17.5" r="1.6" fill="#e00000" stroke="none"/>
+        </svg>
+
+        <span class="gr-label">My&nbsp;Garage</span>
+
+        <span id="garage-row-right" style="flex:1; min-width:0; display:flex; align-items:center; gap:10px;">
+            <select id="garage-vehicle-select" onchange="selectGarageVehicle()" style="flex:1; min-width:0;">
+                <option value="">Loading your saved vehicles...</option>
+            </select>
+            <svg class="gr-chev" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 9l6 6 6-6"/>
+            </svg>
+        </span>
+
+    </div>
 
 </div>
 
 <div id="search-status"></div>
-<div class="hero-garage">
 
-    <label for="garage-vehicle-select"
-           style="display:block; margin-bottom:8px; color:white; font-weight:bold;">
-        Shop for your vehicle
-    </label>
-
-    <select id="garage-vehicle-select"
-            onchange="selectGarageVehicle()"
-            style="width:100%; padding:14px; border-radius:6px; border:1px solid #ddd; font-size:15px;">
-
-        <option value="">Loading your saved vehicles...</option>
-
-    </select>
-
-    <p id="garage-vehicle-status"
-       style="margin-top:8px; color:#c7c7c7; font-size:13px;">
-        Choose a vehicle from My Garage to find compatible products.
-    </p>
-
-</div>
+<p id="garage-vehicle-status">
+    Choose a vehicle from My Garage to find compatible products.
+</p>
     
 </section>
 
@@ -1666,25 +1744,35 @@ function showToast(message) {
     let garageVehicles = [];
 let selectedGarageVehicle = null;
 
+// Swaps the dropdown out for a plain call-to-action link -- used when there's
+// nothing to actually choose from yet (signed out, or no saved vehicles).
+function showGarageCta(href, label) {
+    const right = document.getElementById("garage-row-right");
+    right.innerHTML = `<a class="gr-cta" href="${href}">${label} &rarr;</a>`;
+}
+
+// Restores the dropdown markup (used once we actually have vehicles to list).
+function showGarageSelect() {
+    const right = document.getElementById("garage-row-right");
+    right.innerHTML = `
+        <select id="garage-vehicle-select" onchange="selectGarageVehicle()" style="flex:1; min-width:0;">
+            <option value="">Choose a saved vehicle</option>
+        </select>
+        <svg class="gr-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    `;
+    return document.getElementById("garage-vehicle-select");
+}
+
 async function loadGarageVehicles() {
 
-    const select = document.getElementById("garage-vehicle-select");
     const status = document.getElementById("garage-vehicle-status");
 
     const { data: userData, error: userError } =
         await supabaseClient.auth.getUser();
 
     if (userError || !userData.user) {
-        select.innerHTML = `
-            <option value="">Sign in to use My Garage</option>
-        `;
-
-        status.innerHTML = `
-            <a href="customer-login.html" style="color:white;">
-                Sign in or open My Garage
-            </a>
-        `;
-
+        showGarageCta("customer-login.html", "Sign in to shop by your vehicle");
+        status.textContent = "Save your car's details once, then see what fits it everywhere you shop.";
         return;
     }
 
@@ -1696,36 +1784,20 @@ async function loadGarageVehicles() {
 
     if (error) {
         console.error("GARAGE VEHICLES ERROR:", error);
-
-        select.innerHTML = `
-            <option value="">Unable to load saved vehicles</option>
-        `;
-
-        status.textContent =
-            "We couldn't load your vehicles. Please try again later.";
-
+        showGarageCta("garage.html", "My Garage");
+        status.textContent = "We couldn't load your vehicles. Please try again later.";
         return;
     }
 
     garageVehicles = vehicles || [];
 
     if (garageVehicles.length === 0) {
-        select.innerHTML = `
-            <option value="">No saved vehicles found</option>
-        `;
-
-        status.innerHTML = `
-            Add a vehicle in
-            <a href="garage.html" style="color:white;">My Garage</a>
-            first.
-        `;
-
+        showGarageCta("garage.html", "+ Add your vehicle");
+        status.textContent = "Add a vehicle to My Garage to see what fits it as you shop.";
         return;
     }
 
-    select.innerHTML = `
-        <option value="">Choose a saved vehicle</option>
-    `;
+    const select = showGarageSelect();
 
     garageVehicles.forEach(function(vehicle) {
 
@@ -1753,26 +1825,19 @@ async function loadGarageVehicles() {
 function selectGarageVehicle() {
     const select = document.getElementById("garage-vehicle-select");
 
-    console.log("Dropdown value:", select.value);
-console.log("Saved vehicles:", garageVehicles);
-  console.log("Vehicle details:", JSON.stringify(garageVehicles));
-    
     selectedGarageVehicle =
         garageVehicles.find(function(vehicle) {
         return String(vehicle.id) === select.value;
         }) || null;
-console.log("Selected vehicle:", selectedGarageVehicle);
-console.log("Products will reload now");
-    
+
     const status = document.getElementById("garage-vehicle-status");
 
     if (selectedGarageVehicle) {
         status.textContent =
-            "Selected: " +
+            "Showing parts that fit your " +
             selectedGarageVehicle.year + " " +
             selectedGarageVehicle.make + " " +
-            selectedGarageVehicle.model +
-            ". Compatibility filtering will use this vehicle.";
+            selectedGarageVehicle.model + ".";
     } else {
         status.textContent =
             "Choose a vehicle from My Garage to find compatible products.";
