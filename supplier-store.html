@@ -70,6 +70,15 @@ header h1 {
     font-weight: bold;
 }
 
+.pro-badge {
+    display:inline-flex; align-items:center; gap:7px; width:max-content;
+    margin-top:10px; padding:8px 12px; border-radius:999px;
+    color:#171717; background:linear-gradient(135deg,#ffe7a3,#f3c85b);
+    border:1px solid #d9ad43; font-size:11px; font-weight:850;
+    letter-spacing:.45px; box-shadow:0 3px 10px rgba(0,0,0,.12);
+}
+.pro-badge svg { width:14px; height:14px; fill:#171717; flex:0 0 14px; }
+
 .products-heading {
     margin-bottom: 20px;
 }
@@ -837,6 +846,11 @@ async function loadSupplier() {
         " | PoundTech";
 
 
+    // Only show Pro when the supplier subscription has not expired.
+    const proActive = supplier.plan === "pro" &&
+        !!supplier.plan_ends_at &&
+        new Date(supplier.plan_ends_at).getTime() > Date.now();
+
     document.getElementById(
         "supplier-container"
     ).innerHTML = `
@@ -847,6 +861,11 @@ async function loadSupplier() {
             ${
                 supplier.status === "Approved"
                 ? `<div class="verified">✓ Verified PoundTech Supplier</div>`
+                : ""
+            }
+            ${
+                proActive
+                ? `<div class="pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg> POUNDTECH PRO</div>`
                 : ""
             }
             <div id="supplier-rating-quick" class="supplier-rating-quick" aria-live="polite"><span class="rating-stars">★★★★★</span><span>Loading supplier rating…</span></div>
