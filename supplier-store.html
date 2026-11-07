@@ -74,6 +74,108 @@ header h1 {
     margin-bottom: 20px;
 }
 
+.fitment-panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 24px;
+    margin: 0 0 24px;
+    background: linear-gradient(125deg, #171717 0%, #252525 100%);
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.10);
+    overflow: hidden;
+}
+.fitment-panel:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #e00000;
+}
+.fitment-copy { position: relative; min-width: 0; }
+.fitment-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 7px;
+    color: #ff5a5a;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+}
+.fitment-eyebrow span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ed2525;
+    box-shadow: 0 0 10px rgba(237,37,37,.8);
+}
+.fitment-title { margin: 0; color: #fff; font-size: 19px; font-weight: 750; letter-spacing: -.35px; }
+.fitment-description { margin: 6px 0 0; color: #b8b8b8; font-size: 13px; line-height: 1.5; }
+.fitment-control { position: relative; width: min(100%, 370px); flex: 0 0 370px; }
+.fitment-control label {
+    display: block;
+    margin: 0 0 8px;
+    color: #d7d7d7;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+.fitment-select-wrap { position: relative; }
+.fitment-select-wrap:after {
+    content: "⌄";
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-58%);
+    color: #777;
+    font-size: 20px;
+    pointer-events: none;
+}
+#supplier-vehicle-select {
+    width: 100%;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 14px 42px 14px 14px;
+    border: 1px solid #d8d8d8;
+    border-radius: 9px;
+    outline: none;
+    background: #fff;
+    color: #171717;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+}
+#supplier-vehicle-select:focus {
+    border-color: #ed2525;
+    box-shadow: 0 0 0 3px rgba(237,37,37,.18);
+}
+#supplier-vehicle-select:disabled { opacity: .55; cursor: not-allowed; }
+#supplier-fit-status {
+    margin: 10px 0 0;
+    color: #aaa;
+    font-size: 11px;
+    line-height: 1.5;
+}
+#supplier-fit-status a { color: #ff6868 !important; text-decoration: none; }
+#supplier-fit-status a:hover { text-decoration: underline; }
+@media (max-width: 700px) {
+    .fitment-panel { display: block; padding: 20px 18px; border-radius: 13px; }
+    .fitment-title { font-size: 17px; }
+    .fitment-control { width: 100%; margin-top: 18px; }
+}
+
 .products {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -173,13 +275,22 @@ Loading supplier...
 Products from this supplier
 </h2>
 
-<div id="supplier-fit-filter" style="display:none;background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:14px 16px;margin:-8px 0 20px;">
-    <label for="supplier-vehicle-select" style="display:block;font-weight:bold;margin-bottom:8px;">Filter by My Garage vehicle</label>
-    <select id="supplier-vehicle-select" style="width:100%;max-width:420px;padding:11px;border:1px solid #ccc;border-radius:7px;background:#fff;color:#111;">
-        <option value="">All products</option>
-    </select>
-    <p id="supplier-fit-status" style="margin:9px 0 0;color:#666;font-size:13px;">Choose a saved vehicle to hide products known not to fit.</p>
-</div>
+<section id="supplier-fit-filter" class="fitment-panel" style="display:none;" aria-label="Vehicle compatibility filter">
+    <div class="fitment-copy">
+        <p class="fitment-eyebrow"><span></span> Smarter shopping</p>
+        <h3 class="fitment-title">Find parts for your vehicle</h3>
+        <p class="fitment-description">Choose a vehicle from My Garage to see products matched to your fitment.</p>
+    </div>
+    <div class="fitment-control">
+        <label for="supplier-vehicle-select">Your vehicle</label>
+        <div class="fitment-select-wrap">
+            <select id="supplier-vehicle-select">
+                <option value="">All products</option>
+            </select>
+        </div>
+        <p id="supplier-fit-status">Choose a saved vehicle to hide products known not to fit.</p>
+    </div>
+</section>
 
 
 
