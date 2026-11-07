@@ -1,8 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <title>PoundTech</title>
-  <rect width="512" height="512" fill="#090909"/>
-  <path fill="#f20b20" d="M190 135H400c10 8 16 19 17 34H146z"/>
-  <path fill="#ed1025" d="M121 183h220l-8 17c-6 13-17 19-32 19H88z"/>
-  <path fill="#ed1025" d="M162 238h51l-66 99H96z"/>
-  <path fill="#fff" d="M360 183h56c-7 51-39 94-96 94h-65l-37 60h-52l42-67c10-17 20-32 43-32h57c24 0 37-15 44-35z"/>
+  <rect width="512" height="512" fill="#0a0a0a"/>
+  <g fill="#ed1025">
+    <path d="M89 218L307 218 315 216 326 209 339 184 129 184Z"/>
+    <path d="M148 165L372 166 374 168 416 168 412 150 401 136 189 136Z"/>
+    <path d="M211 238H162L96 335H147Z"/>
+  </g>
+  <path fill="#f8f8f8" d="M415 184H361L344 219 334 230 319 237 233 238 167 335H217L258 276H310L326 274 345 268 366 257 395 228 408 205Z"/>
 </svg>
