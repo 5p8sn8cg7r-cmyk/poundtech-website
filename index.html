@@ -8,14 +8,10 @@
 
 <title>PoundTech | South Africa's Automotive Marketplace</title>
 <link rel="canonical" href="https://poundtech.co.za/">
-<meta name="theme-color" content="#0A0A0A">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=4">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=4">
-<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png?v=4">
-<link rel="shortcut icon" href="/favicon.ico?v=4">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3">
-<link rel="manifest" href="/site.webmanifest?v=3">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/favicon-180x180.png">
 <script>
 // Show poundtech.co.za instead of poundtech.co.za/index.html in the address bar.
 if (/\/index\.html$/.test(location.pathname)) {
@@ -1513,7 +1509,6 @@ Already approved?
     <div class="footer-col">
         <h4>Support</h4>
         <a href="track-order.html">Track Order</a>
-        <a href="orders.html">My Orders</a>
         <a href="favourites.html">Saved Items</a>
         <a href="customer-login.html">My Garage</a>
         <a href="mailto:orders@poundtech.co.za">orders@poundtech.co.za</a>
@@ -1555,18 +1550,14 @@ Already approved?
 </p>
 
     <div id="cart-items"></div>
-    <div id="cart-fitment-summary" style="margin:10px 0 0;"></div>
-    <div id="cart-delivery-info" style="margin:14px 0 0;"></div>
 
-    <div id="cart-recommendations" style="display:none; margin-top:24px;"></div>
+    <h3 id="cart-total" style="margin-top:20px;">
+        Total: R0
+    </h3>
 
-    <div id="cart-total" style="margin-top:22px;padding:18px 16px;background:#f7f7f7;border:1px solid #d5d5d5;border-radius:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-            <span style="font-size:14px;font-weight:600;color:#444;">Subtotal</span>
-            <strong style="font-size:23px;line-height:1.2;color:#111;">R0</strong>
-        </div>
-        <div style="height:1px;background:#d8d8d8;margin:13px 0 10px;"></div>
-        <p style="margin:0;font-size:12px;color:#666;">Delivery is calculated at checkout.</p>
+    <div id="cart-recs" style="display:none;margin-top:22px;border-top:1px solid #eee;padding-top:16px;">
+        <h4 style="margin:0 0 10px 0;font-size:15px;">Often bought with your cart</h4>
+        <div id="cart-recs-grid" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
 
  <button onclick="checkout()" style="
@@ -1875,273 +1866,6 @@ async function refreshCartPrices() {
     }
 }
 
-
-let cartRecommendationRequest = 0;
-let cartRecommendationProducts = {};
-
-async function loadCartRecommendations(cart) {
-    const section = document.getElementById("cart-recommendations");
-    if (!section) return;
-
-    const requestId = ++cartRecommendationRequest;
-    const cartIds = (cart || []).map(function (item) { return item.product_id; });
-
-    if (!cartIds.length) {
-        section.style.display = "none";
-        section.innerHTML = "";
-        return;
-    }
-
-    section.style.display = "block";
-    section.innerHTML = '<p style="color:#777;font-size:13px;">Finding useful extras for your order...</p>';
-
-    const [cartResult, productResult] = await Promise.all([
-        supabaseClient.from("products").select("id, category").in("id", cartIds),
-        loadedProducts && loadedProducts.length
-            ? Promise.resolve({ data: loadedProducts, error: null })
-            : supabaseClient.from("products").select("*")
-                .eq("status", "Active")
-                .order("created_at", { ascending: false })
-                .limit(80)
-    ]);
-
-    if (requestId !== cartRecommendationRequest) return;
-
-    if (productResult.error || !productResult.data) {
-        section.style.display = "none";
-        return;
-    }
-
-    const cartCategories = (cartResult.data || []).map(function (p) {
-        return p.category;
-    }).filter(Boolean);
-
-    const complementaryCategories = {
-        "Engine Parts": ["Oils & Maintenance"],
-        "Oils & Maintenance": ["Engine Parts", "Batteries & Electrical"],
-        "Wheels & Tyres": ["Brakes", "Suspension & Steering"],
-        "Brakes": ["Wheels & Tyres", "Suspension & Steering"],
-        "Suspension & Steering": ["Wheels & Tyres", "Brakes"],
-        "Batteries & Electrical": ["Lighting"],
-        "Lighting": ["Batteries & Electrical"],
-        "Car Audio": ["Interior"],
-        "Interior": ["Car Audio"],
-        "4x4 & Off-Road": ["Exterior"],
-        "Exterior": ["4x4 & Off-Road"],
-        "Performance & Exhaust": ["Engine Parts"]
-    };
-
-    const preferredCategories = [];
-    cartCategories.forEach(function (category) {
-        (complementaryCategories[category] || []).forEach(function (related) {
-            if (preferredCategories.indexOf(related) === -1) preferredCategories.push(related);
-        });
-    });
-
-    const excluded = {};
-    cartIds.forEach(function (id) { excluded[id] = true; });
-
-    let candidates = productResult.data.filter(function (p) {
-        return !excluded[p.id];
-    });
-
-    if (selectedGarageVehicle) {
-        const vehicleMatches = candidates.filter(function (p) {
-            const fit = getCompatibility(p, selectedGarageVehicle);
-            return fit === "match" || fit === "universal";
-        });
-        if (vehicleMatches.length) candidates = vehicleMatches;
-    }
-
-    if (!selectedGarageVehicle && preferredCategories.length) {
-        const complementary = candidates.filter(function (p) {
-            return preferredCategories.indexOf(p.category) !== -1;
-        });
-        if (complementary.length) candidates = complementary;
-    } else if (cartCategories.length) {
-        const sameCategory = candidates.filter(function (p) {
-            return cartCategories.indexOf(p.category) !== -1;
-        });
-        if (sameCategory.length) candidates = sameCategory;
-    }
-
-    candidates.sort(function (a, b) {
-        const aDeal = PT.sale(a).priced ? 1 : 0;
-        const bDeal = PT.sale(b).priced ? 1 : 0;
-        if (aDeal !== bDeal) return bDeal - aDeal;
-        return String(b.created_at || "").localeCompare(String(a.created_at || ""));
-    });
-
-    candidates = candidates.slice(0, 4);
-    cartRecommendationProducts = {};
-    candidates.forEach(function (p) { cartRecommendationProducts[p.id] = p; });
-
-    if (!candidates.length) {
-        section.style.display = "none";
-        section.innerHTML = "";
-        return;
-    }
-
-    const heading = "You may also need";
-
-    section.innerHTML = `
-        <div style="border-top:2px solid #555;padding-top:18px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
-                <h3 style="font-size:17px;margin:0;">${heading}</h3>
-                <span style="font-size:11px;color:#888;white-space:nowrap;">Swipe for more</span>
-            </div>
-            <p style="font-size:12px;color:#777;margin:0 0 12px;">
-                Useful add-ons and current offers selected around your cart.
-            </p>
-            <div style="display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">
-                ${candidates.map(function (p) {
-                    const sale = PT.sale(p);
-                    return `
-                        <div style="box-sizing:border-box;flex:0 0 158px;min-width:0;scroll-snap-align:start;border:1px solid #e5e5e5;border-radius:10px;padding:10px;background:#fff;">
-                            ${p.image_url
-                                ? '<img src="' + esc(p.image_url) + '" alt="' + esc(p.name) + '" loading="lazy" style="display:block;width:100%;height:92px;object-fit:contain;border-radius:6px;">'
-                                : '<div style="height:92px;background:#f2f2f2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#888;font-size:11px;">No image</div>'}
-                            ${sale.priced ? '<span style="display:inline-block;margin-top:7px;padding:3px 6px;background:#fff0f0;color:#c00;border-radius:4px;font-size:10px;font-weight:bold;">SPECIAL OFFER</span>' : '<span style="display:block;height:19px;"></span>'}
-                            <p style="font-size:12px;font-weight:600;line-height:1.35;margin:5px 0;min-height:33px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${esc(p.name)}</p>
-                            <p style="font-size:14px;font-weight:bold;margin:0 0 9px;">${PT.money(sale.now)}</p>
-                            <button type="button" data-cart-rec-add="${esc(p.id)}" style="width:100%;padding:9px 5px;background:#111;color:#fff;border:0;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;">Add</button>
-                        </div>
-                    `;
-                }).join("")}
-            </div>
-        </div>
-    `;
-
-    section.onclick = function (event) {
-        const button = event.target.closest("[data-cart-rec-add]");
-        if (!button) return;
-
-        const product = cartRecommendationProducts[button.getAttribute("data-cart-rec-add")];
-        if (!product) return;
-
-        addCart(product.id, product.supplier_id, product.name, PT.sale(product).now, product.image_url || "");
-        renderCart();
-    };
-}
-
-let cartVehicleDetailsRequest = 0;
-let cartDeliveryFees = [];
-
-async function loadCartContext(cart) {
-    const requestId = ++cartVehicleDetailsRequest;
-    const ids = Array.from(new Set((cart || []).map(function (item) { return item.product_id; }).filter(Boolean)));
-    const supplierIds = Array.from(new Set((cart || []).map(function (item) { return item.supplier_id; }).filter(Boolean)));
-    const fitmentBox = document.getElementById("cart-fitment-summary");
-    const deliveryBox = document.getElementById("cart-delivery-info");
-    if (!ids.length) {
-        if (fitmentBox) fitmentBox.innerHTML = "";
-        if (deliveryBox) deliveryBox.innerHTML = "";
-        cartDeliveryFees = [];
-        return;
-    }
-
-    const tasks = [
-        supabaseClient.from("products").select("id, vehicle_compatibility, stock, status").in("id", ids),
-        supabaseClient.from("customer_vehicles").select("id, make, model, year, engine, nickname")
-            .order("created_at", { ascending: false }),
-        supplierIds.length
-            ? supabaseClient.from("suppliers").select("id, business_name, delivery_fee, collection_available").in("id", supplierIds)
-            : Promise.resolve({ data: [], error: null })
-    ];
-    const results = await Promise.all(tasks);
-    if (requestId !== cartVehicleDetailsRequest) return;
-
-    const products = {};
-    (results[0].data || []).forEach(function (p) { products[String(p.id)] = p; });
-
-    const vehicles = results[1].error ? [] : (results[1].data || []);
-    const fitmentLines = [];
-    if (vehicles.length) {
-        (cart || []).forEach(function (item) {
-            const product = products[String(item.product_id)];
-            if (!product) return;
-            vehicles.slice(0, 2).forEach(function (vehicle) {
-                const fit = PT.fit(product, vehicle);
-                const vehicleLabel = (vehicle.nickname ? vehicle.nickname + " · " : "") +
-                    vehicle.year + " " + vehicle.make + " " + vehicle.model;
-                let label = "";
-                let style = "";
-                if (fit === "match") {
-                    label = "Fits " + vehicleLabel;
-                    style = "background:#e8f5ec;color:#176b36;border:1px solid #b9dfc5;";
-                } else if (fit === "universal") {
-                    label = "Universal fitment — verify specifications";
-                    style = "background:#eef3f8;color:#34516b;border:1px solid #cbd8e5;";
-                } else if (fit === "mismatch") {
-                    label = "Not listed for " + vehicleLabel + " — confirm with supplier";
-                    style = "background:#fff5e8;color:#875500;border:1px solid #ead3a9;";
-                } else {
-                    label = "Fitment not confirmed for " + vehicleLabel;
-                    style = "background:#f4f4f4;color:#555;border:1px solid #ddd;";
-                }
-                fitmentLines.push('<div style="font-size:11px;line-height:1.4;padding:5px 8px;border-radius:6px;margin-top:5px;' +
-                    style + '">' + esc(label) + '</div>');
-            });
-        });
-        if (fitmentBox) fitmentBox.innerHTML = fitmentLines.length
-            ? '<p style="font-size:12px;font-weight:bold;margin:0 0 5px;">Vehicle fitment checks</p>' + fitmentLines.join("")
-            : "";
-    } else if (fitmentBox) {
-        fitmentBox.innerHTML = '<p style="font-size:12px;color:#666;margin:0;">Want to check fitment? <a href="customer-login.html" style="color:#c00;font-weight:bold;">Sign in and add a vehicle to My Garage.</a></p>';
-    }
-
-    cartDeliveryFees = [];
-    if (!results[2].error && results[2].data) {
-        const suppliers = {};
-        results[2].data.forEach(function (s) { suppliers[String(s.id)] = s; });
-        supplierIds.forEach(function (id) {
-            const supplier = suppliers[String(id)];
-            if (!supplier) return;
-            const fee = Number(supplier.delivery_fee);
-            cartDeliveryFees.push({
-                id: id,
-                name: supplier.business_name || "Supplier",
-                fee: Number.isFinite(fee) && fee > 0 ? fee : null,
-                collection: supplier.collection_available === true
-            });
-        });
-    }
-
-    if (deliveryBox) {
-        if (cartDeliveryFees.length) {
-            deliveryBox.innerHTML = '<div style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:12px;">' +
-                '<p style="font-size:13px;font-weight:bold;margin:0 0 7px;">Delivery by supplier</p>' +
-                cartDeliveryFees.map(function (s) {
-                    return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:4px 0;">' +
-                        '<span>' + esc(s.name) + (s.collection ? '<br><span style="color:#666;">Collection offered — confirm arrangements with supplier</span>' : '') + '</span>' +
-                        '<strong style="white-space:nowrap;">' + (s.fee === null ? 'To be confirmed' : PT.money(s.fee)) + '</strong></div>';
-                }).join("") + '</div>';
-        } else {
-            deliveryBox.innerHTML = '<p style="font-size:12px;color:#666;margin:0;">Delivery fees will be confirmed at checkout.</p>';
-        }
-    }
-}
-
-async function saveCartItemForLater(index) {
-    let cart = [];
-    try { cart = JSON.parse(localStorage.getItem("poundtechCart")) || []; } catch (e) { return; }
-    const item = cart[index];
-    if (!item) return;
-
-    if (!PT.isFavourite(item.product_id)) {
-        await PT.toggle(item.product_id);
-        if (!PT.isFavourite(item.product_id)) return;
-    }
-
-    cart.splice(index, 1);
-    localStorage.setItem("poundtechCart", JSON.stringify(cart));
-    document.getElementById("cart-count").innerText = cart.reduce(function (sum, row) {
-        return sum + Number(row.quantity || 1);
-    }, 0);
-    renderCart();
-    PT.toast("Moved to Saved Items");
-}
-
 async function showCart() {
     await refreshCartPrices();
     renderCart();
@@ -2176,7 +1900,7 @@ function renderCart() {
                 gap:15px;
                 padding:16px;
                 margin-bottom:12px;
-                border:1.5px solid #555;
+                border:1px solid #ddd;
                 border-radius:10px;
                 background:#fff;
                 align-items:flex-start;
@@ -2254,8 +1978,6 @@ function renderCart() {
 
                     </div>
 
-                    <button type="button" onclick="saveCartItemForLater(${index})" style="margin:10px 12px 0 0;background:none;border:none;color:#333;padding:0;cursor:pointer;font-size:13px;text-decoration:underline;">Save for later</button>
-
                     <button
                         onclick="removeFromCart(${index})"
                         style="
@@ -2277,20 +1999,83 @@ function renderCart() {
         `;
     });
 
-    loadCartRecommendations(cart);
-    loadCartContext(cart);
-
-    cartTotal.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-            <span style="font-size:14px;font-weight:600;color:#444;">Subtotal</span>
-            <strong style="font-size:23px;line-height:1.2;color:#111;">${PT.money(total)}</strong>
-        </div>
-        <div style="height:1px;background:#d8d8d8;margin:13px 0 10px;"></div>
-        <p style="margin:0;font-size:12px;color:#666;">Delivery is calculated at checkout.</p>
-    `;
+    cartTotal.innerText = "Total: " + PT.money(total);
 
     document.getElementById("cart-panel").style.display = "block";
+
+    loadCartRecommendations(cart);
 }
+
+// "Often bought with your cart": products often bought alongside what's currently
+// in the cart (e.g. brake fluid when brake pads are in there), based on real order history.
+let cartRecsById = {};
+
+async function loadCartRecommendations(cart) {
+
+    const recsBox = document.getElementById("cart-recs");
+    const grid = document.getElementById("cart-recs-grid");
+
+    const productIds = (cart || []).map(function (item) { return item.product_id; }).filter(Boolean);
+
+    if (productIds.length === 0) {
+        recsBox.style.display = "none";
+        return;
+    }
+
+    const { data, error } = await supabaseClient.rpc("get_cart_recommendations", {
+        p_product_ids: productIds,
+        p_limit: 4,
+    });
+
+    if (error || !data || data.length === 0) {
+        recsBox.style.display = "none";
+        return;
+    }
+
+    PT.stash(data);
+
+    cartRecsById = {};
+    data.forEach(function (p) { cartRecsById[p.id] = p; });
+
+    grid.innerHTML = data.map(function (p) {
+        return `
+            <div style="display:flex;gap:12px;align-items:center;padding:10px;border:1px solid #eee;border-radius:8px;">
+                <div onclick="PT.open('${esc(p.id)}')" style="cursor:pointer;flex-shrink:0;">
+                    ${
+                        p.image_url
+                        ? '<img src="' + esc(p.image_url) + '" alt="' + esc(p.name) + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">'
+                        : '<div style="width:48px;height:48px;background:#eee;border-radius:6px;"></div>'
+                    }
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div onclick="PT.open('${esc(p.id)}')" style="cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${esc(p.name)}
+                    </div>
+                    <div style="font-size:13px;color:#555;">${PT.price(p)}</div>
+                </div>
+                <button
+                    data-cart-rec-add="${esc(p.id)}"
+                    style="flex-shrink:0;padding:8px 12px;background:#111;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;"
+                >
+                    Add
+                </button>
+            </div>`;
+    }).join("");
+
+    recsBox.style.display = "block";
+
+    PT.refresh();
+}
+
+document.getElementById("cart-recs-grid").addEventListener("click", function (e) {
+    const add = e.target.closest("[data-cart-rec-add]");
+    if (!add) return;
+    const p = cartRecsById[add.getAttribute("data-cart-rec-add")];
+    if (p) {
+        addCart(p.id, p.supplier_id, p.name, p.sale_price || p.price, p.image_url);
+        renderCart();
+    }
+});
 
  function changeQuantity(index, change) {
 
@@ -2321,8 +2106,6 @@ function closeCart() {
 
 async function checkout() {
     await refreshCartPrices();
-    const cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
-    await loadCartContext(cart);
     renderCheckout();
 }
 
@@ -2360,22 +2143,7 @@ function renderCheckout() {
         `;
     });
 
-    const allDeliveryFeesKnown = cartDeliveryFees.length > 0 &&
-        cartDeliveryFees.every(function (supplier) { return supplier.fee !== null; });
-    const deliveryTotal = cartDeliveryFees.reduce(function (sum, supplier) {
-        return sum + (supplier.fee === null ? 0 : supplier.fee);
-    }, 0);
-    checkoutTotal.innerHTML = `
-        <div style="border:1px solid #d5d5d5;border-radius:10px;background:#fafafa;padding:16px;margin-top:18px;">
-            <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:normal;margin-bottom:10px;">
-                <span>Subtotal</span><strong>${PT.money(total)}</strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:normal;">
-                <span>Supplier delivery</span><strong>${allDeliveryFeesKnown ? PT.money(deliveryTotal) : "To be confirmed"}</strong>
-            </div>
-            ${allDeliveryFeesKnown ? '<div style="height:1px;background:#ddd;margin:12px 0;"></div><div style="display:flex;justify-content:space-between;gap:12px;font-size:17px;"><strong>Estimated total</strong><strong>' + PT.money(total + deliveryTotal) + '</strong></div>' : '<p style="font-size:12px;color:#666;font-weight:normal;margin:10px 0 0;">One or more suppliers have not set a delivery fee. The final delivery charge will be confirmed before payment.</p>'}
-        </div>
-    `;
+    checkoutTotal.innerText = "Total: " + PT.money(total);
 
     document.getElementById("cart-panel").style.display = "none";
     document.getElementById("checkout-panel").style.display = "block";
