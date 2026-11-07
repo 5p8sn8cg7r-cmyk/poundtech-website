@@ -390,6 +390,25 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
 }
 
 
+/* MAKE SUPPLIER LOCATION EASY TO SPOT */
+.supplier-location {
+    display:flex; align-items:center; gap:12px; width:fit-content; max-width:100%;
+    margin-top:19px; padding:11px 15px; border:1px solid rgba(255,255,255,.2);
+    border-left:3px solid #e00000; border-radius:9px;
+    background:rgba(255,255,255,.09); color:#fff;
+}
+.supplier-location > svg {
+    width:23px; height:23px; flex:0 0 23px; stroke:#ff4a4a; fill:none;
+    stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+}
+.supplier-location-copy { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.supplier-location-copy small { color:#ff7777; font-size:9px; font-weight:800; letter-spacing:1.2px; }
+.supplier-location-copy strong { color:#fff; font-size:14px; font-weight:750; line-height:1.35; overflow-wrap:anywhere; }
+@media (max-width:700px) {
+    .supplier-location { margin-top:16px; padding:10px 12px; gap:10px; width:100%; box-sizing:border-box; }
+    .supplier-location-copy strong { font-size:13px; }
+}
+
 /* STOREFRONT NAVIGATION + SECTION FINISH */
 .header-nav a { display:inline-flex; align-items:center; gap:8px; }
 .header-nav a svg { width:16px; height:16px; flex:0 0 16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
@@ -829,9 +848,15 @@ async function loadSupplier() {
                 ? `<div class="verified">✓ Verified PoundTech Supplier</div>`
                 : ""
             }
+            <div class="supplier-location">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                <span class="supplier-location-copy">
+                    <small>SUPPLIER LOCATION</small>
+                    <strong>${PT.esc(supplier.address || "Location not specified")}</strong>
+                </span>
+            </div>
             <div class="supplier-meta">
                 <span>▣ ${PT.esc(supplier.business_type || "Automotive supplier")}</span>
-                <span>⌖ ${PT.esc(supplier.address || "Location not specified")}</span>
             </div>
         </div>
 
