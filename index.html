@@ -8,10 +8,10 @@
 
 <title>PoundTech | South Africa's Automotive Marketplace</title>
 <link rel="canonical" href="https://poundtech.co.za/">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=7">
-<link rel="shortcut icon" href="/favicon.svg?v=7">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/favicon-180x180.png">
 <script>
 // Show poundtech.co.za instead of poundtech.co.za/index.html in the address bar.
 if (/\/index\.html$/.test(location.pathname)) {
@@ -1594,7 +1594,7 @@ Already approved?
     <div id="toast"></div>
     
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="pt-share.js?v=20261026"></script>
+<script src="pt-share.js?v=20261107"></script>
  
 <script>
  
@@ -2408,63 +2408,11 @@ function js(value) {
         .replace(/'/g, "\\'");
 }
 
-function normalise(value) {
-    return String(value || "")
-        .trim()
-        .toLowerCase()
-        .replace(/[-_]/g, " ")
-        .replace(/\s+/g, " ");
-}
-
-const MAKE_ALIASES = {
-    "volkswagen": ["volkswagen", "vw"],
-    "mercedes benz": ["mercedes benz", "mercedes"],
-    "bmw": ["bmw"],
-    "toyota": ["toyota"]
-};
-
+// The actual matching rules (including year-range handling) live in one place,
+// PT.fit() in pt-share.js, so the homepage and the product page can never drift
+// apart on what counts as a fit. This just keeps the existing call sites working.
 function getCompatibility(product, vehicle) {
-
-    const raw = String(product.vehicle_compatibility || "").trim();
-
-    if (!raw) {
-        return "unknown";
-    }
-
-    const entries = raw
-        .split(/[,;\n]+/)
-        .map(normalise)
-        .filter(Boolean);
-
-    if (entries.some(entry => entry === "universal")) {
-        return "universal";
-    }
-
-    const make = normalise(vehicle.make);
-    const model = normalise(vehicle.model);
-    const year = normalise(vehicle.year);
-    const makesToMatch = MAKE_ALIASES[make] || [make];
-    const vehicleName = normalise(vehicle.make + " " + vehicle.model);
-
-    const matches = entries.some(entry => {
-
-        const nameMatches =
-            entry.includes(vehicleName) ||
-            (
-                makesToMatch.some(alias => entry.includes(alias)) &&
-                entry.includes(model)
-            );
-
-        if (!nameMatches) {
-            return false;
-        }
-
-        const years = entry.match(/\b(?:19|20)\d{2}\b/g);
-
-        return !years || years.includes(year);
-    });
-
-    return matches ? "match" : "mismatch";
+    return PT.fit(product, vehicle);
 }
 
 function renderProductCard(product, status) {
