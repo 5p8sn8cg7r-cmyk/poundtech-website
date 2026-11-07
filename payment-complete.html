@@ -6,6 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>Payment | PoundTech</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/favicon-180x180.png">
 <link rel="stylesheet" href="site.css">
 
 <style>
@@ -87,9 +91,7 @@ function esc(value) {
         .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-const params = new URLSearchParams(location.search);
-const orderNumber = params.get("order") || "";
-const bookingId = params.get("booking") || "";
+const orderNumber = new URLSearchParams(location.search).get("order") || "";
 const card = document.getElementById("card");
 
 function show(html) { card.innerHTML = html; }
@@ -103,18 +105,7 @@ async function status() {
     return error ? null : data;
 }
 
-async function checkBooking() {
-    // The signed Yoco webhook is the authority for payment status.
-    // This return page does not mark a booking as paid.
-    show('<h1>Payment submitted</h1>' +
-         '<p>Thank you. Your service booking payment is being verified by PoundTech. Your booking will update once the payment notification has been processed.</p>' +
-         '<div class="order-box"><small>Booking reference</small><strong>' + esc(bookingId) + '</strong></div>' +
-         '<p><strong>Please do not pay again</strong> if your account has been charged. If your booking does not update, contact us with your booking reference.</p>' +
-         '<a class="btn" href="mailto:info@poundtech.co.za?subject=Service%20booking%20payment%20' + encodeURIComponent(bookingId) + '">Contact PoundTech</a>' +
-         '<a class="btn btn-dark" href="/">Back to marketplace</a>');
-}
-
-async function checkOrder() {
+async function check() {
 
     if (!orderNumber) {
         show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn" href="/">Back to marketplace</a>');
@@ -127,11 +118,7 @@ async function checkOrder() {
         const current = await status();
 
         if (current === "Paid") {
-            try {
-                localStorage.removeItem("poundtechCart");
-                localStorage.removeItem("poundtechCheckoutToken");
-                localStorage.removeItem("poundtechCheckoutRequest");
-            } catch (e) { /* ignore */ }
+            try { localStorage.removeItem("poundtechCart"); } catch (e) { /* ignore */ }
             show('<h1>Payment received</h1><p>Thank you. Your PoundTech order is confirmed and the supplier has been notified.</p>' +
                  orderBox() +
                  '<p>Keep your order number to track your order. We will use the contact details you gave us for any updates.</p>' +
@@ -152,11 +139,7 @@ async function checkOrder() {
          '<a class="btn btn-dark" href="/?cart=1">Back to my cart</a>');
 }
 
-if (bookingId) {
-    checkBooking();
-} else {
-    checkOrder();
-}
+check();
 
 </script>
 
