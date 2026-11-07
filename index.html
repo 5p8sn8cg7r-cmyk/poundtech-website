@@ -2903,9 +2903,10 @@ searchStatus.innerHTML = `
         return;
     }
 
- container.innerHTML = data.map(function(product) {
-    return renderProductCard(product, null);
-}).join("");
+ // Reuse the normal product pipeline so search respects My Garage fitment,
+ // sorting, stock/deal filters and product badges.
+ loadedProducts = data || [];
+ await renderLoaded();
 }
     
 function clearSearch() {
