@@ -463,6 +463,47 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
     .header-nav a { font-size:10px; }
     .header-nav a svg { width:14px; height:14px; flex-basis:14px; }
 }
+
+/* CATEGORY-BASED HORIZONTAL PRODUCT BANKS */
+.store-category-bank { margin:0 0 34px; }
+.store-category-bank:last-child { margin-bottom:0; }
+.store-category-head {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; margin:0 0 13px;
+}
+.store-category-head h3 {
+    margin:0; color:#171717; font-size:18px; letter-spacing:-.25px;
+}
+.store-category-head span { color:#888; font-size:11px; white-space:nowrap; }
+.store-category-controls { display:flex; gap:7px; }
+.store-category-controls button {
+    width:32px; height:32px; padding:0; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:#fff; color:#333; border:1px solid #dfe1e5;
+    font-size:18px; line-height:1;
+}
+.store-category-controls button:hover { background:#171717; color:#fff; border-color:#171717; }
+.store-product-rail {
+    display:flex; gap:15px; overflow-x:auto; overflow-y:hidden;
+    padding:2px 2px 15px; scroll-snap-type:x mandatory;
+    scroll-behavior:smooth; -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin; scrollbar-color:#c5c7cb transparent;
+}
+.store-product-rail .product {
+    flex:0 0 245px; width:245px; max-width:245px;
+    scroll-snap-align:start;
+}
+.store-product-rail::-webkit-scrollbar { height:6px; }
+.store-product-rail::-webkit-scrollbar-track { background:#e8e9ec; border-radius:8px; }
+.store-product-rail::-webkit-scrollbar-thumb { background:#c5c7cb; border-radius:8px; }
+@media (max-width:700px) {
+    .store-category-bank { margin-bottom:26px; }
+    .store-category-head h3 { font-size:16px; }
+    .store-product-rail { gap:11px; padding-bottom:12px; }
+    .store-product-rail .product {
+        flex:0 0 72vw; width:72vw; max-width:245px;
+    }
+}
 </style>
 
 </head>
@@ -758,34 +799,73 @@ function renderSupplierProducts() {
         return;
     }
 
-    container.innerHTML = visible.map(function (product) {
-        const fit = selectedSupplierVehicle ? PT.fit(product, selectedSupplierVehicle) : "";
-        const vehicleName = selectedSupplierVehicle ? PT.esc(selectedSupplierVehicle.make + " " + selectedSupplierVehicle.model) : "";
-        const fitLabel = fit === "match"
-            ? '<p class="product-fit fit-match">✓ Fits your ' + vehicleName + '</p>'
-            : fit === "universal"
-                ? '<p class="product-fit fit-neutral">Universal fitment · confirm before buying</p>'
-                : fit === "unknown"
-                    ? '<p class="product-fit fit-neutral">Fitment not specified</p>'
-                    : '<p class="product-fit"></p>';
+    // Give each category its own horizontal product bank. Suppliers with
+    // only one category naturally get one bank; mixed catalogues get several.
+    const categories = [];
+    const grouped = new Map();
+    visible.forEach(function (product) {
+        const category = String(product.category || "Automotive").trim() || "Automotive";
+        if (!grouped.has(category)) {
+            grouped.set(category, []);
+            categories.push(category);
+        }
+        grouped.get(category).push(product);
+    });
+
+    container.innerHTML = categories.map(function (category, index) {
+        const products = grouped.get(category);
+        const cards = products.map(function (product) {
+            const fit = selectedSupplierVehicle ? PT.fit(product, selectedSupplierVehicle) : "";
+            const vehicleName = selectedSupplierVehicle ? PT.esc(selectedSupplierVehicle.make + " " + selectedSupplierVehicle.model) : "";
+            const fitLabel = fit === "match"
+                ? '<p class="product-fit fit-match">✓ Fits your ' + vehicleName + '</p>'
+                : fit === "universal"
+                    ? '<p class="product-fit fit-neutral">Universal fitment · confirm before buying</p>'
+                    : fit === "unknown"
+                        ? '<p class="product-fit fit-neutral">Fitment not specified</p>'
+                        : '<p class="product-fit"></p>';
+            return `
+                <article class="product" onclick="window.location.href='product.html?id=${encodeURIComponent(product.id)}'">
+                    <div class="product-image">
+                        ${product.image_url ? '<img loading="lazy" src="' + PT.esc(product.image_url) + '" alt="' + PT.esc(product.name) + '">' : '<div class="image-placeholder">NO IMAGE</div>'}
+                    </div>
+                    <div class="product-info">
+                        <p class="product-category">${PT.esc(product.category || "Automotive")}</p>
+                        <h3>${PT.esc(product.name)}</h3>
+                        ${fitLabel}
+                        <div class="price">${PT.money(product.price)}</div>
+                        <div class="product-actions">
+                            <button class="view-btn" onclick="event.stopPropagation();window.location.href='product.html?id=${encodeURIComponent(product.id)}'">View details</button>
+                            <button class="cart-btn" onclick="event.stopPropagation();addSupplierProductToCart(${JSON.stringify(String(product.id))},${JSON.stringify(String(product.supplier_id))},${JSON.stringify(String(product.name || ""))},${Number(product.price)||0},${JSON.stringify(String(product.image_url || ""))})">Add to cart</button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join("");
+
         return `
-            <article class="product" onclick="window.location.href='product.html?id=${encodeURIComponent(product.id)}'">
-                <div class="product-image">
-                    ${product.image_url ? '<img loading="lazy" src="' + PT.esc(product.image_url) + '" alt="' + PT.esc(product.name) + '">' : '<div class="image-placeholder">NO IMAGE</div>'}
-                </div>
-                <div class="product-info">
-                    <p class="product-category">${PT.esc(product.category || "Automotive")}</p>
-                    <h3>${PT.esc(product.name)}</h3>
-                    ${fitLabel}
-                    <div class="price">${PT.money(product.price)}</div>
-                    <div class="product-actions">
-                        <button class="view-btn" onclick="event.stopPropagation();window.location.href='product.html?id=${encodeURIComponent(product.id)}'">View details</button>
-                        <button class="cart-btn" onclick="event.stopPropagation();addSupplierProductToCart(${JSON.stringify(String(product.id))},${JSON.stringify(String(product.supplier_id))},${JSON.stringify(String(product.name || ""))},${Number(product.price)||0},${JSON.stringify(String(product.image_url || ""))})">Add to cart</button>
+            <section class="store-category-bank" aria-label="${PT.esc(category)} products">
+                <div class="store-category-head">
+                    <div>
+                        <h3>${PT.esc(category)}</h3>
+                        <span>${products.length} ${products.length === 1 ? "product" : "products"}</span>
+                    </div>
+                    <div class="store-category-controls">
+                        <button type="button" aria-label="Scroll ${PT.esc(category)} products left" onclick="scrollSupplierCategory('supplier-category-${index}',-1)">‹</button>
+                        <button type="button" aria-label="Scroll ${PT.esc(category)} products right" onclick="scrollSupplierCategory('supplier-category-${index}',1)">›</button>
                     </div>
                 </div>
-            </article>
+                <div class="store-product-rail" id="supplier-category-${index}">
+                    ${cards}
+                </div>
+            </section>
         `;
     }).join("");
+}
+
+function scrollSupplierCategory(id, direction) {
+    const rail = document.getElementById(id);
+    if (rail) rail.scrollBy({ left: direction * Math.max(rail.clientWidth * 0.75, 220), behavior: "smooth" });
 }
 
 
