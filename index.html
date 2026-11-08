@@ -6,15 +6,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="icon" href="/favicon.ico?v=12" sizes="any">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=12">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=12">
-<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png?v=12">
-<link rel="manifest" href="/site.webmanifest?v=12">
-
 <title>PoundTech | South Africa's Automotive Marketplace</title>
 <link rel="canonical" href="https://poundtech.co.za/">
-
+<link rel="icon" href="/favicon.ico?v=20261108" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20261108">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=20261108">
+<link rel="apple-touch-icon" href="/favicon-180x180.png?v=20261108">
+<script>
+// Show poundtech.co.za instead of poundtech.co.za/index.html in the address bar.
+if (/\/index\.html$/.test(location.pathname)) {
+    try {
+        history.replaceState(null, "", location.pathname.replace(/index\.html$/, "") + location.search + location.hash);
+    } catch (e) { /* not allowed here; leave the address as is */ }
+}
+</script>
 
 <style>
 * {
@@ -293,42 +298,55 @@ nav a:hover {
 }
 
 .product {
+    display: flex;
+    flex-direction: column;
     background: white;
+    border: 1px solid #ebebec;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+    box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.product:hover {
+    transform: translateY(-4px);
+    border-color: #ddd;
+    box-shadow: 0 14px 28px rgba(0,0,0,0.12);
 }
 
 .product-image {
     height: 170px;
-    background: #ddd;
+    background: #f1f2f4;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: #666;
+    color: #96979d;
     font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
 }
 
 .product-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     padding: 20px;
 }
 
-.pro-seller-badge {
-    display:inline-flex; align-items:center; gap:5px; width:max-content;
-    margin:2px 0 8px; padding:4px 8px; border-radius:999px;
-    color:#352300; background:linear-gradient(135deg,#fff2bd 0%,#ffd95c 38%,#e6a817 72%,#ffdf75 100%);
-    border:1px solid #c58a08; box-shadow:0 2px 7px rgba(190,132,0,.22); font-size:9px; font-weight:850;
-    letter-spacing:.35px; line-height:1.2;
-}
-.pro-seller-badge svg { width:11px; height:11px; fill:currentColor; }
-
 .product h3 {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    font-size: 15.5px;
+    line-height: 1.35;
 }
 
 .product p {
-    color: #777;
-    font-size: 14px;
+    color: #8a8a8a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin: 0;
 }
 
 .price {
@@ -337,14 +355,21 @@ nav a:hover {
     margin: 15px 0;
 }
 
-.product button {
+.product-info button {
+    margin-top: auto;
     width: 100%;
     padding: 12px;
     border: none;
-    border-radius: 5px;
-    background: #111;
+    border-radius: 7px;
+    background: #e00000;
     color: white;
+    font-weight: bold;
     cursor: pointer;
+    transition: background .15s ease;
+}
+
+.product-info button:hover {
+    background: #b80000;
 }
 
 /* MECHANIC */
@@ -1016,28 +1041,6 @@ footer {
     border-radius: 7px;
 }
 
-/* COMPACT CATEGORY GRID ON LAPTOP / DESKTOP */
-@media (min-width: 701px) {
-    .categories {
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 12px;
-    }
-    .category {
-        padding: 16px 8px;
-        gap: 9px;
-        font-size: 13px;
-        border-radius: 9px;
-    }
-    .cat-icon {
-        width: 28px;
-        height: 28px;
-    }
-    .cat-icon-duo {
-        width: 52px;
-        height: 28px;
-    }
-}
-
 /* SMALLER TILES ON PHONE */
 
 @media (max-width: 700px) {
@@ -1135,8 +1138,7 @@ footer {
     font-weight: bold;
 }
 </style>
-
-  </head>
+</head>
 
 <body>
 
@@ -1172,7 +1174,7 @@ footer {
     </div>
 
 <nav>
-    <a href="/index.html">Home</a>
+    <a href="/">Home</a>
     <a href="/?view=parts">Parts</a>
     <a href="/?view=accessories">Accessories</a>
     <a href="preowned.html">Pre-Owned</a>
@@ -1250,8 +1252,6 @@ Find car parts, accessories and automotive services from businesses across South
 .sponsor-card .sponsor-image{width:100%;height:140px;background:#eee;overflow:hidden;}
 .sponsor-card .sponsor-image img{width:100%;height:100%;object-fit:cover;display:block;}
 .sponsor-tag{position:absolute;top:8px;left:8px;background:#111;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.02em;}
-.sponsor-pro-badge{display:inline-flex;align-items:center;gap:5px;margin:0 0 7px;padding:4px 8px;border-radius:999px;color:#352300;background:linear-gradient(135deg,#fff2bd 0%,#ffd95c 38%,#e6a817 72%,#ffdf75 100%);border:1px solid #c58a08;box-shadow:0 2px 7px rgba(190,132,0,.22);font-size:9px;font-weight:850;letter-spacing:.3px;}
-.sponsor-pro-badge svg{width:11px;height:11px;fill:currentColor;}
 .sponsor-card .sponsor-body{padding:10px 12px 14px;}
 .sponsor-card h4{margin:0 0 4px;font-size:14px;line-height:1.3;}
 .sponsor-card .sponsor-price{font-weight:700;font-size:14px;}
@@ -2438,7 +2438,7 @@ async function startPayment(orderNumber) {
                            border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;">
                 Try again
             </button>
-            <button onclick="location.href='/index.html'"
+            <button onclick="location.href='/'"
                     style="width:100%; padding:15px; margin-top:10px; background:#111; color:white; border:none;
                            border-radius:6px; font-size:16px; cursor:pointer;">
                 Back to shop
@@ -2521,41 +2521,6 @@ function getCompatibility(product, vehicle) {
     return PT.fit(product, vehicle);
 }
 
-// Cache active Pro supplier IDs for every homepage product rendering path.
-let activeProSupplierIdsPromise = null;
-let activeProSupplierIds = new Set();
-
-function loadActiveProSupplierIds() {
-    if (!activeProSupplierIdsPromise) {
-        activeProSupplierIdsPromise = (async function () {
-            const { data, error } = await supabaseClient
-                .from("suppliers")
-                .select("id")
-                .eq("plan", "pro")
-                .gt("plan_ends_at", new Date().toISOString());
-
-            if (error) {
-                console.warn("ACTIVE PRO SUPPLIERS COULD NOT BE LOADED:", error);
-                return activeProSupplierIds;
-            }
-
-            activeProSupplierIds = new Set((data || []).map(function (supplier) {
-                return String(supplier.id);
-            }));
-            return activeProSupplierIds;
-        })();
-    }
-    return activeProSupplierIdsPromise;
-}
-
-function isActiveProSupplier(supplierId) {
-    return !!supplierId && activeProSupplierIds.has(String(supplierId));
-}
-
-function proSellerBadge() {
-    return '<span class="pro-seller-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>';
-}
-
 function renderProductCard(product, status) {
 
     const compatibility = String(
@@ -2626,7 +2591,6 @@ function renderProductCard(product, status) {
 
             <div class="product-info">
                 <h3>${esc(product.name)}</h3>
-                ${isActiveProSupplier(product.supplier_id) ? proSellerBadge() : ""}
                 <p>${esc(product.category || "")}</p>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
@@ -2653,7 +2617,6 @@ async function loadSponsoredProducts() {
         return;
     }
 
-    await loadActiveProSupplierIds();
     rail.innerHTML = products.map(function(product) {
         PT.stash(product);
         return `
@@ -2663,7 +2626,6 @@ async function loadSponsoredProducts() {
                     <span class="sponsor-tag">Sponsored</span>
                 </div>
                 <div class="sponsor-body">
-                    ${isActiveProSupplier(product.supplier_id) ? '<span class="sponsor-pro-badge">★ PRO</span>' : ""}
                     <h4>${esc(product.name)}</h4>
                     <div class="sponsor-price">${PT.money(PT.sale(product).now)}</div>
                 </div>
@@ -2721,7 +2683,6 @@ let onlyInStock = false;
 // Applies the garage vehicle, sort and filters to the products already loaded.
 async function renderLoaded() {
 
-    await loadActiveProSupplierIds();
     const container = document.getElementById("products-container");
     const products = loadedProducts;
 
@@ -2970,10 +2931,9 @@ searchStatus.innerHTML = `
         return;
     }
 
- // Reuse the normal product pipeline so search respects My Garage fitment,
- // sorting, stock/deal filters and product badges.
- loadedProducts = data || [];
- await renderLoaded();
+ container.innerHTML = data.map(function(product) {
+    return renderProductCard(product, null);
+}).join("");
 }
     
 function clearSearch() {
