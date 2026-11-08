@@ -499,10 +499,18 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
 @media (max-width:700px) {
     .store-category-bank { margin-bottom:26px; }
     .store-category-head h3 { font-size:16px; }
-    .store-product-rail { gap:11px; padding-bottom:12px; }
+    .store-product-rail { gap:10px; padding-bottom:12px; }
     .store-product-rail .product {
-        flex:0 0 72vw; width:72vw; max-width:245px;
+        flex:0 0 54vw; width:54vw; max-width:205px;
     }
+    .store-product-rail .product-image { aspect-ratio:1.08/1; }
+    .store-product-rail .product-info { padding:10px; }
+    .store-product-rail .product-info h3 { font-size:12px; min-height:34px; }
+    .store-product-rail .product-category { font-size:9px; margin-bottom:5px; }
+    .store-product-rail .product-fit { font-size:9px; margin-bottom:6px; }
+    .store-product-rail .price { font-size:16px; padding-top:5px; margin-bottom:9px; }
+    .store-product-rail .product-actions { gap:5px; }
+    .store-product-rail .product-actions button { padding:8px 5px; font-size:10px; }
 }
 /* STACK CATEGORY BANKS VERTICALLY; KEEP PRODUCTS HORIZONTAL WITHIN EACH BANK */
 #products-container {
