@@ -14,14 +14,7 @@
 
 <title>PoundTech | South Africa's Automotive Marketplace</title>
 <link rel="canonical" href="https://poundtech.co.za/">
-<script>
-// Show poundtech.co.za instead of poundtech.co.za/index.html in the address bar.
-if (/\/index\.html$/.test(location.pathname)) {
-    try {
-        history.replaceState(null, "", location.pathname.replace(/index\.html$/, "") + location.search + location.hash);
-    } catch (e) { /* not allowed here; leave the address as is */ }
-}
-</script>
+
 
 <style>
 * {
@@ -1179,7 +1172,7 @@ footer {
     </div>
 
 <nav>
-    <a href="/">Home</a>
+    <a href="/index.html">Home</a>
     <a href="/?view=parts">Parts</a>
     <a href="/?view=accessories">Accessories</a>
     <a href="preowned.html">Pre-Owned</a>
@@ -2445,7 +2438,7 @@ async function startPayment(orderNumber) {
                            border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;">
                 Try again
             </button>
-            <button onclick="location.href='/'"
+            <button onclick="location.href='/index.html'"
                     style="width:100%; padding:15px; margin-top:10px; background:#111; color:white; border:none;
                            border-radius:6px; font-size:16px; cursor:pointer;">
                 Back to shop
