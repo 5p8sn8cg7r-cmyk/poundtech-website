@@ -1017,6 +1017,28 @@ footer {
     border-radius: 7px;
 }
 
+/* COMPACT CATEGORY GRID ON LAPTOP / DESKTOP */
+@media (min-width: 701px) {
+    .categories {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 12px;
+    }
+    .category {
+        padding: 16px 8px;
+        gap: 9px;
+        font-size: 13px;
+        border-radius: 9px;
+    }
+    .cat-icon {
+        width: 28px;
+        height: 28px;
+    }
+    .cat-icon-duo {
+        width: 52px;
+        height: 28px;
+    }
+}
+
 /* SMALLER TILES ON PHONE */
 
 @media (max-width: 700px) {
