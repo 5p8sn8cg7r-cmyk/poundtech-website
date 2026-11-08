@@ -641,7 +641,7 @@ async function loadProduct() {
     const productId = new URLSearchParams(window.location.search).get("id");
 
     if (!productId) {
-        notice("Product not found. <a href="/index.html" style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
+        notice('Product not found. <a href="/index.html" style="color:#e00000;font-weight:bold;">Back to the marketplace</a>');
         return;
     }
 
@@ -671,7 +671,7 @@ async function loadProduct() {
     }
 
     if (!product || (product.status && product.status !== "Active")) {
-        notice("This product is no longer available. <a href="/index.html" style='color:#e00000;font-weight:bold;'>Back to the marketplace</a>");
+        notice('This product is no longer available. <a href="/index.html" style="color:#e00000;font-weight:bold;">Back to the marketplace</a>');
         return;
     }
 
