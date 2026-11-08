@@ -54,8 +54,8 @@
 <body>
 
 <header class="site-header">
-    <a class="logo" href="/">POUND<span>TECH</span></a>
-    <a class="back" href="/">&larr; Back to marketplace</a>
+    <a class="logo" href="/index.html">POUND<span>TECH</span></a>
+    <a class="back" href="/index.html">&larr; Back to marketplace</a>
 </header>
 
 <main class="pay-main">
@@ -108,7 +108,7 @@ async function status() {
 async function check() {
 
     if (!orderNumber) {
-        show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn" href="/">Back to marketplace</a>');
+        show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn" href="/index.html">Back to marketplace</a>');
         return;
     }
 
@@ -123,7 +123,7 @@ async function check() {
                  orderBox() +
                  '<p>Keep your order number to track your order. We will use the contact details you gave us for any updates.</p>' +
                  '<a class="btn" href="track-order.html">Track your order</a>' +
-                 '<a class="btn btn-dark" href="/">Continue shopping</a>');
+                 '<a class="btn btn-dark" href="/index.html">Continue shopping</a>');
             return;
         }
 
