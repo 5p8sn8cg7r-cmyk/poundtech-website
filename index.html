@@ -2536,7 +2536,7 @@ function isActiveProSupplier(supplierId) {
 }
 
 function proSellerBadge() {
-    return '<span class="pro-seller-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>POUNDTECH PRO</span>';
+    return '<span class="pro-seller-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>';
 }
 
 function renderProductCard(product, status) {
@@ -2646,7 +2646,7 @@ async function loadSponsoredProducts() {
                     <span class="sponsor-tag">Sponsored</span>
                 </div>
                 <div class="sponsor-body">
-                    ${isActiveProSupplier(product.supplier_id) ? '<span class="sponsor-pro-badge">★ POUNDTECH PRO</span>' : ""}
+                    ${isActiveProSupplier(product.supplier_id) ? '<span class="sponsor-pro-badge">★ PRO</span>' : ""}
                     <h4>${esc(product.name)}</h4>
                     <div class="sponsor-price">${PT.money(PT.sale(product).now)}</div>
                 </div>
