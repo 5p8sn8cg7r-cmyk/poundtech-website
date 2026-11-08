@@ -512,27 +512,6 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
     .store-product-rail .product-actions { gap:5px; }
     .store-product-rail .product-actions button { padding:8px 5px; font-size:10px; }
 }
-/* RESTAURANT-STYLE CATEGORY DISCOVERY FOR SUPPLIER STORES */
-.store-category-nav-wrap{margin:0 0 28px;padding:17px 18px 15px;background:#fff;border:1px solid #e6e7ea;border-radius:13px;box-shadow:0 3px 12px rgba(0,0,0,.035)}
-.store-category-nav-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.store-category-nav-top strong{color:#171717;font-size:13px;font-weight:850}
-.store-category-nav-top span{color:#888;font-size:11px}
-#supplier-category-nav{display:flex;gap:8px;overflow-x:auto;padding:1px 1px 5px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-#supplier-category-nav::-webkit-scrollbar{display:none}
-.supplier-category-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:37px;padding:0 14px;border:1px solid #e1e2e5;border-radius:999px;background:#f7f7f8;color:#333;font-size:12px;font-weight:750;white-space:nowrap;transition:background .18s,border-color .18s,color .18s}
-.supplier-category-chip:before{content:"";width:6px;height:6px;border-radius:50%;background:#c5c7cb}
-.supplier-category-chip:hover,.supplier-category-chip.active{color:#fff;background:#171717;border-color:#171717}
-.supplier-category-chip.active:before{background:#ed2525;box-shadow:0 0 0 3px rgba(237,37,37,.17)}
-.store-category-bank{scroll-margin-top:22px;padding:0 0 4px}
-.store-category-head{align-items:center;margin-bottom:14px}
-.store-category-heading-copy{min-width:0}
-.store-category-kicker{display:block;margin:0 0 5px;color:#d00000;font-size:9px;font-weight:850;letter-spacing:1.5px}
-.store-category-head h3{display:flex;align-items:center;gap:9px;font-size:21px;font-weight:850;letter-spacing:-.55px}
-.store-category-subtitle{margin:5px 0 0;color:#858585;font-size:11px;line-height:1.4}
-.store-category-count{display:inline-flex;align-items:center;justify-content:center;min-height:27px;padding:0 10px;border:1px solid #e6e7e9;border-radius:999px;background:#fff;color:#666;font-size:10px;font-weight:750;white-space:nowrap}
-.store-category-controls button{width:34px;height:34px;box-shadow:0 2px 5px rgba(0,0,0,.04)}
-@media(max-width:700px){.store-category-nav-wrap{margin-bottom:22px;padding:14px 13px 11px;border-radius:11px}.store-category-nav-top{margin-bottom:10px}.store-category-nav-top strong{font-size:12px}.store-category-nav-top span{font-size:10px}.supplier-category-chip{min-height:35px;padding:0 12px;font-size:11px}.store-category-head h3{font-size:18px}.store-category-subtitle{font-size:10px}.store-category-count{min-height:25px;padding:0 8px;font-size:9px}}
-
 /* STACK CATEGORY BANKS VERTICALLY; KEEP PRODUCTS HORIZONTAL WITHIN EACH BANK */
 #products-container {
     display:block;
@@ -611,14 +590,6 @@ Loading supplier...
         <p id="supplier-fit-status">Choose a saved vehicle to hide products known not to fit.</p>
     </div>
 </section>
-
-<div class="store-category-nav-wrap" id="store-category-nav-wrap" style="display:none;">
-    <div class="store-category-nav-top">
-        <strong>Browse this store</strong>
-        <span>Jump to a category</span>
-    </div>
-    <nav id="supplier-category-nav" aria-label="Supplier product categories"></nav>
-</div>
 
 <div
     id="products-container"
@@ -857,15 +828,6 @@ function renderSupplierProducts() {
         grouped.get(category).push(product);
     });
 
-    const navWrap = document.getElementById("store-category-nav-wrap");
-    const categoryNav = document.getElementById("supplier-category-nav");
-    if (navWrap && categoryNav) {
-        navWrap.style.display = categories.length > 1 ? "block" : "none";
-        categoryNav.innerHTML = categories.map(function (category, index) {
-            return '<button type="button" class="supplier-category-chip" onclick="scrollToSupplierCategory(\'supplier-category-' + index + '\',this)">' + PT.esc(category) + '</button>';
-        }).join("");
-    }
-
     container.innerHTML = categories.map(function (category, index) {
         const products = grouped.get(category);
         const cards = products.map(function (product) {
@@ -898,34 +860,19 @@ function renderSupplierProducts() {
         }).join("");
 
         return `
-            <section class="store-category-bank" id="store-category-section-${index}" aria-label="${PT.esc(category)} products">
+            <section class="store-category-bank" aria-label="${PT.esc(category)} products">
                 <div class="store-category-head">
-                    <div class="store-category-heading-copy">
-                        <span class="store-category-kicker">SHOP CATEGORY</span>
+                    <div>
                         <h3>${PT.esc(category)}</h3>
-                        <p class="store-category-subtitle">Explore ${products.length} ${products.length === 1 ? "item" : "items"} in this collection</p>
+                        <span>${products.length} ${products.length === 1 ? "product" : "products"}</span>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span class="store-category-count">${products.length} ${products.length === 1 ? "item" : "items"}</span>
-                        <div class="store-category-controls">
-                        <button type="button" aria-label="Scroll ${PT.esc(category)} products left" onclick="scrollSupplierCategory('supplier-category-${index}',-1)">‹</button>
-                        <button type="button" aria-label="Scroll ${PT.esc(category)} products right" onclick="scrollSupplierCategory('supplier-category-${index}',1)">›</button>
-                    </div>
-                </div>
+                    <div class="store-category-controls">
                 <div class="store-product-rail" id="supplier-category-${index}">
                     ${cards}
                 </div>
             </section>
         `;
     }).join("");
-}
-
-function scrollToSupplierCategory(sectionId, chip) {
-    const section = document.getElementById(sectionId.replace("supplier-category-", "store-category-section-"));
-    if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
-    document.querySelectorAll(".supplier-category-chip").forEach(function (item) {
-        item.classList.toggle("active", item === chip);
-    });
 }
 
 function scrollSupplierCategory(id, direction) {
