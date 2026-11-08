@@ -1100,7 +1100,7 @@ function addSupplierProductToCart(
         error
     } = await supabaseClient
         .from("supplier_reviews")
-        .select("*")
+        .select("rating, customer_name, review_text, created_at")
         .eq("supplier_id", supplierId)
         .order("created_at", {
             ascending: false
