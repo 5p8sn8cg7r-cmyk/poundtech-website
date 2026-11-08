@@ -591,6 +591,8 @@ Loading supplier...
     </div>
 </section>
 
+
+
 <div
     id="products-container"
     class="products"
@@ -867,6 +869,10 @@ function renderSupplierProducts() {
                         <span>${products.length} ${products.length === 1 ? "product" : "products"}</span>
                     </div>
                     <div class="store-category-controls">
+                        <button type="button" aria-label="Scroll ${PT.esc(category)} products left" onclick="scrollSupplierCategory('supplier-category-${index}',-1)">‹</button>
+                        <button type="button" aria-label="Scroll ${PT.esc(category)} products right" onclick="scrollSupplierCategory('supplier-category-${index}',1)">›</button>
+                    </div>
+                </div>
                 <div class="store-product-rail" id="supplier-category-${index}">
                     ${cards}
                 </div>
