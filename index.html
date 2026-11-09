@@ -321,10 +321,10 @@ nav a:hover {
     width: fit-content;
     margin: 0 0 8px;
     padding: 4px 8px;
-    border: 1px solid #d9ad43;
+    border: 1px solid #bd8500;
     border-radius: 999px;
-    background: linear-gradient(135deg, #ffe7a3, #f3c85b);
-    color: #272015;
+    background: linear-gradient(135deg, #ffd75e 0%, #f2b923 55%, #d99a08 100%);
+    color: #241a08;
     font-size: 9px;
     font-weight: 850;
     letter-spacing: .35px;
@@ -2728,7 +2728,7 @@ function renderProductCard(product, status) {
 
             <div class="product-info">
                 <h3>${esc(product.name)}</h3>
-                ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>POUNDTECH PRO</span>' : ""}
+                ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
                 <p>${esc(product.category || "")}</p>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
