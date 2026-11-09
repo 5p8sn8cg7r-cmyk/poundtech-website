@@ -1809,6 +1809,18 @@ async function updatePoundTechMarketingConsent(checked) {
         }
         return;
     }
+
+    if (checked && poundtechMarketingConsentEmail === email) return;
+
+    if (poundtechMarketingConsentEmail && poundtechMarketingConsentEmail !== email) {
+        const { error: oldEmailError } = await supabaseClient.rpc("set_poundtech_marketing_consent", {
+            p_email: poundtechMarketingConsentEmail,
+            p_consent: false
+        });
+        if (oldEmailError) console.warn("Could not update previous PoundTech email preference:", oldEmailError.message);
+        poundtechMarketingConsentEmail = "";
+    }
+
     const { error } = await supabaseClient.rpc("set_poundtech_marketing_consent", {
         p_email: email,
         p_consent: checked
