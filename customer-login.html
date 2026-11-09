@@ -198,11 +198,11 @@ signupButton.addEventListener("click", async function() {
 
     if (data.session && data.user) {
         showLoggedIn(data.user.email);
-        showMessage("Account created. You can now open My Garage.");
+        showMessage("Account created. Your PoundTech welcome email is on its way. You can now open My Garage.");
     } else {
         showMessage(
-            "Registration received. Check your email for the confirmation link, " +
-            "then return here and log in."
+            "Registration received. Check your inbox for the account confirmation link " +
+            "and your PoundTech welcome email, then return here and log in."
         );
     }
 });
