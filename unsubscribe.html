@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unsubscribe | PoundTech</title>
+<link rel="icon" href="/favicon.ico?v=20261108" sizes="any">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#222}
+.card{width:100%;max-width:520px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+header{background:#111;padding:25px;text-align:center;color:#fff}
+.logo{font-size:25px;font-weight:900;letter-spacing:1px}
+.logo span{color:#f00}
+main{padding:30px;text-align:center}
+h1{font-size:23px;margin:0 0 12px}
+p{color:#666;line-height:1.6}
+button{margin-top:16px;background:#e00000;color:#fff;border:0;border-radius:6px;padding:13px 22px;font-weight:bold;font-size:15px;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+footer{background:#111;color:#aaa;text-align:center;padding:16px;font-size:12px}
+footer a{color:#fff;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+<header><div class="logo">POUND<span>TECH</span></div></header>
+<main>
+<h1>Email preferences</h1>
+<p id="message">Checking your unsubscribe link…</p>
+<button id="unsubscribe" type="button" hidden>Unsubscribe from marketing emails</button>
+</main>
+<footer><a href="https://poundtech.co.za">poundtech.co.za</a></footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient = supabase.createClient(
+  "https://uezacbssvvvtlosnaroh.supabase.co",
+  "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
+);
+const token = new URLSearchParams(location.search).get("token");
+const message = document.getElementById("message");
+const button = document.getElementById("unsubscribe");
+if (!token) {
+  message.textContent = "This unsubscribe link is incomplete. Please contact orders@poundtech.co.za for help.";
+} else {
+  button.hidden = false;
+  button.addEventListener("click", async function() {
+    button.disabled = true;
+    button.textContent = "Updating…";
+    const { data, error } = await supabaseClient.rpc("unsubscribe_poundtech_marketing", { p_token: token });
+    if (error) {
+      message.textContent = "We couldn't update your preferences. Please contact orders@poundtech.co.za.";
+      button.disabled = false;
+      button.textContent = "Try again";
+      return;
+    }
+    if (data) {
+      message.textContent = "You've been unsubscribed from PoundTech promotional emails. You may still receive essential order and booking updates.";
+      button.hidden = true;
+    } else {
+      message.textContent = "This link has already been used or is no longer valid. If you still receive promotional emails, contact orders@poundtech.co.za.";
+      button.hidden = true;
+    }
+  });
+}
+</script>
+</body>
+</html>
