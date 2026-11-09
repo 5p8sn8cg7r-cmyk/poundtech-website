@@ -1508,6 +1508,11 @@ Already approved?
         "
     >
 
+    <label style="display:flex;align-items:flex-start;gap:9px;margin:0 0 20px;color:#333;font-size:14px;line-height:1.45;font-weight:normal;">
+        <input id="abandoned-cart-consent" type="checkbox" style="margin-top:3px;flex:0 0 auto;">
+        <span>Email me a reminder if I leave items in my cart. This is optional and you can untick it at any time.</span>
+    </label>
+
     <label style="display:block; font-weight:bold; margin-bottom:6px;">Delivery Address</label>
 
     <div class="addr-grid">
@@ -1745,9 +1750,63 @@ if (!PT.ratings) { PT.ratings = {}; }
 
 updateGarageLink();
 
-// Links such as /?checkout=1 (Buy Now) or /?cart=1 (back from a cancelled payment).
-(function () {
+let poundtechCartSaveTimer = null;
+
+function scheduleAbandonedCartSave() {
+    clearTimeout(poundtechCartSaveTimer);
+    poundtechCartSaveTimer = setTimeout(syncAbandonedCart, 900);
+}
+
+async function syncAbandonedCart() {
+    const emailInput = document.getElementById("customer-email");
+    const consentInput = document.getElementById("abandoned-cart-consent");
+    if (!emailInput || !consentInput) return;
+
+    const email = emailInput.value.trim();
+    const consent = consentInput.checked;
+    let cart = [];
+    try { cart = JSON.parse(localStorage.getItem("poundtechCart")) || []; } catch (e) { return; }
+
+    let token = localStorage.getItem("poundtechCartToken");
+    if (!token && consent && email.includes("@") && cart.length) {
+        token = crypto.randomUUID ? crypto.randomUUID() : null;
+        if (!token) {
+            const bytes = new Uint8Array(16);
+            crypto.getRandomValues(bytes);
+            token = Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+        }
+        localStorage.setItem("poundtechCartToken", token);
+    }
+    if (!token) return;
+
+    const { error } = await supabaseClient.rpc("save_poundtech_abandoned_cart", {
+        p_cart_token: token,
+        p_email: email,
+        p_items: cart.map(item => ({ product_id: item.product_id, quantity: item.quantity || 1 })),
+        p_consent: consent && email.includes("@") && cart.length > 0
+    });
+    if (error) console.warn("PoundTech cart reminder preference could not be saved:", error.message);
+}
+
+document.getElementById("customer-email")?.addEventListener("input", scheduleAbandonedCartSave);
+document.getElementById("abandoned-cart-consent")?.addEventListener("change", scheduleAbandonedCartSave);
+
+// Restore a saved cart when a customer follows their private email link.
+(async function () {
     const params = new URLSearchParams(location.search);
+    const cartToken = params.get("cart_token");
+    if (cartToken) {
+        const { data, error } = await supabaseClient.rpc("restore_poundtech_abandoned_cart", {
+            p_cart_token: cartToken
+        });
+        if (!error && Array.isArray(data) && data.length) {
+            localStorage.setItem("poundtechCart", JSON.stringify(data));
+            localStorage.setItem("poundtechCartToken", cartToken);
+            updateCartCount();
+        } else if (error) {
+            console.warn("Could not restore saved PoundTech cart:", error.message);
+        }
+    }
     if (params.get("checkout") === "1") { checkout(); }
     else if (params.get("cart") === "1") { showCart(); }
 })();
@@ -1922,6 +1981,7 @@ function addCart(product_id, supplier_id, name, price, image_url) {
         "poundtechCart",
         JSON.stringify(cart)
     );
+    scheduleAbandonedCartSave();
 
     let totalItems =
         cart.reduce(function(total, item) {
@@ -2194,6 +2254,7 @@ document.getElementById("cart-recs-grid").addEventListener("click", function (e)
     }
 
     localStorage.setItem("poundtechCart", JSON.stringify(cart));
+    scheduleAbandonedCartSave();
 
     let totalItems = cart.reduce(function(total, item) {
         return total + item.quantity;
@@ -2262,6 +2323,7 @@ function removeFromCart(index) {
     cart.splice(index, 1);
 
     localStorage.setItem("poundtechCart", JSON.stringify(cart));
+    scheduleAbandonedCartSave();
 
     let totalItems = cart.reduce(function(total, item) {
         return total + (item.quantity || 1);
