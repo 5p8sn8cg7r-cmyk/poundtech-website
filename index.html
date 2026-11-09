@@ -1513,6 +1513,11 @@ Already approved?
         <span>Email me a reminder if I leave items in my cart. This is optional and you can untick it at any time.</span>
     </label>
 
+    <label style="display:flex;align-items:flex-start;gap:9px;margin:0 0 12px;color:#333;font-size:14px;line-height:1.45;font-weight:normal;">
+        <input id="marketing-consent" type="checkbox" style="margin-top:3px;flex:0 0 auto;">
+        <span>Yes, send me PoundTech discounts, special offers and product updates by email. Optional — unsubscribe at any time.</span>
+    </label>
+
     <label style="display:block; font-weight:bold; margin-bottom:6px;">Delivery Address</label>
 
     <div class="addr-grid">
@@ -1773,7 +1778,8 @@ async function syncAbandonedCart() {
         if (!token) {
             const bytes = new Uint8Array(16);
             crypto.getRandomValues(bytes);
-            token = Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+            const hex = Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+            token = hex.slice(0,8) + "-" + hex.slice(8,12) + "-4" + hex.slice(13,16) + "-a" + hex.slice(17,20) + "-" + hex.slice(20);
         }
         localStorage.setItem("poundtechCartToken", token);
     }
@@ -1790,6 +1796,44 @@ async function syncAbandonedCart() {
 
 document.getElementById("customer-email")?.addEventListener("input", scheduleAbandonedCartSave);
 document.getElementById("abandoned-cart-consent")?.addEventListener("change", scheduleAbandonedCartSave);
+
+let poundtechMarketingTimer = null;
+let poundtechMarketingConsentEmail = "";
+
+async function updatePoundTechMarketingConsent(checked) {
+    const email = document.getElementById("customer-email")?.value.trim() || "";
+    if (!email.includes("@")) {
+        if (checked) {
+            document.getElementById("marketing-consent").checked = false;
+            showToast("Enter your email address first to subscribe.");
+        }
+        return;
+    }
+    const { error } = await supabaseClient.rpc("set_poundtech_marketing_consent", {
+        p_email: email,
+        p_consent: checked
+    });
+    if (error) {
+        console.warn("PoundTech marketing preference could not be saved:", error.message);
+        showToast("We couldn't save your email preference. Please try again.");
+        return;
+    }
+    poundtechMarketingConsentEmail = checked ? email : "";
+    if (checked) showToast("You're subscribed to PoundTech offers.");
+}
+
+document.getElementById("marketing-consent")?.addEventListener("change", function (event) {
+    updatePoundTechMarketingConsent(event.target.checked);
+});
+
+document.getElementById("customer-email")?.addEventListener("input", function () {
+    clearTimeout(poundtechMarketingTimer);
+    if (document.getElementById("marketing-consent")?.checked) {
+        poundtechMarketingTimer = setTimeout(function () {
+            updatePoundTechMarketingConsent(true);
+        }, 900);
+    }
+});
 
 // Restore a saved cart when a customer follows their private email link.
 (async function () {
