@@ -300,19 +300,37 @@ nav a:hover {
 .product {
     display: flex;
     flex-direction: column;
-    background: white;
-    border: 1px solid #ebebec;
-    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #e2e3e6;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.05);
-    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.045);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
 .product:hover {
-    transform: translateY(-4px);
-    border-color: #ddd;
-    box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+    transform: translateY(-3px);
+    border-color: #cfd1d5;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.10);
 }
+
+.pt-pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    margin: 0 0 8px;
+    padding: 4px 8px;
+    border: 1px solid #d9ad43;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffe7a3, #f3c85b);
+    color: #272015;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .35px;
+    line-height: 1.2;
+}
+.pt-pro-badge svg { width: 11px; height: 11px; fill: currentColor; }
 
 .product-image {
     height: 170px;
@@ -359,17 +377,18 @@ nav a:hover {
     margin-top: auto;
     width: 100%;
     padding: 12px;
-    border: none;
+    border: 1px solid #111;
     border-radius: 7px;
-    background: #e00000;
+    background: #111;
     color: white;
     font-weight: bold;
     cursor: pointer;
-    transition: background .15s ease;
+    transition: background .15s ease, transform .15s ease;
 }
 
 .product-info button:hover {
-    background: #b80000;
+    background: #303030;
+    transform: translateY(-1px);
 }
 
 /* MECHANIC */
@@ -2709,6 +2728,7 @@ function renderProductCard(product, status) {
 
             <div class="product-info">
                 <h3>${esc(product.name)}</h3>
+                ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>POUNDTECH PRO</span>' : ""}
                 <p>${esc(product.category || "")}</p>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
@@ -2788,6 +2808,26 @@ async function loadProducts() {
     }
 
     loadedProducts = products;
+
+    // Add the Pro badge only when the supplier has an active Pro plan.
+    const supplierIds = [...new Set(products.map(function (p) { return p.supplier_id; }).filter(Boolean))];
+    if (supplierIds.length) {
+        const supplierResult = await supabaseClient
+            .from("suppliers")
+            .select("id, plan, plan_ends_at")
+            .in("id", supplierIds);
+
+        if (!supplierResult.error && supplierResult.data) {
+            const proSuppliers = new Set(supplierResult.data.filter(function (supplier) {
+                const planEnd = supplier.plan_ends_at ? new Date(supplier.plan_ends_at).getTime() : 0;
+                return supplier.plan === "pro" && planEnd > Date.now();
+            }).map(function (supplier) { return String(supplier.id); }));
+
+            products.forEach(function (product) {
+                product._ptProActive = proSuppliers.has(String(product.supplier_id));
+            });
+        }
+    }
 
     await renderLoaded();
 }
