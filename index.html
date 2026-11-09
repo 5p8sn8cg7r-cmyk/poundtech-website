@@ -358,13 +358,22 @@ nav a:hover {
     line-height: 1.35;
 }
 
-.product p {
-    color: #8a8a8a;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .05em;
+.product-category-label {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 0 9px;
+    padding: 5px 9px;
+    border: 1px solid #e0e2e7;
+    border-radius: 5px;
+    background: #f5f6f8;
+    color: #454953;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .09em;
+    line-height: 1.2;
     text-transform: uppercase;
-    margin: 0;
 }
 
 .price {
@@ -2729,7 +2738,7 @@ function renderProductCard(product, status) {
             <div class="product-info">
                 <h3>${esc(product.name)}</h3>
                 ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
-                <p>${esc(product.category || "")}</p>
+                <span class="product-category-label">${esc(product.category || "General")}</span>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
 
