@@ -923,6 +923,31 @@ footer {
         border-radius: 8px;
     }
 
+    /* Subtle scroll-in lift for product cards on mobile */
+    .product.pt-scroll-card {
+        opacity: .88;
+        transform: translateY(14px);
+        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+        transition: opacity .45s ease, transform .45s ease, box-shadow .45s ease;
+        will-change: opacity, transform;
+    }
+
+    .product.pt-scroll-card.pt-card-visible {
+        opacity: 1;
+        transform: translateY(0);
+        box-shadow: 0 7px 18px rgba(0,0,0,.09);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .product.pt-scroll-card,
+        .product.pt-scroll-card.pt-card-visible {
+            opacity: 1;
+            transform: none;
+            transition: none;
+            will-change: auto;
+        }
+    }
+
     .product-image {
         height: 105px;
     }
@@ -2934,6 +2959,27 @@ async function renderLoaded() {
             return renderProductCard(item.product, item.status);
         })
         .join("");
+
+    // Reveal cards gently as they enter the viewport on mobile.
+    if (window.matchMedia("(max-width: 700px)").matches) {
+        const cards = container.querySelectorAll(".product");
+        if ("IntersectionObserver" in window) {
+            const cardObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("pt-card-visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: "0px 0px -28px 0px" });
+            cards.forEach(function(card) {
+                card.classList.add("pt-scroll-card");
+                cardObserver.observe(card);
+            });
+        } else {
+            cards.forEach(function(card) { card.classList.add("pt-card-visible"); });
+        }
+    }
 
     PT.fetchRatings(displayedProducts.map(function (item) { return item.product.id; })).then(PT.paintRatings);
 }
