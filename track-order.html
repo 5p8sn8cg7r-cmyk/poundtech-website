@@ -115,6 +115,11 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
+const orderFromUrl = new URLSearchParams(window.location.search).get("order");
+if (orderFromUrl) {
+    document.getElementById("order-number").value = orderFromUrl;
+}
+
 async function trackOrder() {
 
     const orderNumber =
