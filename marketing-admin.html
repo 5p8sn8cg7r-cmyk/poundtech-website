@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoundTech Marketing | Admin</title>
+<link rel="icon" href="/favicon.ico?v=20261108" sizes="any">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f5f7;color:#222;font-family:Arial,Helvetica,sans-serif}
+header{background:#08090b;color:#fff;padding:18px 6%;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:23px;font-weight:900;letter-spacing:1px}.logo span{color:#f00}
+main{width:min(760px,92%);margin:35px auto}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:26px;box-shadow:0 4px 18px rgba(0,0,0,.05)}
+h1{margin:0 0 8px;font-size:25px}p{color:#666;line-height:1.55}
+label{display:block;font-size:13px;font-weight:bold;margin:18px 0 6px}
+input,textarea{width:100%;padding:12px;border:1px solid #d8d8d8;border-radius:6px;font:15px Arial, sans-serif}
+textarea{min-height:150px;resize:vertical}
+button{border:0;border-radius:6px;background:#e00000;color:#fff;padding:13px 18px;font-size:15px;font-weight:bold;cursor:pointer}
+button.secondary{background:#222}
+button:disabled{opacity:.55;cursor:default}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.notice{padding:12px 14px;background:#f5f5f5;border-left:3px solid #e00000;border-radius:4px;font-size:13px;color:#555;margin:18px 0}
+#message{margin-top:16px;white-space:pre-wrap}
+.hidden{display:none}
+.top-actions{display:flex;gap:10px;align-items:center}
+@media(max-width:520px){header{padding:16px 4%}.logo{font-size:19px}.card{padding:20px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">POUND<span>TECH</span> <small style="font-size:11px;color:#aaa;font-weight:500">MARKETING</small></div>
+  <div class="top-actions"><button id="signout" class="secondary hidden" type="button">Sign out</button></div>
+</header>
+<main>
+  <section class="card" id="login-card">
+    <h1>Campaign admin sign in</h1>
+    <p>Sign in with your PoundTech admin account to manage promotional emails.</p>
+    <label for="login-email">Email address</label>
+    <input id="login-email" type="email" autocomplete="username" placeholder="Admin email">
+    <label for="login-password">Password</label>
+    <input id="login-password" type="password" autocomplete="current-password" placeholder="Password">
+    <div class="actions"><button id="login-button" type="button">Sign in</button></div>
+    <div id="login-message" role="status"></div>
+  </section>
+
+  <section class="card hidden" id="campaign-card">
+    <h1>Create a promotional campaign</h1>
+    <p>Campaigns are queued only for people who explicitly subscribed to PoundTech promotional emails. Unsubscribed contacts are excluded.</p>
+    <div class="notice">Check every link and price before sending. Queueing a campaign sends it to the email queue, which begins delivery automatically.</div>
+    <label for="subject">Email subject</label>
+    <input id="subject" maxlength="120" placeholder="e.g. This week's PoundTech deals">
+    <label for="headline">Main heading</label>
+    <input id="headline" maxlength="120" placeholder="e.g. Upgrade your drive for less">
+    <label for="body-text">Message</label>
+    <textarea id="body-text" maxlength="5000" placeholder="Write the offer details. Use a blank line to start a new paragraph."></textarea>
+    <label for="cta-label">Button text (optional)</label>
+    <input id="cta-label" maxlength="60" placeholder="e.g. Shop the deals">
+    <label for="cta-url">Button link (optional)</label>
+    <input id="cta-url" type="url" placeholder="https://poundtech.co.za/">
+    <div class="actions"><button id="send-button" type="button">Queue campaign emails</button></div>
+    <div id="message" role="status"></div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient = supabase.createClient(
+  "https://uezacbssvvvtlosnaroh.supabase.co",
+  "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
+);
+const loginCard = document.getElementById("login-card");
+const campaignCard = document.getElementById("campaign-card");
+const signoutButton = document.getElementById("signout");
+const loginMessage = document.getElementById("login-message");
+const message = document.getElementById("message");
+
+async function refreshSession() {
+  const { data } = await supabaseClient.auth.getSession();
+  const signedIn = !!data.session;
+  loginCard.classList.toggle("hidden", signedIn);
+  campaignCard.classList.toggle("hidden", !signedIn);
+  signoutButton.classList.toggle("hidden", !signedIn);
+}
+refreshSession();
+
+document.getElementById("login-button").addEventListener("click", async function() {
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  if (!email || !password) { loginMessage.textContent = "Enter your email and password."; return; }
+  this.disabled = true;
+  loginMessage.textContent = "Signing in…";
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  this.disabled = false;
+  if (error) { loginMessage.textContent = error.message; return; }
+  loginMessage.textContent = "";
+  await refreshSession();
+});
+
+signoutButton.addEventListener("click", async function() {
+  await supabaseClient.auth.signOut();
+  await refreshSession();
+});
+
+document.getElementById("send-button").addEventListener("click", async function() {
+  const subject = document.getElementById("subject").value.trim();
+  const headline = document.getElementById("headline").value.trim();
+  const body_text = document.getElementById("body-text").value.trim();
+  const cta_label = document.getElementById("cta-label").value.trim();
+  const cta_url = document.getElementById("cta-url").value.trim();
+
+  if (!subject || !headline || !body_text) { message.textContent = "Complete the subject, heading and message first."; return; }
+  if (!confirm("Queue this campaign for every active, opted-in PoundTech subscriber? This will begin sending emails.")) return;
+
+  this.disabled = true;
+  this.textContent = "Queueing…";
+  message.textContent = "Preparing the campaign…";
+  const { data, error } = await supabaseClient.functions.invoke("poundtech-marketing-campaign", {
+    body: { subject, headline, body_text, cta_label, cta_url }
+  });
+  this.disabled = false;
+  this.textContent = "Queue campaign emails";
+
+  if (error) {
+    let detail = error.message || "Campaign could not be queued.";
+    try { const body = await error.context.json(); if (body?.error) detail = body.error; } catch (e) {}
+    message.textContent = detail;
+    return;
+  }
+  if (!data?.success) { message.textContent = data?.error || "Campaign could not be queued."; return; }
+  message.textContent = "Campaign queued successfully. " + data.queued + " opted-in recipient(s) will receive it. Campaign reference: " + data.campaign_id;
+});
+</script>
+</body>
+</html>
