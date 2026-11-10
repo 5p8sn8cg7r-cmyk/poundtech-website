@@ -926,6 +926,8 @@ const { data: supplier, error: supplierError } = await supabaseClient.rpc("get_m
 
 const { data: supplierRole } = await supabaseClient.rpc("get_my_supplier_role");
 window.POUNDTECH_SUPPLIER_ROLE = supplierRole || "sales";
+const roleLabel = (supplierRole || "sales").replace(/_/g," ").replace(/\b\w/g, ch => ch.toUpperCase());
+document.getElementById("welcome").textContent = "Logged in as " + user.email + " · " + (supplierRole === "owner" ? "Business Owner" : roleLabel + " Team Member");
 const teamTab = document.getElementById("supplier-team-tab");
 if (teamTab) teamTab.style.display = supplierRole === "owner" ? "" : "none";
 
