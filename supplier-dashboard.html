@@ -1687,10 +1687,9 @@ async function updateProductStock(productId) {
 
 async function archiveProduct(productId) {
     if (!confirm("Archive this product? It will disappear from the marketplace and your public storefront. Existing orders, reviews and payment records will remain untouched. You can restore it later.")) return;
-    const { error } = await supabaseClient.from("products").update({
-        status: "Archived", is_promoted: false, sponsored: false,
-        promotion_expires_at: null, sponsored_until: null, sponsored_requested_at: null
-    }).eq("id", productId);
+    const { error } = await supabaseClient.from("products")
+        .update({ status: "Archived" })
+        .eq("id", productId);
     if (error) { console.error(error); alert("Unable to archive this product."); return; }
     alert("Product archived. It is now hidden from customers and can be restored from Archived products.");
     loadSupplierProducts();
