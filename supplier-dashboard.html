@@ -239,6 +239,7 @@ Logout
         <button type="button" data-supplier-tab="supplier-products-panel" onclick="showSupplierSection('supplier-products-panel', this)">Products</button>
         <button type="button" data-supplier-tab="supplier-earnings-panel" onclick="showSupplierSection('supplier-earnings-panel', this)">Payments &amp; Earnings</button>
         <button type="button" data-supplier-tab="supplier-help-panel" onclick="showSupplierSection('supplier-help-panel', this)">Help &amp; Guides</button>
+        <button type="button" id="supplier-team-tab" style="display:none" onclick="window.location.href='supplier-team.html'">Team</button>
     </nav>
 
     <section class="supplier-panel" id="supplier-earnings-panel">
@@ -841,18 +842,12 @@ async function removeStoredImage(url) {
 }
 
 async function getSupplierId() {
-
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    if (!user) { return null; }
-
-    const { data: supplier } = await supabaseClient
-        .from("suppliers")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-    return supplier ? supplier.id : null;
+    const { data: supplierId, error } = await supabaseClient.rpc("get_my_supplier_id");
+    if (error) {
+        console.error("Could not resolve supplier access:", error.message);
+        return null;
+    }
+    return supplierId || null;
 }
 
 // Live previews in the Add Product form.
@@ -889,13 +884,9 @@ document.addEventListener("change", function (e) {
         return;
     }
 
-    const { data: supplier } = await supabaseClient
-        .from("suppliers")
-        .select("id")
-        .eq("user_id", userData.user.id)
-        .maybeSingle();
+    const { data: supplierId, error: supplierAccessError } = await supabaseClient.rpc("get_my_supplier_id");
 
-    if (!supplier) {
+    if (supplierAccessError || !supplierId) {
         alert("This account is not a PoundTech supplier.");
         window.location.href="/index.html";
     }
@@ -925,16 +916,22 @@ document.getElementById("welcome").textContent =
 
 
 
-const { data: supplier, error: supplierError } =
-await supabaseClient
+const supplierId = await getSupplierId();
+if (!supplierId) {
+    document.getElementById("status").textContent = "Your account does not have access to a supplier business.";
+    return;
+}
 
-.from("suppliers")
+const { data: supplier, error: supplierError } = await supabaseClient
+    .from("suppliers")
+    .select("*")
+    .eq("id", supplierId)
+    .single();
 
-.select("*")
-
-.eq("user_id", user.id)
-
-.single();
+const { data: supplierRole } = await supabaseClient.rpc("get_my_supplier_role");
+window.POUNDTECH_SUPPLIER_ROLE = supplierRole || "sales";
+const teamTab = document.getElementById("supplier-team-tab");
+if (teamTab) teamTab.style.display = supplierRole === "owner" ? "" : "none";
     
 if (supplierError) {
 
@@ -1072,12 +1069,9 @@ async function addProductInner() {
         return;
     }
 
-    const { data: supplier, error: supplierError } =
-        await supabaseClient
-        .from("suppliers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+    const supplierId = await getSupplierId();
+    const supplier = supplierId ? { id: supplierId } : null;
+    const supplierError = supplierId ? null : { message: "Supplier account not found." };
 
     if (supplierError || !supplier) {
         message.textContent = "Supplier account not found.";
@@ -1248,8 +1242,9 @@ async function loadSupplierProducts() {
         return;
     }
 
-    const { data: supplier, error: supplierError } = await supabaseClient
-        .from("suppliers").select("id").eq("user_id", user.id).single();
+    const supplierId = await getSupplierId();
+    const supplier = supplierId ? { id: supplierId } : null;
+    const supplierError = supplierId ? null : { message: "Supplier account not found." };
     if (supplierError || !supplier) {
         productsContainer.innerHTML = "<p>Supplier account not found.</p>";
         return;
@@ -1917,12 +1912,9 @@ async function loadSupplierOrders() {
         return;
     }
 
-    const { data: supplier, error: supplierError } =
-        await supabaseClient
-        .from("suppliers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+    const supplierId = await getSupplierId();
+    const supplier = supplierId ? { id: supplierId } : null;
+    const supplierError = supplierId ? null : { message: "Supplier account not found." };
 
     if (supplierError || !supplier) {
         container.innerHTML =
@@ -2391,12 +2383,9 @@ async function updateSupplierOrderStatus(orderId, newStatus) {
         return;
     }
 
-    const { data: supplier, error: supplierError } =
-        await supabaseClient
-        .from("suppliers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+    const supplierId = await getSupplierId();
+    const supplier = supplierId ? { id: supplierId } : null;
+    const supplierError = supplierId ? null : { message: "Supplier account not found." };
 
     if (supplierError || !supplier) {
         alert("Supplier account not found.");
