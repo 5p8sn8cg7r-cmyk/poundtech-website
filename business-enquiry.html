@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business & Enterprise Enquiry | PoundTech</title>
+<meta name="description" content="Tell PoundTech about your automotive business and explore our Business and Corporate / Enterprise plans.">
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=10">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png?v=10">
+<style>
+:root{--pt-red:#d60000}
+body{background:#f5f5f6;color:#171717}
+.enquiry-wrap{max-width:900px;margin:0 auto;padding:38px 18px 70px}
+.intro{text-align:center;max-width:700px;margin:0 auto 28px}
+.kicker{font-size:11px;letter-spacing:2px;font-weight:850;color:var(--pt-red);text-transform:uppercase}
+.intro h1{font-size:clamp(30px,5vw,43px);line-height:1.1;margin:12px 0}
+.intro p{color:#666;line-height:1.65;margin:0}
+.form-card{background:#fff;border:1px solid #e5e5e5;border-radius:18px;padding:clamp(18px,4vw,34px);box-shadow:0 12px 35px rgba(0,0,0,.05)}
+.plan-choice{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 25px}
+.plan-option{border:1px solid #ddd;border-radius:12px;padding:15px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.plan-option:has(input:checked){border:2px solid var(--pt-red);background:#fffafa;padding:14px}
+.plan-option input{width:auto;margin:4px 0 0;accent-color:var(--pt-red)}
+.plan-option strong{display:block;font-size:14px}
+.plan-option small{display:block;color:#777;margin-top:4px;line-height:1.4}
+.form-section{border-top:1px solid #eee;padding-top:22px;margin-top:22px}
+.form-section h2{font-size:18px;margin:0 0 5px}
+.section-help{font-size:13px;color:#777;line-height:1.5;margin:0 0 17px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field.full{grid-column:1/-1}
+.field label{display:block;font-size:13px;font-weight:700;margin:0 0 6px}
+.field input,.field select,.field textarea{width:100%;padding:12px 13px;border:1px solid #d8d8d8;border-radius:9px;background:#fff;font:inherit;font-size:14px;color:#222}
+.field textarea{min-height:100px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid rgba(214,0,0,.15);border-color:var(--pt-red)}
+.required{color:var(--pt-red)}
+.check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px}
+.check-grid label{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#444}
+.check-grid input{margin:2px 0 0;accent-color:var(--pt-red)}
+.privacy-note{background:#f6f6f6;border-radius:10px;padding:13px 15px;color:#666;font-size:12px;line-height:1.6;margin:20px 0}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.submit{display:block;width:100%;border:0;border-radius:10px;background:var(--pt-red);color:#fff;padding:15px;font-weight:800;font-size:15px;cursor:pointer}
+.submit:disabled{opacity:.6;cursor:wait}
+#form-message{display:none;margin:0 0 16px;padding:13px 15px;border-radius:9px;font-size:14px;line-height:1.5}
+#form-message.success{display:block;background:#edf8f0;color:#176b35}
+#form-message.error{display:block;background:#fff0f0;color:#a00000}
+#form-message.info{display:block;background:#f1f4f8;color:#34445a}
+@media(max-width:620px){.fields,.plan-choice{grid-template-columns:1fr}.check-grid{grid-template-columns:1fr}.enquiry-wrap{padding:26px 12px 48px}}
+</style>
+</head>
+<body>
+<header class="site-header">
+<a class="logo" href="/index.html">POUND<span>TECH</span></a>
+<a class="back" href="/supplier-plans.html">&larr; Back to supplier plans</a>
+</header>
+<main class="enquiry-wrap">
+<section class="intro">
+<div class="kicker">PoundTech business onboarding</div>
+<h1>Let's understand your business.</h1>
+<p>Tell us a little about your operation and what you need from PoundTech. Our team will review your enquiry and contact you about the next steps.</p>
+</section>
+<section class="form-card">
+<div id="form-message" role="status" aria-live="polite"></div>
+<form id="business-enquiry-form">
+<h2 style="font-size:17px;margin:0 0 10px">Which plan are you enquiring about?</h2>
+<div class="plan-choice">
+<label class="plan-option"><input type="radio" name="requested_plan" value="business" checked><span><strong>Business · R999/month</strong><small>For established suppliers, larger teams and multi-branch operations.</small></span></label>
+<label class="plan-option"><input type="radio" name="requested_plan" value="enterprise"><span><strong>Corporate / Enterprise · Custom</strong><small>For large distributors, national suppliers and complex operations.</small></span></label>
+</div>
+
+<div class="form-section">
+<h2>1. Business information</h2>
+<p class="section-help">Share the details we need to understand and identify your business.</p>
+<div class="fields">
+<div class="field"><label for="registered_business_name">Registered business name <span class="required">*</span></label><input id="registered_business_name" name="registered_business_name" required maxlength="180" autocomplete="organization"></div>
+<div class="field"><label for="trading_name">Trading name (if different)</label><input id="trading_name" name="trading_name" maxlength="180"></div>
+<div class="field"><label for="company_type">Business structure</label><select id="company_type" name="company_type"><option value="">Select one</option><option>Private company (Pty Ltd)</option><option>Public company</option><option>Sole proprietor</option><option>Partnership</option><option>Close corporation</option><option>Trust</option><option>Other</option></select></div>
+<div class="field"><label for="registration_number">Company registration number</label><input id="registration_number" name="registration_number" maxlength="60" placeholder="e.g. 2020/123456/07"></div>
+<div class="field"><label for="vat_registered">VAT registration</label><select id="vat_registered" name="vat_registered"><option value="no">Not VAT registered</option><option value="yes">VAT registered</option></select></div>
+<div class="field" id="vat-number-wrap" hidden><label for="vat_number">VAT number</label><input id="vat_number" name="vat_number" maxlength="40"></div>
+<div class="field full"><label for="business_address">Registered / principal business address <span class="required">*</span></label><textarea id="business_address" name="business_address" required maxlength="500" placeholder="Street address, suburb, city and province"></textarea></div>
+<div class="field"><label for="business_website">Business website</label><input id="business_website" name="business_website" type="url" maxlength="250" placeholder="https://"></div>
+<div class="field"><label for="social_links">Social media links</label><input id="social_links" name="social_links" maxlength="500" placeholder="Facebook, Instagram, LinkedIn, etc."></div>
+</div>
+</div>
+
+<div class="form-section">
+<h2>2. Main contact person</h2>
+<p class="section-help">Who should our team contact about this enquiry?</p>
+<div class="fields">
+<div class="field"><label for="contact_name">Full name <span class="required">*</span></label><input id="contact_name" name="contact_name" required maxlength="120" autocomplete="name"></div>
+<div class="field"><label for="contact_role">Position / role</label><input id="contact_role" name="contact_role" maxlength="100" placeholder="Owner, director, procurement manager…"></div>
+<div class="field"><label for="contact_email">Business email <span class="required">*</span></label><input id="contact_email" name="contact_email" type="email" required maxlength="254" autocomplete="email"></div>
+<div class="field"><label for="contact_phone">Contact number <span class="required">*</span></label><input id="contact_phone" name="contact_phone" type="tel" required maxlength="40" autocomplete="tel"></div>
+</div>
+</div>
+
+<div class="form-section">
+<h2>3. Your operation</h2>
+<p class="section-help">Select the areas that best describe your business and tell us about your scale.</p>
+<div class="field full" style="margin-bottom:15px">
+<label>Products / services you provide</label>
+<div class="check-grid">
+<label><input type="checkbox" name="business_categories" value="Auto parts"> Auto parts</label>
+<label><input type="checkbox" name="business_categories" value="Accessories"> Accessories</label>
+<label><input type="checkbox" name="business_categories" value="Tyres and wheels"> Tyres and wheels</label>
+<label><input type="checkbox" name="business_categories" value="Auto electrical and audio"> Auto electrical / audio</label>
+<label><input type="checkbox" name="business_categories" value="Workshop and mechanical services"> Workshop / mechanical services</label>
+<label><input type="checkbox" name="business_categories" value="Car wash and detailing"> Car wash / detailing</label>
+<label><input type="checkbox" name="business_categories" value="Commercial and trucking"> Commercial / trucking</label>
+<label><input type="checkbox" name="business_categories" value="Other automotive services"> Other automotive services</label>
+</div>
+</div>
+<div class="fields">
+<div class="field"><label for="monthly_sales_band">Approximate monthly online sales / turnover</label><select id="monthly_sales_band" name="monthly_sales_band"><option value="">Prefer not to say</option><option>Pre-revenue / starting out</option><option>Under R50,000</option><option>R50,000 – R250,000</option><option>R250,000 – R1 million</option><option>R1 million – R5 million</option><option>Over R5 million</option></select></div>
+<div class="field"><label for="branch_count">Number of branches / locations</label><select id="branch_count" name="branch_count"><option value="">Select one</option><option>1</option><option>2–5</option><option>6–10</option><option>11–25</option><option>26–50</option><option>More than 50</option></select></div>
+<div class="field"><label for="staff_accounts">How many PoundTech user accounts may you need?</label><select id="staff_accounts" name="staff_accounts"><option value="">Not sure yet</option><option>1–3</option><option>4–10</option><option>11–25</option><option>26–50</option><option>More than 50</option></select></div>
+<div class="field full"><label for="operational_requirements">What would you need PoundTech to help your business do?</label><textarea id="operational_requirements" name="operational_requirements" maxlength="2000" placeholder="For example: manage multiple branches, upload a large catalogue, manage staff access, receive bulk orders, connect existing systems, or support a fleet operation."></textarea></div>
+</div>
+</div>
+
+<div class="hp" aria-hidden="true"><label for="website">Leave this field empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+<div class="privacy-note"><strong>Privacy and verification:</strong> Please do not upload or enter ID documents, bank account details, passwords or payment card information here. We first review your business enquiry. If it progresses, PoundTech will contact you and request the relevant verification documents through a separate process.</div>
+<button class="submit" id="submit-button" type="submit">Submit business enquiry</button>
+<p style="text-align:center;color:#777;font-size:12px;line-height:1.6;margin:14px 0 0">Submitting this form does not activate a plan or create a paid subscription. Our team will contact you to discuss suitability and next steps.</p>
+</form>
+</section>
+</main>
+<footer class="site-footer">
+<nav><a href="/supplier-plans.html">Supplier plans</a><a href="/terms.html">Terms &amp; Conditions</a><a href="/privacy.html">Privacy Policy</a><a href="mailto:info@poundtech.co.za">Contact PoundTech</a></nav>
+<p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+<script>
+const ENQUIRY_URL = "https://uezacbssvvvtlosnaroh.supabase.co/functions/v1/business-plan-enquiry";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const form = document.getElementById("business-enquiry-form");
+const message = document.getElementById("form-message");
+const button = document.getElementById("submit-button");
+const params = new URLSearchParams(window.location.search);
+if (["business","enterprise"].includes(params.get("plan"))) {
+  form.querySelector('input[name="requested_plan"][value="' + params.get("plan") + '"]').checked = true;
+}
+document.getElementById("vat_registered").addEventListener("change", function() {
+  const show = this.value === "yes";
+  document.getElementById("vat-number-wrap").hidden = !show;
+  document.getElementById("vat_number").required = show;
+  if (!show) document.getElementById("vat_number").value = "";
+});
+function showMessage(text, type) {
+  message.textContent = text;
+  message.className = type;
+}
+form.addEventListener("submit", async function(event) {
+  event.preventDefault();
+  if (!form.reportValidity()) return;
+  button.disabled = true;
+  button.textContent = "Submitting enquiry…";
+  showMessage("Sending your business enquiry securely…", "info");
+  const data = new FormData(form);
+  const payload = {
+    requested_plan: data.get("requested_plan"),
+    registered_business_name: data.get("registered_business_name"),
+    trading_name: data.get("trading_name"),
+    company_type: data.get("company_type"),
+    registration_number: data.get("registration_number"),
+    vat_registered: data.get("vat_registered") === "yes",
+    vat_number: data.get("vat_number"),
+    business_address: data.get("business_address"),
+    business_website: data.get("business_website"),
+    social_links: data.get("social_links"),
+    contact_name: data.get("contact_name"),
+    contact_role: data.get("contact_role"),
+    contact_email: data.get("contact_email"),
+    contact_phone: data.get("contact_phone"),
+    business_categories: data.getAll("business_categories"),
+    monthly_sales_band: data.get("monthly_sales_band"),
+    branch_count: data.get("branch_count"),
+    staff_accounts: data.get("staff_accounts"),
+    operational_requirements: data.get("operational_requirements"),
+    website: data.get("website")
+  };
+  try {
+    const response = await fetch(ENQUIRY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || "We couldn't submit your enquiry. Please try again.");
+    form.reset();
+    document.getElementById("vat-number-wrap").hidden = true;
+    showMessage("Thank you — your enquiry has been received. Your reference is " + result.reference + ". We've sent an acknowledgement to your email address.", "success");
+  } catch (error) {
+    showMessage(error.message || "Something went wrong. Please email info@poundtech.co.za.", "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Submit business enquiry";
+  }
+});
+</script>
+</body>
+</html>
