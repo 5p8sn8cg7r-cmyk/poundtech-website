@@ -96,10 +96,12 @@ async function loadTeam(){
  supplierId=id;
  const {data:supplier,error:supplierError}=await supabaseClient.from("suppliers").select("business_name,plan,plan_ends_at").eq("id",supplierId).single();
  if(supplierError){message("Couldn't load your subscription details: "+supplierError.message,"error");return;}
- const pro=supplier.plan==="pro"&&supplier.plan_ends_at&&new Date(supplier.plan_ends_at)>new Date();
- seatLimit=pro?3:1;
+ const planActive=!!supplier.plan_ends_at&&new Date(supplier.plan_ends_at)>new Date();
+ const pro=supplier.plan==="pro"&&planActive;
+ const business=supplier.plan==="business"&&planActive;
+ seatLimit=business?10:(pro?3:1);
  $("business-name").textContent=supplier.business_name||"Your supplier business";
- $("plan-name").textContent=pro?"Pro":"Starter";
+ $("plan-name").textContent=business?"Business":(pro?"Pro":"Standard");
  $("seat-limit").textContent=String(seatLimit);
  const {data:members,error:memberError}=await supabaseClient.from("supplier_team_members").select("id,email,full_name,role,status,invited_at,joined_at").eq("supplier_id",supplierId).in("status",["active","invited"]).order("created_at",{ascending:true});
  if(memberError){$("team-list").textContent="Couldn't load team members: "+memberError.message;return;}
