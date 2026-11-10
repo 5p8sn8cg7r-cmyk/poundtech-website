@@ -18,6 +18,15 @@ body{background:#f5f5f6;color:#171717}
 .intro h1{font-size:clamp(30px,5vw,43px);line-height:1.1;margin:12px 0}
 .intro p{color:#666;line-height:1.65;margin:0}
 .form-card{background:#fff;border:1px solid #e5e5e5;border-radius:18px;padding:clamp(18px,4vw,34px);box-shadow:0 12px 35px rgba(0,0,0,.05)}
+.form-card,.form-card *{box-sizing:border-box}
+.fields>.field{min-width:0}
+.field input,.field select,.field textarea{min-width:0;max-width:100%}
+.check-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.check-grid label{min-width:0;overflow-wrap:anywhere}
+.check-grid input{width:auto!important;min-width:16px;max-width:16px;flex:0 0 16px;padding:0}
+.address-fields>.fields{margin-top:10px}
+@media(max-width:620px){.check-grid{grid-template-columns:1fr}}
+
 .plan-choice{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 25px}
 .plan-option{border:1px solid #ddd;border-radius:12px;padding:15px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
 .plan-option:has(input:checked){border:2px solid var(--pt-red);background:#fffafa;padding:14px}
@@ -78,7 +87,17 @@ body{background:#f5f5f6;color:#171717}
 <div class="field"><label for="registration_number">Company registration number</label><input id="registration_number" name="registration_number" maxlength="60" placeholder="e.g. 2020/123456/07"></div>
 <div class="field"><label for="vat_registered">VAT registration</label><select id="vat_registered" name="vat_registered"><option value="no">Not VAT registered</option><option value="yes">VAT registered</option></select></div>
 <div class="field" id="vat-number-wrap" hidden><label for="vat_number">VAT number</label><input id="vat_number" name="vat_number" maxlength="40"></div>
-<div class="field full"><label for="business_address">Registered / principal business address <span class="required">*</span></label><textarea id="business_address" name="business_address" required maxlength="500" placeholder="Street address, suburb, city and province"></textarea></div>
+<div class="field full address-fields">
+<label>Registered / principal business address <span class="required">*</span></label>
+<div class="fields">
+<div class="field full"><label for="address_line1">Street address / building number <span class="required">*</span></label><input id="address_line1" name="address_line1" required maxlength="180" autocomplete="address-line1" placeholder="Street number and street name"></div>
+<div class="field full"><label for="address_line2">Building, unit, complex or business park (if applicable)</label><input id="address_line2" name="address_line2" maxlength="180" autocomplete="address-line2" placeholder="Unit, office, industrial park or complex name"></div>
+<div class="field"><label for="address_suburb">Suburb <span class="required">*</span></label><input id="address_suburb" name="address_suburb" required maxlength="100" autocomplete="address-level3"></div>
+<div class="field"><label for="address_city">City / town <span class="required">*</span></label><input id="address_city" name="address_city" required maxlength="100" autocomplete="address-level2"></div>
+<div class="field"><label for="address_province">Province <span class="required">*</span></label><select id="address_province" name="address_province" required autocomplete="address-level1"><option value="">Select province</option><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>Northern Cape</option><option>North West</option><option>Western Cape</option></select></div>
+<div class="field"><label for="address_postal_code">Postal code</label><input id="address_postal_code" name="address_postal_code" maxlength="10" inputmode="numeric" autocomplete="postal-code"></div>
+</div>
+</div>
 <div class="field"><label for="business_website">Business website</label><input id="business_website" name="business_website" type="url" maxlength="250" placeholder="https://"></div>
 <div class="field"><label for="social_links">Social media links</label><input id="social_links" name="social_links" maxlength="500" placeholder="Facebook, Instagram, LinkedIn, etc."></div>
 </div>
@@ -165,7 +184,14 @@ form.addEventListener("submit", async function(event) {
     registration_number: data.get("registration_number"),
     vat_registered: data.get("vat_registered") === "yes",
     vat_number: data.get("vat_number"),
-    business_address: data.get("business_address"),
+    business_address: [
+      data.get("address_line1"),
+      data.get("address_line2"),
+      data.get("address_suburb"),
+      data.get("address_city"),
+      data.get("address_province"),
+      data.get("address_postal_code")
+    ].map(value => String(value || "").trim()).filter(Boolean).join(", "),
     business_website: data.get("business_website"),
     social_links: data.get("social_links"),
     contact_name: data.get("contact_name"),
