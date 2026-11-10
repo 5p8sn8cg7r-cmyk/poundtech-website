@@ -2979,9 +2979,10 @@ function renderProductCard(product, status) {
 
                 ${PT.price(product)}
 
-                <button onclick="${esc(handler)}">
-                    Add to Cart
-                </button>
+${Number(product.stock) > 0
+                    ? `<button onclick="${esc(handler)}">Add to Cart</button>`
+                    : '<button type="button" disabled style="background:#777;cursor:not-allowed;">Out of stock</button>'}
+                ${Number(product.stock) <= 0 ? '<p style="margin:6px 0 0;color:#a00;font-size:12px;font-weight:700;">Currently unavailable</p>' : ''}
             </div>
         </div>
     `;
