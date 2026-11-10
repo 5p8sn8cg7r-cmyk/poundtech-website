@@ -2207,12 +2207,13 @@ function planBoxHTML(st) {
                        <li>No payout holds, however new your account is</li>
                        <li>No cap on how many active listings you can run</li>
                    </ul>
-                   <button onclick="requestProPlan()">Ask about the Pro plan</button>
+                   <button onclick="requestProPlan()">View plans &amp; request Pro</button>
                </div>`;
     }
 
     return `<div style="background:#fff; border:1px solid #ddd; border-radius:10px; padding:18px 20px; margin-top:20px;">
                 <p style="margin:0;color:#666;">Your current PoundTech commission</p>
+                <p style="margin:6px 0 0;font-size:13px;"><a href="/supplier-plans.html" style="color:#c00000;font-weight:700;text-decoration:none;">Compare Standard &amp; Pro plans →</a></p>
                 <h3 style="margin:6px 0 0;">${rate}%</h3>
                 ${banner}
                 ${proOffer}
