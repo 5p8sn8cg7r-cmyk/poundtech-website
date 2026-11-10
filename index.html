@@ -1940,6 +1940,24 @@ new MutationObserver(syncBadges).observe(document.querySelector(".header-actions
     
     let toastTimer;
 
+function ptAlert(message, title) {
+    const existing = document.getElementById("pt-alert-overlay");
+    if (existing) existing.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "pt-alert-overlay";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;font-family:Arial,Helvetica,sans-serif;";
+    const panel = document.createElement("div");
+    panel.style.cssText = "width:100%;max-width:420px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,.3);";
+    panel.innerHTML = '<div style="height:5px;background:#e00000;"></div><div style="padding:25px 24px 22px;"><div style="font-size:12px;font-weight:800;letter-spacing:1.5px;color:#e00000;margin-bottom:9px;">POUNDTECH</div><h2 style="font-size:21px;margin:0 0 10px;color:#111;">' +
+        esc(title || "Just a moment") + '</h2><p style="font-size:14px;line-height:1.55;color:#555;margin:0 0 22px;">' +
+        esc(message) + '</p><button type="button" id="pt-alert-close" style="width:100%;padding:13px;background:#111;color:#fff;border:0;border-radius:7px;font-weight:700;font-size:14px;cursor:pointer;">Got it</button></div>';
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    function close() { overlay.remove(); }
+    panel.querySelector("#pt-alert-close").addEventListener("click", close);
+    overlay.addEventListener("click", function(e) { if (e.target === overlay) close(); });
+}
+
 function showToast(message) {
     const toast = document.getElementById("toast");
     toast.textContent = message;
@@ -2060,7 +2078,7 @@ function selectGarageVehicle() {
 loadGarageVehicles();
     
  function searchProducts() {
-    alert("Search functionality will be connected soon!");
+    ptAlert("Product search is being improved and will be available shortly.", "Search coming soon");
 }
 
 
@@ -2157,6 +2175,12 @@ async function showCart() {
     renderCart();
 }
 
+function openCartProduct(productId) {
+    if (!productId) return;
+    try { sessionStorage.setItem("ptReturnToCart", "1"); } catch (e) {}
+    window.location.href = "product.html?id=" + encodeURIComponent(productId) + "&fromCart=1";
+}
+
 function renderCart() {
 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
@@ -2194,18 +2218,20 @@ function renderCart() {
 
                 ${
                     item.image_url
-                    ? '<img src="' + esc(item.image_url) + '" alt="' + esc(item.name) + '" style="width:85px;height:85px;object-fit:cover;border-radius:8px;flex-shrink:0;">'
-                    : '<div style="width:85px;height:85px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#777;flex-shrink:0;">No Image</div>'
+                    ? '<img onclick="openCartProduct(\'' + esc(item.product_id) + '\')" src="' + esc(item.image_url) + '" alt="' + esc(item.name) + '" style="width:85px;height:85px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;">'
+                    : '<div onclick="openCartProduct(\'' + esc(item.product_id) + '\')" style="width:85px;height:85px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#777;flex-shrink:0;cursor:pointer;">No Image</div>'
                 }
 
                 <div style="flex:1;">
 
-                    <h3 style="
+                    <h3 onclick="openCartProduct('${esc(item.product_id)}')" style="
                         margin:0 0 6px 0;
                         font-size:17px;
-                    ">
+                        cursor:pointer;
+                    " title="View product details">
                         ${esc(item.name)}
                     </h3>
+                    <button onclick="openCartProduct('${esc(item.product_id)}')" style="display:block;margin:-2px 0 10px;padding:0;border:0;background:none;color:#c00;font-size:12px;font-weight:700;cursor:pointer;">View product details →</button>
 
                     <p style="
                         margin:0 0 10px 0;
@@ -2488,7 +2514,7 @@ async function renderCheckout() {
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
     if (cart.length === 0) {
-        alert("Your cart is empty!");
+        ptAlert("Add a product to your cart before continuing.", "Your cart is empty");
         return;
     }
 
@@ -2665,7 +2691,7 @@ async function placeOrder() {
     let email = document.getElementById("customer-email").value.trim();
 
     if (name === "" || phone === "" || email === "") {
-        alert("Please complete all your details before placing the order.");
+        ptAlert("Please add your name, phone number and email address so the supplier can process your order.", "Your details are missing");
         return;
     }
 
@@ -2677,14 +2703,14 @@ async function placeOrder() {
     if (hasDelivery) {
         const addr = readDeliveryAddress();
         if (addr.error) {
-            alert(addr.error);
+            ptAlert(addr.error, "Delivery address needed");
             return;
         }
         address = addr.text;
     }
 
     if (cart.length === 0) {
-        alert("Your cart is empty!");
+        ptAlert("Add a product to your cart before placing your order.", "Your cart is empty");
         return;
     }
 
@@ -2719,7 +2745,11 @@ async function placeOrder() {
         console.error("PLACE ORDER ERROR:", error);
         checkoutToken = null;
         if (payButton) { payButton.disabled = false; payButton.innerText = "Pay Now"; }
-        alert("Order error: " + error.message);
+        const detail = String(error.message || "");
+        const friendly = /out of stock|unavailable/i.test(detail)
+            ? "One or more products are no longer available in the quantity selected. Your cart has been kept safe. Please review the item and try again."
+            : "We couldn't prepare your order just yet. Your cart has been kept safe. Please try again in a moment.";
+        ptAlert(friendly, "We couldn't place your order");
         return;
     }
 
@@ -2811,6 +2841,12 @@ function updateCartCount() {
 }
     
 updateCartCount();
+
+if (new URLSearchParams(window.location.search).get("openCart") === "1" ||
+    sessionStorage.getItem("ptReturnToCart") === "1") {
+    sessionStorage.removeItem("ptReturnToCart");
+    showCart();
+}
  
 // ================= PRODUCT LISTING =================
 // Category/group and vehicle filters work together.
@@ -3305,7 +3341,7 @@ searchStatus.innerHTML = `
 
     if (error) {
         console.error("SEARCH ERROR:", error);
-        alert("Unable to search products.");
+        ptAlert("We couldn't load those search results. Please try again.", "Search unavailable");
         return;
     }
 
