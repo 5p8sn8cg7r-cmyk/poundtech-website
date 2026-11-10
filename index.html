@@ -1571,6 +1571,13 @@ Already approved?
         <span>Yes, send me PoundTech discounts, special offers and product updates by email. Optional — unsubscribe at any time.</span>
     </label>
 
+    <h3 style="margin:0 0 12px;">Delivery Options</h3>
+    <p style="color:#666;font-size:14px;margin:0 0 14px;">Choose delivery or collection for each supplier. Delivery fees are shown before you pay.</p>
+    <div id="checkout-delivery-options" style="margin-bottom:22px;">
+        <p style="color:#777;">Loading delivery options...</p>
+    </div>
+
+    <div id="delivery-address-section">
     <label style="display:block; font-weight:bold; margin-bottom:6px;">Delivery Address</label>
 
     <div class="addr-grid">
@@ -1621,6 +1628,7 @@ Already approved?
             </select>
         </div>
 
+    </div>
     </div>
 
 </div>
@@ -2380,12 +2388,15 @@ function closeCart() {
 
 }
 
+let checkoutDeliveryOptions = [];
+let checkoutToken = null;
+
 async function checkout() {
     await refreshCartPrices();
-    renderCheckout();
+    await renderCheckout();
 }
 
-function renderCheckout() {
+async function renderCheckout() {
 
     let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
@@ -2394,35 +2405,92 @@ function renderCheckout() {
         return;
     }
 
-    let checkoutItems = document.getElementById("checkout-items");
-    let checkoutTotal = document.getElementById("checkout-total");
+    const deliveryBox = document.getElementById("checkout-delivery-options");
+    deliveryBox.innerHTML = '<p style="color:#777;">Loading delivery options...</p>';
 
+    const productIds = [...new Set(cart.map(item => item.product_id).filter(Boolean))];
+    const { data: deliveryOptions, error: deliveryError } = await supabaseClient.rpc("get_checkout_delivery_options", {
+        product_ids_input: productIds
+    });
+
+    if (deliveryError) {
+        console.error("CHECKOUT DELIVERY OPTIONS ERROR:", deliveryError);
+        deliveryBox.innerHTML = '<p style="color:#c00;">We could not load delivery options. Please refresh and try again.</p>';
+        return;
+    }
+
+    checkoutDeliveryOptions = deliveryOptions || [];
+
+    const missingSupplier = checkoutDeliveryOptions.length === 0 ||
+        productIds.some(id => !cart.some(item => item.product_id === id));
+    if (missingSupplier) {
+        deliveryBox.innerHTML = '<p style="color:#c00;">Delivery details could not be loaded for this cart. Please contact PoundTech.</p>';
+        return;
+    }
+
+    deliveryBox.innerHTML = checkoutDeliveryOptions.map(function(supplier) {
+        const fee = Number(supplier.delivery_fee || 0);
+        return `
+            <div style="border:1px solid #e2e2e2;border-radius:8px;padding:14px;margin-bottom:10px;">
+                <strong>${esc(supplier.business_name || "Supplier")}</strong>
+                <div style="margin-top:9px;">
+                    <label style="display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:normal;">
+                        <input type="radio" name="delivery-${supplier.supplier_id}" value="delivery" checked onchange="updateCheckoutTotals()">
+                        <span>Delivery — ${PT.money(fee)}</span>
+                    </label>
+                    ${supplier.collection_available ? `
+                    <label style="display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:normal;">
+                        <input type="radio" name="delivery-${supplier.supplier_id}" value="collection" onchange="updateCheckoutTotals()">
+                        <span>Collection — Free</span>
+                    </label>` : ""}
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    let checkoutItems = document.getElementById("checkout-items");
     checkoutItems.innerHTML = "";
 
-    let total = 0;
-
     cart.forEach(function(item) {
-
         let quantity = item.quantity || 1;
-        let itemTotal = item.price * quantity;
-
-        total += itemTotal;
-
+        let itemTotal = Number(item.price) * quantity;
         checkoutItems.innerHTML += `
-            <div style="
-                padding:12px 0;
-                border-bottom:1px solid #ddd;
-            ">
+            <div style="padding:12px 0;border-bottom:1px solid #ddd;">
                 <strong>${esc(item.name)}</strong>
                 <p>${PT.money(item.price)} × ${quantity} = ${PT.money(itemTotal)}</p>
             </div>
         `;
     });
 
-    checkoutTotal.innerText = "Total: " + PT.money(total);
-
+    updateCheckoutTotals();
     document.getElementById("cart-panel").style.display = "none";
     document.getElementById("checkout-panel").style.display = "block";
+}
+
+function getCheckoutDeliveryChoices() {
+    return checkoutDeliveryOptions.map(function(supplier) {
+        const selected = document.querySelector('input[name="delivery-' + supplier.supplier_id + '"]:checked');
+        return {
+            supplier_id: supplier.supplier_id,
+            method: selected ? selected.value : "delivery"
+        };
+    });
+}
+
+function updateCheckoutTotals() {
+    const cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+    const subtotal = cart.reduce((sum, item) => sum + Number(item.price) * (item.quantity || 1), 0);
+    const choices = getCheckoutDeliveryChoices();
+    const deliveryTotal = choices.reduce(function(sum, choice) {
+        if (choice.method !== "delivery") return sum;
+        const supplier = checkoutDeliveryOptions.find(item => item.supplier_id === choice.supplier_id);
+        return sum + Number(supplier ? supplier.delivery_fee : 0);
+    }, 0);
+    const hasDelivery = choices.some(choice => choice.method === "delivery");
+    document.getElementById("delivery-address-section").style.display = hasDelivery ? "block" : "none";
+    document.getElementById("checkout-total").innerText =
+        "Subtotal: " + PT.money(subtotal) + " | Delivery: " + PT.money(deliveryTotal) +
+        " | Total: " + PT.money(subtotal + deliveryTotal);
 }
  
 function removeFromCart(index) {
@@ -2514,23 +2582,38 @@ async function placeOrder() {
         return;
     }
 
-    const addr = readDeliveryAddress();
+    const cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
+    const deliveryChoices = getCheckoutDeliveryChoices();
+    const hasDelivery = deliveryChoices.some(choice => choice.method === "delivery");
 
-    if (addr.error) {
-        alert(addr.error);
-        return;
+    let address = "Collection";
+    if (hasDelivery) {
+        const addr = readDeliveryAddress();
+        if (addr.error) {
+            alert(addr.error);
+            return;
+        }
+        address = addr.text;
     }
-
-    let address = addr.text;
-
-    let cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
 
     if (cart.length === 0) {
         alert("Your cart is empty!");
         return;
     }
 
-    const { data: result, error } = await supabaseClient.rpc("place_order", {
+    if (!checkoutToken) {
+        checkoutToken = (window.crypto && window.crypto.randomUUID)
+            ? window.crypto.randomUUID()
+            : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+    }
+
+    const payButton = document.querySelector('#checkout-panel button[onclick="placeOrder()"]');
+    if (payButton) { payButton.disabled = true; payButton.innerText = "Preparing order..."; }
+
+    const { data: result, error } = await supabaseClient.rpc("place_order_with_delivery", {
         customer_name_input: name,
         phone_input: phone,
         email_input: email,
@@ -2540,11 +2623,15 @@ async function placeOrder() {
                 product_id: item.product_id,
                 quantity: item.quantity || 1
             };
-        })
+        }),
+        delivery_choices_input: deliveryChoices,
+        checkout_token_input: checkoutToken
     });
 
     if (error) {
         console.error("PLACE ORDER ERROR:", error);
+        checkoutToken = null;
+        if (payButton) { payButton.disabled = false; payButton.innerText = "Pay Now"; }
         alert("Order error: " + error.message);
         return;
     }
