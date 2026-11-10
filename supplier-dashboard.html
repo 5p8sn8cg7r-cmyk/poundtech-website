@@ -1141,11 +1141,7 @@ async function addProductInner() {
            </div>`
         : "";
 
-    productsContainer.innerHTML = probationNote +
-        '<div class="od-tabs" style="margin:14px 0;">' +
-            '<button type="button" class="od-tab ' + (SUP_PRODUCT_VIEW === "active" ? "on" : "") + '" onclick="setSupplierProductView(\'active\')">Active listings</button>' +
-            '<button type="button" class="od-tab ' + (SUP_PRODUCT_VIEW === "archived" ? "on" : "") + '" onclick="setSupplierProductView(\'archived\')">Archived products</button>' +
-        '</div>' + visibleProducts.map(product => `
+    productsContainer.innerHTML = probationNote + visibleProducts.map(product => `
         <div style="
             border:1px solid #ddd;
             padding:15px;
