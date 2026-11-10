@@ -1127,7 +1127,7 @@ async function addProductInner() {
     }
 
     const visibleProducts = products.filter(product =>
-        SUP_PRODUCT_VIEW === "archived" ? product.status === "Archived" : product.status !== "Archived"
+        SUP_PRODUCT_VIEW === "archived" ? product.status !== "Active" : product.status === "Active"
     );
 
     await loadSellerStatus();
@@ -1196,7 +1196,7 @@ async function addProductInner() {
                     <strong>Stock:</strong>
                     ${esc(product.stock)}
                     ${Number(product.stock) <= 0 ? '<span class="od-pill amber">Out of stock — customers cannot buy</span>' : '<span class="od-pill green">In stock</span>'}
-                    ${product.status === "Archived" ? '<span class="od-pill dark">Archived — hidden from customers</span>' : ''}
+                    ${product.status !== "Active" ? '<span class="od-pill dark">Archived — hidden from customers</span>' : ''}
                 </p>
 
                 <div class="row-actions">
@@ -1213,7 +1213,7 @@ async function addProductInner() {
                         Edit Product
                     </button>
 
-${product.status === "Archived"
+${product.status !== "Active"
                         ? `<button onclick="restoreProduct('${esc(product.id)}')" style="background:#16803c;">Restore listing</button>`
                         : `<button onclick="updateProductStock('${esc(product.id)}')" style="background:#555;">Update stock</button>
                            <button onclick="archiveProduct('${esc(product.id)}')" style="background:#555;">Archive product</button>`
