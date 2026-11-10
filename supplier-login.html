@@ -88,6 +88,14 @@ function showMessage(text, type) {
 // Links this login to the supplier's approved application, then routes them.
 async function routeAfterLogin() {
 
+    // Existing team members already belong to a supplier; route them before
+    // the legacy owner-account claiming flow runs.
+    const { data: teamSupplierId, error: teamAccessError } = await supabaseClient.rpc("get_my_supplier_id");
+    if (!teamAccessError && teamSupplierId) {
+        window.location.href = "supplier-dashboard.html";
+        return true;
+    }
+
     const { data: result, error } = await supabaseClient.rpc("claim_supplier_account");
 
     if (error) {
