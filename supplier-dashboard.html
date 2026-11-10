@@ -115,6 +115,14 @@ button:hover {
 @media(max-width:640px){.supplier-nav{position:sticky;top:0;z-index:50}.supplier-nav button{flex:1 1 calc(50% - 8px)}}
 
 /* PoundTech branded product dialogs and form controls */
+#add-product-form>input:not([type=file]),#add-product-form>select,#add-product-form>textarea,
+#add-product-form .pt-inline-special input,#add-product-form .pt-inline-special select{border:1px solid #d6d6d6;border-radius:10px;box-sizing:border-box;font:inherit;font-size:15px;background:#fff;min-height:46px;padding:12px 13px;max-width:100%}
+#add-product-form>input:focus,#add-product-form>select:focus,#add-product-form>textarea:focus,
+#add-product-form .pt-inline-special input:focus,#add-product-form .pt-inline-special select:focus{outline:none;border-color:#d00000;box-shadow:0 0 0 3px rgba(208,0,0,.1)}
+#add-product-form>textarea{min-height:105px}
+#add-product-form .pt-inline-special{border:1px solid #f0d5d5!important;border-left:4px solid #d00000!important;background:#fffafa!important;border-radius:12px!important;padding:16px!important}
+#photos-dialog{width:min(500px,calc(100vw - 32px));padding:0}
+
 .pt-dialog{width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 36px);overflow:auto;border:1px solid #e5e5e5;border-radius:18px;padding:0;box-shadow:0 22px 70px rgba(0,0,0,.28);color:#171717}
 .pt-dialog::backdrop{background:rgba(10,10,10,.62);backdrop-filter:blur(3px)}
 .pt-dialog-head{padding:22px 24px 16px;border-bottom:1px solid #eee;background:linear-gradient(135deg,#fff 0%,#fafafa 100%)}
@@ -370,23 +378,17 @@ Add Product
     style="display:none;"
 >
 
-<dialog id="photos-dialog" style="border:none; border-radius:12px; padding:22px; width:min(460px, 94vw);">
-
-    <h3 id="photos-title" style="margin-top:0;">Photos</h3>
-
-    <p style="color:#666; font-size:13px; margin-top:0;">
-        Up to 3 photos. The main photo shows on product cards; customers swipe to see the rest.
-    </p>
-
-    <div id="photos-list"></div>
-
-    <p id="photos-message" style="color:#555; min-height:20px; margin:10px 0;"></p>
-
-    <div class="row-actions" style="margin-top:0;">
-        <button type="button" id="photos-add">Add photo</button>
-        <button type="button" id="photos-close" style="background:#555;">Done</button>
+<dialog id="photos-dialog" class="pt-dialog">
+    <div class="pt-dialog-head"><p class="pt-dialog-kicker">PoundTech · Product photos</p><h3 id="photos-title">Manage photos</h3></div>
+    <div class="pt-dialog-body">
+        <p style="color:#666;font-size:13px;line-height:1.5;margin:0 0 14px;">Add up to 3 photos. The main photo appears on product cards; customers can swipe to see the others.</p>
+        <div id="photos-list"></div>
+        <p id="photos-message" role="status" style="color:#555;min-height:20px;margin:10px 0 0;font-size:13px;"></p>
     </div>
-
+    <div class="pt-dialog-foot">
+        <button type="button" id="photos-close" class="pt-btn-muted">Done</button>
+        <button type="button" id="photos-add">Add photo</button>
+    </div>
 </dialog>
 
 <div id="supplier-products" style="margin-top:20px;">
@@ -443,9 +445,9 @@ Add Product
         style="display:block; margin-bottom:10px; padding:10px; width:100%;"
     >
 
-    <div style="border:1px dashed #ccc; border-radius:8px; padding:12px; margin-bottom:14px;">
+    <div class="pt-inline-special">
 
-        <strong>Special offer (optional)</strong>
+        <strong style="display:block;margin-bottom:5px;">Special offer <span style="font-weight:400;color:#777;">(optional)</span></strong>
 
         <p style="color:#777; font-size:13px; margin:4px 0 10px;">
             Show a markdown on the product card. Customers see the normal price crossed out.
