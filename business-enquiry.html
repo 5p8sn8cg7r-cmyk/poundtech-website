@@ -189,7 +189,7 @@ form.addEventListener("submit", async function(event) {
     if (!response.ok || !result.ok) throw new Error(result.error || "We couldn't submit your enquiry. Please try again.");
     form.reset();
     document.getElementById("vat-number-wrap").hidden = true;
-    showMessage("Thank you — your enquiry has been received. Your reference is " + result.reference + ". We've sent an acknowledgement to your email address.", "success");
+    showMessage(result.emails_sent ? ("Thank you — your enquiry has been received. Your reference is " + result.reference + ". We have sent an acknowledgement to your email address.") : ("Thank you — your enquiry has been received. Your reference is " + result.reference + ". Our team will follow up. You can also email info@poundtech.co.za."), "success");
   } catch (error) {
     showMessage(error.message || "Something went wrong. Please email info@poundtech.co.za.", "error");
   } finally {
