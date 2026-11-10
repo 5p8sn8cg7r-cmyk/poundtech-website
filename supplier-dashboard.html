@@ -1141,12 +1141,12 @@ async function addProductInner() {
            </div>`
         : "";
 
-    productsContainer.innerHTML = probationNote + `
-        <div class="od-tabs" style="margin:14px 0;">
-            <button type="button" class="od-tab ${SUP_PRODUCT_VIEW === "active" ? "on" : ""}" onclick="setSupplierProductView('active')">Active listings</button>
-            <button type="button" class="od-tab ${SUP_PRODUCT_VIEW === "archived" ? "on" : ""}" onclick="setSupplierProductView('archived')">Archived products</button>
-        </div>
-        ${visibleProducts.length ? visibleProducts.map(product => `
+    productsContainer.innerHTML = probationNote +
+        '<div class="od-tabs" style="margin:14px 0;">' +
+            '<button type="button" class="od-tab ' + (SUP_PRODUCT_VIEW === "active" ? "on" : "") + '" onclick="setSupplierProductView(\'active\')">Active listings</button>' +
+            '<button type="button" class="od-tab ' + (SUP_PRODUCT_VIEW === "archived" ? "on" : "") + '" onclick="setSupplierProductView(\'archived\')">Archived products</button>' +
+        '</div>' +
+        (visibleProducts.length ? visibleProducts.map(product => `
         <div style="
             border:1px solid #ddd;
             padding:15px;
@@ -1228,7 +1228,7 @@ ${product.status !== "Active"
         </div>
     `).join("") : (SUP_PRODUCT_VIEW === "archived"
         ? "<p>You have no archived products. Archive a listing when you no longer want customers to see it.</p>"
-        : "<p>You have no active listings. Add a product or restore one from Archived products.</p>") + ""}`;
+        : "<p>You have no active listings. Add a product or restore one from Archived products.</p>");
     loadSupplierProducts();
     
 /* ---------- SPECIALS ---------- */
