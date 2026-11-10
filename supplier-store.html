@@ -872,9 +872,16 @@ function renderSupplierProducts() {
                         <h3>${PT.esc(product.name)}</h3>
                         ${fitLabel}
                         <div class="price">${PT.money(product.price)}</div>
+                        ${Number(product.stock) <= 0
+                            ? '<p style="margin:0 0 10px;color:#a00;font-size:12px;font-weight:700;">Out of stock</p>'
+                            : Number(product.stock) <= 5
+                                ? '<p style="margin:0 0 10px;color:#8a5a00;font-size:12px;font-weight:700;">Only ' + Number(product.stock) + ' left</p>'
+                                : ''}
                         <div class="product-actions">
                             <button class="view-btn" onclick="event.stopPropagation();window.location.href='product.html?id=${encodeURIComponent(product.id)}'">View details</button>
-                            <button class="cart-btn" onclick="event.stopPropagation();addSupplierProductToCart(${JSON.stringify(String(product.id))},${JSON.stringify(String(product.supplier_id))},${JSON.stringify(String(product.name || ""))},${Number(product.price)||0},${JSON.stringify(String(product.image_url || ""))})">Add to cart</button>
+${Number(product.stock) > 0
+                                ? `<button class="cart-btn" onclick="event.stopPropagation();addSupplierProductToCart(${JSON.stringify(String(product.id))},${JSON.stringify(String(product.supplier_id))},${JSON.stringify(String(product.name || ""))},${Number(product.price)||0},${JSON.stringify(String(product.image_url || ""))})">Add to cart</button>`
+                                : '<button class="cart-btn" type="button" disabled style="background:#777;cursor:not-allowed;">Out of stock</button>'}
                         </div>
                     </div>
                 </article>
