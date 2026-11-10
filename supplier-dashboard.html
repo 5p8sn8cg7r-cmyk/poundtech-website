@@ -92,6 +92,27 @@ button:hover {
     font-weight: bold;
 }
 
+
+/* Supplier portal navigation and learning centre */
+.supplier-nav{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 20px;padding:8px;background:#fff;border:1px solid #e5e5e5;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.supplier-nav button{flex:1 1 130px;background:transparent;color:#333;border:1px solid transparent;border-radius:9px;padding:12px 14px;font-size:14px}
+.supplier-nav button:hover{background:#f5f5f5;color:#111}
+.supplier-nav button.active{background:#111;color:#fff;border-color:#111}
+.supplier-panel{display:none}
+.supplier-panel.active{display:block}
+.supplier-guide{background:#fff;border:1px solid #e4e4e4;border-radius:12px;padding:18px;margin-bottom:14px}
+.supplier-guide h3{margin:0 0 8px}
+.supplier-guide p{color:#555;line-height:1.55}
+.supplier-step{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-top:1px solid #eee}
+.supplier-step:first-of-type{border-top:0}
+.supplier-step .step-no{flex:0 0 28px;height:28px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-weight:bold}
+.supplier-step strong{display:block;margin-bottom:3px}
+.supplier-step span{color:#666;font-size:14px;line-height:1.45}
+.supplier-flow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:14px 0}
+.supplier-flow span{background:#f1f1f1;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700}
+.supplier-flow b{color:#999}
+.supplier-help-note{border-left:4px solid #e00000;background:#fff5f5;padding:12px 14px;border-radius:7px;font-size:14px;line-height:1.5}
+@media(max-width:640px){.supplier-nav{position:sticky;top:0;z-index:50}.supplier-nav button{flex:1 1 calc(50% - 8px)}}
 </style>
 
 <style>
@@ -154,6 +175,15 @@ Logout
 
 <div class="container">
 
+    <nav class="supplier-nav" aria-label="Supplier dashboard sections">
+        <button type="button" class="active" data-supplier-tab="supplier-overview" onclick="showSupplierSection('supplier-overview', this)">Overview</button>
+        <button type="button" data-supplier-tab="supplier-orders-panel" onclick="showSupplierSection('supplier-orders-panel', this)">Orders</button>
+        <button type="button" data-supplier-tab="supplier-products-panel" onclick="showSupplierSection('supplier-products-panel', this)">Products</button>
+        <button type="button" data-supplier-tab="supplier-earnings-panel" onclick="showSupplierSection('supplier-earnings-panel', this)">Payments &amp; Earnings</button>
+        <button type="button" data-supplier-tab="supplier-help-panel" onclick="showSupplierSection('supplier-help-panel', this)">Help &amp; Guides</button>
+    </nav>
+
+    <section class="supplier-panel" id="supplier-earnings-panel">
     <div class="card">
 
 <h2>Earnings</h2>
@@ -188,7 +218,9 @@ Logout
 </div>
         
 </div>
+</section>
 
+<section class="supplier-panel active" id="supplier-overview">
 <div class="card">
 
 <h2>Supplier Dashboard</h2>
@@ -208,8 +240,9 @@ Checking...
 </p>
 
 </div>
+</section>
 
-
+<section class="supplier-panel" id="supplier-products-panel">
 <div class="card">
 
 <h2>Products</h2>
@@ -434,20 +467,47 @@ Add Product
     <p id="product-message"></p>
 
 </div>
+</section>
 
-</div>
+<section class="supplier-panel" id="supplier-help-panel">
+    <div class="card">
+        <h2>Supplier Help Centre</h2>
+        <p style="color:#666;line-height:1.5;">Everything you need to run your PoundTech store. Start here whenever you are unsure what to do next.</p>
 
+        <div class="supplier-guide">
+            <h3>Your first-day checklist</h3>
+            <div class="supplier-step"><div class="step-no">1</div><div><strong>Check your supplier details</strong><span>Make sure your business information and contact details are correct.</span></div></div>
+            <div class="supplier-step"><div class="step-no">2</div><div><strong>Add your products</strong><span>Upload clear photos, accurate descriptions, prices and available stock.</span></div></div>
+            <div class="supplier-step"><div class="step-no">3</div><div><strong>Review every new order</strong><span>Open Orders regularly. New paid orders appear under the New tab and need your attention.</span></div></div>
+            <div class="supplier-step"><div class="step-no">4</div><div><strong>Keep order statuses up to date</strong><span>Move each order through the stages below so customers know what is happening.</span></div></div>
+            <div class="supplier-step"><div class="step-no">5</div><div><strong>Check your earnings and payouts</strong><span>Use Payments &amp; Earnings to see sales, PoundTech commission, amounts due and payout history.</span></div></div>
+        </div>
 
-<div class="card">
+        <div class="supplier-guide">
+            <h3>How to process an order</h3>
+            <p>Open the Orders tab, select an order to see its details, then use the Status dropdown to record each stage.</p>
+            <div class="supplier-flow" aria-label="Order status workflow">
+                <span>Pending</span><b>→</b><span>Accepted</span><b>→</b><span>Processing</span><b>→</b><span>Shipped</span><b>→</b><span>Completed</span>
+            </div>
+            <div class="supplier-step"><div class="step-no">1</div><div><strong>Pending — Accept the order</strong><span>A customer has paid. Check the items and quantities, confirm you can fulfil the order, then change the status to Accepted.</span></div></div>
+            <div class="supplier-step"><div class="step-no">2</div><div><strong>Accepted — You have confirmed it</strong><span>The order is yours to fulfil. Move it to Processing when you start preparing or packing it.</span></div></div>
+            <div class="supplier-step"><div class="step-no">3</div><div><strong>Processing — Prepare the order</strong><span>Pick the correct products, check the quantities and get the parcel ready for collection or delivery.</span></div></div>
+            <div class="supplier-step"><div class="step-no">4</div><div><strong>Shipped — It has left your hands</strong><span>Only mark an order as Shipped once it has been handed to the courier or dispatched to the customer.</span></div></div>
+            <div class="supplier-step"><div class="step-no">5</div><div><strong>Completed — The order has been fulfilled</strong><span>Mark it Completed once the customer has received the order or the agreed fulfilment is finished. Completion makes the order eligible for the payout process; any new-supplier payout hold still applies.</span></div></div>
+            <div class="supplier-help-note"><strong>Important:</strong> Do not mark an order Completed just because you have packed it or handed it to a courier. Keep the status accurate so customers and PoundTech can follow the order correctly.</div>
+        </div>
 
-<h2>Orders</h2>
-
-<p>
-Your supplier orders will appear here.
-</p>
-
-</div>
-
+        <div class="supplier-guide">
+            <h3>Quick tips</h3>
+            <ul style="padding-left:20px;color:#555;line-height:1.7;">
+                <li>Check the New orders count whenever you sign in.</li>
+                <li>Work through older outstanding orders first.</li>
+                <li>Keep product stock accurate so you do not sell items you cannot supply.</li>
+                <li>Check Payments &amp; Earnings for payout timing and any new-supplier hold information.</li>
+            </ul>
+        </div>
+    </div>
+</section>
 
 </div>
 
@@ -1627,11 +1687,8 @@ async function deleteProduct(productId) {
 
 </script>
 
-<div style="
-    max-width:900px;
-    margin:40px auto;
-    padding:0 20px;
-">
+<section class="supplier-panel" id="supplier-orders-panel" style="max-width:1000px;margin:0 auto;padding:0 20px;">
+<div class="card">
     <h2>Orders</h2>
 
     <p style="color:#666;">
@@ -1641,6 +1698,8 @@ async function deleteProduct(productId) {
     <div id="supplier-orders">
         Loading orders...
     </div>
+</div>
+</section>
     <script>
 
 async function loadSupplierOrders() {
@@ -2172,6 +2231,25 @@ async function updateSupplierOrderStatus(orderId, newStatus) {
 showOrderToast(newStatus === "Completed" ? "Marked completed. PoundTech will schedule your payout." : "Status updated to " + newStatus);
 
 loadSupplierOrders();
+}
+
+function showSupplierSection(sectionId, button) {
+    document.querySelectorAll(".supplier-panel").forEach(function(panel) {
+        panel.classList.toggle("active", panel.id === sectionId);
+    });
+    document.querySelectorAll(".supplier-nav button").forEach(function(tab) {
+        const selected = tab === button;
+        tab.classList.toggle("active", selected);
+        tab.setAttribute("aria-current", selected ? "page" : "false");
+    });
+    if (sectionId === "supplier-orders-panel") { loadSupplierOrders(); }
+    if (sectionId === "supplier-products-panel") { loadSupplierProducts(); }
+    if (sectionId === "supplier-earnings-panel") {
+        loadSupplierEarnings();
+        loadSupplierPayouts();
+        loadPlanBox();
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
         
 </script>
