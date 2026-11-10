@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accept PoundTech Team Invitation</title>
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;font-family:Arial,sans-serif;color:#171717}
+header{background:#111;color:#fff;padding:20px 24px;font-weight:900;letter-spacing:.04em}
+header span{color:#e00000}.wrap{max-width:480px;margin:54px auto;padding:0 18px}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:18px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.06)}
+h1{font-size:25px;margin:0 0 8px}.muted{color:#666;line-height:1.55}
+label{display:block;font-size:13px;font-weight:700;margin:17px 0 7px}
+input{width:100%;padding:13px;border:1px solid #ccc;border-radius:10px;font:inherit;min-height:46px}
+input:focus{outline:none;border-color:#d00000;box-shadow:0 0 0 3px #d0000018}
+button{width:100%;border:0;border-radius:10px;background:#d00000;color:#fff;font-weight:700;padding:14px;margin-top:20px;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}
+#message{margin-top:16px;font-size:14px;line-height:1.5;color:#555}
+#message.error{color:#b00020}#message.success{color:#16723a}
+</style>
+</head>
+<body>
+<header>POUND<span>TECH</span></header>
+<main class="wrap"><section class="card">
+<h1>Join your PoundTech team</h1>
+<p class="muted">Set a password for your individual staff login. Your business owner has invited you to access their PoundTech supplier account.</p>
+<div id="message" role="status">Checking your invitation…</div>
+<form id="accept-form" style="display:none">
+<label for="password">Create password</label>
+<input id="password" type="password" minlength="8" autocomplete="new-password" required placeholder="At least 8 characters">
+<label for="confirm-password">Confirm password</label>
+<input id="confirm-password" type="password" minlength="8" autocomplete="new-password" required placeholder="Enter it again">
+<button id="accept-button" type="submit">Activate my account</button>
+</form>
+</section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient=supabase.createClient(
+ "https://uezacbssvvvtlosnaroh.supabase.co",
+ "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
+);
+const message=document.getElementById("message");
+const form=document.getElementById("accept-form");
+function showMessage(text,type){message.textContent=text;message.className=type||"";}
+(async function(){
+ const {data,error}=await supabaseClient.auth.getSession();
+ if(error||!data.session){
+   showMessage("This invitation link is invalid or has expired. Ask your business owner to send a new invitation.","error");
+   return;
+ }
+ showMessage("Invitation verified. Create your password to activate your staff account.");
+ form.style.display="block";
+})();
+form.addEventListener("submit",async function(event){
+ event.preventDefault();
+ const password=document.getElementById("password").value;
+ const confirm=document.getElementById("confirm-password").value;
+ if(password.length<8){showMessage("Use at least 8 characters for your password.","error");return;}
+ if(password!==confirm){showMessage("The passwords do not match.","error");return;}
+ const button=document.getElementById("accept-button");
+ button.disabled=true;showMessage("Activating your account…");
+ const {error:passwordError}=await supabaseClient.auth.updateUser({password});
+ if(passwordError){button.disabled=false;showMessage("We couldn't set your password: "+passwordError.message,"error");return;}
+ const {data:accepted,error:acceptError}=await supabaseClient.rpc("accept_supplier_team_invite");
+ if(acceptError||!accepted){button.disabled=false;showMessage("Your password was saved, but the team invitation could not be activated. Please contact your business owner.","error");return;}
+ showMessage("Your PoundTech staff account is active. Taking you to the dashboard…","success");
+ window.location.href="supplier-dashboard.html";
+});
+</script>
+</body>
+</html>
