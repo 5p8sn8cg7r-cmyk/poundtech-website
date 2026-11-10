@@ -1033,6 +1033,8 @@ async function addProductInner() {
 }
 
     var SELLER_STATUS = null;
+    var SUP_PRODUCT_VIEW = "active";
+    function setSupplierProductView(view) { SUP_PRODUCT_VIEW = view === "archived" ? "archived" : "active"; loadSupplierProducts(); }
 
     async function loadSellerStatus() {
         try {
@@ -1124,6 +1126,10 @@ async function addProductInner() {
         return;
     }
 
+    const visibleProducts = products.filter(product =>
+        SUP_PRODUCT_VIEW === "archived" ? product.status === "Archived" : product.status !== "Archived"
+    );
+
     await loadSellerStatus();
 
     const probationNote = (SELLER_STATUS && !SELLER_STATUS.graduated)
@@ -1135,7 +1141,12 @@ async function addProductInner() {
            </div>`
         : "";
 
-    productsContainer.innerHTML = probationNote + products.map(product => `
+    productsContainer.innerHTML = probationNote + `
+        <div class="od-tabs" style="margin:14px 0;">
+            <button type="button" class="od-tab ${SUP_PRODUCT_VIEW === "active" ? "on" : ""}" onclick="setSupplierProductView('active')">Active listings</button>
+            <button type="button" class="od-tab ${SUP_PRODUCT_VIEW === "archived" ? "on" : ""}" onclick="setSupplierProductView('archived')">Archived products</button>
+        </div>
+        ${visibleProducts.length ? visibleProducts.map(product => `
         <div style="
             border:1px solid #ddd;
             padding:15px;
@@ -1184,6 +1195,8 @@ async function addProductInner() {
                 <p>
                     <strong>Stock:</strong>
                     ${esc(product.stock)}
+                    ${Number(product.stock) <= 0 ? '<span class="od-pill amber">Out of stock — customers cannot buy</span>' : '<span class="od-pill green">In stock</span>'}
+                    ${product.status === "Archived" ? '<span class="od-pill dark">Archived — hidden from customers</span>' : ''}
                 </p>
 
                 <div class="row-actions">
@@ -1200,9 +1213,11 @@ async function addProductInner() {
                         Edit Product
                     </button>
 
-                    <button onclick="deleteProduct('${esc(product.id)}')" style="background:#555;">
-                        Delete Product
-                    </button>
+${product.status === "Archived"
+                        ? `<button onclick="restoreProduct('${esc(product.id)}')" style="background:#16803c;">Restore listing</button>`
+                        : `<button onclick="updateProductStock('${esc(product.id)}')" style="background:#555;">Update stock</button>
+                           <button onclick="archiveProduct('${esc(product.id)}')" style="background:#555;">Archive product</button>`
+                    }
 
                     ${sponsorButton(product)}
 
@@ -1211,7 +1226,9 @@ async function addProductInner() {
             </div>
 
         </div>
-    `).join("");
+    `).join("") : (SUP_PRODUCT_VIEW === "archived"
+        ? "<p>You have no archived products. Archive a listing when you no longer want customers to see it.</p>"
+        : "<p>You have no active listings. Add a product or restore one from Archived products.</p>") + "";
 }
     loadSupplierProducts();
     
@@ -1655,6 +1672,38 @@ async function editProduct(productId) {
     loadSupplierProducts();
 }
    
+async function updateProductStock(productId) {
+    const { data: product, error: loadError } = await supabaseClient.from("products").select("stock").eq("id", productId).maybeSingle();
+    if (loadError || !product) { alert("Unable to load this product."); return; }
+    const value = prompt("Enter the available stock quantity. Enter 0 to mark this product out of stock:", product.stock);
+    if (value === null) return;
+    const stock = Number(value);
+    if (!Number.isInteger(stock) || stock < 0) { alert("Please enter a whole number of 0 or more."); return; }
+    const { error } = await supabaseClient.from("products").update({ stock }).eq("id", productId);
+    if (error) { console.error(error); alert("Unable to update stock."); return; }
+    alert(stock === 0 ? "Marked out of stock. The listing stays visible, but customers cannot purchase it." : "Stock updated successfully.");
+    loadSupplierProducts();
+}
+
+async function archiveProduct(productId) {
+    if (!confirm("Archive this product? It will disappear from the marketplace and your public storefront. Existing orders, reviews and payment records will remain untouched. You can restore it later.")) return;
+    const { error } = await supabaseClient.from("products").update({
+        status: "Archived", is_promoted: false, sponsored: false,
+        promotion_expires_at: null, sponsored_until: null, sponsored_requested_at: null
+    }).eq("id", productId);
+    if (error) { console.error(error); alert("Unable to archive this product."); return; }
+    alert("Product archived. It is now hidden from customers and can be restored from Archived products.");
+    loadSupplierProducts();
+}
+
+async function restoreProduct(productId) {
+    if (!confirm("Restore this product to your public storefront and the PoundTech marketplace? Check its price and stock before restoring.")) return;
+    const { error } = await supabaseClient.from("products").update({ status: "Active" }).eq("id", productId);
+    if (error) { console.error(error); alert("Unable to restore this product."); return; }
+    alert("Product restored. It is visible to customers again.");
+    loadSupplierProducts();
+}
+
 async function deleteProduct(productId) {
 
     const confirmed = confirm(
