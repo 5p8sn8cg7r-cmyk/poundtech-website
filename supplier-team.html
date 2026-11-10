@@ -136,9 +136,9 @@ async function confirmRemoveMember(){
  if(!pendingRemoveId)return;
  const id=pendingRemoveId,button=$("confirm-remove-button");
  button.disabled=true;button.textContent="Removing…";
- const {error}=await supabaseClient.from("supplier_team_members").update({status:"suspended",updated_at:new Date().toISOString()}).eq("id",id);
+ const {data:removed,error}=await supabaseClient.rpc("remove_supplier_team_member",{p_member_id:id});
  button.disabled=false;button.textContent="Remove access";
- if(error){closeRemoveDialog();message("Couldn't remove access: "+error.message,"error");return;}
+ if(error||!removed){closeRemoveDialog();message("Couldn't remove access: "+(error?.message||"Please refresh and try again."),"error");return;}
  closeRemoveDialog();message("Employee access removed.","success");await loadTeam();
 }
 loadTeam();
