@@ -134,8 +134,11 @@
     PT.sale = function (product) {
         var price = Number(product.price) || 0;
         var sp = product.sale_price == null ? null : Number(product.sale_price);
+        var starts = product.sale_starts_at ? new Date(product.sale_starts_at) : null;
         var ends = product.sale_ends_at ? new Date(product.sale_ends_at) : null;
-        var live = !ends || isNaN(ends.getTime()) || ends.getTime() > Date.now();
+        var started = !starts || isNaN(starts.getTime()) || starts.getTime() <= Date.now();
+        var notEnded = !ends || isNaN(ends.getTime()) || ends.getTime() > Date.now();
+        var live = started && notEnded;
         var priced = live && sp != null && isFinite(sp) && sp > 0 && sp < price;
         var pct = priced ? Math.round((price - sp) / price * 100) : 0;
         return {
