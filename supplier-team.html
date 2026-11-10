@@ -37,6 +37,7 @@ dialog::backdrop{background:rgba(0,0,0,.58);backdrop-filter:blur(2px)}
 <main class="wrap">
 <section class="card">
 <h1>Manage your team</h1>
+<p class="muted" id="business-name">Loading business…</p>
 <p class="muted">Invite employees to use their own secure login. You remain in control of who can access your business.</p>
 <div class="stats">
  <div class="stat"><strong id="seat-usage">—</strong><span>Staff seats in use (including you)</span></div>
@@ -97,6 +98,7 @@ async function loadTeam(){
  if(supplierError){message("Couldn't load your subscription details: "+supplierError.message,"error");return;}
  const pro=supplier.plan==="pro"&&supplier.plan_ends_at&&new Date(supplier.plan_ends_at)>new Date();
  seatLimit=pro?3:1;
+ $("business-name").textContent=supplier.business_name||"Your supplier business";
  $("plan-name").textContent=pro?"Pro":"Starter";
  $("seat-limit").textContent=String(seatLimit);
  const {data:members,error:memberError}=await supabaseClient.from("supplier_team_members").select("id,email,full_name,role,status,invited_at,joined_at").eq("supplier_id",supplierId).in("status",["active","invited"]).order("created_at",{ascending:true});
