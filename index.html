@@ -2105,6 +2105,12 @@ function addCart(product_id, supplier_id, name, price, image_url) {
     document.getElementById("cart-count").innerText =
         totalItems;
 
+    // Keep an already-open cart in sync when products are added from the shop.
+    const cartPanel = document.getElementById("cart-panel");
+    if (cartPanel && cartPanel.style.display !== "none") {
+        renderCart();
+    }
+
    showToast(name + " added to cart");
 }
 
