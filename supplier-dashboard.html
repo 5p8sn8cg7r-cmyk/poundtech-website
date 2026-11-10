@@ -1613,15 +1613,21 @@ document.getElementById("photos-list").addEventListener("click", function (e) {
 
     } else if (act === "remove") {
 
-        if (!confirm("Remove this photo?")) { return; }
-
-        runPhotoAction(async function (msg) {
-            const old = photoList[i];
-            const next = photoList.filter(function (u, k) { return k !== i; });
-            if (await savePhotoList(next)) {
-                await removeStoredImage(old);
-                msg.textContent = "Photo removed.";
-            }
+        openProductActionDialog({
+            title: "Remove this photo?",
+            message: "This photo will be removed from the product listing. The other product photos will remain.",
+            confirmText: "Remove photo",
+            danger: true
+        }).then(function (confirmed) {
+            if (!confirmed) return;
+            runPhotoAction(async function (msg) {
+                const old = photoList[i];
+                const next = photoList.filter(function (u, k) { return k !== i; });
+                if (await savePhotoList(next)) {
+                    await removeStoredImage(old);
+                    msg.textContent = "Photo removed.";
+                }
+            });
         });
     }
 });
@@ -1649,7 +1655,6 @@ async function editProduct(productId) {
 }
 
 document.getElementById("edit-product-cancel").addEventListener("click", () => document.getElementById("product-edit-dialog").close());
-document.getElementById("product-edit-dialog").addEventListener("cancel", event => event.preventDefault());
 document.getElementById("edit-product-save").addEventListener("click", async () => {
     if (!editingProductId) return;
     const name = document.getElementById("edit-product-name").value.trim();
