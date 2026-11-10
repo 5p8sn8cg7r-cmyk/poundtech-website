@@ -99,7 +99,7 @@ async function loadTeam(){
  seatLimit=pro?3:1;
  $("plan-name").textContent=pro?"Pro":"Starter";
  $("seat-limit").textContent=String(seatLimit);
- const {data:members,error:memberError}=await supabaseClient.from("supplier_team_members").select("id,email,full_name,role,status,invited_at,joined_at").eq("supplier_id",supplierId).order("created_at",{ascending:true});
+ const {data:members,error:memberError}=await supabaseClient.from("supplier_team_members").select("id,email,full_name,role,status,invited_at,joined_at").eq("supplier_id",supplierId).in("status",["active","invited"]).order("created_at",{ascending:true});
  if(memberError){$("team-list").textContent="Couldn't load team members: "+memberError.message;return;}
  memberRows=members||[];
  const used=1+memberRows.filter(m=>m.status==="active"||m.status==="invited").length;
@@ -136,7 +136,7 @@ async function confirmRemoveMember(){
  if(!pendingRemoveId)return;
  const id=pendingRemoveId,button=$("confirm-remove-button");
  button.disabled=true;button.textContent="Removing…";
- const {error}=await supabaseClient.from("supplier_team_members").delete().eq("id",id);
+ const {error}=await supabaseClient.from("supplier_team_members").update({status:"suspended",updated_at:new Date().toISOString()}).eq("id",id);
  button.disabled=false;button.textContent="Remove access";
  if(error){closeRemoveDialog();message("Couldn't remove access: "+error.message,"error");return;}
  closeRemoveDialog();message("Employee access removed.","success");await loadTeam();
