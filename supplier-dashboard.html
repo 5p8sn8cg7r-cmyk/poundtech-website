@@ -2231,16 +2231,18 @@ async function requestProPlan() {
 
 async function loadPlanBox() {
 
-    if (window.POUNDTECH_SUPPLIER_ROLE !== "owner") {
-        const planBox = document.getElementById("supplier-plan-box");
-        if (planBox) planBox.style.display = "none";
+    const { data: role } = await supabaseClient.rpc("get_my_supplier_role");
+    window.POUNDTECH_SUPPLIER_ROLE = role || "sales";
+
+    const box = document.getElementById("plan-box");
+    if (role !== "owner") {
+        if (box) box.style.display = "none";
         return;
     }
 
     await loadSellerStatus();
 
-    const box = document.getElementById("plan-box");
-    if (box) { box.innerHTML = planBoxHTML(SELLER_STATUS); }
+    if (box) { box.style.display = ""; box.innerHTML = planBoxHTML(SELLER_STATUS); }
 }
 
 async function loadSupplierEarnings() {
