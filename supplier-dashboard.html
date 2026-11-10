@@ -318,7 +318,7 @@ Checking...
 Manage your products and stock below.
 </p>
 
-<button onclick="showAddProductForm()">
+<button id="add-product-toggle" onclick="showAddProductForm()">
 Add Product
 </button>
     
@@ -941,9 +941,9 @@ const visibleTabs = roleTabs[supplierRole] || roleTabs.custom;
 document.querySelectorAll("[data-supplier-tab]").forEach(function(tab) {
     tab.style.display = visibleTabs.includes(tab.getAttribute("data-supplier-tab")) ? "" : "none";
 });
-const canManageProducts = ["owner","admin","inventory"].includes(supplierRole);
+window.POUNDTECH_CAN_MANAGE_PRODUCTS = ["owner","admin","inventory"].includes(supplierRole);
 const addProductToggle = document.getElementById("add-product-toggle");
-if (addProductToggle && !canManageProducts) addProductToggle.style.display = "none";
+if (addProductToggle && !window.POUNDTECH_CAN_MANAGE_PRODUCTS) addProductToggle.style.display = "none";
 
     
 if (supplierError) {
@@ -1184,6 +1184,7 @@ async function addProductInner() {
     }
 
     function sponsorButton(product) {
+        if (window.POUNDTECH_SUPPLIER_ROLE !== "owner") return "";
         const until = product.sponsored_until ? new Date(product.sponsored_until) : null;
         const isSponsored = product.sponsored && until && until > new Date();
         if (isSponsored || product.sponsored_requested_at) { return ""; }
@@ -1293,6 +1294,9 @@ async function loadSupplierProducts() {
             <button type="button" onclick="showSupplierProductView('archived')" style="${supplierProductView === "archived" ? "background:#d00000;" : "background:#555;"}">Archived Products (${archivedProducts.length})</button>
         </div>
         <div>${shownProducts.length ? shownProducts.map(renderSupplierProductCard).join("") : supplierProductView === "archived" ? "<p>You have no archived products.</p>" : "<p>You have no active products yet.</p>"}</div>`;
+    if (!window.POUNDTECH_CAN_MANAGE_PRODUCTS) {
+        productsContainer.querySelectorAll(".row-actions").forEach(function(actions) { actions.style.display = "none"; });
+    }
 }
 
 function showSupplierProductView(view) {
@@ -2226,6 +2230,12 @@ async function requestProPlan() {
 }
 
 async function loadPlanBox() {
+
+    if (window.POUNDTECH_SUPPLIER_ROLE !== "owner") {
+        const planBox = document.getElementById("supplier-plan-box");
+        if (planBox) planBox.style.display = "none";
+        return;
+    }
 
     await loadSellerStatus();
 
