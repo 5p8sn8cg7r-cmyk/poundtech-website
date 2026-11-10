@@ -922,16 +922,29 @@ if (!supplierId) {
     return;
 }
 
-const { data: supplier, error: supplierError } = await supabaseClient
-    .from("suppliers")
-    .select("*")
-    .eq("id", supplierId)
-    .single();
+const { data: supplier, error: supplierError } = await supabaseClient.rpc("get_my_supplier_dashboard_profile");
 
 const { data: supplierRole } = await supabaseClient.rpc("get_my_supplier_role");
 window.POUNDTECH_SUPPLIER_ROLE = supplierRole || "sales";
 const teamTab = document.getElementById("supplier-team-tab");
 if (teamTab) teamTab.style.display = supplierRole === "owner" ? "" : "none";
+
+const roleTabs = {
+    owner: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-help-panel"],
+    admin: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-help-panel"],
+    sales: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-help-panel"],
+    inventory: ["supplier-overview","supplier-products-panel","supplier-help-panel"],
+    finance: ["supplier-overview","supplier-earnings-panel","supplier-help-panel"],
+    custom: ["supplier-overview","supplier-help-panel"]
+};
+const visibleTabs = roleTabs[supplierRole] || roleTabs.custom;
+document.querySelectorAll("[data-supplier-tab]").forEach(function(tab) {
+    tab.style.display = visibleTabs.includes(tab.getAttribute("data-supplier-tab")) ? "" : "none";
+});
+const canManageProducts = ["owner","admin","inventory"].includes(supplierRole);
+const addProductToggle = document.getElementById("add-product-toggle");
+if (addProductToggle && !canManageProducts) addProductToggle.style.display = "none";
+
     
 if (supplierError) {
 
