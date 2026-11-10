@@ -225,6 +225,14 @@ Logout
 
 <h2>Supplier Dashboard</h2>
 
+<p style="color:#666;line-height:1.5;">Welcome to your supplier workspace. Use the tabs above to manage orders, products and payments. If you are new to PoundTech, the Help &amp; Guides tab walks you through everything step by step.</p>
+
+<div class="row-actions" style="margin:14px 0 18px;">
+    <button type="button" onclick="showSupplierSection('supplier-orders-panel', document.querySelector('[data-supplier-tab=supplier-orders-panel]'))">View orders</button>
+    <button type="button" onclick="showSupplierSection('supplier-products-panel', document.querySelector('[data-supplier-tab=supplier-products-panel]'))" style="background:#333;">Manage products</button>
+    <button type="button" onclick="showSupplierSection('supplier-help-panel', document.querySelector('[data-supplier-tab=supplier-help-panel]'))" style="background:#555;">How it works</button>
+</div>
+
 <p id="welcome">
 Loading supplier information...
 </p>
@@ -1691,9 +1699,10 @@ async function deleteProduct(productId) {
 <div class="card">
     <h2>Orders</h2>
 
-    <p style="color:#666;">
-        Orders containing your products will appear here.
+    <p style="color:#666;line-height:1.5;">
+        Orders containing your products will appear here. Open an order to review the customer details and update its progress.
     </p>
+    <div class="supplier-help-note" style="margin:14px 0 18px;"><strong>Order status reminder:</strong> Pending → Accepted → Processing → Shipped → Completed. Only mark an order Completed after it has been delivered or the agreed fulfilment is finished. See Help &amp; Guides for the full explanation.</div>
 
     <div id="supplier-orders">
         Loading orders...
