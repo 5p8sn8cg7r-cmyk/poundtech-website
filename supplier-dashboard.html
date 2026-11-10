@@ -330,6 +330,18 @@ Add Product
     </div>
 </dialog>
 
+<dialog id="product-edit-dialog" class="pt-dialog">
+    <div class="pt-dialog-head"><p class="pt-dialog-kicker">PoundTech · Product details</p><h3>Edit product</h3></div>
+    <div class="pt-dialog-body">
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-name">Product name</label><input id="edit-product-name" class="pt-field" maxlength="120" required></div>
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-price">Selling price (R)</label><input id="edit-product-price" class="pt-field" type="number" min="0.01" step="0.01" inputmode="decimal" required><p class="pt-field-help">Your normal price must remain higher than any active special price.</p></div>
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-stock">Available stock</label><input id="edit-product-stock" class="pt-field" type="number" min="0" step="1" inputmode="numeric" required><p class="pt-field-help">Enter 0 if temporarily out of stock. The listing stays visible but cannot be purchased.</p></div>
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-description">Description</label><textarea id="edit-product-description" class="pt-field" rows="4" style="resize:vertical;"></textarea></div>
+        <div class="pt-field-group" style="margin-bottom:4px;"><label class="pt-field-label" for="edit-product-compatibility">Vehicle compatibility</label><input id="edit-product-compatibility" class="pt-field" placeholder="e.g. VW Polo 2018–2022"><p class="pt-field-help">Add compatible makes, models and years, or leave blank if universal.</p></div>
+        <p id="edit-product-error" role="alert" style="color:#b80000;font-size:13px;min-height:18px;margin:12px 0 0;"></p>
+    </div>
+    <div class="pt-dialog-foot"><button type="button" id="edit-product-cancel" class="pt-btn-muted">Cancel</button><button type="button" id="edit-product-save">Save changes</button></div>
+</dialog>
 <dialog id="product-action-dialog" class="pt-dialog">
     <div class="pt-dialog-head">
         <p class="pt-dialog-kicker">PoundTech · Product management</p>
@@ -1616,70 +1628,65 @@ document.getElementById("photos-close").addEventListener("click", function () {
     document.getElementById("photos-dialog").close();
 });
 
+let editingProductId = null;
+
 async function editProduct(productId) {
-
-    const { data: product, error } =
-        await supabaseClient
-        .from("products")
-        .select("*")
-        .eq("id", productId)
-        .single();
-
+    const { data: product, error } = await supabaseClient.from("products").select("*").eq("id", productId).single();
     if (error || !product) {
-        alert("Unable to load product.");
+        showSupplierToast("Unable to load this product. Please try again.", "error");
         return;
     }
-
-    const newName = prompt("Product name:", product.name);
-    if (newName === null) return;
-
-    const newPrice = prompt("Price (R):", product.price);
-    if (newPrice === null) return;
-
-    const newStock = prompt("Stock quantity:", product.stock);
-    if (newStock === null) return;
-
-    const newDescription = prompt(
-        "Description:",
-        product.description || ""
-    );
-    if (newDescription === null) return;
-
-    const newCompatibility = prompt(
-        "Vehicle compatibility:",
-        product.vehicle_compatibility || ""
-    );
-    if (newCompatibility === null) return;
-
-    const { error: updateError } =
-        await supabaseClient
-        .from("products")
-        .update({
-            name: newName,
-            price: Number(newPrice),
-            stock: Number(newStock),
-            description: newDescription,
-            vehicle_compatibility: newCompatibility
-        })
-        .eq("id", productId);
-
-    if (updateError) {
-        console.error(updateError);
-        alert(
-            /sale_price|products_sale/i.test(updateError.message || "")
-            ? "The normal price must stay higher than the special price. Edit or remove the special first."
-            : /New seller/i.test(updateError.message || "")
-            ? updateError.message
-            : "Unable to update product."
-        );
-        return;
-    }
-
-    alert("Product updated successfully!");
-
-    loadSupplierProducts();
+    editingProductId = productId;
+    document.getElementById("edit-product-name").value = product.name || "";
+    document.getElementById("edit-product-price").value = product.price == null ? "" : product.price;
+    document.getElementById("edit-product-stock").value = product.stock == null ? 0 : product.stock;
+    document.getElementById("edit-product-description").value = product.description || "";
+    document.getElementById("edit-product-compatibility").value = product.vehicle_compatibility || "";
+    document.getElementById("edit-product-error").textContent = "";
+    document.getElementById("product-edit-dialog").showModal();
 }
+
+document.getElementById("edit-product-cancel").addEventListener("click", () => document.getElementById("product-edit-dialog").close());
+document.getElementById("product-edit-dialog").addEventListener("cancel", event => event.preventDefault());
+document.getElementById("edit-product-save").addEventListener("click", async () => {
+    if (!editingProductId) return;
+    const name = document.getElementById("edit-product-name").value.trim();
+    const priceText = document.getElementById("edit-product-price").value.trim();
+    const stockText = document.getElementById("edit-product-stock").value.trim();
+    const price = Number(priceText);
+    const stock = Number(stockText);
+    const errorBox = document.getElementById("edit-product-error");
+    if (!name) { errorBox.textContent = "Please enter a product name."; return; }
+    if (!priceText || !Number.isFinite(price) || price <= 0) { errorBox.textContent = "Enter a selling price greater than R0."; return; }
+    if (!stockText || !Number.isInteger(stock) || stock < 0) { errorBox.textContent = "Enter a whole stock quantity of 0 or more."; return; }
+
+    const saveButton = document.getElementById("edit-product-save");
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+    const { error } = await supabaseClient.from("products").update({
+        name,
+        price,
+        stock,
+        description: document.getElementById("edit-product-description").value.trim(),
+        vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim()
+    }).eq("id", editingProductId);
+    saveButton.disabled = false;
+    saveButton.textContent = "Save changes";
+
+    if (error) {
+        console.error(error);
+        errorBox.textContent = /sale_price|products_sale/i.test(error.message || "")
+            ? "The normal price must be higher than the special price. Edit or remove the special offer first."
+            : /New seller/i.test(error.message || "") ? error.message : "Unable to update this product. Please check the details and try again.";
+        return;
+    }
+    document.getElementById("product-edit-dialog").close();
+    editingProductId = null;
+    showSupplierToast("Product details updated successfully.", "success");
+    loadSupplierProducts();
+});
    
+
 let productActionResolver = null;
 let productActionMode = null;
 
@@ -1797,40 +1804,26 @@ async function restoreProduct(productId) {
 }
 
 async function deleteProduct(productId) {
+    const ok = await openProductActionDialog({
+        title: "Delete this product?",
+        message: "This permanently removes the product listing and its product photos. Existing order, review and payment records are not intentionally deleted. If you only want to hide the listing, use Archive instead.",
+        confirmText: "Delete product",
+        danger: true
+    });
+    if (!ok) return;
 
-    const confirmed = confirm(
-        "Are you sure you want to delete this product?"
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
-    const { data: existing } = await supabaseClient
-        .from("products")
-        .select("image_url, extra_images")
-        .eq("id", productId)
-        .maybeSingle();
-
-    const { error } = await supabaseClient
-        .from("products")
-        .delete()
-        .eq("id", productId);
-
+    const { data: existing } = await supabaseClient.from("products")
+        .select("image_url, extra_images").eq("id", productId).maybeSingle();
+    const { error } = await supabaseClient.from("products").delete().eq("id", productId);
     if (error) {
         console.error(error);
-        alert("Unable to delete product.");
+        showSupplierToast("Unable to delete this product. Please try again.", "error");
         return;
     }
-
     if (existing) {
-        for (const url of productPhotoList(existing)) {
-            await removeStoredImage(url);
-        }
+        for (const url of productPhotoList(existing)) await removeStoredImage(url);
     }
-
-    alert("Product deleted successfully!");
-
+    showSupplierToast("Product deleted.", "success");
     loadSupplierProducts();
 }
 
