@@ -23,6 +23,13 @@ button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#eee;color:#
 .member:first-of-type{border-top:0}.member-main{min-width:0}.member-main strong{display:block;overflow-wrap:anywhere}.member-meta{font-size:12px;color:#777;margin-top:4px}
 .pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#eee;font-size:11px;font-weight:700;text-transform:capitalize}
 @media(max-width:620px){.grid{grid-template-columns:1fr}.card{padding:18px}.wrap{margin:18px auto}.member button{width:100%}}
+dialog{border:0;border-radius:16px;padding:0;width:min(420px,calc(100vw - 30px));box-shadow:0 20px 60px rgba(0,0,0,.25);color:#171717}
+dialog::backdrop{background:rgba(0,0,0,.58);backdrop-filter:blur(2px)}
+.modal-head{padding:20px 22px 14px;border-bottom:1px solid #eee}
+.modal-head small{color:#d00000;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.modal-body{padding:18px 22px;color:#555;line-height:1.5}
+.modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:0 22px 20px}
+
 </style>
 </head>
 <body>
@@ -63,6 +70,11 @@ button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#eee;color:#
 <div id="team-list" class="muted">Loading team members…</div>
 </section>
 </main>
+<dialog id="remove-dialog">
+ <div class="modal-head"><small>PoundTech · Team access</small><h2 style="margin:7px 0 0">Remove employee?</h2></div>
+ <div class="modal-body" id="remove-copy">This employee will lose access to your business dashboard.</div>
+ <div class="modal-foot"><button type="button" class="secondary" onclick="closeRemoveDialog()">Cancel</button><button type="button" class="danger" id="confirm-remove-button" onclick="confirmRemoveMember()">Remove access</button></div>
+</dialog>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient=supabase.createClient(
@@ -112,12 +124,22 @@ $("invite-form").addEventListener("submit",async e=>{
  message(data.message||"Invitation sent.","success");
  $("invite-form").reset();await loadTeam();
 });
-async function removeMember(id){
+let pendingRemoveId=null;
+function removeMember(id){
  const member=memberRows.find(m=>m.id===id);if(!member)return;
- if(!confirm("Remove "+(member.full_name||member.email)+" from your PoundTech team?"))return;
+ pendingRemoveId=id;
+ $("remove-copy").textContent=(member.full_name||member.email)+" will lose access to your PoundTech business dashboard. Their account and historical activity will remain intact.";
+ $("remove-dialog").showModal();
+}
+function closeRemoveDialog(){pendingRemoveId=null;$("remove-dialog").close();}
+async function confirmRemoveMember(){
+ if(!pendingRemoveId)return;
+ const id=pendingRemoveId,button=$("confirm-remove-button");
+ button.disabled=true;button.textContent="Removing…";
  const {error}=await supabaseClient.from("supplier_team_members").delete().eq("id",id);
- if(error){message("Couldn't remove access: "+error.message,"error");return;}
- message("Employee access removed.","success");await loadTeam();
+ button.disabled=false;button.textContent="Remove access";
+ if(error){closeRemoveDialog();message("Couldn't remove access: "+error.message,"error");return;}
+ closeRemoveDialog();message("Employee access removed.","success");await loadTeam();
 }
 loadTeam();
 </script>
