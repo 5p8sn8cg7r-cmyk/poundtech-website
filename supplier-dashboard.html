@@ -1126,10 +1126,6 @@ async function addProductInner() {
         return;
     }
 
-    const visibleProducts = products.filter(product =>
-        SUP_PRODUCT_VIEW === "archived" ? product.status !== "Active" : product.status === "Active"
-    );
-
     await loadSellerStatus();
 
     const probationNote = (SELLER_STATUS && !SELLER_STATUS.graduated)
@@ -1141,7 +1137,7 @@ async function addProductInner() {
            </div>`
         : "";
 
-    productsContainer.innerHTML = probationNote + visibleProducts.map(product => `
+    productsContainer.innerHTML = probationNote + products.map(product => `
         <div style="
             border:1px solid #ddd;
             padding:15px;
@@ -1190,8 +1186,6 @@ async function addProductInner() {
                 <p>
                     <strong>Stock:</strong>
                     ${esc(product.stock)}
-                    ${Number(product.stock) <= 0 ? '<span class="od-pill amber">Out of stock — customers cannot buy</span>' : '<span class="od-pill green">In stock</span>'}
-                    ${product.status !== "Active" ? '<span class="od-pill dark">Archived — hidden from customers</span>' : ''}
                 </p>
 
                 <div class="row-actions">
@@ -1208,11 +1202,9 @@ async function addProductInner() {
                         Edit Product
                     </button>
 
-${product.status !== "Active"
-                        ? `<button onclick="restoreProduct('${esc(product.id)}')" style="background:#16803c;">Restore listing</button>`
-                        : `<button onclick="updateProductStock('${esc(product.id)}')" style="background:#555;">Update stock</button>
-                           <button onclick="archiveProduct('${esc(product.id)}')" style="background:#555;">Archive product</button>`
-                    }
+                    <button onclick="deleteProduct('${esc(product.id)}')" style="background:#555;">
+                        Delete Product
+                    </button>
 
                     ${sponsorButton(product)}
 
@@ -1222,8 +1214,10 @@ ${product.status !== "Active"
 
         </div>
     `).join("");
+}
     loadSupplierProducts();
     
+
 /* ---------- SPECIALS ---------- */
 
 // Turns what the supplier typed into values for the database, or an error message.
