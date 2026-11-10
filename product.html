@@ -578,6 +578,14 @@ const esc = PT.esc;
 let currentProduct = null;
 let selectedQuantity = 1;
 
+const productPageParams = new URLSearchParams(window.location.search);
+if (productPageParams.get("fromCart") === "1") {
+    const backToCart = document.querySelector(".site-header .back");
+    if (backToCart) {
+        backToCart.href = "/index.html?openCart=1";
+        backToCart.textContent = "← Back to your cart";
+    }
+}
 
 function money(value) { return PT.money(value); }
 
