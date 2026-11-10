@@ -341,6 +341,11 @@ Add Product
             <p class="pt-field-help">Enter a price lower than the normal selling price.</p>
         </div>
         <div class="pt-field-group">
+            <label class="pt-field-label" for="special-starts">Offer start date <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <input class="pt-field" type="date" id="special-starts">
+            <p class="pt-field-help">Leave blank to start immediately. Choose a future date to schedule the promotion.</p>
+        </div>
+        <div class="pt-field-group">
             <label class="pt-field-label" for="special-ends">Offer end date <span style="font-weight:400;color:#888;">(optional)</span></label>
             <input class="pt-field" type="date" id="special-ends">
             <p class="pt-field-help">The offer remains active until the end of the selected day.</p>
@@ -507,6 +512,10 @@ Add Product
             min="0"
             style="display:block; margin-bottom:10px; padding:10px; width:100%;"
         >
+
+        <label for="product-sale-starts" style="display:block; font-size:13px; margin-bottom:4px;">
+            Special starts on (optional)</label>
+        <input type="date" id="product-sale-starts" style="display:block; margin-bottom:10px; padding:10px; width:100%;">
 
         <label for="product-sale-ends" style="display:block; font-size:13px; margin-bottom:4px;">
             Special ends on (optional)
@@ -1036,6 +1045,7 @@ async function addProductInner() {
 
     const special = readSpecial(
         document.getElementById("product-sale-price").value,
+        document.getElementById("product-sale-starts").value,
         document.getElementById("product-sale-ends").value,
         document.getElementById("product-sale-label").value,
         price
@@ -1106,6 +1116,7 @@ async function addProductInner() {
             extra_images: uploadedUrls.slice(1),
             vehicle_compatibility: vehicle_compatibility,
             sale_price: special.sale_price,
+            sale_starts_at: special.sale_starts_at,
             sale_ends_at: special.sale_ends_at,
             sale_label: special.sale_label,
             status: "Active"
@@ -1130,6 +1141,7 @@ async function addProductInner() {
     document.getElementById("product-price").value = "";
     document.getElementById("product-stock").value = "";
     document.getElementById("product-sale-price").value = "";
+    document.getElementById("product-sale-starts").value = "";
     document.getElementById("product-sale-ends").value = "";
     document.getElementById("product-sale-label").value = "";
     document.querySelectorAll(".new-photo").forEach(function (input) { input.value = ""; });
@@ -1285,49 +1297,25 @@ function showSupplierProductView(view) {
 /* ---------- SPECIALS ---------- */
 
 // Turns what the supplier typed into values for the database, or an error message.
-function readSpecial(priceText, endsText, label, normalPrice) {
-
-    const none = { sale_price: null, sale_ends_at: null, sale_label: label ? label : null, error: null };
-
-    if (String(priceText).trim() === "") {
-
-        if (endsText) {
-            return { error: "Enter a special price, or clear the end date." };
-        }
-
-        return none;
+function readSpecial(priceText, startsText, endsText, label, normalPrice) {
+    const hasPrice = String(priceText).trim() !== "";
+    if (!hasPrice && !label && (startsText || endsText)) return { error:"Choose a promotional tag or enter a special price before setting dates." };
+    if (!hasPrice && !label) return { sale_price:null, sale_starts_at:null, sale_ends_at:null, sale_label:null, error:null };
+    let salePrice = null;
+    if (hasPrice) {
+        salePrice = Number(priceText);
+        const normal = Number(normalPrice);
+        if (!isFinite(salePrice) || salePrice <= 0) return { error:"The special price must be more than R0." };
+        if (isFinite(normal) && salePrice >= normal) return { error:"The special price must be lower than the normal selling price (" + PT.money(normal) + ")." };
     }
-
-    const salePrice = Number(priceText);
-    const normal = Number(normalPrice);
-
-    if (!isFinite(salePrice) || salePrice <= 0) {
-        return { error: "The special price must be more than R0." };
-    }
-
-    if (isFinite(normal) && salePrice >= normal) {
-        return { error: "The special price must be lower than the normal price (" + PT.money(normal) + ")." };
-    }
-
-    let endsAt = null;
-
-    if (endsText) {
-        // The special runs to the end of that day, South African time.
-        const d = new Date(endsText + "T23:59:59+02:00");
-
-        if (isNaN(d.getTime())) { return { error: "That end date is not valid." }; }
-
-        if (d.getTime() <= Date.now()) { return { error: "The end date must be today or later." }; }
-
-        endsAt = d.toISOString();
-    }
-
-    return {
-        sale_price: Math.round(salePrice * 100) / 100,
-        sale_ends_at: endsAt,
-        sale_label: label ? label : null,
-        error: null
-    };
+    const today = new Date(Date.now() + 2 * 3600000).toISOString().slice(0,10);
+    if (startsText && startsText < today) return { error:"The start date must be today or later." };
+    if (endsText && endsText < today) return { error:"The end date must be today or later." };
+    if (startsText && endsText && endsText < startsText) return { error:"The end date must be on or after the start date." };
+    const startsAt = startsText ? new Date(startsText + "T00:00:00+02:00") : null;
+    const endsAt = endsText ? new Date(endsText + "T23:59:59+02:00") : null;
+    if ((startsAt && isNaN(startsAt.getTime())) || (endsAt && isNaN(endsAt.getTime()))) return { error:"Please choose valid promotion dates." };
+    return { sale_price:hasPrice ? Math.round(salePrice*100)/100 : null, sale_starts_at:startsAt ? startsAt.toISOString() : null, sale_ends_at:endsAt ? endsAt.toISOString() : null, sale_label:label || null, error:null };
 }
 
 function dateInputFromIso(iso) {
@@ -1402,10 +1390,13 @@ async function openSpecial(productId) {
     document.getElementById("special-product-name").textContent = product.name;
     document.getElementById("special-normal").textContent = "Normal selling price: " + PT.money(product.price);
     document.getElementById("special-price").value = product.sale_price == null ? "" : product.sale_price;
+    document.getElementById("special-starts").value = dateInputFromIso(product.sale_starts_at);
     document.getElementById("special-ends").value = dateInputFromIso(product.sale_ends_at);
     document.getElementById("special-label").value = product.sale_label || "";
     document.getElementById("special-message").textContent = "";
-    document.getElementById("special-ends").min = new Date().toISOString().slice(0, 10);
+    const todaySA = new Date(Date.now() + 2 * 3600000).toISOString().slice(0, 10);
+    document.getElementById("special-starts").min = todaySA;
+    document.getElementById("special-ends").min = todaySA;
     document.getElementById("special-remove").style.display =
         product.sale_price == null && !product.sale_label ? "none" : "";
     updateSpecialPreview();
@@ -1421,10 +1412,11 @@ async function saveSpecial(remove) {
     let values;
 
     if (remove) {
-        values = { sale_price: null, sale_ends_at: null, sale_label: null, error: null };
+        values = { sale_price: null, sale_starts_at: null, sale_ends_at: null, sale_label: null, error: null };
     } else {
         values = readSpecial(
             document.getElementById("special-price").value,
+            document.getElementById("special-starts").value,
             document.getElementById("special-ends").value,
             document.getElementById("special-label").value,
             specialProduct.price
@@ -1442,6 +1434,7 @@ async function saveSpecial(remove) {
         .from("products")
         .update({
             sale_price: values.sale_price,
+            sale_starts_at: values.sale_starts_at,
             sale_ends_at: values.sale_ends_at,
             sale_label: values.sale_label
         })
