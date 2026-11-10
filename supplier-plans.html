@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Plans & Pricing | PoundTech</title>
+<meta name="description" content="Compare PoundTech supplier plans. Start free with Standard or unlock more tools and a lower commission with Pro.">
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=10">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png?v=10">
+<style>
+:root{--pt-red:#d60000;--pt-black:#101010;--pt-gold:#c49a45}
+body{background:#f5f5f6;color:#171717}
+.plans-wrap{max-width:1120px;margin:0 auto;padding:46px 22px 72px}
+.plans-intro{text-align:center;max-width:720px;margin:0 auto 34px}
+.plans-kicker{color:var(--pt-red);font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.plans-intro h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:12px 0}
+.plans-intro p{color:#666;font-size:16px;line-height:1.65;margin:0}
+.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:stretch}
+.plan-card{background:#fff;border:1px solid #e3e3e3;border-radius:18px;padding:28px;box-shadow:0 8px 28px rgba(0,0,0,.045);display:flex;flex-direction:column;position:relative}
+.plan-card.pro{border:2px solid var(--pt-gold);box-shadow:0 14px 38px rgba(130,95,25,.13)}
+.plan-tag{display:inline-flex;align-self:flex-start;border-radius:999px;padding:6px 11px;background:#f0f0f0;color:#333;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.pro .plan-tag{background:#f8efd9;color:#78551a}
+.plan-card h2{font-size:25px;margin:18px 0 5px}
+.plan-desc{color:#666;line-height:1.5;min-height:48px;margin:0}
+.price{font-size:42px;font-weight:850;letter-spacing:-1.5px;margin:20px 0 3px}
+.price small{font-size:14px;font-weight:500;letter-spacing:0;color:#777}
+.commission{border-top:1px solid #eee;border-bottom:1px solid #eee;padding:15px 0;margin:16px 0 18px}
+.commission strong{font-size:27px}
+.commission span{display:block;color:#777;font-size:13px;margin-top:3px}
+.features{list-style:none;padding:0;margin:0 0 24px;display:grid;gap:13px}
+.features li{display:flex;gap:10px;align-items:flex-start;color:#444;font-size:14px;line-height:1.45}
+.tick{color:#18834b;font-weight:900;font-size:16px;line-height:1.2}
+.plan-action{display:block;text-align:center;text-decoration:none;background:#171717;color:#fff;padding:14px 18px;border-radius:10px;font-weight:800;margin-top:auto}
+.plan-action:hover{background:#333}
+.pro .plan-action{background:var(--pt-red)}
+.pro .plan-action:hover{background:#b90000}
+.plan-note{text-align:center;color:#777;font-size:12px;line-height:1.6;margin:22px auto 0;max-width:760px}
+.faq{max-width:850px;margin:50px auto 0}
+.faq h2{text-align:center;font-size:24px}
+.faq-item{background:#fff;border:1px solid #e7e7e7;border-radius:12px;padding:17px 19px;margin:10px 0}
+.faq-item strong{display:block;margin-bottom:5px}
+.faq-item p{margin:0;color:#666;line-height:1.55;font-size:14px}
+@media(max-width:720px){.plans-wrap{padding:32px 15px 50px}.plan-grid{grid-template-columns:1fr}.plan-card{padding:23px}.plan-desc{min-height:0}}
+</style>
+</head>
+<body>
+<header class="site-header">
+<a class="logo" href="/index.html">POUND<span>TECH</span></a>
+<a class="back" href="/index.html">&larr; Back to marketplace</a>
+</header>
+<main class="plans-wrap">
+<section class="plans-intro">
+<div class="plans-kicker">Built for automotive businesses</div>
+<h1>Choose the plan that moves your business forward.</h1>
+<p>Start selling on South Africa's automotive marketplace for free. Upgrade when you want more control, more team access and a lower commission.</p>
+</section>
+<section class="plan-grid" aria-label="Supplier plan comparison">
+<article class="plan-card">
+<span class="plan-tag">Get started</span>
+<h2>Standard</h2>
+<p class="plan-desc">Everything you need to start listing products and managing orders on PoundTech.</p>
+<div class="price">Free</div>
+<div class="commission"><strong>10.5%</strong><span>Commission per completed product sale</span></div>
+<ul class="features">
+<li><span class="tick">✓</span><span>One supplier login</span></li>
+<li><span class="tick">✓</span><span>List products on the PoundTech marketplace</span></li>
+<li><span class="tick">✓</span><span>Manage stock, orders and customer purchases</span></li>
+<li><span class="tick">✓</span><span>Supplier profile and store page</span></li>
+<li><span class="tick">✓</span><span>View sales, commissions and payout information</span></li>
+<li><span class="tick">✓</span><span>Access to the core supplier dashboard</span></li>
+</ul>
+<a class="plan-action" href="/supplier-login.html">Continue with Standard</a>
+</article>
+<article class="plan-card pro">
+<span class="plan-tag">More tools. More control.</span>
+<h2>Pro</h2>
+<p class="plan-desc">For growing suppliers who want to scale their catalogue, team and sales operations.</p>
+<div class="price">R299<small> / month</small></div>
+<div class="commission"><strong>8.5%</strong><span>Reduced commission per completed product sale</span></div>
+<ul class="features">
+<li><span class="tick">✓</span><span>Everything included in Standard</span></li>
+<li><span class="tick">✓</span><span>Up to 3 named user accounts, including the owner</span></li>
+<li><span class="tick">✓</span><span>Unlimited active product listings</span></li>
+<li><span class="tick">✓</span><span>New listings go live instantly without the standard listing review</span></li>
+<li><span class="tick">✓</span><span>Enhanced product media options, including additional photos and video</span></li>
+<li><span class="tick">✓</span><span>Enhanced supplier profile and Pro badge</span></li>
+<li><span class="tick">✓</span><span>Enhanced sales analytics and priority support</span></li>
+<li><span class="tick">✓</span><span>No probationary payout holds</span></li>
+</ul>
+<a class="plan-action" href="/supplier-login.html">Log in to upgrade to Pro</a>
+</article>
+</section>
+<p class="plan-note">Commission is calculated on eligible product sales. Payment processing fees, delivery charges, refunds and other applicable marketplace terms are handled separately. Pro is billed monthly. Your subscription and Pro benefits are subject to successful payment and the applicable supplier terms.</p>
+<section class="faq">
+<h2>Plan questions</h2>
+<div class="faq-item"><strong>Can I start on Standard and upgrade later?</strong><p>Yes. You can begin with the free Standard plan and move to Pro when your business needs the additional tools and lower commission.</p></div>
+<div class="faq-item"><strong>Does Pro change how customers shop?</strong><p>No. Your products remain available through the same PoundTech marketplace. Pro adds supplier-side tools and benefits.</p></div>
+<div class="faq-item"><strong>How many people can use a Pro supplier account?</strong><p>Pro supports up to three named users in total: the business owner and two team members.</p></div>
+</section>
+</main>
+</body>
+</html>
