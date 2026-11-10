@@ -113,6 +113,31 @@ button:hover {
 .supplier-flow b{color:#999}
 .supplier-help-note{border-left:4px solid #e00000;background:#fff5f5;padding:12px 14px;border-radius:7px;font-size:14px;line-height:1.5}
 @media(max-width:640px){.supplier-nav{position:sticky;top:0;z-index:50}.supplier-nav button{flex:1 1 calc(50% - 8px)}}
+
+/* PoundTech branded product dialogs and form controls */
+.pt-dialog{width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 36px);overflow:auto;border:1px solid #e5e5e5;border-radius:18px;padding:0;box-shadow:0 22px 70px rgba(0,0,0,.28);color:#171717}
+.pt-dialog::backdrop{background:rgba(10,10,10,.62);backdrop-filter:blur(3px)}
+.pt-dialog-head{padding:22px 24px 16px;border-bottom:1px solid #eee;background:linear-gradient(135deg,#fff 0%,#fafafa 100%)}
+.pt-dialog-kicker{font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#d00000;margin:0 0 7px}
+.pt-dialog-head h3{font-size:21px;margin:0;line-height:1.25}
+.pt-dialog-body{padding:20px 24px}
+.pt-dialog-foot{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;padding:15px 24px 22px;border-top:1px solid #eee}
+.pt-dialog-foot button{min-width:112px}
+.pt-btn-dark{background:#171717!important}.pt-btn-muted{background:#ededed!important;color:#222!important}
+.pt-btn-danger{background:#b80000!important}
+.pt-field{display:block;width:100%;box-sizing:border-box;border:1px solid #d6d6d6;border-radius:10px;background:#fff;padding:12px 13px;font:inherit;font-size:15px;color:#171717;min-height:46px;transition:border-color .15s,box-shadow .15s}
+.pt-field:focus{outline:none;border-color:#d00000;box-shadow:0 0 0 3px rgba(208,0,0,.1)}
+.pt-field-label{display:block;font-size:13px;font-weight:700;margin:0 0 7px;color:#333}
+.pt-field-help{font-size:12px;line-height:1.45;color:#777;margin:6px 0 0}
+.pt-field-group{margin-bottom:17px}
+.pt-info-panel{background:#f6f6f6;border:1px solid #ececec;border-radius:11px;padding:12px 14px;font-size:13px;line-height:1.5;color:#555}
+.pt-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10050;max-width:calc(100vw - 36px);width:max-content;background:#171717;color:#fff;border-left:4px solid #d00000;padding:13px 17px;border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.22);font-size:14px;line-height:1.4}
+.pt-toast.success{border-left-color:#1d9b55}.pt-toast.error{border-left-color:#d00000}
+#special-dialog{width:min(490px,calc(100vw - 32px));padding:0}
+#special-dialog .pt-dialog-body{padding-top:18px}
+.pt-special-price-row{display:flex;align-items:center;gap:8px}
+.pt-currency{font-weight:700;color:#666;background:#f2f2f2;border:1px solid #ddd;border-radius:10px;padding:12px 13px}
+@media(max-width:520px){.pt-dialog-foot{flex-direction:column-reverse}.pt-dialog-foot button{width:100%}.pt-dialog-head,.pt-dialog-body{padding-left:18px;padding-right:18px}.pt-dialog-foot{padding-left:18px;padding-right:18px}}
 </style>
 
 <style>
@@ -263,42 +288,68 @@ Manage your products and stock below.
 Add Product
 </button>
     
-<dialog id="special-dialog" style="border:none; border-radius:12px; padding:22px; width:min(420px, 92vw);">
-
-    <h3 id="special-title" style="margin-top:0;">Special offer</h3>
-
-    <p id="special-normal" style="color:#555; margin-top:0;"></p>
-
-    <label for="special-price" style="display:block; font-size:13px; margin-bottom:4px;">Special price (R)</label>
-    <input type="number" id="special-price" step="0.01" min="0"
-           style="display:block; margin-bottom:10px; padding:10px; width:100%; box-sizing:border-box;">
-
-    <label for="special-ends" style="display:block; font-size:13px; margin-bottom:4px;">Ends on (optional)</label>
-    <input type="date" id="special-ends"
-           style="display:block; margin-bottom:10px; padding:10px; width:100%; box-sizing:border-box;">
-
-    <label for="special-label" style="display:block; font-size:13px; margin-bottom:4px;">Tag on the product card</label>
-    <select id="special-label"
-            style="display:block; margin-bottom:12px; padding:10px; width:100%; box-sizing:border-box;">
-        <option value="">No tag</option>
-            <option>Special</option>
-            <option>Weekend special</option>
-            <option>Clearance</option>
-            <option>Hot deal</option>
-            <option>End of line</option>
-            <option>Free fitting</option>
-            <option>Bundle deal</option>
-    </select>
-
-    <p id="special-message" style="color:#b80000; min-height:20px; margin:0 0 8px;"></p>
-
-    <div class="row-actions" style="margin-top:0;">
-        <button type="button" id="special-save">Save special</button>
-        <button type="button" id="special-remove" style="background:#555;">Remove special</button>
-        <button type="button" id="special-cancel" style="background:#999;">Cancel</button>
+<dialog id="special-dialog" class="pt-dialog">
+    <div class="pt-dialog-head">
+        <p class="pt-dialog-kicker">PoundTech · Product pricing</p>
+        <h3 id="special-title">Create a special offer</h3>
     </div>
-
+    <div class="pt-dialog-body">
+        <div class="pt-info-panel" style="margin-bottom:18px;">
+            <strong id="special-product-name">Product</strong>
+            <div id="special-normal" style="margin-top:4px;">Normal price: —</div>
+            <div id="special-saving-preview" style="margin-top:5px;color:#d00000;font-weight:700;"></div>
+        </div>
+        <div class="pt-field-group">
+            <label class="pt-field-label" for="special-price">Special price</label>
+            <div class="pt-special-price-row">
+                <span class="pt-currency">R</span>
+                <input class="pt-field" type="number" id="special-price" step="0.01" min="0.01" inputmode="decimal" placeholder="e.g. 799.00">
+            </div>
+            <p class="pt-field-help">Enter a price lower than the normal selling price.</p>
+        </div>
+        <div class="pt-field-group">
+            <label class="pt-field-label" for="special-ends">Offer end date <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <input class="pt-field" type="date" id="special-ends">
+            <p class="pt-field-help">The offer remains active until the end of the selected day.</p>
+        </div>
+        <div class="pt-field-group" style="margin-bottom:4px;">
+            <label class="pt-field-label" for="special-label">Product tag <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="pt-field" id="special-label">
+                <option value="">No tag</option>
+                <option>Special</option><option>Weekend special</option><option>Clearance</option>
+                <option>Hot deal</option><option>End of line</option><option>Free fitting</option><option>Bundle deal</option>
+            </select>
+            <p class="pt-field-help">A short label displayed on your product card.</p>
+        </div>
+        <p id="special-message" role="status" style="color:#b80000;min-height:20px;margin:13px 0 0;font-size:13px;"></p>
+    </div>
+    <div class="pt-dialog-foot">
+        <button type="button" id="special-cancel" class="pt-btn-muted">Cancel</button>
+        <button type="button" id="special-remove" class="pt-btn-dark">Remove offer</button>
+        <button type="button" id="special-save">Save offer</button>
+    </div>
 </dialog>
+
+<dialog id="product-action-dialog" class="pt-dialog">
+    <div class="pt-dialog-head">
+        <p class="pt-dialog-kicker">PoundTech · Product management</p>
+        <h3 id="product-action-title">Confirm action</h3>
+    </div>
+    <div class="pt-dialog-body">
+        <p id="product-action-message" style="margin:0;color:#555;line-height:1.55;"></p>
+        <div id="product-action-input-wrap" class="pt-field-group" style="display:none;margin:18px 0 0;">
+            <label id="product-action-input-label" class="pt-field-label" for="product-action-input">Quantity available</label>
+            <input id="product-action-input" class="pt-field" type="number" min="0" step="1" inputmode="numeric">
+            <p id="product-action-help" class="pt-field-help">Enter a whole number. Use 0 when none are available.</p>
+        </div>
+        <p id="product-action-error" role="alert" style="color:#b80000;font-size:13px;min-height:18px;margin:10px 0 0;"></p>
+    </div>
+    <div class="pt-dialog-foot">
+        <button type="button" id="product-action-cancel" class="pt-btn-muted">Cancel</button>
+        <button type="button" id="product-action-confirm">Confirm</button>
+    </div>
+</dialog>
+<div id="pt-toast-region" aria-live="polite" aria-atomic="true"></div>
 
 <input
     type="file"
@@ -1257,6 +1308,21 @@ function priceSummary(product) {
 let specialProductId = null;
 let specialProduct = null;
 
+function updateSpecialPreview() {
+    const priceInput = document.getElementById("special-price");
+    const preview = document.getElementById("special-saving-preview");
+    if (!priceInput || !preview || !specialProduct) return;
+    const value = Number(priceInput.value);
+    if (priceInput.value.trim() && isFinite(value) && value > 0 && value < Number(specialProduct.price)) {
+        const saving = Number(specialProduct.price) - value;
+        const percent = Math.round(saving / Number(specialProduct.price) * 100);
+        preview.textContent = "Customer saves " + PT.money(saving) + " (" + percent + "% off)";
+    } else {
+        preview.textContent = priceInput.value.trim() ? "Enter a price below " + PT.money(specialProduct.price) + "." : "Your special price will appear here as a saving.";
+    }
+}
+document.getElementById("special-price").addEventListener("input", updateSpecialPreview);
+
 async function openSpecial(productId) {
 
     const { data: product, error } = await supabaseClient
@@ -1266,22 +1332,24 @@ async function openSpecial(productId) {
         .maybeSingle();
 
     if (error || !product) {
-        alert("Unable to load product.");
+        showSupplierToast("Unable to load this product. Please try again.", "error");
         return;
     }
 
     specialProductId = productId;
     specialProduct = product;
 
-    document.getElementById("special-title").textContent = product.name;
-    document.getElementById("special-normal").textContent = "Normal price: " + PT.money(product.price);
+    document.getElementById("special-title").textContent = product.sale_price != null || product.sale_label ? "Edit special offer" : "Create a special offer";
+    document.getElementById("special-product-name").textContent = product.name;
+    document.getElementById("special-normal").textContent = "Normal selling price: " + PT.money(product.price);
     document.getElementById("special-price").value = product.sale_price == null ? "" : product.sale_price;
     document.getElementById("special-ends").value = dateInputFromIso(product.sale_ends_at);
     document.getElementById("special-label").value = product.sale_label || "";
     document.getElementById("special-message").textContent = "";
+    document.getElementById("special-ends").min = new Date().toISOString().slice(0, 10);
     document.getElementById("special-remove").style.display =
         product.sale_price == null && !product.sale_label ? "none" : "";
-
+    updateSpecialPreview();
     document.getElementById("special-dialog").showModal();
 }
 
@@ -1327,7 +1395,7 @@ async function saveSpecial(remove) {
     }
 
     document.getElementById("special-dialog").close();
-
+    showSupplierToast(remove ? "Special offer removed." : "Special offer saved successfully.", "success");
     loadSupplierProducts();
 }
 
@@ -1612,34 +1680,119 @@ async function editProduct(productId) {
     loadSupplierProducts();
 }
    
+let productActionResolver = null;
+let productActionMode = null;
+
+function showSupplierToast(message, type) {
+    const region = document.getElementById("pt-toast-region");
+    if (!region) return;
+    region.innerHTML = "";
+    const toast = document.createElement("div");
+    toast.className = "pt-toast " + (type || "");
+    toast.textContent = message;
+    region.appendChild(toast);
+    window.setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3400);
+}
+
+function openProductActionDialog(options) {
+    const dialog = document.getElementById("product-action-dialog");
+    document.getElementById("product-action-title").textContent = options.title || "Confirm action";
+    document.getElementById("product-action-message").textContent = options.message || "";
+    document.getElementById("product-action-error").textContent = "";
+    const wrap = document.getElementById("product-action-input-wrap");
+    const input = document.getElementById("product-action-input");
+    wrap.style.display = options.input ? "" : "none";
+    input.value = options.input ? options.input.value : "";
+    input.min = options.input && options.input.min != null ? options.input.min : "0";
+    input.step = options.input && options.input.step != null ? options.input.step : "1";
+    document.getElementById("product-action-input-label").textContent = options.input ? options.input.label : "";
+    document.getElementById("product-action-help").textContent = options.input ? options.input.help : "";
+    const confirmButton = document.getElementById("product-action-confirm");
+    confirmButton.textContent = options.confirmText || "Confirm";
+    confirmButton.className = options.danger ? "pt-btn-danger" : "";
+    productActionMode = options;
+    dialog.showModal();
+    if (options.input) {
+        input.focus();
+        input.select();
+    }
+    return new Promise(resolve => { productActionResolver = resolve; });
+}
+
+function closeProductActionDialog(result) {
+    const dialog = document.getElementById("product-action-dialog");
+    if (dialog.open) dialog.close();
+    if (productActionResolver) {
+        const resolve = productActionResolver;
+        productActionResolver = null;
+        resolve(result);
+    }
+}
+
+document.getElementById("product-action-cancel").addEventListener("click", () => closeProductActionDialog(null));
+document.getElementById("product-action-dialog").addEventListener("cancel", event => {
+    event.preventDefault();
+    closeProductActionDialog(null);
+});
+document.getElementById("product-action-confirm").addEventListener("click", () => {
+    const mode = productActionMode || {};
+    const input = document.getElementById("product-action-input");
+    if (mode.input) {
+        const value = input.value.trim();
+        const number = Number(value);
+        if (value === "" || !Number.isInteger(number) || number < 0) {
+            document.getElementById("product-action-error").textContent = "Please enter a whole number of 0 or more.";
+            input.focus();
+            return;
+        }
+        closeProductActionDialog(number);
+    } else {
+        closeProductActionDialog(true);
+    }
+});
+
 async function updateProductStock(productId) {
-    const { data: product, error: loadError } = await supabaseClient.from("products").select("stock").eq("id", productId).maybeSingle();
-    if (loadError || !product) { alert("Unable to load this product."); return; }
-    const value = prompt("Enter the available stock quantity. Enter 0 to mark this product out of stock:", product.stock);
-    if (value === null) return;
-    const stock = Number(value);
-    if (!Number.isInteger(stock) || stock < 0) { alert("Please enter a whole number of 0 or more."); return; }
+    const { data: product, error: loadError } = await supabaseClient.from("products").select("name,stock").eq("id", productId).maybeSingle();
+    if (loadError || !product) { showSupplierToast("We couldn't load this product. Please try again.", "error"); return; }
+    const stock = await openProductActionDialog({
+        title: "Update available stock",
+        message: "Set how many units of " + product.name + " are currently available. Enter 0 if it is temporarily unavailable. The listing will remain visible to customers.",
+        confirmText: "Save stock",
+        input: { value: product.stock == null ? 0 : product.stock, label: "Available quantity", help: "Use a whole number. 0 means out of stock; customers won't be able to purchase it." }
+    });
+    if (stock === null) return;
     const { error } = await supabaseClient.from("products").update({ stock }).eq("id", productId);
-    if (error) { console.error(error); alert("Unable to update stock."); return; }
-    alert(stock === 0 ? "Marked out of stock. The listing stays visible, but customers cannot purchase it." : "Stock updated successfully.");
+    if (error) { console.error(error); showSupplierToast("Stock could not be updated. Please try again.", "error"); return; }
+    showSupplierToast(stock === 0 ? "Marked out of stock. Your listing remains visible." : "Stock updated successfully.", "success");
     loadSupplierProducts();
 }
 
 async function archiveProduct(productId) {
-    if (!confirm("Archive this product? It will disappear from the marketplace and your public storefront. Existing orders, reviews and payment records will remain untouched. You can restore it later.")) return;
-    const { error } = await supabaseClient.from("products")
-        .update({ status: "Archived" })
-        .eq("id", productId);
-    if (error) { console.error(error); alert("Unable to archive this product."); return; }
-    alert("Product archived. It is now hidden from customers and can be restored from Archived products.");
+    const ok = await openProductActionDialog({
+        title: "Archive this product?",
+        message: "This product will be hidden from the PoundTech marketplace and your public storefront. Existing orders, reviews and payment records will not be deleted. You can restore the product at any time.",
+        confirmText: "Archive product",
+        danger: true
+    });
+    if (!ok) return;
+    const { error } = await supabaseClient.from("products").update({ status: "Archived" }).eq("id", productId);
+    if (error) { console.error(error); showSupplierToast("The product could not be archived. Please try again.", "error"); return; }
+    supplierProductView = "archived";
+    showSupplierToast("Product archived and moved to Archived Products.", "success");
     loadSupplierProducts();
 }
 
 async function restoreProduct(productId) {
-    if (!confirm("Restore this product to your public storefront and the PoundTech marketplace? Check its price and stock before restoring.")) return;
+    const ok = await openProductActionDialog({
+        title: "Restore this product?",
+        message: "This will make the product visible on the PoundTech marketplace and your public storefront again. Check that its price and stock are up to date before restoring.",
+        confirmText: "Restore product"
+    });
+    if (!ok) return;
     const { error } = await supabaseClient.from("products").update({ status: "Active" }).eq("id", productId);
-    if (error) { console.error(error); alert("Unable to restore this product."); return; }
-    alert("Product restored. It is visible to customers again.");
+    if (error) { console.error(error); showSupplierToast("The product could not be restored. Please try again.", "error"); return; }
+    supplierProductView = "active";
+    showSupplierToast("Product restored and moved to Active Products.", "success");
     loadSupplierProducts();
 }
 
