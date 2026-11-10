@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Management | PoundTech</title>
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;font-family:Arial,sans-serif;color:#171717}
+header{background:#111;color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:900;letter-spacing:.04em}.brand span{color:#e00000}a{color:#c00000;font-weight:700;text-decoration:none}
+.wrap{max-width:980px;margin:30px auto;padding:0 18px}.card{background:#fff;border:1px solid #e5e5e5;border-radius:15px;padding:22px;margin-bottom:16px}
+h1{font-size:26px;margin:0 0 7px}h2{font-size:19px;margin:0 0 12px}.muted{color:#666;line-height:1.5}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}.stat{background:#f5f5f5;border-radius:11px;padding:13px 16px;min-width:150px}.stat strong{display:block;font-size:22px}.stat span{font-size:12px;color:#666}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}
+input,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:9px;font:inherit;min-height:44px;background:#fff}
+input:focus,select:focus{outline:none;border-color:#d00000;box-shadow:0 0 0 3px #d0000018}
+button{border:0;border-radius:9px;background:#d00000;color:#fff;padding:12px 16px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#eee;color:#222}.danger{background:#555}
+#message{margin-top:12px;font-size:14px;line-height:1.45}.error{color:#b00020}.success{color:#16723a}
+.member{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid #eee;flex-wrap:wrap}
+.member:first-of-type{border-top:0}.member-main{min-width:0}.member-main strong{display:block;overflow-wrap:anywhere}.member-meta{font-size:12px;color:#777;margin-top:4px}
+.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#eee;font-size:11px;font-weight:700;text-transform:capitalize}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.card{padding:18px}.wrap{margin:18px auto}.member button{width:100%}}
+</style>
+</head>
+<body>
+<header><div class="brand">POUND<span>TECH</span> <span style="color:#aaa;font-weight:500">/ Team</span></div><a href="supplier-dashboard.html" style="color:#fff">← Back to dashboard</a></header>
+<main class="wrap">
+<section class="card">
+<h1>Manage your team</h1>
+<p class="muted">Invite employees to use their own secure login. You remain in control of who can access your business.</p>
+<div class="stats">
+ <div class="stat"><strong id="seat-usage">—</strong><span>Staff seats in use (including you)</span></div>
+ <div class="stat"><strong id="seat-limit">—</strong><span>Seats included in your plan</span></div>
+ <div class="stat"><strong id="plan-name">—</strong><span>Current subscription</span></div>
+</div>
+</section>
+<section class="card">
+<h2>Invite an employee</h2>
+<p class="muted" style="font-size:13px">Each employee gets their own login. Invitations are sent to their email address.</p>
+<form id="invite-form">
+ <div class="grid">
+  <div><label for="employee-name">Employee name</label><input id="employee-name" maxlength="100" placeholder="e.g. Thabo Mokoena"></div>
+  <div><label for="employee-email">Email address</label><input id="employee-email" type="email" required placeholder="employee@business.co.za"></div>
+ </div>
+ <label for="employee-role">Access role</label>
+ <select id="employee-role">
+  <option value="sales">Sales — orders and customer interactions</option>
+  <option value="inventory">Inventory — products and stock</option>
+  <option value="finance">Finance — payments and reports</option>
+  <option value="admin">Administrator — most business operations</option>
+ </select>
+ <p class="muted" style="font-size:12px;margin:8px 0 0">Owner-only controls such as subscriptions and team access remain private to you.</p>
+ <button id="invite-button" type="submit" style="margin-top:16px">Send invitation</button>
+ <div id="message" role="status"></div>
+</form>
+</section>
+<section class="card">
+<h2>Your team</h2>
+<p class="muted" style="font-size:13px">You can remove an employee's access at any time. Their login will no longer be able to access this business.</p>
+<div id="team-list" class="muted">Loading team members…</div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient=supabase.createClient(
+ "https://uezacbssvvvtlosnaroh.supabase.co",
+ "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
+);
+let supplierId=null,seatLimit=1,memberRows=[];
+const $=id=>document.getElementById(id);
+function message(text,type){$("message").textContent=text;$("message").className=type||"";}
+function esc(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+async function loadTeam(){
+ const {data:{user}}=await supabaseClient.auth.getUser();
+ if(!user){location.href="supplier-login.html";return;}
+ const {data:role}=await supabaseClient.rpc("get_my_supplier_role");
+ if(role!=="owner"){document.querySelector("main").innerHTML='<section class="card"><h1>Owner access only</h1><p class="muted">Only the supplier account owner can manage team members.</p><a href="supplier-dashboard.html">Return to dashboard</a></section>';return;}
+ const {data:id,error:idError}=await supabaseClient.rpc("get_my_supplier_id");
+ if(idError||!id){message("We couldn't identify your supplier account. Please sign in again.","error");return;}
+ supplierId=id;
+ const {data:supplier,error:supplierError}=await supabaseClient.from("suppliers").select("business_name,plan,plan_ends_at").eq("id",supplierId).single();
+ if(supplierError){message("Couldn't load your subscription details: "+supplierError.message,"error");return;}
+ const pro=supplier.plan==="pro"&&supplier.plan_ends_at&&new Date(supplier.plan_ends_at)>new Date();
+ seatLimit=pro?3:1;
+ $("plan-name").textContent=pro?"Pro":"Starter";
+ $("seat-limit").textContent=String(seatLimit);
+ const {data:members,error:memberError}=await supabaseClient.from("supplier_team_members").select("id,email,full_name,role,status,invited_at,joined_at").eq("supplier_id",supplierId).order("created_at",{ascending:true});
+ if(memberError){$("team-list").textContent="Couldn't load team members: "+memberError.message;return;}
+ memberRows=members||[];
+ const used=1+memberRows.filter(m=>m.status==="active"||m.status==="invited").length;
+ $("seat-usage").textContent=used+" / "+seatLimit;
+ $("invite-button").disabled=used>=seatLimit;
+ $("invite-button").textContent=used>=seatLimit?"Upgrade to add staff":"Send invitation";
+ renderMembers();
+}
+function renderMembers(){
+ const list=$("team-list");
+ if(!memberRows.length){list.innerHTML='<p class="muted">No employees added yet. Your business owner account is the only login currently using a seat.</p>';return;}
+ list.innerHTML=memberRows.map(m=>'<div class="member"><div class="member-main"><strong>'+esc(m.full_name||m.email)+'</strong><div class="member-meta">'+esc(m.email)+' · '+esc(m.role)+' · <span class="pill">'+esc(m.status)+'</span></div></div><button class="danger" onclick="removeMember(\''+esc(m.id)+'\')">Remove access</button></div>').join("");
+}
+$("invite-form").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const email=$("employee-email").value.trim().toLowerCase();
+ const full_name=$("employee-name").value.trim();
+ const role=$("employee-role").value;
+ $("invite-button").disabled=true;message("Sending invitation…");
+ const {data,error}=await supabaseClient.functions.invoke("supplier-team-invite",{body:{email,full_name,role}});
+ if(error||data?.error){message(data?.error||error.message,"error");$("invite-button").disabled=false;return;}
+ message(data.message||"Invitation sent.","success");
+ $("invite-form").reset();await loadTeam();
+});
+async function removeMember(id){
+ const member=memberRows.find(m=>m.id===id);if(!member)return;
+ if(!confirm("Remove "+(member.full_name||member.email)+" from your PoundTech team?"))return;
+ const {error}=await supabaseClient.from("supplier_team_members").delete().eq("id",id);
+ if(error){message("Couldn't remove access: "+error.message,"error");return;}
+ message("Employee access removed.","success");await loadTeam();
+}
+loadTeam();
+</script>
+</body>
+</html>
