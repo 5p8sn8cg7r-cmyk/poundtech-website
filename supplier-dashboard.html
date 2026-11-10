@@ -146,6 +146,31 @@ button:hover {
 .pt-special-price-row{display:flex;align-items:center;gap:8px}
 .pt-currency{font-weight:700;color:#666;background:#f2f2f2;border:1px solid #ddd;border-radius:10px;padding:12px 13px}
 @media(max-width:520px){.pt-dialog-foot{flex-direction:column-reverse}.pt-dialog-foot button{width:100%}.pt-dialog-head,.pt-dialog-body{padding-left:18px;padding-right:18px}.pt-dialog-foot{padding-left:18px;padding-right:18px}}
+
+/* Refined product editor */
+.pt-edit-dialog{width:min(590px,calc(100vw - 28px))}
+.pt-edit-head{background:radial-gradient(circle at 100% 0%,rgba(208,0,0,.08),transparent 42%),linear-gradient(135deg,#fff,#f8f8f8);padding-bottom:18px}
+.pt-edit-head h3{font-size:25px;letter-spacing:-.035em}
+.pt-edit-subtitle{margin:6px 0 0;color:#777;font-size:13px;line-height:1.5}
+.pt-edit-product-preview{display:flex;align-items:center;gap:12px;margin-top:18px;padding:11px 13px;background:#fff;border:1px solid #ececec;border-radius:13px;min-width:0}
+.pt-edit-product-preview img,.pt-edit-product-placeholder{width:48px;height:48px;flex:0 0 48px;border-radius:10px;object-fit:cover;background:#171717;color:#fff;display:grid;place-items:center;font-weight:900;letter-spacing:.04em}
+.pt-edit-product-preview>div:last-child{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pt-edit-product-preview strong{font-size:14px;overflow-wrap:anywhere}
+.pt-edit-product-preview span{font-size:12px;color:#777}
+.pt-edit-body{padding-top:21px}
+.pt-edit-section-title{display:flex;align-items:center;gap:10px;margin:2px 0 15px;padding-bottom:11px;border-bottom:1px solid #eee}
+.pt-edit-section-title>span{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#171717;color:#fff;font-size:11px;font-weight:800}
+.pt-edit-section-title div{display:flex;flex-direction:column;gap:2px}
+.pt-edit-section-title strong{font-size:14px}
+.pt-edit-section-title small{font-size:12px;color:#888}
+.pt-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt-edit-tip{margin-top:16px;border-left:3px solid #d00000}
+.pt-edit-foot{justify-content:space-between}
+.pt-edit-foot button:last-child{min-width:190px}
+#product-edit-dialog .pt-field-group{margin-bottom:16px}
+#product-edit-dialog .pt-field{width:100%}
+#product-edit-dialog textarea{min-height:112px}
+@media(max-width:520px){.pt-edit-grid{grid-template-columns:1fr;gap:0}.pt-edit-head h3{font-size:22px}.pt-edit-foot{flex-direction:column-reverse}.pt-edit-foot button{width:100%}.pt-edit-foot button:last-child{min-width:0}}
 </style>
 
 <style>
@@ -324,8 +349,15 @@ Add Product
             <label class="pt-field-label" for="special-label">Product tag <span style="font-weight:400;color:#888;">(optional)</span></label>
             <select class="pt-field" id="special-label">
                 <option value="">No tag</option>
-                <option>Special</option><option>Weekend special</option><option>Clearance</option>
-                <option>Hot deal</option><option>End of line</option><option>Free fitting</option><option>Bundle deal</option>
+                <optgroup label="PoundTech promotions">
+                    <option>Black November Deal</option><option>Black Friday Drop</option><option>Payday Special</option><option>Price Drop</option>
+                </optgroup>
+                <optgroup label="Product highlights">
+                    <option>Hot Deal</option><option>Best Seller</option><option>Top Pick</option><option>Limited Stock</option><option>New Arrival</option>
+                </optgroup>
+                <optgroup label="Seasonal &amp; bundles">
+                    <option>Weekend Special</option><option>Summer Ready</option><option>Road-trip Ready</option><option>Bundle Deal</option><option>Clearance</option><option>End of Line</option><option>Free Fitting</option>
+                </optgroup>
             </select>
             <p class="pt-field-help">A short label displayed on your product card.</p>
         </div>
@@ -338,17 +370,30 @@ Add Product
     </div>
 </dialog>
 
-<dialog id="product-edit-dialog" class="pt-dialog">
-    <div class="pt-dialog-head"><p class="pt-dialog-kicker">PoundTech · Product details</p><h3>Edit product</h3></div>
-    <div class="pt-dialog-body">
-        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-name">Product name</label><input id="edit-product-name" class="pt-field" maxlength="120" required></div>
-        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-price">Selling price (R)</label><input id="edit-product-price" class="pt-field" type="number" min="0.01" step="0.01" inputmode="decimal" required><p class="pt-field-help">Your normal price must remain higher than any active special price.</p></div>
-        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-stock">Available stock</label><input id="edit-product-stock" class="pt-field" type="number" min="0" step="1" inputmode="numeric" required><p class="pt-field-help">Enter 0 if temporarily out of stock. The listing stays visible but cannot be purchased.</p></div>
-        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-description">Description</label><textarea id="edit-product-description" class="pt-field" rows="4" style="resize:vertical;"></textarea></div>
-        <div class="pt-field-group" style="margin-bottom:4px;"><label class="pt-field-label" for="edit-product-compatibility">Vehicle compatibility</label><input id="edit-product-compatibility" class="pt-field" placeholder="e.g. VW Polo 2018–2022"><p class="pt-field-help">Add compatible makes, models and years, or leave blank if universal.</p></div>
+<dialog id="product-edit-dialog" class="pt-dialog pt-edit-dialog">
+    <div class="pt-dialog-head pt-edit-head">
+        <p class="pt-dialog-kicker">PoundTech · Listing studio</p><h3>Refine your product</h3>
+        <p class="pt-edit-subtitle">Keep your listing accurate, clear and ready to sell.</p>
+        <div class="pt-edit-product-preview">
+            <img id="edit-product-image" alt="" style="display:none;">
+            <div class="pt-edit-product-placeholder" id="edit-product-image-placeholder">PT</div>
+            <div><strong id="edit-product-preview-name">Your product</strong><span id="edit-product-preview-price">Set your selling price</span></div>
+        </div>
+    </div>
+    <div class="pt-dialog-body pt-edit-body">
+        <div class="pt-edit-section-title"><span>01</span><div><strong>Listing details</strong><small>The name customers will see.</small></div></div>
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-name">Product name</label><input id="edit-product-name" class="pt-field" maxlength="120" placeholder="e.g. Premium LED Headlight Kit" required></div>
+        <div class="pt-edit-grid">
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-price">Selling price</label><div class="pt-special-price-row"><span class="pt-currency">R</span><input id="edit-product-price" class="pt-field" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required></div><p class="pt-field-help">Your normal price must remain higher than an active special price.</p></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-stock">Available stock</label><input id="edit-product-stock" class="pt-field" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required><p class="pt-field-help">Use 0 when temporarily out of stock.</p></div>
+        </div>
+        <div class="pt-edit-section-title"><span>02</span><div><strong>Help customers choose</strong><small>Useful details reduce questions and returns.</small></div></div>
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-description">Product description</label><textarea id="edit-product-description" class="pt-field" rows="4" maxlength="2000" placeholder="Describe the key features, condition, what's included and any fitting information." style="resize:vertical;"></textarea><p class="pt-field-help">Be specific about what the customer receives.</p></div>
+        <div class="pt-field-group" style="margin-bottom:4px;"><label class="pt-field-label" for="edit-product-compatibility">Vehicle compatibility</label><input id="edit-product-compatibility" class="pt-field" placeholder="e.g. VW Polo 2018–2022"><p class="pt-field-help">List compatible makes, models and years, or leave blank if universal.</p></div>
+        <div class="pt-info-panel pt-edit-tip">A clear title, accurate stock count and helpful compatibility details make it easier for customers to buy with confidence.</div>
         <p id="edit-product-error" role="alert" style="color:#b80000;font-size:13px;min-height:18px;margin:12px 0 0;"></p>
     </div>
-    <div class="pt-dialog-foot"><button type="button" id="edit-product-cancel" class="pt-btn-muted">Cancel</button><button type="button" id="edit-product-save">Save changes</button></div>
+    <div class="pt-dialog-foot pt-edit-foot"><button type="button" id="edit-product-cancel" class="pt-btn-muted">Cancel</button><button type="button" id="edit-product-save">Save product changes</button></div>
 </dialog>
 <dialog id="product-action-dialog" class="pt-dialog">
     <div class="pt-dialog-head">
@@ -1651,9 +1696,22 @@ async function editProduct(productId) {
     document.getElementById("edit-product-description").value = product.description || "";
     document.getElementById("edit-product-compatibility").value = product.vehicle_compatibility || "";
     document.getElementById("edit-product-error").textContent = "";
+    const editImage = document.getElementById("edit-product-image");
+    const editPlaceholder = document.getElementById("edit-product-image-placeholder");
+    if (product.image_url) { editImage.src = product.image_url; editImage.style.display = "block"; editPlaceholder.style.display = "none"; }
+    else { editImage.removeAttribute("src"); editImage.style.display = "none"; editPlaceholder.style.display = "grid"; }
+    document.getElementById("edit-product-preview-name").textContent = product.name || "Your product";
+    document.getElementById("edit-product-preview-price").textContent = PT.money(product.price || 0) + " · Current selling price";
     document.getElementById("product-edit-dialog").showModal();
 }
 
+document.getElementById("edit-product-name").addEventListener("input", function () {
+    document.getElementById("edit-product-preview-name").textContent = this.value.trim() || "Your product";
+});
+document.getElementById("edit-product-price").addEventListener("input", function () {
+    const value = Number(this.value);
+    document.getElementById("edit-product-preview-price").textContent = this.value && Number.isFinite(value) && value > 0 ? PT.money(value) + " · New selling price" : "Set your selling price";
+});
 document.getElementById("edit-product-cancel").addEventListener("click", () => document.getElementById("product-edit-dialog").close());
 document.getElementById("edit-product-save").addEventListener("click", async () => {
     if (!editingProductId) return;
