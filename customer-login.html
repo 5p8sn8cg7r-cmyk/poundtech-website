@@ -73,6 +73,10 @@ button.secondary { background: #333; }
                    placeholder="Password (at least 8 characters)"
                    autocomplete="current-password" minlength="8" required>
 
+            <p style="text-align:right;margin:0 0 8px;">
+                <a href="#" id="forgot-password" style="color:#c62828;font-size:14px;font-weight:bold;">Forgot password?</a>
+            </p>
+
             <button id="login-button" type="button">Log In</button>
             <button id="signup-button" type="button" class="secondary">
                 Create Account
@@ -103,6 +107,7 @@ const loginButton = document.getElementById("login-button");
 const signupButton = document.getElementById("signup-button");
 const logoutButton = document.getElementById("logout-button");
 const garageButton = document.getElementById("garage-button");
+const forgotPasswordLink = document.getElementById("forgot-password");
 
 function showMessage(text, error = false) {
     message.textContent = text;
@@ -159,6 +164,34 @@ loginButton.addEventListener("click", async function() {
     }
 
     showLoggedIn(data.user.email);
+});
+
+forgotPasswordLink.addEventListener("click", async function(event) {
+    event.preventDefault();
+    const email = document.getElementById("email").value.trim();
+
+    if (!email) {
+        showMessage("Enter your email address first, then select Forgot password.", true);
+        document.getElementById("email").focus();
+        return;
+    }
+
+    setBusy(true);
+    showMessage("Sending password reset instructions...");
+
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset-password.html"
+    });
+
+    setBusy(false);
+
+    if (error) {
+        showMessage("We couldn't send the reset email. Please try again or contact PoundTech support.", true);
+        console.error(error);
+        return;
+    }
+
+    showMessage("If an account exists for that email, password reset instructions will arrive shortly. Check your inbox and spam folder.");
 });
 
 signupButton.addEventListener("click", async function() {
