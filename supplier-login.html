@@ -42,7 +42,8 @@
 
     <p style="margin-top:18px; font-size:14px; color:#666;">
         Not a supplier yet? <a href="supplier.html" style="color:#e00000; font-weight:bold;">Apply to sell on PoundTech</a><br>
-        Forgot your password or need help? Email
+        <a href="#" id="forgot-password" style="color:#e00000; font-weight:bold;">Forgot your password?</a>
+        <br>Need help? Email
         <a href="mailto:info@poundtech.co.za" style="color:#e00000; font-weight:bold;">info@poundtech.co.za</a>.
     </p>
 
@@ -115,6 +116,36 @@ async function routeAfterLogin() {
 
     return false;
 }
+
+
+document.getElementById("forgot-password").addEventListener("click", async function(event) {
+    event.preventDefault();
+    const email = document.getElementById("login-email").value.trim().toLowerCase();
+
+    if (!email) {
+        showMessage("Enter your supplier email address first, then select Forgot your password.", "error");
+        document.getElementById("login-email").focus();
+        return;
+    }
+
+    const button = document.getElementById("login-button");
+    button.disabled = true;
+    showMessage("Sending password reset instructions…", "info");
+
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset-password.html"
+    });
+
+    button.disabled = false;
+
+    if (error) {
+        console.error(error);
+        showMessage("We couldn't send the reset email. Please try again or contact info@poundtech.co.za.", "error");
+        return;
+    }
+
+    showMessage("If an account exists for that email, password reset instructions will arrive shortly. Check your inbox and spam folder.", "success");
+});
 
 
 async function supplierLogin() {
