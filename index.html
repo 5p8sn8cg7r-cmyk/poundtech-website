@@ -2787,6 +2787,13 @@ async function renderCheckout() {
     }
 
     const supplierIds = (deliveryOptions || []).map(function(item) { return item.supplier_id; });
+    const missingSupplier = supplierIds.length === 0 ||
+        productIds.some(id => !cart.some(item => item.product_id === id));
+    if (missingSupplier) {
+        deliveryBox.innerHTML = '<p style="color:#c00;">Delivery details could not be loaded for this cart. Please contact PoundTech.</p>';
+        return;
+    }
+
     const { data: branchRows, error: branchError } = await supabaseClient
         .from("supplier_branches")
         .select("id,supplier_id,branch_name,address,suburb,city,province,postal_code,is_primary")
@@ -2813,13 +2820,6 @@ async function renderCheckout() {
             collection_branches: branchesBySupplier[item.supplier_id] || []
         });
     });
-
-    const missingSupplier = checkoutDeliveryOptions.length === 0 ||
-        productIds.some(id => !cart.some(item => item.product_id === id));
-    if (missingSupplier) {
-        deliveryBox.innerHTML = '<p style="color:#c00;">Delivery details could not be loaded for this cart. Please contact PoundTech.</p>';
-        return;
-    }
 
     deliveryBox.innerHTML = checkoutDeliveryOptions.map(function(supplier) {
         const fee = Number(supplier.delivery_fee || 0);
