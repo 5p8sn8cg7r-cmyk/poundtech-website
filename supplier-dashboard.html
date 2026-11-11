@@ -396,6 +396,16 @@ Add Product
         <div class="pt-edit-section-title"><span>02</span><div><strong>Help customers choose</strong><small>Useful details reduce questions and returns.</small></div></div>
         <div class="pt-field-group"><label class="pt-field-label" for="edit-product-description">Product description</label><textarea id="edit-product-description" class="pt-field" rows="4" maxlength="2000" placeholder="Describe the key features, condition, what's included and any fitting information." style="resize:vertical;"></textarea><p class="pt-field-help">Be specific about what the customer receives.</p></div>
         <div class="pt-field-group" style="margin-bottom:4px;"><label class="pt-field-label" for="edit-product-compatibility">Vehicle compatibility</label><input id="edit-product-compatibility" class="pt-field" placeholder="e.g. VW Polo 2018–2022"><p class="pt-field-help">List compatible makes, models and years, or leave blank if universal.</p></div>
+        <div id="edit-premium-video-fields" style="display:none;border:1px solid #e2d6b2;background:#fffaf0;padding:14px;border-radius:9px;margin:14px 0;">
+            <strong style="display:block;margin-bottom:6px;">Premium product videos</strong>
+            <p style="color:#666;font-size:13px;margin:0 0 10px;">Pro and Business suppliers can add a short MP4/WebM advert preview (25 MB maximum, 30 seconds maximum) and a YouTube demonstration.</p>
+            <p id="edit-current-video" style="font-size:12px;color:#555;margin:0 0 8px;"></p>
+            <label for="edit-product-video-preview" class="pt-field-label">Upload or replace advert preview</label>
+            <input type="file" id="edit-product-video-preview" accept="video/mp4,video/webm" style="display:block;width:100%;margin:6px 0 10px;">
+            <label for="edit-product-youtube-demo" class="pt-field-label">YouTube demonstration link</label>
+            <input type="url" id="edit-product-youtube-demo" class="pt-field" placeholder="https://www.youtube.com/watch?v=...">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:10px;"><input type="checkbox" id="edit-remove-product-video" style="width:auto;"> Remove current advert preview</label>
+        </div>
         <div class="pt-info-panel pt-edit-tip">A clear title, accurate stock count and helpful compatibility details make it easier for customers to buy with confidence.</div>
         <p id="edit-product-error" role="alert" style="color:#b80000;font-size:13px;min-height:18px;margin:12px 0 0;"></p>
     </div>
@@ -1791,6 +1801,7 @@ document.getElementById("photos-close").addEventListener("click", function () {
 });
 
 let editingProductId = null;
+let editingProductRecord = null;
 
 async function editProduct(productId) {
     const { data: product, error } = await supabaseClient.from("products").select("*").eq("id", productId).single();
@@ -1799,6 +1810,13 @@ async function editProduct(productId) {
         return;
     }
     editingProductId = productId;
+    editingProductRecord = product;
+    const premiumVideoFields = document.getElementById("edit-premium-video-fields");
+    premiumVideoFields.style.display = hasActivePremiumVideoPlan() ? "block" : "none";
+    document.getElementById("edit-product-video-preview").value = "";
+    document.getElementById("edit-product-youtube-demo").value = product.youtube_demo_url || "";
+    document.getElementById("edit-remove-product-video").checked = false;
+    document.getElementById("edit-current-video").textContent = product.video_preview_url ? "A short advert preview is currently attached. Upload a replacement or tick remove." : "No advert preview uploaded yet.";
     document.getElementById("edit-product-name").value = product.name || "";
     document.getElementById("edit-product-price").value = product.price == null ? "" : product.price;
     document.getElementById("edit-product-stock").value = product.stock == null ? 0 : product.stock;
@@ -1837,17 +1855,30 @@ document.getElementById("edit-product-save").addEventListener("click", async () 
     const saveButton = document.getElementById("edit-product-save");
     saveButton.disabled = true;
     saveButton.textContent = "Saving...";
+    let newUploadedVideoUrl = null;
+    let nextVideoUrl = editingProductRecord ? editingProductRecord.video_preview_url : null;
+    const editVideoFile = document.getElementById("edit-product-video-preview").files[0] || null;
+    const removeVideo = document.getElementById("edit-remove-product-video").checked;
+    const youtubeText = document.getElementById("edit-product-youtube-demo").value.trim();
+    const nextYoutubeUrl = youtubeText ? normaliseYouTubeUrl(youtubeText) : null;
+    if (youtubeText && !nextYoutubeUrl) { errorBox.textContent = "Please enter a valid YouTube video link."; return; }
+    if ((editVideoFile || youtubeText || removeVideo) && !hasActivePremiumVideoPlan()) { errorBox.textContent = "An active Pro or Business plan is required to manage product videos."; return; }
+    if (editVideoFile) {
+        try { await validateProductVideo(editVideoFile); newUploadedVideoUrl = await uploadProductVideo(editVideoFile, await getSupplierId()); nextVideoUrl = newUploadedVideoUrl; }
+        catch (videoError) { errorBox.textContent = "Video upload failed: " + videoError.message; return; }
+    } else if (removeVideo) { nextVideoUrl = null; }
     const { error } = await supabaseClient.from("products").update({
-        name,
-        price,
-        stock,
+        name, price, stock,
         description: document.getElementById("edit-product-description").value.trim(),
-        vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim()
+        vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim(),
+        video_preview_url: nextVideoUrl,
+        youtube_demo_url: nextYoutubeUrl
     }).eq("id", editingProductId);
     saveButton.disabled = false;
     saveButton.textContent = "Save changes";
 
     if (error) {
+        if (newUploadedVideoUrl) await removeStoredProductVideo(newUploadedVideoUrl);
         console.error(error);
         errorBox.textContent = /sale_price|products_sale/i.test(error.message || "")
             ? "The normal price must be higher than the special price. Edit or remove the special offer first."
@@ -1855,7 +1886,12 @@ document.getElementById("edit-product-save").addEventListener("click", async () 
         return;
     }
     document.getElementById("product-edit-dialog").close();
+    if (editingProductRecord && editingProductRecord.video_preview_url &&
+        editingProductRecord.video_preview_url !== nextVideoUrl) {
+        await removeStoredProductVideo(editingProductRecord.video_preview_url);
+    }
     editingProductId = null;
+    editingProductRecord = null;
     showSupplierToast("Product details updated successfully.", "success");
     loadSupplierProducts();
 });
