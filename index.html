@@ -332,6 +332,9 @@ nav a:hover {
 }
 .pt-pro-badge svg { width: 11px; height: 11px; fill: currentColor; }
 
+.product-seller { margin: 0 0 9px; color: #777; font-size: 12px; line-height: 1.35; }
+.product-seller strong { color: #333; font-weight: 700; }
+
 .product-image {
     height: 170px;
     background: #f1f2f4;
@@ -2995,7 +2998,8 @@ function renderProductCard(product, status) {
 
             <div class="product-info">
                 <h3>${esc(product.name)}</h3>
-                ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
+                ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
+                ${product._ptSupplierName ? '<p class="product-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>' : ""}
                 <span class="product-category-label">${esc(product.category || "General")}</span>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
@@ -3131,25 +3135,7 @@ async function loadProducts(append) {
     PRODUCT_HAS_MORE = products.length === PRODUCT_PAGE_SIZE;
     loadedProducts = append ? loadedProducts.concat(products) : products;
 
-    // Add the Pro badge only when the supplier has an active Pro plan.
-    const supplierIds = [...new Set(products.map(function (p) { return p.supplier_id; }).filter(Boolean))];
-    if (supplierIds.length) {
-        const supplierResult = await supabaseClient
-            .from("suppliers")
-            .select("id, plan, plan_ends_at")
-            .in("id", supplierIds);
-
-        if (!supplierResult.error && supplierResult.data) {
-            const proSuppliers = new Set(supplierResult.data.filter(function (supplier) {
-                const planEnd = supplier.plan_ends_at ? new Date(supplier.plan_ends_at).getTime() : 0;
-                return supplier.plan === "pro" && planEnd > Date.now();
-            }).map(function (supplier) { return String(supplier.id); }));
-
-            products.forEach(function (product) {
-                product._ptProActive = proSuppliers.has(String(product.supplier_id));
-            });
-        }
-    }
+    await enrichProductSupplierDetails(products);
 
     PRODUCT_LOADING = false;
     await renderLoaded();
@@ -3162,6 +3148,30 @@ const PRODUCT_PAGE_SIZE = 24;
 let PRODUCT_OFFSET = 0;
 let PRODUCT_HAS_MORE = true;
 let PRODUCT_LOADING = false;
+
+async function enrichProductSupplierDetails(products) {
+    const supplierIds = [...new Set((products || []).map(function (p) { return p.supplier_id; }).filter(Boolean))];
+    if (!supplierIds.length) return;
+
+    const { data, error } = await supabaseClient.rpc("get_public_product_supplier_card_details", {
+        p_supplier_ids: supplierIds
+    });
+
+    if (error) {
+        console.warn("PUBLIC PRODUCT SUPPLIER DETAILS ERROR:", error);
+        return;
+    }
+
+    const byId = new Map((data || []).map(function (supplier) {
+        return [String(supplier.supplier_id), supplier];
+    }));
+
+    (products || []).forEach(function (product) {
+        const supplier = byId.get(String(product.supplier_id));
+        product._ptSupplierName = supplier ? supplier.business_name : "";
+        product._ptProActive = !!(supplier && supplier.pro_active);
+    });
+}
 
 function updateLoadMoreButton() {
     const button = document.getElementById("products-load-more");
@@ -3451,6 +3461,8 @@ searchStatus.innerHTML = `
             "<p>No products found.</p>";
         return;
     }
+
+ await enrichProductSupplierDetails(data);
 
  container.innerHTML = data.map(function(product) {
     return renderProductCard(product, null);
