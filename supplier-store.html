@@ -286,6 +286,14 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
     color:#fff; padding:34px 38px; border-radius:16px; margin-bottom:34px;
     box-shadow:0 12px 30px rgba(0,0,0,.12);
 }
+.supplier-banner-photo {
+    display:block; width:100%; max-height:270px; aspect-ratio:16/6;
+    object-fit:cover; border-radius:11px; margin:0 0 22px;
+    border:1px solid rgba(255,255,255,.12); background:#25272b;
+}
+@media(max-width:700px) {
+    .supplier-banner-photo { aspect-ratio:16/8; max-height:190px; margin-bottom:17px; border-radius:9px; }
+}
 .supplier-header:after {
     content:""; position:absolute; z-index:-1; width:310px; height:310px;
     right:-90px; top:-150px; border:1px solid rgba(255,255,255,.08);
@@ -1007,6 +1015,17 @@ async function loadSupplier() {
         " | PoundTech";
 
 
+    let storefrontBannerMarkup = "";
+    const { data: storefrontBannerPath, error: storefrontBannerError } = await supabaseClient.rpc("get_public_supplier_banner", {
+        p_supplier_id: supplierId
+    });
+    if (storefrontBannerError) {
+        console.warn("PUBLIC STOREFRONT BANNER LOAD ERROR:", storefrontBannerError);
+    } else if (storefrontBannerPath) {
+        const { data: bannerUrl } = supabaseClient.storage.from("business-photos").getPublicUrl(storefrontBannerPath);
+        storefrontBannerMarkup = '<img class="supplier-banner-photo" src="' + PT.esc(bannerUrl.publicUrl) + '" alt="' + PT.esc((supplier.business_name || "Supplier") + " workshop") + '" loading="eager" decoding="async">';
+    }
+
     // Subscription badges are returned as safe, server-checked booleans.
     const proActive = supplier.pro_active === true;
     const businessActive = supplier.business_active === true;
@@ -1016,6 +1035,7 @@ async function loadSupplier() {
     ).innerHTML = `
 
         <div class="supplier-header">
+            ${storefrontBannerMarkup}
             <p class="supplier-kicker">PoundTech marketplace partner</p>
             <h2>${PT.esc(supplier.business_name || "Supplier")}</h2>
             ${
