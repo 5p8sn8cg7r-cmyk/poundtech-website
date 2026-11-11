@@ -3034,6 +3034,7 @@ loadSupplierOrders();
 
 
 var SUPPLIER_BRANCHES = [];
+var SUPPLIER_BRANCH_LOAD_SEQUENCE = 0;
 
 async function loadSupplierBranches() {
     const tab = document.getElementById("supplier-branches-tab");
@@ -3041,21 +3042,43 @@ async function loadSupplierBranches() {
     const list = document.getElementById("supplier-branches-list");
     if (!tab || !panel || !list) return;
 
-    const [{ data: role }, access] = await Promise.all([
-        supabaseClient.rpc("get_my_supplier_role"),
-        loadSupplierPlanAccess()
-    ]);
-    window.POUNDTECH_SUPPLIER_ROLE = role || "sales";
+    // Ignore stale responses if more than one refresh is triggered.
+    const loadSequence = ++SUPPLIER_BRANCH_LOAD_SEQUENCE;
 
-    const isBusiness = !!(access && access.plan === "business");
-    if (role !== "owner" || !isBusiness) {
-        tab.style.display = "none";
-        if (panel.classList.contains("active")) showSupplierSection("supplier-overview", document.querySelector('[data-supplier-tab="supplier-overview"]'));
-        return;
-    }
+    try {
+        // Wait for Supabase to restore the saved login session before
+        // evaluating supplier role and plan permissions.
+        const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+        if (loadSequence !== SUPPLIER_BRANCH_LOAD_SEQUENCE) return;
+        if (authError || !authData || !authData.user) {
+            console.warn("Branch access check waiting for an authenticated supplier session.", authError);
+            return;
+        }
 
-    tab.style.display = "";
-    const canManage = !!access.plan_active;
+        const [roleResult, access] = await Promise.all([
+            supabaseClient.rpc("get_my_supplier_role"),
+            loadSupplierPlanAccess()
+        ]);
+        if (loadSequence !== SUPPLIER_BRANCH_LOAD_SEQUENCE) return;
+
+        // A failed permission request is not proof that the supplier lacks access.
+        if (roleResult.error || !access) {
+            console.error("SUPPLIER BRANCH ACCESS CHECK ERROR:", roleResult.error || "Plan access was not returned.");
+            return;
+        }
+
+        const role = roleResult.data;
+        window.POUNDTECH_SUPPLIER_ROLE = role || "sales";
+
+        const isBusiness = !!(access && access.plan === "business");
+        if (role !== "owner" || !isBusiness) {
+            tab.style.display = "none";
+            if (panel.classList.contains("active")) showSupplierSection("supplier-overview", document.querySelector('[data-supplier-tab=supplier-overview]'));
+            return;
+        }
+
+        tab.style.display = "";
+        const canManage = !!access.plan_active;
     const note = document.getElementById("supplier-branches-plan-note");
     const addButton = document.getElementById("add-supplier-branch-btn");
     if (note) note.innerHTML = canManage
@@ -3082,8 +3105,12 @@ async function loadSupplierBranches() {
         return;
     }
 
-    SUPPLIER_BRANCHES = data || [];
-    renderSupplierBranches(canManage);
+        SUPPLIER_BRANCHES = data || [];
+        renderSupplierBranches(canManage);
+    } catch (error) {
+        console.error("SUPPLIER BRANCH LOAD ERROR:", error);
+        // Keep the last known tab visibility during temporary network/auth failures.
+    }
 }
 
 function renderSupplierBranches(canManage) {
