@@ -1154,7 +1154,7 @@ function downloadBusinessProductCsvTemplate() {
 
 function parseSupplierCsv(text) {
     const rows = []; let row = []; let field = ""; let quoted = false;
-    text = String(text || "").replace(/^\\uFEFF/, "");
+    text = String(text || "").replace(/^\uFEFF/, "");
     for (let i = 0; i < text.length; i++) {
         const ch = text[i];
         if (quoted) {
@@ -1163,7 +1163,7 @@ function parseSupplierCsv(text) {
             else field += ch;
         } else if (ch === '"' && field.length === 0) quoted = true;
         else if (ch === ",") { row.push(field); field = ""; }
-        else if (ch === "\\n" || ch === "\\r") {
+        else if (ch === "\n" || ch === "\r") {
             if (ch === "\\r" && text[i + 1] === "\\n") i++;
             row.push(field); field = "";
             if (row.some(value => String(value).trim() !== "")) rows.push(row);
