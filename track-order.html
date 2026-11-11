@@ -208,13 +208,20 @@ async function trackOrder() {
                 const tracking = d.tracking_reference
                     ? `<p><strong>Waybill / tracking reference:</strong><br>${escapeHTML(d.tracking_reference)}</p>`
                     : `<p style="color:#777;">A tracking reference has not been added yet.</p>`;
+                const collectionLocation = d.delivery_method === "collection" && d.branch_name
+                    ? `<div style="margin:12px 0;padding:12px;background:#f7f7f7;border-radius:8px;">
+                        <p style="margin:0 0 5px;"><strong>Collection branch:</strong> ${escapeHTML(d.branch_name)}</p>
+                        <p style="margin:0;">${escapeHTML(d.branch_address || "")}</p>
+                        ${d.branch_address ? '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(d.branch_address) + '" target="_blank" rel="noopener" style="display:inline-block;margin-top:9px;color:#c00000;font-weight:700;">Get directions</a>' : ""}
+                    </div>`
+                    : "";
 
                 return `
                     <div style="background:white;border:1px solid #ddd;border-radius:8px;padding:16px;margin-top:12px;">
                         <h4 style="margin:0 0 10px;">Delivery ${index + 1}${d.supplier_name ? " — " + escapeHTML(d.supplier_name) : ""}</h4>
                         <p><strong>Delivery method:</strong> ${escapeHTML(d.delivery_method || "Not specified")}</p>
-                        <p><strong>Courier:</strong> ${escapeHTML(d.courier_name || "Not yet assigned")}</p>
-                        ${tracking}
+                        ${collectionLocation}
+                        ${d.delivery_method === "delivery" ? '<p><strong>Courier:</strong> ' + escapeHTML(d.courier_name || "Not yet assigned") + '</p>' + tracking : ""}
                         <p style="margin-bottom:0;"><strong>Delivery progress:</strong> ${escapeHTML(d.delivery_status || "Pending")}</p>
                     </div>
                 `;
