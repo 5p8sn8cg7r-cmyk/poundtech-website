@@ -236,7 +236,7 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-se
 
 <header class="pt-admin-header">
   <div class="pt-brand">POUND<span>TECH</span><small>ADMIN</small></div>
-  <div class="pt-admin-user"><span id="admin-user-label">Admin workspace</span><button type="button" class="pt-signout" onclick="adminLogout()">Sign out</button></div>
+  <div class="pt-admin-user"><span id="admin-user-label">Admin workspace</span><button type="button" class="pt-signout" id="admin-signout" onclick="adminLogout()" style="display:none">Sign out</button></div>
 </header>
 <div id="admin-nav" class="pt-nav-wrap" style="display:none">
   <nav class="pt-nav" aria-label="Admin sections">
@@ -353,6 +353,7 @@ function showDashboard() {
     document.getElementById("login").style.display = "none";
     document.getElementById("admin-nav").style.display = "block";
     document.getElementById("admin-user-label").textContent = "PoundTech admin";
+    document.getElementById("admin-signout").style.display = "inline-block";
     setAdminSection("overview");
     loadRevenue();
     loadPayoutsAdmin();
@@ -372,6 +373,7 @@ async function adminLogout() {
     if (error) { console.log("LOGOUT ERROR:", error); return; }
     document.getElementById("login").style.display = "block";
     document.getElementById("admin-nav").style.display = "none";
+    document.getElementById("admin-signout").style.display = "none";
     document.querySelectorAll("[data-admin-panel]").forEach(function(panel){ panel.classList.remove("active"); });
     document.querySelectorAll(".pt-nav-btn").forEach(function(btn){ btn.classList.remove("active"); });
 }
