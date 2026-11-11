@@ -1867,13 +1867,16 @@ document.getElementById("edit-product-save").addEventListener("click", async () 
         try { await validateProductVideo(editVideoFile); newUploadedVideoUrl = await uploadProductVideo(editVideoFile, await getSupplierId()); nextVideoUrl = newUploadedVideoUrl; }
         catch (videoError) { errorBox.textContent = "Video upload failed: " + videoError.message; return; }
     } else if (removeVideo) { nextVideoUrl = null; }
-    const { error } = await supabaseClient.from("products").update({
+    const productChanges = {
         name, price, stock,
         description: document.getElementById("edit-product-description").value.trim(),
-        vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim(),
-        video_preview_url: nextVideoUrl,
-        youtube_demo_url: nextYoutubeUrl
-    }).eq("id", editingProductId);
+        vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim()
+    };
+    if (hasActivePremiumVideoPlan()) {
+        productChanges.video_preview_url = nextVideoUrl;
+        productChanges.youtube_demo_url = nextYoutubeUrl;
+    }
+    const { error } = await supabaseClient.from("products").update(productChanges).eq("id", editingProductId);
     saveButton.disabled = false;
     saveButton.textContent = "Save changes";
 
@@ -2023,7 +2026,7 @@ async function deleteProduct(productId) {
     if (!ok) return;
 
     const { data: existing } = await supabaseClient.from("products")
-        .select("image_url, extra_images").eq("id", productId).maybeSingle();
+        .select("image_url, extra_images, video_preview_url").eq("id", productId).maybeSingle();
     const { error } = await supabaseClient.from("products").delete().eq("id", productId);
     if (error) {
         console.error(error);
@@ -2032,6 +2035,7 @@ async function deleteProduct(productId) {
     }
     if (existing) {
         for (const url of productPhotoList(existing)) await removeStoredImage(url);
+        if (existing.video_preview_url) await removeStoredProductVideo(existing.video_preview_url);
     }
     showSupplierToast("Product deleted.", "success");
     loadSupplierProducts();
