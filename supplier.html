@@ -91,6 +91,42 @@
 .check-row input { width: auto; margin: 3px 0 0; }
 
 .hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+
+.plan-preview {
+    margin: 0 0 24px;
+    padding: 20px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    background: #fff;
+}
+.plan-preview h2 { margin: 0 0 6px; font-size: 20px; }
+.plan-preview-intro { color: #666; font-size: 14px; line-height: 1.5; margin: 0 0 16px; }
+.plan-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+.plan-preview-item {
+    padding: 13px;
+    border: 1px solid #e8e8e8;
+    border-radius: 9px;
+    background: #fafafa;
+    min-width: 0;
+}
+.plan-preview-item strong { display: block; margin-bottom: 5px; }
+.plan-preview-item .plan-price { font-weight: 800; font-size: 17px; }
+.plan-preview-item p { margin: 5px 0 0; color: #666; font-size: 12px; line-height: 1.45; }
+.plan-preview-link { display: inline-block; margin-top: 15px; color: #d60000; font-weight: 800; text-decoration: none; }
+.plan-preview-link:hover { text-decoration: underline; }
+.plan-preview-note { margin: 12px 0 0; color: #666; font-size: 12px; line-height: 1.5; }
+@media (max-width: 700px) {
+    .plan-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .plan-preview { padding: 15px; }
+}
+@media (max-width: 380px) {
+    .plan-preview-grid { grid-template-columns: 1fr; }
+}
+
 </style>
   <link rel="icon" href="/favicon.ico?v=10" sizes="any">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=10">
@@ -122,6 +158,35 @@
             <div><span>2</span> We review your application</div>
             <div><span>3</span> Get your login</div>
         </div>
+
+        <section class="plan-preview" aria-labelledby="supplier-plan-heading">
+            <h2 id="supplier-plan-heading">Choose how you want to grow with PoundTech</h2>
+            <p class="plan-preview-intro">Every approved supplier can start on Standard for free. Compare the options and choose what suits your business as it grows.</p>
+            <div class="plan-preview-grid">
+                <div class="plan-preview-item">
+                    <strong>Standard</strong>
+                    <div class="plan-price">Free</div>
+                    <p>7% commission for your first 30 days, then 10.5%.</p>
+                </div>
+                <div class="plan-preview-item">
+                    <strong>Pro</strong>
+                    <div class="plan-price">R299/month</div>
+                    <p>7% for your first 30 days, then 8.5% commission.</p>
+                </div>
+                <div class="plan-preview-item">
+                    <strong>Business</strong>
+                    <div class="plan-price">R999/month</div>
+                    <p>7% for your first 30 days, then 7.5% commission.</p>
+                </div>
+                <div class="plan-preview-item">
+                    <strong>Corporate / Enterprise</strong>
+                    <div class="plan-price">Custom</div>
+                    <p>Tailored pricing and commercial terms.</p>
+                </div>
+            </div>
+            <a class="plan-preview-link" href="/supplier-plans.html">Compare all plans and benefits &rarr;</a>
+            <p class="plan-preview-note">You don't need to select or pay for a plan to apply. New suppliers start on Standard, with the option to upgrade after approval.</p>
+        </section>
 
         <div id="message" role="status"></div>
 
@@ -373,6 +438,8 @@ async function registerSupplier() {
             <div class="tick">✓</div>
             <h2>Application received</h2>
             <p>Thank you, ${esc(businessName)}. PoundTech will review your application.</p>
+            <p>You can start on the free Standard plan once approved, or explore the other options whenever you're ready.</p>
+            <p><a href="/supplier-plans.html" style="color:#e00000;font-weight:bold;">View supplier plans and benefits</a></p>
         </div>
 
         <div class="next-steps">
