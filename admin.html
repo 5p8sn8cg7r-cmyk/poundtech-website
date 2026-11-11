@@ -1005,20 +1005,27 @@ async function loadPlansAdmin() {
 
     const box = document.getElementById("plans-admin");
 
-    const [rev, req] = await Promise.all([
+    const [rev, suppliersResult] = await Promise.all([
         supabaseClient.rpc("get_plan_revenue"),
         supabaseClient.from("suppliers").select("id, business_name, plan, plan_ends_at, plan_requested_at")
-            .not("plan_requested_at", "is", null)
+            .order("business_name", {ascending:true})
     ]);
 
     if (rev.error) {
         box.innerHTML = '<div class="empty"><h2>Plans unavailable</h2><p>' + esc(rev.error.message) +
-            '</p><p>Run 17_migration16_commission_plans.sql in Supabase.</p></div>';
+            '</p><p>Refresh the page or check the plan revenue database function.</p></div>';
+        return;
+    }
+    if (suppliersResult.error) {
+        box.innerHTML = '<div class="empty"><h2>Supplier plans unavailable</h2><p>' + esc(suppliersResult.error.message) + '</p></div>';
         return;
     }
 
     const revenue = rev.data || {};
-    const requests = (req.data || []).filter(function(s) { return s.plan !== "pro" || !s.plan_ends_at || new Date(s.plan_ends_at) < new Date(); });
+    const suppliers = suppliersResult.data || [];
+    const requests = suppliers.filter(function(s) {
+        return s.plan_requested_at && (s.plan !== "pro" || !s.plan_ends_at || new Date(s.plan_ends_at) < new Date());
+    });
 
     const reqRows = requests.map(function(s) {
         return `<div class="od-item"><div style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;">
@@ -1031,16 +1038,33 @@ async function loadPlansAdmin() {
                 </div></div>`;
     }).join("") || '<div class="od-empty">No one has asked for the Pro plan.</div>';
 
+    const tierRows = suppliers.map(function(s) {
+        const plan = (s.plan || "standard").toLowerCase();
+        const labels = {standard:"Standard", pro:"Pro", business:"Business", enterprise:"Corporate / Enterprise", corporate:"Corporate / Enterprise"};
+        const isPaidTier = ["pro","business"].includes(plan);
+        const active = isPaidTier ? (s.plan_ends_at && new Date(s.plan_ends_at) > new Date()) : (plan === "enterprise" || plan === "corporate" ? (!s.plan_ends_at || new Date(s.plan_ends_at) > new Date()) : true);
+        const expiry = s.plan_ends_at ? new Date(s.plan_ends_at).toLocaleDateString("en-ZA") : (plan === "enterprise" || plan === "corporate" ? "Custom terms" : "—");
+        return '<tr><td>' + esc(s.business_name || "Supplier") + '</td><td><span class="od-pill ' + (plan === "business" || plan === "enterprise" || plan === "corporate" ? "dark" : plan === "pro" ? "amber" : "") + '">' + esc(labels[plan] || plan) + '</span></td><td>' + (active ? '<span class="od-pill green">Active</span>' : '<span class="od-pill amber">Expired</span>') + '</td><td>' + esc(expiry) + '</td></tr>';
+    }).join("") || '<tr><td colspan="4">No suppliers found.</td></tr>';
+
     box.innerHTML = `
-        <h2 class="rev-title">Plans</h2>
-        <div class="od-cards" style="grid-template-columns:repeat(3,1fr);">
-            <div class="od-card ${requests.length ? "hot" : ""}"><span class="n">${requests.length}</span><span class="l">Pro requests waiting</span></div>
-            <div class="od-card"><span class="n">${esc(revenue.active_pro || 0)}</span><span class="l">Active Pro suppliers</span></div>
+        <h2 class="rev-title">Supplier plans</h2>
+        <div class="od-cards" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+            <div class="od-card"><span class="n">${esc(revenue.active_standard || 0)}</span><span class="l">Standard · Free · 10.5% commission</span></div>
+            <div class="od-card"><span class="n">${esc(revenue.active_pro || 0)}</span><span class="l">Pro · R299/month · 8.5% commission</span></div>
+            <div class="od-card"><span class="n">${esc(revenue.active_business || 0)}</span><span class="l">Business · R999/month · 7.5% commission</span></div>
+            <div class="od-card"><span class="n">${esc(revenue.active_enterprise || 0)}</span><span class="l">Corporate / Enterprise · Custom terms</span></div>
+        </div>
+        <div class="od-cards" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px;">
+            <div class="od-card ${requests.length ? "hot" : ""}"><span class="n">${requests.length}</span><span class="l">Pro upgrade requests waiting</span></div>
             <div class="od-card"><span class="n">${esc(money(revenue.last_30_days))}</span><span class="l">Plan revenue, 30 days</span></div>
         </div>
-        <h4 class="rev-note" style="margin:16px 0 8px;">Activate once you've received their payment by EFT or your own invoice</h4>
+        <h3 style="font-size:16px;margin:22px 0 10px;">Upgrade requests</h3>
+        <p class="rev-note">Pro upgrades can be activated here after payment is received. Business and Corporate / Enterprise enquiries are handled through their enquiry process and negotiated terms.</p>
         ${reqRows}
-        <p class="rev-note">Total plan revenue to date: ${esc(money(revenue.total))}. This is a taxable sale like your commission.</p>
+        <h3 style="font-size:16px;margin:24px 0 10px;">All supplier accounts by plan</h3>
+        <div style="overflow-x:auto;"><table class="rev-table"><thead><tr><th>Supplier</th><th>Plan</th><th>Status</th><th>Expiry / terms</th></tr></thead><tbody>${tierRows}</tbody></table></div>
+        <p class="rev-note">Total plan revenue to date: ${esc(money(revenue.total))}. Business and Enterprise commercial terms are subject to confirmation with PoundTech.</p>
     `;
 }
 
