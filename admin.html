@@ -1039,6 +1039,11 @@ async function loadPlansAdmin() {
                 </div></div>`;
     }).join("") || '<div class="od-empty">No one has asked for the Pro plan.</div>';
 
+    const supplierOptions = suppliers.map(function(s) {
+        return '<option value="' + esc(s.id) + '">' + esc(s.business_name || "Supplier") +
+            ' · ' + esc((s.plan || "standard").toUpperCase()) + '</option>';
+    }).join("");
+
     box.innerHTML = `
         <h2 class="rev-title">Supplier plans</h2>
         <div class="od-cards" style="grid-template-columns:repeat(4,minmax(0,1fr));">
@@ -1054,6 +1059,21 @@ async function loadPlansAdmin() {
         <h3 style="font-size:16px;margin:22px 0 10px;">Upgrade requests</h3>
         <p class="rev-note">Pro upgrades can be activated here after payment is received. Business and Corporate / Enterprise enquiries are handled through their enquiry process and negotiated terms.</p>
         ${reqRows}
+        <h3 style="font-size:16px;margin:24px 0 10px;">Activate a paid plan</h3>
+        <p class="rev-note">After confirming the supplier's payment and agreed terms, you can activate Pro or Business here. Business access unlocks branch management and bulk product uploads.</p>
+        <div class="od-item" style="padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:9px;">
+            <select id="admin-plan-supplier" style="min-width:220px;flex:2;margin:0;">
+                <option value="">Choose a supplier</option>${supplierOptions}
+            </select>
+            <select id="admin-plan-tier" style="min-width:130px;flex:1;margin:0;">
+                <option value="pro">Pro · R299/month</option>
+                <option value="business">Business · R999/month</option>
+            </select>
+            <input type="number" id="admin-plan-months" min="1" max="24" step="1" value="1" title="Months" style="width:90px;margin:0;">
+            <input type="number" id="admin-plan-amount" min="0" step="0.01" placeholder="Amount received (R)" style="width:175px;margin:0;">
+            <button type="button" onclick="activateSelectedSupplierPlan()">Activate plan</button>
+        </div>
+        <p id="admin-plan-activation-msg" class="rev-note" role="status" style="margin-top:8px;"></p>
         <h3 style="font-size:16px;margin:24px 0 10px;">All supplier accounts by plan</h3>
         <div class="pt-filter-panel" style="margin-bottom:10px;">
             <label for="admin-plan-filter">Filter by plan</label>
@@ -1111,9 +1131,48 @@ async function activatePro(id) {
         p_supplier: id, p_plan: "pro", p_months: months, p_amount: amount
     });
 
-    if (error) { alert("Could not activate: " + error.message); }
+    if (error) { alert("Could not activate: " + error.message); return; }
 
     loadPlansAdmin();
+}
+
+async function activateSelectedSupplierPlan() {
+    const supplierId = document.getElementById("admin-plan-supplier").value;
+    const plan = document.getElementById("admin-plan-tier").value;
+    const months = Number(document.getElementById("admin-plan-months").value);
+    const amountText = document.getElementById("admin-plan-amount").value.trim();
+    const amount = Number(amountText);
+    const message = document.getElementById("admin-plan-activation-msg");
+
+    if (!supplierId) { message.textContent = "Choose a supplier first."; return; }
+    if (!Number.isInteger(months) || months < 1 || months > 24) {
+        message.textContent = "Enter a whole number of months between 1 and 24."; return;
+    }
+    if (amountText === "" || !Number.isFinite(amount) || amount < 0) {
+        message.textContent = "Enter the amount received."; return;
+    }
+
+    const button = document.querySelector('button[onclick="activateSelectedSupplierPlan()"]');
+    button.disabled = true;
+    button.textContent = "Activating…";
+
+    const { error } = await supabaseClient.rpc("set_supplier_plan", {
+        p_supplier: supplierId,
+        p_plan: plan,
+        p_months: months,
+        p_amount: amount
+    });
+
+    button.disabled = false;
+    button.textContent = "Activate plan";
+
+    if (error) {
+        message.textContent = "Could not activate plan: " + error.message;
+        return;
+    }
+
+    alert((plan === "business" ? "Business" : "Pro") + " plan activated successfully.");
+    await loadPlansAdmin();
 }
 
 
