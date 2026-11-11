@@ -507,6 +507,11 @@
 
 .more-card .mc-info { padding: 12px 14px 14px; }
 
+.mc-seller { margin: 5px 0 5px; color: #777; font-size: 11px; line-height: 1.35; overflow-wrap:anywhere; }
+.mc-seller strong { color:#333; font-weight:700; }
+.mc-pro-badge { display:inline-flex; align-items:center; gap:4px; margin:0 0 7px; padding:3px 7px; border-radius:999px; color:#241a08; background:linear-gradient(135deg,#ffd75e 0%,#f2b923 55%,#d99a08 100%); border:1px solid #bd8500; font-size:9px; font-weight:850; letter-spacing:.3px; line-height:1.2; white-space:nowrap; }
+.mc-pro-badge svg { width:10px; height:10px; fill:currentColor; flex:none; }
+
 .more-card h3 { font-size: 15px; margin-bottom: 4px; }
 
 .more-card .mc-fit { font-size: 12px; font-weight: bold; color: #16803c; margin-bottom: 4px; }
@@ -662,18 +667,50 @@ async function fetchSupplier(supplierId) {
 
     if (!supplierId) { return null; }
 
-    const result = await supabaseClient
-        .from("suppliers")
-        .select("business_name, status, plan, plan_ends_at")
-        .eq("id", supplierId)
-        .maybeSingle();
+    const result = await supabaseClient.rpc("get_public_product_supplier_card_details", {
+        p_supplier_ids: [supplierId]
+    });
 
     if (result.error) {
-        console.error("SUPPLIER ERROR:", result.error);
+        console.error("SUPPLIER DETAILS ERROR:", result.error);
         return null;
     }
 
-    return result.data;
+    return Array.isArray(result.data) ? result.data[0] || null : null;
+}
+
+async function enrichSimilarSupplierDetails(products) {
+    const ids = [...new Set((products || []).map(function (p) { return p.supplier_id; }).filter(Boolean))];
+    if (!ids.length) return;
+
+    const result = await supabaseClient.rpc("get_public_product_supplier_card_details", {
+        p_supplier_ids: ids
+    });
+
+    if (result.error) {
+        console.error("SIMILAR PRODUCT SUPPLIER DETAILS ERROR:", result.error);
+        return;
+    }
+
+    const byId = new Map((result.data || []).map(function (s) {
+        return [String(s.supplier_id), s];
+    }));
+
+    (products || []).forEach(function (p) {
+        const s = byId.get(String(p.supplier_id));
+        p._ptSupplierName = s ? s.business_name : "";
+        p._ptProActive = !!(s && s.pro_active);
+    });
+}
+
+function similarSupplierMarkup(product) {
+    const name = product._ptSupplierName
+        ? '<p class="mc-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>'
+        : "";
+    const badge = product._ptProActive
+        ? '<span class="mc-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>'
+        : "";
+    return name + badge;
 }
 
 
@@ -688,9 +725,7 @@ function fillSupplier(product, supplier) {
         return;
     }
 
-    const planEnd = supplier.plan_ends_at ? new Date(supplier.plan_ends_at).getTime() : 0;
-    const proActive = supplier.plan === "pro" && planEnd > Date.now();
-    const proBadge = proActive
+    const proBadge = supplier.pro_active
         ? '<span class="pro-seller-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>POUNDTECH PRO</span>'
         : "";
 
@@ -1391,6 +1426,8 @@ async function loadSimilar(product) {
         })
         .slice(0, LIMIT);
 
+    await enrichSimilarSupplierDetails(list.map(function (row) { return row.p; }));
+
     PT.stash(list.map(function (row) { return row.p; }));
 
     similarById = {};
@@ -1414,6 +1451,7 @@ async function loadSimilar(product) {
                 <div class="mc-info">
                     ${row.v ? '<div class="mc-fit">Fits your ' + esc(row.v.make + " " + row.v.model) + '</div>' : ""}
                     <h3>${esc(p.name)}</h3>
+                    ${similarSupplierMarkup(p)}
                     <span data-rating-for="${esc(p.id)}"></span>
                     ${PT.price(p)}
                     <button type="button" class="mc-add" data-add="${esc(p.id)}">Add to Cart</button>
@@ -1463,6 +1501,8 @@ async function loadRelated(productId) {
         return;
     }
 
+    await enrichSimilarSupplierDetails(data);
+
     PT.stash(data);
 
     relatedById = {};
@@ -1478,6 +1518,7 @@ async function loadRelated(productId) {
                 </div>
                 <div class="mc-info">
                     <h3>${esc(p.name)}</h3>
+                    ${similarSupplierMarkup(p)}
                     <span data-rating-for="${esc(p.id)}"></span>
                     ${PT.price(p)}
                     <button type="button" class="mc-add" data-add="${esc(p.id)}">Add to Cart</button>
