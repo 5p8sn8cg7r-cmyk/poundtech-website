@@ -1248,6 +1248,8 @@ const roleLabel = (supplierRole || "sales").replace(/_/g," ").replace(/\b\w/g, c
 document.getElementById("welcome").textContent = "Logged in as " + user.email + " · " + (supplierRole === "owner" ? "Business Owner" : roleLabel + " Team Member");
 const teamTab = document.getElementById("supplier-team-tab");
 if (teamTab) teamTab.style.display = supplierRole === "owner" ? "" : "none";
+const branchesTab = document.getElementById("supplier-branches-tab");
+if (branchesTab) branchesTab.style.display = supplierRole === "owner" ? "" : "none";
 
 const roleTabs = {
     owner: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-branches-panel","supplier-earnings-panel","supplier-help-panel","supplier-support-panel"],
@@ -3081,12 +3083,14 @@ async function loadSupplierBranches() {
         window.POUNDTECH_SUPPLIER_ROLE = role || "sales";
 
         const isBusiness = !!(access && access.plan === "business");
-        if (role !== "owner" || !isBusiness) {
+        if (role !== "owner") {
             tab.style.display = "none";
             if (panel.classList.contains("active")) showSupplierSection("supplier-overview", document.querySelector('[data-supplier-tab=supplier-overview]'));
             return;
         }
 
+        // Owners can always see saved branches. The Business plan controls
+        // editing/adding, not whether the navigation entry is displayed.
         tab.style.display = "";
         const canManage = !!access.plan_active;
     const note = document.getElementById("supplier-branches-plan-note");
