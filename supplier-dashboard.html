@@ -572,6 +572,16 @@ Add Product
         </div>
     </div>
 
+    <div id="premium-video-fields" style="display:none;border:1px solid #e2d6b2;background:#fffaf0;padding:14px;border-radius:9px;margin:14px 0;">
+        <strong style="display:block;margin-bottom:6px;">Premium product videos</strong>
+        <p style="color:#666;font-size:13px;margin:0 0 12px;">Available with an active Pro or Business plan. Add a short advert preview (MP4/WebM, up to 25 MB and 30 seconds) and/or a YouTube link for a full demonstration.</p>
+        <label for="product-video-preview" style="display:block;font-size:13px;font-weight:700;margin-bottom:5px;">Short advert preview</label>
+        <input type="file" id="product-video-preview" accept="video/mp4,video/webm" style="display:block;width:100%;margin-bottom:8px;">
+        <video id="product-video-preview-player" controls muted playsinline style="display:none;width:100%;max-width:360px;border-radius:8px;margin-bottom:12px;"></video>
+        <label for="product-youtube-demo" style="display:block;font-size:13px;font-weight:700;margin-bottom:5px;">Full product demonstration (YouTube)</label>
+        <input type="url" id="product-youtube-demo" placeholder="https://www.youtube.com/watch?v=..." style="display:block;width:100%;padding:10px;margin-bottom:5px;">
+        <p style="color:#777;font-size:12px;margin:0;">You can add either option or both.</p>
+    </div>
     <input
         type="text"
         id="vehicle-compatibility"
@@ -684,6 +694,64 @@ function uniqueName() {
     }
     return Date.now() + "-" + Math.random().toString(36).slice(2);
 }
+
+const PRODUCT_VIDEO_BUCKET = "product-videos";
+const MAX_PRODUCT_VIDEO_BYTES = 25 * 1024 * 1024;
+const MAX_PRODUCT_VIDEO_SECONDS = 30;
+
+function hasActivePremiumVideoPlan() {
+    return !!(SELLER_STATUS && SELLER_STATUS.plan_active && (SELLER_STATUS.plan === "pro" || SELLER_STATUS.plan === "business"));
+}
+function updatePremiumVideoFields() {
+    const panel = document.getElementById("premium-video-fields");
+    if (panel) panel.style.display = hasActivePremiumVideoPlan() ? "block" : "none";
+}
+function normaliseYouTubeUrl(value) {
+    try {
+        const url = new URL(value);
+        const host = url.hostname.toLowerCase().replace(/^www\./, "");
+        let id = "";
+        if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || "";
+        else if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+            if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
+            else if (/^\/(embed|shorts)\//.test(url.pathname)) id = url.pathname.split("/")[2] || "";
+        }
+        return /^[A-Za-z0-9_-]{11}$/.test(id) ? "https://www.youtube-nocookie.com/embed/" + id : null;
+    } catch (e) { return null; }
+}
+function validateProductVideo(file) {
+    return new Promise(function(resolve, reject) {
+        if (!file || !["video/mp4", "video/webm"].includes(file.type)) return reject(new Error("Choose an MP4 or WebM video."));
+        if (file.size > MAX_PRODUCT_VIDEO_BYTES) return reject(new Error("The advert preview must be 25 MB or smaller."));
+        const url = URL.createObjectURL(file); const video = document.createElement("video"); video.preload = "metadata";
+        video.onloadedmetadata = function() { URL.revokeObjectURL(url); if (!Number.isFinite(video.duration) || video.duration <= 0 || video.duration > MAX_PRODUCT_VIDEO_SECONDS) reject(new Error("Keep advert previews to 30 seconds or less.")); else resolve(true); };
+        video.onerror = function() { URL.revokeObjectURL(url); reject(new Error("This video could not be read. Please try another MP4 or WebM file.")); };
+        video.src = url;
+    });
+}
+async function uploadProductVideo(file, supplierId) {
+    const ext = file.type === "video/webm" ? "webm" : "mp4";
+    const path = supplierId + "/" + uniqueName() + "." + ext;
+    const result = await supabaseClient.storage.from(PRODUCT_VIDEO_BUCKET).upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
+    if (result.error) throw new Error(result.error.message);
+    return supabaseClient.storage.from(PRODUCT_VIDEO_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+async function removeStoredProductVideo(url) {
+    const marker = "/storage/v1/object/public/" + PRODUCT_VIDEO_BUCKET + "/"; const value = String(url || ""); const i = value.indexOf(marker);
+    if (i < 0) return;
+    const path = decodeURIComponent(value.slice(i + marker.length).split("?")[0]);
+    const result = await supabaseClient.storage.from(PRODUCT_VIDEO_BUCKET).remove([path]);
+    if (result.error) console.error("Could not remove old product video:", result.error);
+}
+document.addEventListener("change", function(e) {
+    if (!e.target || e.target.id !== "product-video-preview") return;
+    const player = document.getElementById("product-video-preview-player");
+    if (player.dataset.objectUrl) URL.revokeObjectURL(player.dataset.objectUrl);
+    const file = e.target.files && e.target.files[0];
+    if (!file) { player.style.display = "none"; player.removeAttribute("src"); return; }
+    const url = URL.createObjectURL(file); player.dataset.objectUrl = url; player.src = url; player.style.display = "block"; player.load();
+});
+
 
 async function readImage(file) {
 
@@ -1068,6 +1136,17 @@ async function addProductInner() {
         return;
     }
     const vehicle_compatibility = document.getElementById("vehicle-compatibility").value;
+    const videoFile = document.getElementById("product-video-preview").files[0] || null;
+    const youtubeInput = document.getElementById("product-youtube-demo").value.trim();
+    const youtubeDemoUrl = youtubeInput ? normaliseYouTubeUrl(youtubeInput) : null;
+    if ((videoFile || youtubeInput) && !hasActivePremiumVideoPlan()) {
+        message.textContent = "Product videos require an active Pro or Business plan.";
+        return;
+    }
+    if (youtubeInput && !youtubeDemoUrl) {
+        message.textContent = "Please enter a valid YouTube video link.";
+        return;
+    }
 
     if (!name || !category || !price) {
         message.textContent = "Please fill in the product name, category and price.";
@@ -1094,6 +1173,7 @@ async function addProductInner() {
     }
 
     const uploadedUrls = [];
+    let uploadedVideoUrl = null;
 
     if (imageFiles.length > 0) {
 
@@ -1112,6 +1192,20 @@ async function addProductInner() {
         message.textContent = "Saving product...";
     }
 
+    if (videoFile) {
+        try {
+            message.textContent = "Checking video...";
+            await validateProductVideo(videoFile);
+            message.textContent = "Uploading advert preview...";
+            uploadedVideoUrl = await uploadProductVideo(videoFile, supplier.id);
+        } catch (videoError) {
+            console.error(videoError);
+            for (const url of uploadedUrls) { await removeStoredImage(url); }
+            message.textContent = "Video upload failed: " + videoError.message;
+            return;
+        }
+    }
+
     const { error } = await supabaseClient
         .from("products")
         .insert([{
@@ -1123,6 +1217,8 @@ async function addProductInner() {
             stock: Number(stock) || 0,
             image_url: uploadedUrls[0] || "",
             extra_images: uploadedUrls.slice(1),
+            video_preview_url: uploadedVideoUrl,
+            youtube_demo_url: youtubeDemoUrl,
             vehicle_compatibility: vehicle_compatibility,
             sale_price: special.sale_price,
             sale_starts_at: special.sale_starts_at,
@@ -1134,6 +1230,7 @@ async function addProductInner() {
     if (error) {
         console.error(error);
         for (const url of uploadedUrls) { await removeStoredImage(url); }
+        if (uploadedVideoUrl) { await removeStoredProductVideo(uploadedVideoUrl); }
         message.textContent = "Error saving product: " + error.message;
         return;
     }
@@ -1159,6 +1256,10 @@ async function addProductInner() {
         img.removeAttribute("src");
     });
     document.getElementById("vehicle-compatibility").value = "";
+    document.getElementById("product-video-preview").value = "";
+    document.getElementById("product-youtube-demo").value = "";
+    const previewPlayer = document.getElementById("product-video-preview-player");
+    previewPlayer.pause(); previewPlayer.removeAttribute("src"); previewPlayer.load(); previewPlayer.style.display = "none";
 
     loadSupplierProducts();
 }
@@ -1276,6 +1377,7 @@ async function loadSupplierProducts() {
     }
 
     await loadSellerStatus();
+    updatePremiumVideoFields();
     const allProducts = products || [];
     const activeProducts = allProducts.filter(product => product.status === "Active");
     const archivedProducts = allProducts.filter(product => product.status !== "Active");
