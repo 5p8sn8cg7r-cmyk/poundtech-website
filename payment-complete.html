@@ -49,13 +49,14 @@
 .pay-card .btn { margin-top: 8px; }
 
 </style>
+<link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
 
 <body>
 
 <header class="site-header">
     <a class="logo" href="/index.html">POUND<span>TECH</span></a>
-    <a class="back" href="/index.html">&larr; Back to marketplace</a>
+    <a class="back pt-back-marketplace" href="/index.html">&larr; Back to marketplace</a>
 </header>
 
 <main class="pay-main">
@@ -108,7 +109,7 @@ async function status() {
 async function check() {
 
     if (!orderNumber) {
-        show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn" href="/index.html">Back to marketplace</a>');
+        show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn pt-back-marketplace" href="/index.html">Back to marketplace</a>');
         return;
     }
 
