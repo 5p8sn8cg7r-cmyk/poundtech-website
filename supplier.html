@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Become a Supplier | PoundTech</title>
+<title>Grow Your Automotive Business | Sell on PoundTech</title>
+<meta name="description" content="Reach automotive customers across South Africa. List your products, manage orders and grow your business on PoundTech. Apply free and start on Standard." />
 <link rel="stylesheet" href="site.css">
 
 <style>
@@ -119,6 +120,37 @@
 .plan-preview-link { display: inline-block; margin-top: 15px; color: #d60000; font-weight: 800; text-decoration: none; }
 .plan-preview-link:hover { text-decoration: underline; }
 .plan-preview-note { margin: 12px 0 0; color: #666; font-size: 12px; line-height: 1.5; }
+.supplier-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 24px;
+}
+.supplier-benefit {
+    padding: 17px;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    background: #fff;
+}
+.supplier-benefit-mark {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: #fff0f0;
+    color: #d60000;
+    font-size: 17px;
+    font-weight: 800;
+}
+.supplier-benefit h2 { margin: 0 0 6px; font-size: 15px; }
+.supplier-benefit p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; }
+@media (max-width: 700px) {
+    .supplier-benefits { grid-template-columns: 1fr; gap: 9px; }
+    .supplier-benefit { padding: 14px; }
+}
 @media (max-width: 700px) {
     .plan-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .plan-preview { padding: 15px; }
@@ -144,14 +176,32 @@
 </header>
 
 <section class="page-hero">
-    <h1>Become a PoundTech Supplier</h1>
-    <p>Register your automotive business to sell through the PoundTech marketplace.</p>
+    <h1>Grow your automotive business with PoundTech</h1>
+    <p>Put your products in front of customers across South Africa. Reach new buyers, manage your orders and build your online presence — all in one place.</p>
 </section>
 
 <main class="page-main">
 <div class="card" id="application-card">
 
     <div id="application-form">
+
+        <section class="supplier-benefits" aria-label="Benefits of selling on PoundTech">
+            <article class="supplier-benefit">
+                <span class="supplier-benefit-mark" aria-hidden="true">↗</span>
+                <h2>Reach more customers</h2>
+                <p>Make your products discoverable to motorists shopping for parts and accessories across South Africa.</p>
+            </article>
+            <article class="supplier-benefit">
+                <span class="supplier-benefit-mark" aria-hidden="true">✓</span>
+                <h2>Manage your business</h2>
+                <p>List products, manage orders and run your supplier storefront through your PoundTech dashboard.</p>
+            </article>
+            <article class="supplier-benefit">
+                <span class="supplier-benefit-mark" aria-hidden="true">R</span>
+                <h2>Start on a free plan</h2>
+                <p>Apply at no cost and begin on Standard once approved. Upgrade only when a different plan suits your business.</p>
+            </article>
+        </section>
 
         <div class="steps">
             <div><span>1</span> Apply</div>
