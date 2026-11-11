@@ -332,8 +332,9 @@ nav a:hover {
 }
 .pt-pro-badge svg { width: 11px; height: 11px; fill: currentColor; }
 
-.product-seller { margin: 0 0 9px; color: #777; font-size: 12px; line-height: 1.35; }
-.product-seller strong { color: #333; font-weight: 700; }
+.product-supplier-meta { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; margin:0 0 7px; }
+.product-seller { display:block; margin:0 0 5px; color:#777; font-size:12px; line-height:1.35; overflow-wrap:anywhere; }
+.product-seller strong { color:#333; font-weight:700; }
 
 .product-image {
     height: 170px;
@@ -2998,8 +2999,10 @@ function renderProductCard(product, status) {
 
             <div class="product-info">
                 <h3>${esc(product.name)}</h3>
-                ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
-                ${product._ptSupplierName ? '<p class="product-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>' : ""}
+                <div class="product-supplier-meta">
+                    ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
+                    ${product._ptSupplierName ? '<p class="product-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>' : ""}
+                </div>
                 <span class="product-category-label">${esc(product.category || "General")}</span>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
