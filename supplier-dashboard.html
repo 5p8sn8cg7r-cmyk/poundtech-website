@@ -343,6 +343,16 @@ Manage your products and stock below.
 <button id="add-product-toggle" onclick="showAddProductForm()">
 Add Product
 </button>
+<div id="business-bulk-upload-panel" style="display:none;margin:18px 0;padding:16px;border:1px solid #e5d6ad;background:#fffaf0;border-radius:10px;">
+    <strong style="display:block;margin-bottom:5px;">Business · Bulk product upload</strong>
+    <p style="font-size:13px;color:#666;margin:0 0 12px;">Import up to 100 products at a time using a CSV file. Product photos can be added afterwards from Manage Photos.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button type="button" onclick="downloadBusinessProductCsvTemplate()" style="background:#333;">Download CSV template</button>
+        <input type="file" id="business-products-csv" accept=".csv,text/csv" style="max-width:100%;">
+        <button type="button" id="business-products-import-btn" onclick="importBusinessProductsCsv()">Import products</button>
+    </div>
+    <p id="business-products-import-message" role="status" style="font-size:13px;color:#555;margin:10px 0 0;min-height:18px;"></p>
+</div>
     
 <dialog id="special-dialog" class="pt-dialog">
     <div class="pt-dialog-head">
@@ -736,10 +746,12 @@ function hasActivePremiumVideoPlan() {
 }
 function updatePremiumVideoFields() {
     const visible = hasActivePremiumVideoPlan() ? "block" : "none";
-    const panel = document.getElementById("premium-video-fields");
     const editPanel = document.getElementById("edit-premium-video-fields");
+    const panel = document.getElementById("premium-video-fields");
     if (panel) panel.style.display = visible;
     if (editPanel) editPanel.style.display = visible;
+    const bulkPanel = document.getElementById("business-bulk-upload-panel");
+    if (bulkPanel) bulkPanel.style.display = (SUPPLIER_PLAN_ACCESS && SUPPLIER_PLAN_ACCESS.plan_active && SUPPLIER_PLAN_ACCESS.plan === "business" && SUPPLIER_PLAN_ACCESS.can_manage_products) ? "block" : "none";
 }
 function normaliseYouTubeUrl(value) {
     try {
@@ -1132,6 +1144,75 @@ function hideAddProductForm() {
 let savingProduct = false;
 
 // Stops a double tap from saving the same product twice while a photo uploads.
+function downloadBusinessProductCsvTemplate() {
+    const csv = "name,category,description,price,stock,vehicle_compatibility\nExample LED Headlight Kit,Lighting,Pair of LED headlights,899,12,VW Polo 2018-2022";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a"); link.href = url; link.download = "poundtech-product-import-template.csv";
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+}
+
+function parseSupplierCsv(text) {
+    const rows = []; let row = []; let field = ""; let quoted = false;
+    text = String(text || "").replace(/^\\uFEFF/, "");
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (quoted) {
+            if (ch === '"' && text[i + 1] === '"' ) { field += '"' ; i++; }
+            else if (ch === '"' ) quoted = false;
+            else field += ch;
+        } else if (ch === '"' && field.length === 0) quoted = true;
+        else if (ch === ",") { row.push(field); field = ""; }
+        else if (ch === "\\n" || ch === "\\r") {
+            if (ch === "\\r" && text[i + 1] === "\\n") i++;
+            row.push(field); field = "";
+            if (row.some(value => String(value).trim() !== "")) rows.push(row);
+            row = [];
+        } else field += ch;
+    }
+    row.push(field); if (row.some(value => String(value).trim() !== "")) rows.push(row);
+    return rows;
+}
+
+async function importBusinessProductsCsv() {
+    const input = document.getElementById("business-products-csv");
+    const message = document.getElementById("business-products-import-message");
+    const button = document.getElementById("business-products-import-btn");
+    const file = input && input.files && input.files[0];
+    if (!file) { message.textContent = "Choose a CSV file first."; return; }
+    if (file.size > 1024 * 1024) { message.textContent = "The CSV file must be 1 MB or smaller."; return; }
+    if (!SUPPLIER_PLAN_ACCESS || !SUPPLIER_PLAN_ACCESS.plan_active || SUPPLIER_PLAN_ACCESS.plan !== "business" || !SUPPLIER_PLAN_ACCESS.can_manage_products) {
+        message.textContent = "Bulk uploads require an active Business plan and product-management permission."; return;
+    }
+    button.disabled = true; button.textContent = "Importing..."; message.textContent = "Reading your CSV...";
+    try {
+        const text = await file.text();
+        const rows = parseSupplierCsv(text);
+        if (rows.length < 2) throw new Error("The CSV needs a header row and at least one product.");
+        const headers = rows[0].map(value => String(value).trim().toLowerCase());
+        const required = ["name","category","description","price","stock","vehicle_compatibility"];
+        const missing = required.filter(name => !headers.includes(name));
+        if (missing.length) throw new Error("Missing CSV columns: " + missing.join(", "));
+        const products = rows.slice(1).map((cells,index) => {
+            const record = {}; headers.forEach((header,i) => record[header] = String(cells[i] == null ? "" : cells[i]).trim());
+            return { name:record.name, category:record.category, description:record.description, price:record.price, stock:record.stock, vehicle_compatibility:record.vehicle_compatibility, _row:index+2 };
+        });
+        if (products.length > 100) throw new Error("Import up to 100 products per file. This file has " + products.length + ".");
+        const invalid = products.find(item => !item.name || !item.category || !item.price || !Number.isFinite(Number(item.price)) || Number(item.price) <= 0 || (item.stock !== "" && (!Number.isInteger(Number(item.stock)) || Number(item.stock) < 0)));
+        if (invalid) throw new Error("Check row " + invalid._row + ": name, category and a positive price are required; stock must be a whole number of 0 or more.");
+        products.forEach(item => delete item._row);
+        message.textContent = "Importing " + products.length + " products...";
+        const { data, error } = await supabaseClient.rpc("bulk_import_supplier_products", { p_rows: products });
+        if (error) throw new Error(error.message);
+        message.textContent = Number(data) + " products imported successfully. Add product photos from Manage Photos.";
+        input.value = "";
+        await loadSupplierProducts();
+    } catch (error) {
+        console.error("Bulk product import:", error);
+        message.textContent = error.message || "The CSV could not be imported. Check the file and try again.";
+    } finally { button.disabled = false; button.textContent = "Import products"; }
+}
+
 async function addProduct() {
 
     if (savingProduct) { return; }
