@@ -1164,7 +1164,7 @@ function parseSupplierCsv(text) {
         } else if (ch === '"' && field.length === 0) quoted = true;
         else if (ch === ",") { row.push(field); field = ""; }
         else if (ch === "\n" || ch === "\r") {
-            if (ch === "\\r" && text[i + 1] === "\\n") i++;
+            if (ch === "\r" && text[i + 1] === "\n") i++;
             row.push(field); field = "";
             if (row.some(value => String(value).trim() !== "")) rows.push(row);
             row = [];
