@@ -78,6 +78,14 @@ header h1 {
     letter-spacing:.45px; box-shadow:0 3px 10px rgba(0,0,0,.12);
 }
 .pro-badge svg { width:14px; height:14px; fill:#171717; flex:0 0 14px; }
+.business-badge {
+    display:inline-flex; align-items:center; gap:7px; width:max-content;
+    margin-top:10px; padding:9px 13px; border-radius:999px;
+    color:#171717; background:linear-gradient(135deg,#fff0bd,#dcae3e);
+    border:1px solid #c99a2d; font-size:11px; font-weight:900;
+    letter-spacing:.5px; box-shadow:0 4px 13px rgba(0,0,0,.18);
+}
+.business-badge svg { width:15px; height:15px; fill:#171717; flex:0 0 15px; }
 
 .products-heading {
     margin-bottom: 20px;
@@ -975,20 +983,10 @@ async function loadSupplier() {
     }
 
 
-    const {
-        data: supplier,
-        error
-    } =
-        await supabaseClient
-
-        .from("suppliers")
-
-        .select("*")
-
-        .eq("id", supplierId)
-
-        .single();
-
+    const { data: supplierProfiles, error } = await supabaseClient.rpc("get_public_supplier_profile", {
+        p_supplier_id: supplierId
+    });
+    const supplier = supplierProfiles && supplierProfiles.length ? supplierProfiles[0] : null;
 
     if (error || !supplier) {
 
@@ -1009,10 +1007,9 @@ async function loadSupplier() {
         " | PoundTech";
 
 
-    // Only show Pro when the supplier subscription has not expired.
-    const proActive = supplier.plan === "pro" &&
-        !!supplier.plan_ends_at &&
-        new Date(supplier.plan_ends_at).getTime() > Date.now();
+    // Subscription badges are returned as safe, server-checked booleans.
+    const proActive = supplier.pro_active === true;
+    const businessActive = supplier.business_active === true;
 
     document.getElementById(
         "supplier-container"
@@ -1027,9 +1024,11 @@ async function loadSupplier() {
                 : ""
             }
             ${
-                proActive
-                ? `<div class="pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg> POUNDTECH PRO</div>`
-                : ""
+                businessActive
+                ? `<div class="business-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg> POUNDTECH BUSINESS PARTNER</div>`
+                : proActive
+                    ? `<div class="pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg> POUNDTECH PRO</div>`
+                    : ""
             }
             <div id="supplier-rating-quick" class="supplier-rating-quick" aria-live="polite"><span class="rating-stars">★★★★★</span><span>Loading supplier rating…</span></div>
             <div class="supplier-location">
