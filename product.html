@@ -628,7 +628,7 @@ function notice(html) {
 
 
 function productKey(p) {
-    return [p.price, p.sale_price, p.sale_ends_at, p.sale_label, p.stock, p.status, p.name, p.image_url, (p.extra_images || []).join(",")].join("|");
+    return [p.price, p.sale_price, p.sale_ends_at, p.sale_label, p.stock, p.status, p.name, p.image_url, (p.extra_images || []).join(","), p.video_preview_url || "", p.youtube_demo_url || ""].join("|");
 }
 
 
