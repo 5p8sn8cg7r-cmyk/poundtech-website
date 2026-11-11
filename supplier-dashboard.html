@@ -211,6 +211,21 @@ button:hover {
 .od-actions select{padding:9px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
 .od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
 @media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}}
+.pt-analytics-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0 24px}
+.pt-analytics-kpi{padding:14px;border:1px solid #eee;border-radius:9px;background:#fafafa;min-width:0}
+.pt-analytics-kpi span{display:block;color:#666;font-size:12px}
+.pt-analytics-kpi strong{display:block;font-size:21px;margin-top:7px;overflow-wrap:anywhere}
+.pt-analytics-sub{font-size:12px;color:#777;margin-top:5px}
+.pt-analytics-chart{display:flex;align-items:flex-end;gap:10px;min-height:180px;padding:14px 4px 0;border-bottom:1px solid #ddd}
+.pt-analytics-month{flex:1;min-width:0;text-align:center;font-size:11px;color:#666}
+.pt-analytics-track{height:125px;display:flex;align-items:flex-end;justify-content:center}
+.pt-analytics-bar{width:min(34px,75%);min-height:3px;border-radius:5px 5px 0 0;background:#d00000}
+.pt-analytics-month b{display:block;font-size:10px;color:#333;margin-bottom:5px;white-space:nowrap}
+.pt-analytics-month small{display:block;margin-top:7px;white-space:nowrap}
+.pt-analytics-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+.pt-analytics-table th,.pt-analytics-table td{padding:10px 8px;border-bottom:1px solid #eee;text-align:left}
+.pt-analytics-table th:last-child,.pt-analytics-table td:last-child{text-align:right}
+@media(max-width:680px){.pt-analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pt-analytics-kpi strong{font-size:18px}.pt-analytics-chart{gap:5px}.pt-analytics-month{font-size:10px}.pt-analytics-month small{font-size:9px}}
 </style>
 </head>
 
@@ -266,6 +281,13 @@ Logout
 
 </div>
         
+<section id="advanced-analytics-panel" style="display:none;margin:26px 0 8px;padding:20px;border:1px solid #e6e6e6;border-radius:12px;background:#fff;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div><h3 style="margin:0 0 5px;">Advanced analytics</h3><p style="color:#666;font-size:13px;margin:0;">Pro and Business insight into paid sales performance.</p></div>
+        <span style="font-size:11px;font-weight:800;letter-spacing:.05em;padding:6px 9px;border-radius:999px;background:#fff4d6;color:#72500a;">PRO · BUSINESS</span>
+    </div>
+    <div id="advanced-analytics-content" style="margin-top:18px;"><p style="color:#777;">Loading analytics...</p></div>
+</section>
 <div id="plan-box"></div>
 
 <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;">
@@ -2391,6 +2413,52 @@ async function loadPlanBox() {
     if (box) { box.style.display = ""; box.innerHTML = planBoxHTML(SELLER_STATUS); }
 }
 
+async function loadAdvancedAnalytics() {
+    const panel = document.getElementById("advanced-analytics-panel");
+    const content = document.getElementById("advanced-analytics-content");
+    if (!panel || !content) return;
+    await loadSellerStatus();
+    const premiumActive = SELLER_STATUS && SELLER_STATUS.plan_active && ["pro","business"].includes(SELLER_STATUS.plan);
+    if (!premiumActive) { panel.style.display = "none"; return; }
+    panel.style.display = "block";
+    content.innerHTML = "<p style=\"color:#777;\">Loading analytics...</p>";
+    const { data, error } = await supabaseClient.rpc("get_supplier_advanced_analytics", { p_months: 6 });
+    if (error || !data) {
+        console.error("ADVANCED ANALYTICS ERROR:", error);
+        content.innerHTML = "<p style=\"color:#777;\">Analytics could not be loaded right now. Please refresh and try again.</p>";
+        return;
+    }
+    renderAdvancedAnalytics(data, content);
+}
+
+function renderAdvancedAnalytics(data, container) {
+    const period = data.last_30_days || {};
+    const money = value => "R" + Number(value || 0).toLocaleString("en-ZA", {minimumFractionDigits:2,maximumFractionDigits:2});
+    const change = period.sales_change_pct;
+    const trend = change == null ? "No previous period to compare" : ((Number(change) >= 0 ? "↑ " : "↓ ") + Math.abs(Number(change)).toFixed(1) + "% vs previous 30 days");
+    const months = Array.isArray(data.monthly_sales) ? data.monthly_sales : [];
+    const maxSales = Math.max(1, ...months.map(m => Number(m.gross_sales) || 0));
+    const bars = months.map(m => {
+        const value = Number(m.gross_sales) || 0;
+        const height = value > 0 ? Math.max(5, Math.round(value / maxSales * 100)) : 2;
+        return `<div class="pt-analytics-month" title="${esc(m.month)}: ${money(value)}"><b>${money(value)}</b><div class="pt-analytics-track"><div class="pt-analytics-bar" style="height:${height}%;"></div></div><small>${esc(m.month)}</small></div>`;
+    }).join("");
+    const top = Array.isArray(data.top_products) ? data.top_products : [];
+    const topRows = top.length ? top.map((item,i) => `<tr><td>${i+1}. ${esc(item.product_name || "Product")}</td><td>${Number(item.units_sold || 0)}</td><td>${Number(item.orders || 0)}</td><td>${money(item.gross_sales)}</td></tr>`).join("") : '<tr><td colspan="4" style="color:#777;">No paid product sales in this period yet.</td></tr>';
+    container.innerHTML = `
+        <div class="pt-analytics-kpis">
+            <div class="pt-analytics-kpi"><span>Sales · last 30 days</span><strong>${money(period.gross_sales)}</strong><div class="pt-analytics-sub">${trend}</div></div>
+            <div class="pt-analytics-kpi"><span>Paid orders</span><strong>${Number(period.paid_orders || 0)}</strong><div class="pt-analytics-sub">Last 30 days</div></div>
+            <div class="pt-analytics-kpi"><span>Units sold</span><strong>${Number(period.units_sold || 0)}</strong><div class="pt-analytics-sub">Last 30 days</div></div>
+            <div class="pt-analytics-kpi"><span>Average order value</span><strong>${money(period.average_order_value)}</strong><div class="pt-analytics-sub">${Number(data.active_listings || 0)} active listings</div></div>
+        </div>
+        <h4 style="margin:0 0 4px;">Monthly sales trend</h4><p style="font-size:12px;color:#777;margin:0;">Paid product sales · last ${Number(data.period_months || 6)} months</p>
+        <div class="pt-analytics-chart">${bars}</div>
+        <h4 style="margin:24px 0 4px;">Top-selling products</h4>
+        <div style="overflow-x:auto;"><table class="pt-analytics-table"><thead><tr><th>Product</th><th>Units</th><th>Orders</th><th>Sales</th></tr></thead><tbody>${topRows}</tbody></table></div>
+    `;
+}
+
 async function loadSupplierEarnings() {
 
     const { data, error } =
@@ -2419,6 +2487,7 @@ async function loadSupplierEarnings() {
 
 loadSupplierEarnings();
 loadPlanBox();
+loadAdvancedAnalytics();
         async function loadSupplierPayouts() {
 
     const { data, error } =
