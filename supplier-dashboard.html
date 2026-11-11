@@ -171,6 +171,7 @@ button:hover {
 #product-edit-dialog .pt-field{width:100%}
 #product-edit-dialog textarea{min-height:112px}
 @media(max-width:520px){.pt-edit-grid{grid-template-columns:1fr;gap:0}.pt-edit-head h3{font-size:22px}.pt-edit-foot{flex-direction:column-reverse}.pt-edit-foot button{width:100%}.pt-edit-foot button:last-child{min-width:0}}
+@media(max-width:620px){#supplier-branch-form>div:first-of-type{grid-template-columns:1fr!important}#supplier-branch-form label[style*="grid-column:1/-1"]{grid-column:auto!important}}
 </style>
 
 <style>
@@ -252,6 +253,7 @@ Logout
         <button type="button" class="active" data-supplier-tab="supplier-overview" onclick="showSupplierSection('supplier-overview', this)">Overview</button>
         <button type="button" data-supplier-tab="supplier-orders-panel" onclick="showSupplierSection('supplier-orders-panel', this)">Orders</button>
         <button type="button" data-supplier-tab="supplier-products-panel" onclick="showSupplierSection('supplier-products-panel', this)">Products</button>
+        <button type="button" id="supplier-branches-tab" data-supplier-tab="supplier-branches-panel" style="display:none" onclick="showSupplierSection('supplier-branches-panel', this)">Branches</button>
         <button type="button" data-supplier-tab="supplier-earnings-panel" onclick="showSupplierSection('supplier-earnings-panel', this)">Payments &amp; Earnings</button>
         <button type="button" data-supplier-tab="supplier-help-panel" onclick="showSupplierSection('supplier-help-panel', this)">Help &amp; Guides</button>
         <button type="button" id="supplier-team-tab" style="display:none" onclick="window.location.href='supplier-team.html'">Team</button>
@@ -328,6 +330,63 @@ Checking...
 
 </p>
 
+</div>
+</section>
+
+<section class="supplier-panel" id="supplier-branches-panel">
+<div class="card">
+    <h2>Business branches</h2>
+    <p style="color:#666;line-height:1.5;">Manage the locations customers can visit or collect from. Your branches share one PoundTech supplier account, product catalogue, stock and order dashboard.</p>
+    <div id="supplier-branches-plan-note" style="margin:12px 0;"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+        <button type="button" id="add-supplier-branch-btn" onclick="showSupplierBranchForm()">Add a branch</button>
+    </div>
+    <form id="supplier-branch-form" onsubmit="saveSupplierBranch(event)" style="display:none;border:1px solid #e5e5e5;border-radius:12px;padding:18px;margin:16px 0;background:#fafafa;">
+        <h3 id="supplier-branch-form-title" style="margin:0 0 14px;">Add a branch</h3>
+        <input type="hidden" id="supplier-branch-id">
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+            <label style="font-size:13px;font-weight:700;">Branch name *
+                <input class="pt-field" id="supplier-branch-name" required maxlength="100" placeholder="e.g. Sandton branch" style="margin-top:6px;">
+            </label>
+            <label style="font-size:13px;font-weight:700;">Contact phone
+                <input class="pt-field" id="supplier-branch-phone" type="tel" maxlength="40" placeholder="Branch phone number" style="margin-top:6px;">
+            </label>
+            <label style="font-size:13px;font-weight:700;grid-column:1/-1;">Street address *
+                <input class="pt-field" id="supplier-branch-address" required maxlength="250" placeholder="Street number and street name" style="margin-top:6px;">
+            </label>
+            <label style="font-size:13px;font-weight:700;">Suburb
+                <input class="pt-field" id="supplier-branch-suburb" maxlength="100" style="margin-top:6px;">
+            </label>
+            <label style="font-size:13px;font-weight:700;">City / town *
+                <input class="pt-field" id="supplier-branch-city" required maxlength="100" style="margin-top:6px;">
+            </label>
+            <label style="font-size:13px;font-weight:700;">Province
+                <select class="pt-field" id="supplier-branch-province" style="margin-top:6px;">
+                    <option value="">Select province</option>
+                    <option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>North West</option><option>Northern Cape</option><option>Western Cape</option>
+                </select>
+            </label>
+            <label style="font-size:13px;font-weight:700;">Postal code
+                <input class="pt-field" id="supplier-branch-postal" maxlength="12" style="margin-top:6px;">
+            </label>
+            <label style="font-size:13px;font-weight:700;">Branch email
+                <input class="pt-field" id="supplier-branch-email" type="email" maxlength="254" style="margin-top:6px;">
+            </label>
+            <label style="font-size:13px;font-weight:700;grid-column:1/-1;">Opening hours
+                <input class="pt-field" id="supplier-branch-hours" maxlength="250" placeholder="Mon–Fri 08:00–17:00 · Sat 08:00–13:00" style="margin-top:6px;">
+            </label>
+        </div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin:15px 0;font-size:14px;">
+            <label><input type="checkbox" id="supplier-branch-collection"> Customers can collect orders here</label>
+            <label><input type="checkbox" id="supplier-branch-primary"> Set as main branch</label>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;">
+            <button type="submit" id="save-supplier-branch-btn">Save branch</button>
+            <button type="button" onclick="hideSupplierBranchForm()" style="background:#555;">Cancel</button>
+        </div>
+        <p id="supplier-branch-form-message" role="status" style="font-size:13px;color:#666;margin:10px 0 0;"></p>
+    </form>
+    <div id="supplier-branches-list"><p style="color:#777;">Loading branches...</p></div>
 </div>
 </section>
 
@@ -2754,6 +2813,202 @@ showOrderToast(newStatus === "Completed" ? "Marked completed. PoundTech will sch
 loadSupplierOrders();
 }
 
+
+var SUPPLIER_BRANCHES = [];
+
+async function loadSupplierBranches() {
+    const tab = document.getElementById("supplier-branches-tab");
+    const panel = document.getElementById("supplier-branches-panel");
+    const list = document.getElementById("supplier-branches-list");
+    if (!tab || !panel || !list) return;
+
+    const [{ data: role }, access] = await Promise.all([
+        supabaseClient.rpc("get_my_supplier_role"),
+        loadSupplierPlanAccess()
+    ]);
+
+    const isBusiness = !!(access && access.plan === "business");
+    if (role !== "owner" || !isBusiness) {
+        tab.style.display = "none";
+        if (panel.classList.contains("active")) showSupplierSection("supplier-overview", document.querySelector('[data-supplier-tab="supplier-overview"]'));
+        return;
+    }
+
+    tab.style.display = "";
+    const canManage = !!access.plan_active;
+    const note = document.getElementById("supplier-branches-plan-note");
+    const addButton = document.getElementById("add-supplier-branch-btn");
+    if (note) note.innerHTML = canManage
+        ? '<div class="pt-info-panel">Your Business plan includes branch management. New active branches become visible to customers once saved.</div>'
+        : '<div class="pt-info-panel">Your Business plan is not currently active. You can view your saved branches, but you need an active Business plan to add, edit or reactivate locations.</div>';
+    if (addButton) addButton.style.display = canManage ? "" : "none";
+
+    const supplierId = await getSupplierId();
+    if (!supplierId) {
+        list.innerHTML = '<p style="color:#b00020;">Could not identify your supplier account.</p>';
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("supplier_branches")
+        .select("*")
+        .eq("supplier_id", supplierId)
+        .order("is_primary", { ascending: false })
+        .order("branch_name", { ascending: true });
+
+    if (error) {
+        console.error("SUPPLIER BRANCH LOAD ERROR:", error);
+        list.innerHTML = '<p style="color:#b00020;">Could not load branches: ' + esc(error.message) + '</p>';
+        return;
+    }
+
+    SUPPLIER_BRANCHES = data || [];
+    renderSupplierBranches(canManage);
+}
+
+function renderSupplierBranches(canManage) {
+    const list = document.getElementById("supplier-branches-list");
+    if (!list) return;
+    if (!SUPPLIER_BRANCHES.length) {
+        list.innerHTML = '<div class="od-empty">No branches added yet. Add your first location to get started.</div>';
+        return;
+    }
+    list.innerHTML = SUPPLIER_BRANCHES.map(function(branch) {
+        const hours = branch.operating_hours && branch.operating_hours.display ? branch.operating_hours.display : "";
+        return `
+            <article style="border:1px solid #e5e5e5;border-radius:12px;padding:16px;margin:12px 0;background:#fff;opacity:${branch.is_active ? "1" : ".65"};">
+                <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:180px;">
+                        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+                            <strong style="font-size:16px;">${esc(branch.branch_name)}</strong>
+                            ${branch.is_primary ? '<span class="od-pill dark">Main branch</span>' : ''}
+                            ${branch.is_active ? '<span class="od-pill green">Active</span>' : '<span class="od-pill">Inactive</span>'}
+                        </div>
+                        <p style="margin:8px 0 4px;color:#555;">${esc([branch.address, branch.suburb, branch.city, branch.province, branch.postal_code].filter(Boolean).join(", "))}</p>
+                        ${branch.phone ? '<p style="margin:4px 0;color:#666;font-size:13px;">Phone: ' + esc(branch.phone) + '</p>' : ''}
+                        ${branch.email ? '<p style="margin:4px 0;color:#666;font-size:13px;">Email: ' + esc(branch.email) + '</p>' : ''}
+                        ${hours ? '<p style="margin:4px 0;color:#666;font-size:13px;">Hours: ' + esc(hours) + '</p>' : ''}
+                        ${branch.collection_available ? '<span class="od-pill green">Collection available</span>' : ''}
+                    </div>
+                    ${canManage ? '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" onclick="editSupplierBranch(\'' + esc(branch.id) + '\')" style="background:#333;">Edit</button><button type="button" onclick="toggleSupplierBranch(\'' + esc(branch.id) + '\')" style="background:#666;">' + (branch.is_active ? 'Deactivate' : 'Reactivate') + '</button></div>' : ''}
+                </div>
+            </article>`;
+    }).join("");
+}
+
+function showSupplierBranchForm(branch) {
+    const form = document.getElementById("supplier-branch-form");
+    if (!form) return;
+    const b = branch || {};
+    document.getElementById("supplier-branch-form-title").textContent = b.id ? "Edit branch" : "Add a branch";
+    document.getElementById("supplier-branch-id").value = b.id || "";
+    document.getElementById("supplier-branch-name").value = b.branch_name || "";
+    document.getElementById("supplier-branch-address").value = b.address || "";
+    document.getElementById("supplier-branch-suburb").value = b.suburb || "";
+    document.getElementById("supplier-branch-city").value = b.city || "";
+    document.getElementById("supplier-branch-province").value = b.province || "";
+    document.getElementById("supplier-branch-postal").value = b.postal_code || "";
+    document.getElementById("supplier-branch-phone").value = b.phone || "";
+    document.getElementById("supplier-branch-email").value = b.email || "";
+    document.getElementById("supplier-branch-hours").value = (b.operating_hours && b.operating_hours.display) || "";
+    document.getElementById("supplier-branch-collection").checked = !!b.collection_available;
+    document.getElementById("supplier-branch-primary").checked = !!b.is_primary;
+    document.getElementById("supplier-branch-form-message").textContent = "";
+    form.style.display = "block";
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function editSupplierBranch(id) {
+    const branch = SUPPLIER_BRANCHES.find(item => item.id === id);
+    if (branch) showSupplierBranchForm(branch);
+}
+
+function hideSupplierBranchForm() {
+    const form = document.getElementById("supplier-branch-form");
+    if (form) form.style.display = "none";
+    if (form) form.reset();
+    document.getElementById("supplier-branch-id").value = "";
+}
+
+async function saveSupplierBranch(event) {
+    event.preventDefault();
+    const button = document.getElementById("save-supplier-branch-btn");
+    const message = document.getElementById("supplier-branch-form-message");
+    const supplierId = await getSupplierId();
+    if (!supplierId || !SUPPLIER_PLAN_ACCESS || !SUPPLIER_PLAN_ACCESS.plan_active || SUPPLIER_PLAN_ACCESS.plan !== "business" || window.POUNDTECH_SUPPLIER_ROLE !== "owner") {
+        message.textContent = "An active Business plan and owner access are required to manage branches.";
+        return;
+    }
+
+    const id = document.getElementById("supplier-branch-id").value;
+    const isPrimary = document.getElementById("supplier-branch-primary").checked;
+    const payload = {
+        supplier_id: supplierId,
+        branch_name: document.getElementById("supplier-branch-name").value.trim(),
+        address: document.getElementById("supplier-branch-address").value.trim(),
+        suburb: document.getElementById("supplier-branch-suburb").value.trim() || null,
+        city: document.getElementById("supplier-branch-city").value.trim(),
+        province: document.getElementById("supplier-branch-province").value || null,
+        postal_code: document.getElementById("supplier-branch-postal").value.trim() || null,
+        phone: document.getElementById("supplier-branch-phone").value.trim() || null,
+        email: document.getElementById("supplier-branch-email").value.trim() || null,
+        operating_hours: { display: document.getElementById("supplier-branch-hours").value.trim() },
+        collection_available: document.getElementById("supplier-branch-collection").checked,
+        is_primary: isPrimary
+    };
+
+    if (!payload.branch_name || !payload.address || !payload.city) {
+        message.textContent = "Please complete the branch name, street address and city/town.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+    message.textContent = "";
+
+    try {
+        if (isPrimary) {
+            const clear = await supabaseClient.from("supplier_branches").update({ is_primary: false }).eq("supplier_id", supplierId);
+            if (clear.error) throw clear.error;
+        }
+        let result;
+        if (id) {
+            result = await supabaseClient.from("supplier_branches").update(payload).eq("id", id).eq("supplier_id", supplierId);
+        } else {
+            if (SUPPLIER_BRANCHES.length === 0) payload.is_primary = true;
+            result = await supabaseClient.from("supplier_branches").insert(payload);
+        }
+        if (result.error) throw result.error;
+        hideSupplierBranchForm();
+        await loadSupplierBranches();
+    } catch (error) {
+        console.error("SUPPLIER BRANCH SAVE ERROR:", error);
+        message.textContent = "Could not save branch: " + (error.message || "Please try again.");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Save branch";
+    }
+}
+
+async function toggleSupplierBranch(id) {
+    const branch = SUPPLIER_BRANCHES.find(item => item.id === id);
+    if (!branch) return;
+    if (!SUPPLIER_PLAN_ACCESS || !SUPPLIER_PLAN_ACCESS.plan_active || SUPPLIER_PLAN_ACCESS.plan !== "business" || window.POUNDTECH_SUPPLIER_ROLE !== "owner") {
+        alert("An active Business plan and owner access are required to manage branches.");
+        return;
+    }
+    const action = branch.is_active ? "deactivate" : "reactivate";
+    if (!confirm("Are you sure you want to " + action + " " + branch.branch_name + "?")) return;
+    const { error } = await supabaseClient.from("supplier_branches")
+        .update({ is_active: !branch.is_active })
+        .eq("id", id);
+    if (error) {
+        alert("Could not update branch: " + error.message);
+        return;
+    }
+    await loadSupplierBranches();
+}
+
 function showSupplierSection(sectionId, button) {
     document.querySelectorAll(".supplier-panel").forEach(function(panel) {
         panel.classList.toggle("active", panel.id === sectionId);
@@ -2765,9 +3020,11 @@ function showSupplierSection(sectionId, button) {
     });
     if (sectionId === "supplier-orders-panel") { loadSupplierOrders(); }
     if (sectionId === "supplier-products-panel") { loadSupplierProducts(); }
+    if (sectionId === "supplier-branches-panel") { loadSupplierBranches(); }
     if (sectionId === "supplier-earnings-panel") {
         loadSupplierEarnings();
         loadSupplierPayouts();
+loadSupplierBranches();
         loadPlanBox();
         loadAdvancedAnalytics();
     }
