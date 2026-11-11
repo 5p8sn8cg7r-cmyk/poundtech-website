@@ -297,6 +297,34 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
 .store-section-head p { color:#777; font-size:13px; margin:6px 0 0; }
 #supplier-product-count { color:#777; font-size:12px; white-space:nowrap; padding-bottom:3px; }
 .fitment-panel { margin:0 0 25px; }
+
+/* BUSINESS PLAN BRANCH LOCATIONS */
+.supplier-branches {
+    margin:0 0 30px;
+    padding:24px;
+    background:#fff;
+    border:1px solid #e8e9ec;
+    border-radius:14px;
+    box-shadow:0 3px 14px rgba(0,0,0,.035);
+}
+.supplier-branches[hidden] { display:none; }
+.supplier-branches-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.supplier-branches-head h2 { margin:0; font-size:21px; letter-spacing:-.4px; }
+.supplier-branches-head p { margin:6px 0 0; color:#777; font-size:13px; }
+.supplier-branch-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+.supplier-branch-card { min-width:0; padding:17px; border:1px solid #e7e8eb; border-radius:11px; background:#fafafa; }
+.supplier-branch-title { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-bottom:9px; }
+.supplier-branch-title strong { font-size:15px; }
+.supplier-branch-primary { padding:4px 7px; border-radius:999px; background:#fff1d2; color:#805600; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; }
+.supplier-branch-address { color:#555; font-size:13px; line-height:1.55; margin:0 0 9px; }
+.supplier-branch-detail { color:#666; font-size:12px; line-height:1.55; margin:4px 0; overflow-wrap:anywhere; }
+.supplier-branch-detail a { color:#d00000; text-decoration:none; font-weight:700; }
+.supplier-branch-collection { display:inline-flex; margin-top:9px; padding:6px 9px; border-radius:6px; background:#eaf6ed; color:#18733a; font-size:10px; font-weight:800; }
+@media(max-width:700px) {
+    .supplier-branches { padding:18px; margin-bottom:24px; }
+    .supplier-branches-head h2 { font-size:19px; }
+    .supplier-branch-grid { grid-template-columns:1fr; }
+}
 .products {
     display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px;
 }
@@ -583,6 +611,16 @@ Loading supplier...
 </p>
 
 </div>
+
+<section id="supplier-branches" class="supplier-branches" hidden aria-label="Supplier branch locations">
+    <div class="supplier-branches-head">
+        <div>
+            <h2>Our locations</h2>
+            <p>Visit or collect from one of our active branches.</p>
+        </div>
+    </div>
+    <div id="supplier-branch-list" class="supplier-branch-grid"></div>
+</section>
 
 
     
@@ -1009,9 +1047,61 @@ async function loadSupplier() {
     `;
 
 
+    loadSupplierBranches();
     loadSupplierProducts();
     loadSupplierReviews();
 
+}
+
+
+async function loadSupplierBranches() {
+    const section = document.getElementById("supplier-branches");
+    const list = document.getElementById("supplier-branch-list");
+    if (!section || !list || !supplierId) return;
+
+    const { data: branches, error } = await supabaseClient
+        .from("supplier_branches")
+        .select("branch_name,address,suburb,city,province,postal_code,phone,email,operating_hours,collection_available,is_primary")
+        .eq("supplier_id", supplierId)
+        .eq("is_active", true)
+        .order("is_primary", { ascending: false })
+        .order("branch_name", { ascending: true });
+
+    if (error) {
+        console.error("PUBLIC SUPPLIER BRANCHES ERROR:", error);
+        section.hidden = true;
+        return;
+    }
+
+    if (!branches || !branches.length) {
+        section.hidden = true;
+        return;
+    }
+
+    list.innerHTML = branches.map(function(branch) {
+        const address = [branch.address, branch.suburb, branch.city, branch.province, branch.postal_code]
+            .filter(Boolean).map(PT.esc).join(", ");
+        const hours = branch.operating_hours && branch.operating_hours.display
+            ? PT.esc(branch.operating_hours.display) : "";
+        const phone = String(branch.phone || "").trim();
+        const email = String(branch.email || "").trim();
+
+        return `
+            <article class="supplier-branch-card">
+                <div class="supplier-branch-title">
+                    <strong>${PT.esc(branch.branch_name || "Branch")}</strong>
+                    ${branch.is_primary ? '<span class="supplier-branch-primary">Main branch</span>' : ""}
+                </div>
+                <p class="supplier-branch-address">${address}</p>
+                ${hours ? '<p class="supplier-branch-detail"><strong>Hours:</strong> ' + hours + '</p>' : ""}
+                ${phone ? '<p class="supplier-branch-detail"><strong>Phone:</strong> <a href="tel:' + PT.esc(phone.replace(/[^+\\d]/g, "")) + '">' + PT.esc(phone) + '</a></p>' : ""}
+                ${email ? '<p class="supplier-branch-detail"><strong>Email:</strong> <a href="mailto:' + PT.esc(email) + '">' + PT.esc(email) + '</a></p>' : ""}
+                ${branch.collection_available ? '<span class="supplier-branch-collection">Collection available</span>' : ""}
+            </article>
+        `;
+    }).join("");
+
+    section.hidden = false;
 }
 
 
