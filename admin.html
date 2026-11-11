@@ -191,74 +191,143 @@ input {
 .od-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:9999}
 @media(max-width:640px){.od-cards{grid-template-columns:repeat(2,1fr)}}
 </style>
+<style>
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f4f5f7;color:#171717}
+.pt-admin-header{background:#090a0c;color:#fff;padding:18px clamp(18px,4vw,54px);display:flex;align-items:center;justify-content:space-between;gap:18px;border-bottom:3px solid #d00000}
+.pt-brand{font-size:22px;font-weight:900;letter-spacing:-.7px}.pt-brand span{color:#e00000}.pt-brand small{font-size:10px;letter-spacing:1.8px;color:#9b9b9b;margin-left:10px}
+.pt-admin-user{display:flex;align-items:center;gap:14px;color:#c8c8c8;font-size:13px}.pt-signout{margin:0;background:#252525;border:1px solid #454545;border-radius:9px;padding:9px 14px}.pt-signout:hover{background:#3a3a3a}
+.pt-nav-wrap{background:#fff;border-bottom:1px solid #e6e6e6;position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(0,0,0,.035)}
+.pt-nav{max-width:1500px;margin:auto;padding:10px clamp(12px,3vw,42px);display:flex;gap:7px;overflow-x:auto}
+.pt-nav-btn{background:transparent;color:#555;border:1px solid transparent;border-radius:9px;padding:11px 15px;margin:0;white-space:nowrap;font-size:13px;font-weight:700}
+.pt-nav-btn:hover{background:#f5f5f5;color:#111}.pt-nav-btn.active{background:#111;color:#fff;border-color:#111}.pt-nav-count{display:inline-block;margin-left:6px;background:#d00000;color:#fff;border-radius:20px;padding:2px 7px;font-size:11px}
+.pt-admin-container{max-width:1500px;margin:28px auto;padding:0 clamp(12px,3vw,42px) 50px}
+.pt-login{max-width:440px;margin:70px auto;background:#fff;border:1px solid #e7e7e7;border-radius:18px;padding:30px;box-shadow:0 14px 45px rgba(0,0,0,.07)}
+.pt-login h2{font-size:25px;letter-spacing:-.7px;margin:7px 0}.pt-login input{border-radius:9px}.pt-login-btn{width:100%;padding:13px;border-radius:9px;margin:5px 0 0}
+.section-kicker{display:block;color:#c00000;text-transform:uppercase;letter-spacing:1.5px;font-size:10px;font-weight:800}
+.section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:4px 0 20px}
+.section-heading h2{font-size:27px;letter-spacing:-.8px;margin:5px 0}.section-heading p{color:#777;font-size:14px;margin:0}
+.admin-panel{display:none}.admin-panel.active{display:block}
+.pt-refresh{background:#fff;color:#222;border:1px solid #d9d9d9;border-radius:9px;margin:0;padding:10px 14px}.pt-refresh:hover{background:#f5f5f5;border-color:#aaa}
+.pt-filter-panel{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e7e7e7;border-radius:12px;padding:14px 16px;margin-bottom:16px;flex-wrap:wrap}
+.pt-filter-panel label{font-size:13px;font-weight:700}.pt-filter-panel select,.support-list-head select{padding:10px 12px;border:1px solid #d8d8d8;border-radius:9px;background:#fff;font:inherit}
+.pt-filter-panel select{min-width:240px}
+.rev-card,.order,.panel-card{border:1px solid #e7e7e7;box-shadow:0 3px 12px rgba(0,0,0,.035);border-radius:14px}
+.rev-grid{gap:14px}.rev-card{padding:20px}.rev-card b{font-size:26px}.rev-table{border:1px solid #e7e7e7;box-shadow:0 3px 12px rgba(0,0,0,.035)}
+.od-cards button.od-card{border-radius:13px;padding:17px}.od-cards button.od-card:hover{transform:translateY(-1px)}
+.od-item{border-radius:12px;border:1px solid #e7e7e7}.od-tabs{margin-top:12px}
+.support-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.support-stat{background:#fff;border:1px solid #e7e7e7;border-radius:12px;padding:15px 18px}.support-stat strong{display:block;font-size:25px;letter-spacing:-.6px}.support-stat span{font-size:12px;color:#777}
+.support-workspace{display:grid;grid-template-columns:minmax(290px,.85fr) minmax(0,1.5fr);gap:15px;align-items:start}
+.panel-card{background:#fff;overflow:hidden}.support-list-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:15px 16px;border-bottom:1px solid #eee}.support-list-head strong{font-size:14px}.support-list-head select{max-width:150px;font-size:12px;padding:8px}
+.support-ticket{display:block;width:100%;text-align:left;background:#fff;color:#222;border:0;border-bottom:1px solid #eee;border-radius:0;padding:14px 16px;margin:0;font-weight:400}.support-ticket:hover{background:#fafafa}.support-ticket.selected{background:#fff5f5;border-left:4px solid #c90000;padding-left:12px}
+.support-ticket strong{display:block;font-size:13px;margin:7px 0 4px}.support-ticket small{display:block;color:#777;font-size:11px;line-height:1.5}.support-ticket-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.support-pill{font-size:10px;font-weight:800;border-radius:30px;padding:5px 8px;background:#eee;color:#444;white-space:nowrap}.support-pill.open{background:#ffe7e7;color:#a50000}.support-pill.progress{background:#fff0d8;color:#885300}.support-pill.awaiting{background:#e9edff;color:#344caa}.support-pill.done{background:#e4f5ea;color:#176b35}
+.support-detail{padding:20px;min-height:480px}.support-detail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid #eee;padding-bottom:14px}.support-detail-head h3{font-size:18px;margin:5px 0}.support-detail-head p{font-size:12px;color:#777;margin:0}
+.support-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:16px 0}.support-meta div{background:#f7f7f7;padding:11px;border-radius:9px;min-width:0}.support-meta small{display:block;color:#777;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}.support-meta strong{font-size:12px;overflow-wrap:anywhere}
+.support-detail h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#777;margin:18px 0 8px}.support-message{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:14px;white-space:pre-wrap;line-height:1.55;font-size:13px;overflow-wrap:anywhere}
+.support-detail label{display:block;font-size:12px;font-weight:700;margin:14px 0 7px}.support-detail select,.support-detail textarea{width:100%;padding:11px 12px;border:1px solid #d8d8d8;border-radius:9px;background:#fff;font:inherit;box-sizing:border-box}.support-detail textarea{min-height:130px;resize:vertical;line-height:1.5}
+.support-detail-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}.support-detail-actions span{font-size:11px;color:#777}.support-detail-actions button{margin:0;border-radius:9px}
+#admin-support-message{margin-top:12px}
+@media(max-width:850px){.support-workspace{grid-template-columns:1fr}.support-list{order:1}.support-detail{order:2;min-height:0}.support-list{max-height:none}.section-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:600px){.pt-admin-header{padding:14px 15px}.pt-brand{font-size:19px}.pt-admin-user{gap:8px}.pt-admin-user #admin-user-label{display:none}.pt-nav{padding:8px 10px}.pt-nav-btn{padding:10px 12px}.pt-admin-container{margin:18px auto;padding:0 12px 36px}.section-heading h2{font-size:24px}.support-stats{gap:7px}.support-stat{padding:12px}.support-stat strong{font-size:21px}.support-meta{grid-template-columns:1fr}.pt-filter-panel{align-items:stretch}.pt-filter-panel select{width:100%}.pt-filter-panel button{width:100%}}
+</style>
 </head>
 
 <body>
 
-<header>
-
-    <h1>POUND<span>TECH</span></h1>
-    <p>Admin Dashboard</p>
-
-    <div id="admin-nav" style="display:none; margin:20px 0;">
-        <button onclick="window.location.href='admin.html'">Orders</button>
-        <button onclick="window.location.href='admin-mechanics.html'">Mechanic Applications</button>
-        <button onclick="window.location.href='admin-suppliers.html'">Supplier Applications</button>
-        <button onclick="window.location.href='admin-private-sellers.html'">Private Sellers</button>
-    </div>
-
-    <button onclick="adminLogout()">Logout</button>
-
+<header class="pt-admin-header">
+  <div class="pt-brand">POUND<span>TECH</span><small>ADMIN</small></div>
+  <div class="pt-admin-user"><span id="admin-user-label">Admin workspace</span><button type="button" class="pt-signout" onclick="adminLogout()">Sign out</button></div>
 </header>
+<div id="admin-nav" class="pt-nav-wrap" style="display:none">
+  <nav class="pt-nav" aria-label="Admin sections">
+    <button type="button" class="pt-nav-btn active" data-section="overview" onclick="setAdminSection('overview')">Overview</button>
+    <button type="button" class="pt-nav-btn" data-section="orders" onclick="setAdminSection('orders')">Orders</button>
+    <button type="button" class="pt-nav-btn" data-section="applications" onclick="setAdminSection('applications')">Applications</button>
+    <button type="button" class="pt-nav-btn" data-section="support" onclick="setAdminSection('support')">Support <span id="support-nav-count" class="pt-nav-count" hidden>0</span></button>
+    <button type="button" class="pt-nav-btn" data-section="marketplace" onclick="setAdminSection('marketplace')">Marketplace</button>
+    <button type="button" class="pt-nav-btn" data-section="finance" onclick="setAdminSection('finance')">Finance</button>
+    <button type="button" class="pt-nav-btn" data-section="settings" onclick="setAdminSection('settings')">Settings</button>
+  </nav>
+</div>
 
-<div class="container">
+<div class="container pt-admin-container">
 
-    <div id="login">
+    <div id="login" class="pt-login">
 
-        <h2>Admin Login</h2>
+        <span class="section-kicker">Restricted access</span><h2>Admin sign in</h2><p class="rev-note">Sign in to manage the PoundTech marketplace.</p>
 
         <input id="admin-email" type="email" placeholder="Admin email">
         <input id="admin-password" type="password" placeholder="Password">
 
-        <button onclick="adminLogin()">Login</button>
+        <button onclick="adminLogin()" class="pt-login-btn">Sign in to admin</button>
 
         <p id="login-error"></p>
 
     </div>
 
-    <div id="payments-setup" style="display:none;">
+    <section class="admin-panel active" data-admin-panel="overview" id="panel-overview">
+      <div class="section-heading"><div><span class="section-kicker">At a glance</span><h2>Business overview</h2><p>Track PoundTech performance and activity.</p></div></div>
+      <div id="revenue"></div>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="orders" id="panel-orders">
+      <div class="section-heading"><div><span class="section-kicker">Marketplace operations</span><h2>Orders</h2><p>Monitor payments, supplier progress and customer orders.</p></div><button type="button" class="pt-refresh" onclick="loadOrders()">Refresh orders</button></div>
+      <div id="orders"></div>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="applications" id="panel-applications">
+      <div class="section-heading"><div><span class="section-kicker">Onboarding</span><h2>Applications</h2><p>Review every business and seller application from one workspace.</p></div></div>
+      <div class="pt-filter-panel"><label for="application-kind">Application type</label><select id="application-kind">
+        <option value="suppliers">Suppliers</option><option value="mechanics">Mechanics &amp; service businesses</option><option value="private_sellers">Private sellers</option>
+      </select><button type="button" class="pt-refresh" onclick="loadAdminApplications(document.getElementById('application-kind').value)">Refresh applications</button></div>
+      <div id="applications-admin"><div class="od-empty">Choose an application type to load its applications.</div></div>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="support" id="panel-support">
+      <div class="section-heading"><div><span class="section-kicker">Supplier services</span><h2>Business support</h2><p>Manage Business supplier requests and send replies directly from PoundTech.</p></div><button type="button" class="pt-refresh" id="admin-support-refresh">Refresh inbox</button></div>
+      <div class="support-stats">
+        <div class="support-stat"><strong id="admin-support-open">0</strong><span>Active requests</span></div>
+        <div class="support-stat"><strong id="admin-support-resolved">0</strong><span>Resolved / closed</span></div>
+        <div class="support-stat"><strong id="admin-support-total">0</strong><span>Total loaded</span></div>
+      </div>
+      <div class="support-workspace">
+        <div class="support-list panel-card"><div class="support-list-head"><strong>Support requests</strong><select id="admin-support-filter" aria-label="Filter support requests"><option value="active">Active</option><option value="all">All tickets</option><option>Open</option><option>In progress</option><option>Awaiting supplier</option><option>Resolved</option><option>Closed</option></select></div><div id="admin-support-list"><div class="od-empty">Loading support requests…</div></div></div>
+        <div class="support-detail panel-card" id="admin-support-detail"><div class="od-empty">Select a support request to view its details.</div></div>
+      </div>
+      <p id="admin-support-message" class="rev-note" role="status"></p>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="marketplace" id="panel-marketplace">
+      <div class="section-heading"><div><span class="section-kicker">Marketplace quality</span><h2>Marketplace management</h2><p>Review listings, manage promotions and keep the catalogue healthy.</p></div></div>
+      <div id="listings-admin"></div>
+      <div id="preowned-listings-admin"></div>
+      <div id="sponsor-admin"></div>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="finance" id="panel-finance">
+      <div class="section-heading"><div><span class="section-kicker">Money movement</span><h2>Finance &amp; payouts</h2><p>Manage supplier payments, private-seller payouts and plan revenue.</p></div></div>
+      <div id="payouts-admin"></div>
+      <div id="preowned-payouts-admin"></div>
+      <div id="plans-admin"></div>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="settings" id="panel-settings">
+      <div class="section-heading"><div><span class="section-kicker">Platform controls</span><h2>Settings</h2><p>Manage marketplace rules and payment integrations.</p></div></div>
+      <div id="rules-admin"></div>
+      <div id="payments-setup">
         <div class="rev-card" style="margin-bottom:24px;">
-            <h2 class="rev-title" style="margin-bottom:8px;">Online payments (Yoco)</h2>
-            <p class="rev-note" style="margin-bottom:12px;">
-                One-time step after adding your Yoco secret key to Supabase: connect Yoco's
-                "payment succeeded" messages to your site. Run it again after switching from test to live keys.
-            </p>
-            <button onclick="connectYocoWebhook()" id="yoco-btn">Connect Yoco webhook</button>
-            <p id="yoco-msg" style="margin:10px 0 0; font-size:14px;"></p>
+          <h2 class="rev-title" style="margin-bottom:8px;">Online payments (Yoco)</h2>
+          <p class="rev-note" style="margin-bottom:12px;">One-time setup after adding your Yoco secret key to Supabase. Reconnect after switching from test to live keys.</p>
+          <button onclick="connectYocoWebhook()" id="yoco-btn">Connect Yoco webhook</button>
+          <p id="yoco-msg" style="margin:10px 0 0;font-size:14px;"></p>
         </div>
-    </div>
-
-    <div id="revenue" style="display:none;"></div>
-
-    <div id="payouts-admin" style="display:none;"></div>
-
-    <div id="listings-admin" style="display:none;"></div>
-
-    <div id="preowned-listings-admin" style="display:none;"></div>
-
-    <div id="preowned-payouts-admin" style="display:none;"></div>
-
-    <div id="rules-admin" style="display:none;"></div>
-
-    <div id="plans-admin" style="display:none;"></div>
-
-    <div id="sponsor-admin" style="display:none;"></div>
-
-    <div id="orders" style="display:none;"></div>
+      </div>
+    </section>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin-review.js?v=1"></script>
 
 <script>
 
@@ -282,17 +351,9 @@ function esc(value) {
 
 function showDashboard() {
     document.getElementById("login").style.display = "none";
-    document.getElementById("orders").style.display = "block";
-    document.getElementById("revenue").style.display = "block";
-    document.getElementById("payouts-admin").style.display = "block";
-    document.getElementById("listings-admin").style.display = "block";
-    document.getElementById("preowned-listings-admin").style.display = "block";
-    document.getElementById("preowned-payouts-admin").style.display = "block";
-    document.getElementById("rules-admin").style.display = "block";
-    document.getElementById("plans-admin").style.display = "block";
-    document.getElementById("sponsor-admin").style.display = "block";
-    document.getElementById("payments-setup").style.display = "block";
     document.getElementById("admin-nav").style.display = "block";
+    document.getElementById("admin-user-label").textContent = "PoundTech admin";
+    setAdminSection("overview");
     loadRevenue();
     loadPayoutsAdmin();
     loadListingsAdmin();
@@ -307,26 +368,12 @@ function showDashboard() {
 
 
 async function adminLogout() {
-
     const { error } = await supabaseClient.auth.signOut();
-
-    if (error) {
-        console.log("LOGOUT ERROR:", error);
-        return;
-    }
-
+    if (error) { console.log("LOGOUT ERROR:", error); return; }
     document.getElementById("login").style.display = "block";
-    document.getElementById("orders").style.display = "none";
-    document.getElementById("payouts-admin").style.display = "none";
-    document.getElementById("listings-admin").style.display = "none";
-    document.getElementById("preowned-listings-admin").style.display = "none";
-    document.getElementById("preowned-payouts-admin").style.display = "none";
-    document.getElementById("rules-admin").style.display = "none";
-    document.getElementById("plans-admin").style.display = "none";
-    document.getElementById("sponsor-admin").style.display = "none";
-    document.getElementById("revenue").style.display = "none";
-    document.getElementById("payments-setup").style.display = "none";
     document.getElementById("admin-nav").style.display = "none";
+    document.querySelectorAll("[data-admin-panel]").forEach(function(panel){ panel.classList.remove("active"); });
+    document.querySelectorAll(".pt-nav-btn").forEach(function(btn){ btn.classList.remove("active"); });
 }
 
 
@@ -1285,6 +1332,140 @@ function adminOrderHTML(x) {
     `;
 }
 
+
+
+// ---------- Unified admin navigation ----------
+var ADMIN_CURRENT_SECTION = "overview";
+function setAdminSection(section) {
+    ADMIN_CURRENT_SECTION = section;
+    document.querySelectorAll("[data-admin-panel]").forEach(function(panel) {
+        panel.classList.toggle("active", panel.getAttribute("data-admin-panel") === section);
+    });
+    document.querySelectorAll(".pt-nav-btn").forEach(function(btn) {
+        btn.classList.toggle("active", btn.getAttribute("data-section") === section);
+    });
+    if (section === "applications") {
+        loadAdminApplications(document.getElementById("application-kind").value);
+    }
+    if (section === "support") loadAdminSupportTickets();
+}
+document.getElementById("application-kind").addEventListener("change", function() {
+    loadAdminApplications(this.value);
+});
+
+// ---------- Unified application review ----------
+async function loadAdminApplications(kind) {
+    var box = document.getElementById("applications-admin");
+    box.innerHTML = '<div class="od-empty">Loading applications…</div>';
+    var table = kind === "suppliers" ? "suppliers" : kind === "private_sellers" ? "private_sellers" : "mechanics";
+    var result = await supabaseClient.from(table).select("*").order("created_at", {ascending:false});
+    if (result.error) {
+        box.innerHTML = '<div class="od-empty">Could not load applications: ' + esc(result.error.message) + '</div>';
+        return;
+    }
+    if (!result.data || !result.data.length) {
+        var label = kind === "suppliers" ? "supplier" : kind === "private_sellers" ? "private-seller" : "mechanic and service-business";
+        box.innerHTML = '<div class="od-empty">No ' + label + ' applications yet.</div>';
+        return;
+    }
+    renderApplications(kind, result.data, box, function(){ loadAdminApplications(kind); });
+}
+
+// ---------- Business support inbox ----------
+var ADMIN_SUPPORT_TICKETS = [];
+var ADMIN_SUPPORT_SELECTED = null;
+function adminSupportRef(id) { return "PTB-" + String(id).slice(0,8).toUpperCase(); }
+function adminSupportPill(status) {
+    var cls = status === "Open" ? "open" : status === "In progress" ? "progress" : status === "Awaiting supplier" ? "awaiting" : "done";
+    return '<span class="support-pill ' + cls + '">' + esc(status) + '</span>';
+}
+async function loadAdminSupportTickets() {
+    var refresh = document.getElementById("admin-support-refresh");
+    var message = document.getElementById("admin-support-message");
+    refresh.disabled = true;
+    message.textContent = "Refreshing inbox…";
+    var result = await supabaseClient.rpc("get_admin_business_support_tickets");
+    refresh.disabled = false;
+    if (result.error) {
+        message.textContent = "Could not load support requests: " + result.error.message;
+        document.getElementById("admin-support-list").innerHTML = '<div class="od-empty">Support inbox unavailable.</div>';
+        return;
+    }
+    ADMIN_SUPPORT_TICKETS = result.data || [];
+    var active = ADMIN_SUPPORT_TICKETS.filter(function(t){ return ["Open","In progress","Awaiting supplier"].includes(t.status); }).length;
+    var closed = ADMIN_SUPPORT_TICKETS.length - active;
+    document.getElementById("admin-support-open").textContent = active;
+    document.getElementById("admin-support-resolved").textContent = closed;
+    document.getElementById("admin-support-total").textContent = ADMIN_SUPPORT_TICKETS.length;
+    var navCount = document.getElementById("support-nav-count");
+    navCount.textContent = active;
+    navCount.hidden = active === 0;
+    renderAdminSupportTickets();
+    message.textContent = "Inbox updated.";
+}
+function renderAdminSupportTickets() {
+    var filter = document.getElementById("admin-support-filter").value;
+    var rows = ADMIN_SUPPORT_TICKETS.filter(function(t) {
+        return filter === "all" || (filter === "active" ? ["Open","In progress","Awaiting supplier"].includes(t.status) : t.status === filter);
+    });
+    var list = document.getElementById("admin-support-list");
+    list.innerHTML = rows.length ? rows.map(function(t) {
+        return '<button type="button" class="support-ticket ' + (t.id === ADMIN_SUPPORT_SELECTED ? 'selected' : '') + '" data-support-id="' + esc(t.id) + '">' +
+          '<div class="support-ticket-top">' + adminSupportPill(t.status) + '<small>' + esc(new Date(t.created_at).toLocaleDateString("en-ZA")) + '</small></div>' +
+          '<strong>' + esc(t.subject) + '</strong><small>' + esc(t.business_name) + ' · ' + esc(t.category) + ' · ' + adminSupportRef(t.id) + '</small></button>';
+    }).join("") : '<div class="od-empty">No support requests in this view.</div>';
+    list.querySelectorAll("[data-support-id]").forEach(function(btn) {
+        btn.addEventListener("click", function(){ ADMIN_SUPPORT_SELECTED = btn.getAttribute("data-support-id"); renderAdminSupportTickets(); });
+    });
+    var selected = ADMIN_SUPPORT_TICKETS.find(function(t){ return t.id === ADMIN_SUPPORT_SELECTED; });
+    if (selected) renderAdminSupportDetail(selected);
+    else document.getElementById("admin-support-detail").innerHTML = '<div class="od-empty">Select a support request to view its details.</div>';
+}
+function renderAdminSupportDetail(t) {
+    var box = document.getElementById("admin-support-detail");
+    box.innerHTML = '<div class="support-detail-head"><div><span class="section-kicker">' + adminSupportRef(t.id) + '</span><h3>' + esc(t.subject) + '</h3><p>' + esc(t.business_name) + ' · ' + esc(new Date(t.created_at).toLocaleString("en-ZA")) + '</p></div>' + adminSupportPill(t.status) + '</div>' +
+      '<div class="support-meta"><div><small>Contact email</small><strong>' + esc(t.submitted_by_email) + '</strong></div><div><small>Category</small><strong>' + esc(t.category) + '</strong></div><div><small>Priority</small><strong>' + esc(t.priority || "Business") + '</strong></div><div><small>Last updated</small><strong>' + esc(new Date(t.updated_at).toLocaleString("en-ZA")) + '</strong></div></div>' +
+      '<h4>Supplier message</h4><div class="support-message">' + esc(t.message) + '</div>' +
+      '<form id="admin-support-reply-form"><label for="admin-support-status">Update status</label><select id="admin-support-status"><option>Open</option><option>In progress</option><option>Awaiting supplier</option><option>Resolved</option><option>Closed</option></select>' +
+      '<label for="admin-support-reply">Reply to supplier</label><textarea id="admin-support-reply" maxlength="3000" placeholder="Write a clear response or request more information…">' + esc(t.staff_response || "") + '</textarea>' +
+      '<div class="support-detail-actions"><span>Non-empty new replies are emailed to the supplier.</span><button type="submit" id="admin-support-save">Save update</button></div><p id="admin-support-detail-message" class="rev-note" role="status"></p></form>';
+    document.getElementById("admin-support-status").value = t.status;
+    document.getElementById("admin-support-reply-form").addEventListener("submit", saveAdminSupportUpdate);
+}
+async function saveAdminSupportUpdate(event) {
+    event.preventDefault();
+    var ticket = ADMIN_SUPPORT_TICKETS.find(function(t){ return t.id === ADMIN_SUPPORT_SELECTED; });
+    if (!ticket) return;
+    var btn = document.getElementById("admin-support-save");
+    var note = document.getElementById("admin-support-detail-message");
+    var newStatus = document.getElementById("admin-support-status").value;
+    var newReply = document.getElementById("admin-support-reply").value.trim();
+    var oldReply = (ticket.staff_response || "").trim();
+    btn.disabled = true; btn.textContent = "Saving…"; note.textContent = "";
+    var saved = await supabaseClient.rpc("admin_update_business_support_ticket", {
+        p_ticket_id: ticket.id, p_status: newStatus, p_response: newReply || null
+    });
+    if (saved.error) {
+        note.textContent = "Could not save: " + saved.error.message;
+        btn.disabled = false; btn.textContent = "Save update"; return;
+    }
+    var emailNote = "";
+    if (newReply && newReply !== oldReply) {
+        note.textContent = "Saved. Sending supplier email…";
+        var mailed = await supabaseClient.functions.invoke("business-support-reply", {body:{ticket_id:ticket.id}});
+        if (mailed.error || !mailed.data || !mailed.data.notified) emailNote = " The ticket is saved, but email delivery could not be confirmed.";
+        else emailNote = " Supplier email sent.";
+    }
+    await loadAdminSupportTickets();
+    var refreshed = ADMIN_SUPPORT_TICKETS.find(function(t){ return t.id === ADMIN_SUPPORT_SELECTED; });
+    if (refreshed) renderAdminSupportDetail(refreshed);
+    var finalNote = document.getElementById("admin-support-detail-message");
+    if (finalNote) finalNote.textContent = "Ticket updated." + emailNote;
+    var msg = document.getElementById("admin-support-message");
+    msg.textContent = "Ticket updated." + emailNote;
+}
+document.getElementById("admin-support-refresh").addEventListener("click", loadAdminSupportTickets);
+document.getElementById("admin-support-filter").addEventListener("change", renderAdminSupportTickets);
 
 // Keep the admin signed in after a page refresh.
 (async function restoreSession() {
