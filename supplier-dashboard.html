@@ -1259,6 +1259,9 @@ const roleTabs = {
 };
 const visibleTabs = roleTabs[supplierRole] || roleTabs.custom;
 document.querySelectorAll("[data-supplier-tab]").forEach(function(tab) {
+    // Branch visibility is controlled only by the dedicated async owner/plan
+    // check in loadSupplierBranches(). Keep it out of this separate role filter.
+    if (tab.id === "supplier-branches-tab") return;
     tab.style.display = visibleTabs.includes(tab.getAttribute("data-supplier-tab")) ? "" : "none";
 });
 await loadSupplierPlanAccess();
