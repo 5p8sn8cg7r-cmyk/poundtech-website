@@ -94,8 +94,8 @@ button:hover {
 
 
 /* Supplier portal navigation and learning centre */
-.supplier-nav{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 20px;padding:8px;background:#fff;border:1px solid #e5e5e5;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.supplier-nav button{flex:1 1 130px;background:#fff;color:#333;border:1px solid #d8d8d8;border-radius:9px;padding:12px 14px;font-size:14px;box-sizing:border-box;min-height:44px}
+.supplier-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:22px 0 20px;padding:8px;background:#fff;border:1px solid #e5e5e5;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.supplier-nav button{width:100%;min-width:0;background:#fff;color:#333;border:1px solid #d8d8d8;border-radius:9px;padding:12px 14px;font-size:14px;box-sizing:border-box;min-height:44px}
 .supplier-nav button:hover{background:#f5f5f5;color:#111}
 .supplier-nav button.active{background:#111;color:#fff;border-color:#111}
 .supplier-panel{display:none}
@@ -112,7 +112,7 @@ button:hover {
 .supplier-flow span{background:#f1f1f1;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700}
 .supplier-flow b{color:#999}
 .supplier-help-note{border-left:4px solid #e00000;background:#fff5f5;padding:12px 14px;border-radius:7px;font-size:14px;line-height:1.5}
-@media(max-width:640px){.supplier-nav{position:sticky;top:0;z-index:50;gap:8px;padding:8px}.supplier-nav button{flex:1 1 calc(50% - 8px);min-width:0;padding:11px 8px;border:1px solid #d0d0d0;background:#fff;border-radius:9px;white-space:normal}.supplier-nav button.active{background:#111;color:#fff;border-color:#111}}
+@media(max-width:640px){.supplier-nav{position:sticky;top:0;z-index:50;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}.supplier-nav button{width:100%;min-width:0;padding:11px 8px;border:1px solid #d0d0d0;background:#fff;border-radius:9px;white-space:normal}.supplier-nav button.active{background:#111;color:#fff;border-color:#111}}
 
 /* PoundTech branded product dialogs and form controls */
 #add-product-form>input:not([type=file]),#add-product-form>select,#add-product-form>textarea,
