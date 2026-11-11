@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PoundTech | Support Inbox</title>
+<link rel="icon" href="/favicon.ico?v=20261108" sizes="any">
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#171717;background:#f3f4f6}
+*{box-sizing:border-box}body{margin:0}header{background:#090a0c;color:#fff;padding:18px 5%;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:3px solid #c90000}
+.brand{font-size:22px;font-weight:900;letter-spacing:-.5px}.brand span{color:#e00000}.header-right{display:flex;align-items:center;gap:12px;font-size:13px;color:#ccc}
+button{border:0;border-radius:9px;background:#c90000;color:#fff;font-weight:700;padding:12px 16px;cursor:pointer}button:hover{background:#a90000}button:disabled{opacity:.55;cursor:wait}.secondary{background:#222}.secondary:hover{background:#444}
+main{max-width:1440px;margin:28px auto;padding:0 20px}.intro{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:20px}.eyebrow{color:#c00000;text-transform:uppercase;letter-spacing:1.6px;font-size:11px;font-weight:800}.intro h1{margin:6px 0;font-size:30px;letter-spacing:-1px}.muted{color:#777;font-size:14px;line-height:1.5}
+.login-wrap{max-width:430px;margin:70px auto}.panel{background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:22px;box-shadow:0 5px 20px rgba(0,0,0,.045)}
+label{display:block;font-size:13px;font-weight:700;margin:15px 0 7px}input,select,textarea{width:100%;padding:12px 13px;border:1px solid #d7d7d7;border-radius:9px;font:inherit;background:#fff}textarea{min-height:180px;resize:vertical;line-height:1.5}input:focus,select:focus,textarea:focus{outline:2px solid rgba(201,0,0,.13);border-color:#c90000}
+#app{display:none}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}.stat{background:#fff;border:1px solid #e8e8e8;border-radius:11px;padding:12px 16px;min-width:110px}.stat strong{display:block;font-size:22px}.stat span{font-size:12px;color:#777}
+.workspace{display:grid;grid-template-columns:minmax(300px, .85fr) minmax(0,1.45fr);gap:18px;align-items:start}.ticket-list{padding:0;overflow:hidden}.list-head{padding:17px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px}.list-head h2,.detail-head h2{font-size:17px;margin:0}.filters{display:flex;gap:8px;align-items:center}.filters select{padding:8px;width:auto;max-width:150px;font-size:12px}.tickets{max-height:calc(100vh - 330px);min-height:300px;overflow:auto}.ticket{display:block;width:100%;text-align:left;background:#fff;color:#222;border-radius:0;border-bottom:1px solid #eee;padding:15px 17px}.ticket:hover{background:#fafafa}.ticket.active{background:#fff5f5;border-left:4px solid #c90000;padding-left:13px}.ticket strong{display:block;font-size:14px;line-height:1.35;margin-bottom:6px}.ticket small{display:block;color:#777;font-size:12px;line-height:1.5}.ticket-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px}.pill{font-size:10px;font-weight:800;border-radius:30px;padding:5px 8px;background:#eee;color:#444;white-space:nowrap}.pill.open{background:#ffe7e7;color:#a50000}.pill.inprogress{background:#fff0d8;color:#885300}.pill.resolved,.pill.closed{background:#e4f5ea;color:#176b35}.pill.awaiting{background:#e9edff;color:#344caa}
+.detail{min-height:500px}.detail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid #eee;padding-bottom:15px}.detail-head p{margin:7px 0 0}.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}.meta div{background:#f7f7f7;padding:11px 13px;border-radius:9px;min-width:0}.meta span{display:block;color:#777;font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}.meta strong{font-size:13px;overflow-wrap:anywhere}.message-box{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:16px;margin:14px 0 20px;white-space:pre-wrap;line-height:1.55;font-size:14px;overflow-wrap:anywhere}.reply-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px;flex-wrap:wrap}.notice{font-size:13px;line-height:1.5;margin-top:12px}.empty{padding:34px 20px;text-align:center;color:#777;font-size:14px}.hidden{display:none!important}
+@media(max-width:850px){.workspace{grid-template-columns:1fr}.tickets{max-height:360px;min-height:120px}.detail{min-height:0}.intro{align-items:flex-start;flex-direction:column}}
+@media(max-width:520px){main{padding:0 12px;margin:20px auto}.intro h1{font-size:25px}.panel{padding:16px}.meta,.reply-row{grid-template-columns:1fr}.header-right{font-size:11px}.brand{font-size:19px}}
+</style>
+</head>
+<body>
+<header><div class="brand">Pound<span>Tech</span> <span style="color:#aaa;font-size:13px;font-weight:600">/ SUPPORT</span></div><div class="header-right"><span id="admin-email"></span><button id="logout-btn" class="secondary hidden" type="button">Sign out</button></div></header>
+<section id="login-view" class="login-wrap panel">
+<div class="eyebrow">Restricted access</div><h1 style="margin:7px 0 4px">Admin sign in</h1><p class="muted">Sign in with your existing PoundTech administrator account to open the support inbox.</p>
+<form id="login-form"><label for="email">Admin email</label><input id="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button id="login-btn" style="width:100%;margin-top:18px">Sign in</button><p id="login-status" class="notice" role="status"></p></form>
+</section>
+<main id="app">
+<div class="intro"><div><div class="eyebrow">Supplier services</div><h1>Business support inbox</h1><p class="muted">Review requests, update progress and send a response directly to the supplier.</p></div><button id="refresh-btn" class="secondary" type="button">Refresh inbox</button></div>
+<div class="stats"><div class="stat"><strong id="stat-open">0</strong><span>Open / active</span></div><div class="stat"><strong id="stat-resolved">0</strong><span>Resolved</span></div><div class="stat"><strong id="stat-total">0</strong><span>Total tickets</span></div></div>
+<div class="workspace">
+<section class="panel ticket-list"><div class="list-head"><h2>Support requests</h2><div class="filters"><select id="status-filter" aria-label="Filter tickets"><option value="active">Active</option><option value="all">All tickets</option><option value="Open">Open</option><option value="In progress">In progress</option><option value="Awaiting supplier">Awaiting supplier</option><option value="Resolved">Resolved</option><option value="Closed">Closed</option></select></div></div><div id="tickets" class="tickets"><div class="empty">Loading support requests…</div></div></section>
+<section class="panel detail" id="detail"><div class="empty">Select a support request to view its details.</div></section>
+</div><p id="global-status" class="notice" role="status"></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let allTickets = [];
+let selectedId = null;
+const $ = id => document.getElementById(id);
+function esc(v){return String(v == null ? "" : v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function ref(id){return "PTB-"+String(id).slice(0,8).toUpperCase();}
+function pillClass(status){return status==="Open"?"open":status==="In progress"?"inprogress":status==="Awaiting supplier"?"awaiting":status==="Resolved"?"resolved":"closed";}
+function setLoginMessage(msg,error=true){$("login-status").textContent=msg||"";$("login-status").style.color=error?"#a00000":"#176b35";}
+async function verifyAdmin(){
+ const {data:{user},error}=await db.auth.getUser();
+ if(error||!user){$("login-view").classList.remove("hidden");$("app").style.display="none";$("logout-btn").classList.add("hidden");$("admin-email").textContent="";return false;}
+ const {data,error:checkError}=await db.rpc("get_admin_business_support_tickets");
+ if(checkError){$("login-view").classList.remove("hidden");$("app").style.display="none";$("logout-btn").classList.add("hidden");setLoginMessage("This account does not have PoundTech admin access.");return false;}
+ $("login-view").classList.add("hidden");$("app").style.display="block";$("logout-btn").classList.remove("hidden");$("admin-email").textContent=user.email||"Admin";allTickets=data||[];render();return true;
+}
+async function loadTickets(){
+ $("refresh-btn").disabled=true;$("global-status").textContent="Refreshing…";
+ const {data,error}=await db.rpc("get_admin_business_support_tickets");
+ $("refresh-btn").disabled=false;
+ if(error){$("global-status").textContent=error.message;return;}
+ allTickets=data||[];render();$("global-status").textContent="Inbox updated.";
+}
+function render(){
+ const open=allTickets.filter(t=>["Open","In progress","Awaiting supplier"].includes(t.status)).length;
+ $("stat-open").textContent=open;$("stat-resolved").textContent=allTickets.filter(t=>["Resolved","Closed"].includes(t.status)).length;$("stat-total").textContent=allTickets.length;
+ const filter=$("status-filter").value;
+ const visible=allTickets.filter(t=>filter==="all"||(filter==="active"?["Open","In progress","Awaiting supplier"].includes(t.status):t.status===filter));
+ $("tickets").innerHTML=visible.length?visible.map(t=>'<button type="button" class="ticket '+(t.id===selectedId?'active':'')+'" data-id="'+esc(t.id)+'"><div class="ticket-top"><span class="pill '+pillClass(t.status)+'">'+esc(t.status)+'</span><small>'+esc(new Date(t.created_at).toLocaleDateString("en-ZA"))+'</small></div><strong>'+esc(t.subject)+'</strong><small>'+esc(t.business_name)+' · '+esc(t.category)+' · '+ref(t.id)+'</small></button>').join(""):'<div class="empty">No tickets in this view.</div>';
+ document.querySelectorAll(".ticket[data-id]").forEach(btn=>btn.addEventListener("click",()=>selectTicket(btn.dataset.id)));
+ if(selectedId){const t=allTickets.find(x=>x.id===selectedId);if(t)renderDetail(t);else{$("detail").innerHTML='<div class="empty">Select a support request to view its details.</div>';selectedId=null;}}
+}
+function selectTicket(id){selectedId=id;render();}
+function renderDetail(t){
+ $("detail").innerHTML=`
+ <div class="detail-head"><div><div class="eyebrow">${ref(t.id)}</div><h2>${esc(t.subject)}</h2><p class="muted">${esc(t.business_name)} · Submitted ${esc(new Date(t.created_at).toLocaleString("en-ZA"))}</p></div><span class="pill ${pillClass(t.status)}">${esc(t.status)}</span></div>
+ <div class="meta"><div><span>Contact email</span><strong>${esc(t.submitted_by_email)}</strong></div><div><span>Category</span><strong>${esc(t.category)}</strong></div><div><span>Priority</span><strong>${esc(t.priority||"Business")}</strong></div><div><span>Last updated</span><strong>${esc(new Date(t.updated_at).toLocaleString("en-ZA"))}</strong></div></div>
+ <h3 style="font-size:14px;margin:18px 0 8px">Supplier message</h3><div class="message-box">${esc(t.message)}</div>
+ <form id="reply-form"><div class="reply-row"><div><label for="ticket-status">Update status</label><select id="ticket-status"><option>Open</option><option>In progress</option><option>Awaiting supplier</option><option>Resolved</option><option>Closed</option></select></div><div><label for="reply-message">Reply to supplier</label><p class="muted" style="margin:0">A non-empty reply is emailed to the supplier.</p></div></div>
+ <label for="reply-text">Your response</label><textarea id="reply-text" maxlength="3000" placeholder="Write a clear response or request more information…">${esc(t.staff_response||"")}</textarea>
+ <div class="actions"><span class="muted" style="font-size:12px">Saving a reply sends it by email.</span><button id="save-btn" type="submit">Save update</button></div><p id="detail-status" class="notice" role="status"></p></form>`;
+ $("ticket-status").value=t.status;
+ $("reply-form").addEventListener("submit",saveTicketUpdate);
+}
+async function saveTicketUpdate(event){
+ event.preventDefault();const btn=$("save-btn");const status=$("detail-status");const t=allTickets.find(x=>x.id===selectedId);if(!t)return;
+ const newStatus=$("ticket-status").value;const newReply=$("reply-text").value.trim();const previousReply=(t.staff_response||"").trim();
+ btn.disabled=true;btn.textContent="Saving…";status.textContent="";
+ const {data,error}=await db.rpc("admin_update_business_support_ticket",{p_ticket_id:t.id,p_status:newStatus,p_response:newReply||null});
+ if(error){status.textContent=error.message;status.style.color="#a00000";btn.disabled=false;btn.textContent="Save update";return;}
+ let emailNote="";
+ if(newReply && newReply!==previousReply){
+   status.textContent="Saved. Sending email to supplier…";
+   const {data:mail,error:mailError}=await db.functions.invoke("business-support-reply",{body:{ticket_id:t.id}});
+   if(mailError||!mail||!mail.notified)emailNote=" The update is saved, but the email could not be confirmed. You can retry by changing the reply text and saving again.";
+   else emailNote=" Supplier email sent.";
+ }
+ await loadTickets();status.textContent="Ticket updated."+emailNote;status.style.color=emailNote.includes("could not")?"#a00000":"#176b35";
+ btn.disabled=false;btn.textContent="Save update";
+}
+$("login-form").addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("login-btn");btn.disabled=true;btn.textContent="Signing in…";setLoginMessage("",false);
+ const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+ if(error){setLoginMessage(error.message);btn.disabled=false;btn.textContent="Sign in";return;}
+ const ok=await verifyAdmin();if(!ok){await db.auth.signOut();}btn.disabled=false;btn.textContent="Sign in";
+});
+$("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
+$("refresh-btn").addEventListener("click",loadTickets);
+$("status-filter").addEventListener("change",render);
+verifyAdmin();
+</script>
+</body>
+</html>
