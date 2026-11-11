@@ -332,6 +332,19 @@ Checking...
 </p>
 
 </div>
+<div class="card" id="storefront-banner-card" style="display:none;">
+    <h2>Workshop photo</h2>
+    <p style="color:#666;line-height:1.5;">Add a wide photo of your workshop, showroom or business premises. It will appear at the top of your public PoundTech storefront. This is optional.</p>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:14px 0;">
+        <img id="storefront-banner-preview" alt="Your current storefront workshop photo" style="display:none;width:min(100%,420px);aspect-ratio:16/7;object-fit:cover;border-radius:12px;border:1px solid #e5e5e5;background:#f2f2f2;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" id="storefront-banner-choose">Upload workshop photo</button>
+            <button type="button" id="storefront-banner-remove" class="pt-btn-muted" style="display:none;">Remove photo</button>
+        </div>
+    </div>
+    <input type="file" id="storefront-banner-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
+    <p id="storefront-banner-message" role="status" style="min-height:20px;color:#666;font-size:13px;margin:8px 0 0;"></p>
+</div>
 </section>
 
 <section class="supplier-panel" id="supplier-branches-panel">
@@ -1041,6 +1054,118 @@ async function getSupplierId() {
     return supplierId || null;
 }
 
+/* ---------- PUBLIC STOREFRONT WORKSHOP BANNER ---------- */
+let STOREFRONT_BANNER_PATH = null;
+
+function renderStorefrontBannerPreview(path) {
+    const preview = document.getElementById("storefront-banner-preview");
+    const removeButton = document.getElementById("storefront-banner-remove");
+    if (!preview || !removeButton) return;
+    if (!path) {
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+        removeButton.style.display = "none";
+        return;
+    }
+    const { data } = supabaseClient.storage.from("business-photos").getPublicUrl(path);
+    preview.src = data.publicUrl;
+    preview.style.display = "block";
+    removeButton.style.display = "inline-block";
+}
+
+async function loadStorefrontBanner(supplierId, role) {
+    const card = document.getElementById("storefront-banner-card");
+    if (!card) return;
+    if (role !== "owner") {
+        card.style.display = "none";
+        return;
+    }
+    card.style.display = "block";
+    const message = document.getElementById("storefront-banner-message");
+    const { data, error } = await supabaseClient.rpc("get_my_supplier_storefront_banner");
+    if (error) {
+        console.error("STOREFRONT BANNER LOAD ERROR:", error);
+        message.textContent = "Your workshop photo settings could not be loaded.";
+        return;
+    }
+    STOREFRONT_BANNER_PATH = data || null;
+    renderStorefrontBannerPreview(STOREFRONT_BANNER_PATH);
+}
+
+document.getElementById("storefront-banner-choose").addEventListener("click", function () {
+    document.getElementById("storefront-banner-input").click();
+});
+
+document.getElementById("storefront-banner-input").addEventListener("change", async function (event) {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    const message = document.getElementById("storefront-banner-message");
+    const button = document.getElementById("storefront-banner-choose");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        message.textContent = "Please choose a JPG, PNG or WebP image.";
+        return;
+    }
+    if (file.size > MAX_IMAGE_INPUT_BYTES) {
+        message.textContent = "Please choose an image smaller than 15 MB.";
+        return;
+    }
+    button.disabled = true;
+    button.textContent = "Uploading...";
+    message.textContent = "Optimising and uploading your workshop photo...";
+    let uploadedPath = null;
+    try {
+        const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+        if (userError || !userData || !userData.user) throw new Error("Please sign in again.");
+        const blob = await resizeImage(file, 1800, 0.82, 1536 * 1024);
+        uploadedPath = userData.user.id + "/storefront/" + uniqueName() + ".jpg";
+        const { error: uploadError } = await supabaseClient.storage
+            .from("business-photos")
+            .upload(uploadedPath, blob, { contentType: "image/jpeg", cacheControl: "31536000", upsert: false });
+        if (uploadError) throw uploadError;
+        const { error: saveError } = await supabaseClient.rpc("set_my_supplier_storefront_banner", { p_path: uploadedPath });
+        if (saveError) throw saveError;
+        const oldPath = STOREFRONT_BANNER_PATH;
+        STOREFRONT_BANNER_PATH = uploadedPath;
+        renderStorefrontBannerPreview(uploadedPath);
+        if (oldPath && oldPath !== uploadedPath) {
+            const { error: removeError } = await supabaseClient.storage.from("business-photos").remove([oldPath]);
+            if (removeError) console.warn("Old storefront banner could not be removed:", removeError);
+        }
+        message.textContent = "Workshop photo saved. It is now displayed on your public storefront.";
+    } catch (error) {
+        console.error("STOREFRONT BANNER UPLOAD ERROR:", error);
+        if (uploadedPath) await supabaseClient.storage.from("business-photos").remove([uploadedPath]);
+        message.textContent = "Photo upload failed: " + (error.message || "Please try again.");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Upload workshop photo";
+    }
+});
+
+document.getElementById("storefront-banner-remove").addEventListener("click", async function () {
+    if (!STOREFRONT_BANNER_PATH) return;
+    const button = this;
+    const message = document.getElementById("storefront-banner-message");
+    button.disabled = true;
+    message.textContent = "Removing workshop photo...";
+    const oldPath = STOREFRONT_BANNER_PATH;
+    const { error } = await supabaseClient.rpc("set_my_supplier_storefront_banner", { p_path: null });
+    if (error) {
+        console.error("STOREFRONT BANNER REMOVE ERROR:", error);
+        message.textContent = "The photo could not be removed. Please try again.";
+        button.disabled = false;
+        return;
+    }
+    STOREFRONT_BANNER_PATH = null;
+    renderStorefrontBannerPreview(null);
+    const { error: storageError } = await supabaseClient.storage.from("business-photos").remove([oldPath]);
+    if (storageError) console.warn("Removed banner reference but could not delete storage object:", storageError);
+    message.textContent = "Workshop photo removed from your storefront.";
+    button.disabled = false;
+});
+
+
 // Live previews in the Add Product form.
 document.addEventListener("change", function (e) {
 
@@ -1117,6 +1242,7 @@ const { data: supplier, error: supplierError } = await supabaseClient.rpc("get_m
 
 const { data: supplierRole } = await supabaseClient.rpc("get_my_supplier_role");
 window.POUNDTECH_SUPPLIER_ROLE = supplierRole || "sales";
+await loadStorefrontBanner(supplierId, supplierRole || "sales");
 const roleLabel = (supplierRole || "sales").replace(/_/g," ").replace(/\b\w/g, ch => ch.toUpperCase());
 document.getElementById("welcome").textContent = "Logged in as " + user.email + " · " + (supplierRole === "owner" ? "Business Owner" : roleLabel + " Team Member");
 const teamTab = document.getElementById("supplier-team-tab");
