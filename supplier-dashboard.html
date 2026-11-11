@@ -2841,7 +2841,7 @@ async function loadSupplierBranches() {
     const note = document.getElementById("supplier-branches-plan-note");
     const addButton = document.getElementById("add-supplier-branch-btn");
     if (note) note.innerHTML = canManage
-        ? '<div class="pt-info-panel">Your Business plan includes branch management. New active branches become visible to customers once saved.</div>'
+        ? '<div class="pt-info-panel">Your Business plan includes branch management. Add each location here so PoundTech can display it in customer-facing branch listings.</div>'
         : '<div class="pt-info-panel">Your Business plan is not currently active. You can view your saved branches, but you need an active Business plan to add, edit or reactivate locations.</div>';
     if (addButton) addButton.style.display = canManage ? "" : "none";
 
