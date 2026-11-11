@@ -1,0 +1,46 @@
+/* Shared PoundTech "Back to marketplace" button */
+a.pt-back-marketplace {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-height: 44px !important;
+    padding: 0 16px !important;
+    border: 1px solid #e00000 !important;
+    border-radius: 8px !important;
+    background: #e00000 !important;
+    color: #fff !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    text-decoration: none !important;
+    box-shadow: 0 3px 10px rgba(224, 0, 0, .18) !important;
+    transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease !important;
+    -webkit-tap-highlight-color: transparent;
+}
+a.pt-back-marketplace:hover {
+    background: #bd0000 !important;
+    border-color: #bd0000 !important;
+    color: #fff !important;
+    box-shadow: 0 5px 14px rgba(189, 0, 0, .22) !important;
+}
+a.pt-back-marketplace:active {
+    transform: translateY(1px) !important;
+}
+a.pt-back-marketplace:focus-visible {
+    outline: 3px solid rgba(224, 0, 0, .28) !important;
+    outline-offset: 3px !important;
+}
+@media (max-width: 520px) {
+    a.pt-back-marketplace {
+        min-height: 44px !important;
+        max-width: 100% !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    a.pt-back-marketplace { transition: none !important; }
+    a.pt-back-marketplace:active { transform: none !important; }
+}
