@@ -2786,7 +2786,33 @@ async function renderCheckout() {
         return;
     }
 
-    checkoutDeliveryOptions = deliveryOptions || [];
+    const supplierIds = (deliveryOptions || []).map(function(item) { return item.supplier_id; });
+    const { data: branchRows, error: branchError } = await supabaseClient
+        .from("supplier_branches")
+        .select("id,supplier_id,branch_name,address,suburb,city,province,postal_code,is_primary")
+        .in("supplier_id", supplierIds)
+        .eq("is_active", true)
+        .eq("collection_available", true)
+        .order("is_primary", { ascending: false })
+        .order("branch_name", { ascending: true });
+
+    if (branchError) {
+        console.error("CHECKOUT COLLECTION BRANCHES ERROR:", branchError);
+        deliveryBox.innerHTML = '<p style="color:#c00;">We could not load collection locations. Please refresh and try again.</p>';
+        return;
+    }
+
+    const branchesBySupplier = {};
+    (branchRows || []).forEach(function(branch) {
+        if (!branchesBySupplier[branch.supplier_id]) branchesBySupplier[branch.supplier_id] = [];
+        branchesBySupplier[branch.supplier_id].push(branch);
+    });
+
+    checkoutDeliveryOptions = (deliveryOptions || []).map(function(item) {
+        return Object.assign({}, item, {
+            collection_branches: branchesBySupplier[item.supplier_id] || []
+        });
+    });
 
     const missingSupplier = checkoutDeliveryOptions.length === 0 ||
         productIds.some(id => !cart.some(item => item.product_id === id));
@@ -2805,11 +2831,22 @@ async function renderCheckout() {
                         <input type="radio" name="delivery-${supplier.supplier_id}" value="delivery" checked onchange="updateCheckoutTotals()">
                         <span>Delivery — ${PT.money(fee)}</span>
                     </label>
-                    ${supplier.collection_available ? `
+                    ${(supplier.collection_available || supplier.collection_branches.length) ? `
                     <label style="display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:normal;">
                         <input type="radio" name="delivery-${supplier.supplier_id}" value="collection" onchange="updateCheckoutTotals()">
-                        <span>Collection — Free</span>
-                    </label>` : ""}
+                        <span>${supplier.collection_branches.length ? "Collect from a branch — Free" : "Collection — Free"}</span>
+                    </label>
+                    ${supplier.collection_branches.length ? `
+                    <div id="collection-branch-${supplier.supplier_id}" style="display:none;margin:8px 0 10px 26px;">
+                        <label for="collection-branch-select-${supplier.supplier_id}" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px;">Choose collection location</label>
+                        <select id="collection-branch-select-${supplier.supplier_id}" style="width:100%;max-width:440px;padding:11px;border:1px solid #ccc;border-radius:8px;font:inherit;" onchange="updateCheckoutTotals()">
+                            <option value="">Select a branch</option>
+                            ${supplier.collection_branches.map(function(branch) {
+                                const address = [branch.address,branch.suburb,branch.city,branch.province,branch.postal_code].filter(Boolean).join(", ");
+                                return '<option value="' + esc(branch.id) + '">' + esc(branch.branch_name) + ' — ' + esc(address) + '</option>';
+                            }).join("")}
+                        </select>
+                    </div>` : ""}` : ""}
                 </div>
             </div>
         `;
@@ -2837,9 +2874,12 @@ async function renderCheckout() {
 function getCheckoutDeliveryChoices() {
     return checkoutDeliveryOptions.map(function(supplier) {
         const selected = document.querySelector('input[name="delivery-' + supplier.supplier_id + '"]:checked');
+        const method = selected ? selected.value : "delivery";
+        const branchSelect = document.getElementById("collection-branch-select-" + supplier.supplier_id);
         return {
             supplier_id: supplier.supplier_id,
-            method: selected ? selected.value : "delivery"
+            method: method,
+            branch_id: method === "collection" && branchSelect ? (branchSelect.value || null) : null
         };
     });
 }
@@ -2853,6 +2893,10 @@ function updateCheckoutTotals() {
         const supplier = checkoutDeliveryOptions.find(item => item.supplier_id === choice.supplier_id);
         return sum + Number(supplier ? supplier.delivery_fee : 0);
     }, 0);
+    choices.forEach(function(choice) {
+        const branchBox = document.getElementById("collection-branch-" + choice.supplier_id);
+        if (branchBox) branchBox.style.display = choice.method === "collection" ? "block" : "none";
+    });
     const hasDelivery = choices.some(choice => choice.method === "delivery");
     document.getElementById("delivery-address-section").style.display = hasDelivery ? "block" : "none";
     document.getElementById("checkout-total").innerText =
@@ -2952,6 +2996,15 @@ async function placeOrder() {
     const cart = JSON.parse(localStorage.getItem("poundtechCart")) || [];
     const deliveryChoices = getCheckoutDeliveryChoices();
     const hasDelivery = deliveryChoices.some(choice => choice.method === "delivery");
+    const missingCollectionBranch = deliveryChoices.some(function(choice) {
+        const supplier = checkoutDeliveryOptions.find(item => item.supplier_id === choice.supplier_id);
+        return choice.method === "collection" && supplier &&
+            supplier.collection_branches.length > 0 && !choice.branch_id;
+    });
+    if (missingCollectionBranch) {
+        ptAlert("Please choose the branch where you would like to collect your order.", "Choose a collection branch");
+        return;
+    }
 
     let address = "Collection";
     if (hasDelivery) {
