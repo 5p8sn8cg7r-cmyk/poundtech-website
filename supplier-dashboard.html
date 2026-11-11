@@ -2754,6 +2754,7 @@ function renderPayouts() {
 }
 
 loadSupplierPayouts();
+loadSupplierBranches();
         
        function showOrderToast(text) {
     const t = document.createElement("div");
@@ -2826,6 +2827,7 @@ async function loadSupplierBranches() {
         supabaseClient.rpc("get_my_supplier_role"),
         loadSupplierPlanAccess()
     ]);
+    window.POUNDTECH_SUPPLIER_ROLE = role || "sales";
 
     const isBusiness = !!(access && access.plan === "business");
     if (role !== "owner" || !isBusiness) {
@@ -3024,7 +3026,6 @@ function showSupplierSection(sectionId, button) {
     if (sectionId === "supplier-earnings-panel") {
         loadSupplierEarnings();
         loadSupplierPayouts();
-loadSupplierBranches();
         loadPlanBox();
         loadAdvancedAnalytics();
     }
