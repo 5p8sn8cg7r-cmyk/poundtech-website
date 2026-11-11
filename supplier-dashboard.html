@@ -1299,6 +1299,13 @@ if (supplier.status !== "Approved") {
 
 }
 
+// Run the branch permission/visibility check after the authenticated supplier
+// role and plan have finished loading, so an early refresh cannot leave the
+// navigation tab hidden.
+if (supplierRole === "owner") {
+    await loadSupplierBranches();
+}
+
 }
 
 
