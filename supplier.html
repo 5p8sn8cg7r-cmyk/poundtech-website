@@ -145,7 +145,7 @@
     font-size: 17px;
     font-weight: 800;
 }
-.supplier-benefit h2 { margin: 0 0 6px; font-size: 15px; }
+.supplier-benefit-mark-text { font-size: 13px; letter-spacing: -0.5px; }\n.supplier-benefit h2 { margin: 0 0 6px; font-size: 15px; }
 .supplier-benefit p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; }
 @media (max-width: 700px) {
     .supplier-benefits { grid-template-columns: 1fr; gap: 9px; }
@@ -192,12 +192,17 @@
                 <p>Make your products discoverable to motorists shopping for parts and accessories across South Africa.</p>
             </article>
             <article class="supplier-benefit">
-                <span class="supplier-benefit-mark" aria-hidden="true">✓</span>
+                <span class="supplier-benefit-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="3.5" width="16" height="17" rx="2"></rect>
+                        <path d="M8 8h8M8 12h8M8 16h5"></path>
+                    </svg>
+                </span>
                 <h2>Manage your business</h2>
                 <p>List products, manage orders and run your supplier storefront through your PoundTech dashboard.</p>
             </article>
             <article class="supplier-benefit">
-                <span class="supplier-benefit-mark" aria-hidden="true">R</span>
+                <span class="supplier-benefit-mark supplier-benefit-mark-text" aria-hidden="true">R0</span>
                 <h2>Start on a free plan</h2>
                 <p>Apply at no cost and begin on Standard once approved. Upgrade only when a different plan suits your business.</p>
             </article>
