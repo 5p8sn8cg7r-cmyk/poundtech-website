@@ -2516,6 +2516,16 @@ async function loadSupplierOrders() {
         return;
     }
 
+    const { data: deliveryRows, error: deliveryRowsError } = await supabaseClient
+        .from("order_deliveries")
+        .select("order_id,delivery_method,fee,branch_name,branch_address")
+        .eq("supplier_id", supplier.id)
+        .in("order_id", orderIds);
+
+    if (deliveryRowsError) {
+        console.warn("SUPPLIER ORDER FULFILMENT DETAILS ERROR:", deliveryRowsError);
+    }
+
     SUP_ORDERS = [];
 
     for (const order of orders) {
@@ -2530,6 +2540,7 @@ async function loadSupplierOrders() {
             order: order,
             items: supplierItems,
             status: rec ? rec.status : "Pending",
+            delivery: (deliveryRows || []).find(function(d) { return d.order_id === order.id; }) || null,
             total: supplierItems.reduce((t, i) => t + (Number(i.price) * Number(i.quantity)), 0)
         });
     }
@@ -2671,6 +2682,16 @@ function supplierOrderHTML(o) {
                 <p><strong>${esc(order.customer_name)}</strong></p>
                 <p>${esc(order.phone)}</p>
                 <p>${esc(order.address)}</p>
+
+                ${o.delivery ? `
+                <h4>Fulfilment</h4>
+                ${o.delivery.delivery_method === "collection" ? `
+                    <p><strong>Customer collection</strong></p>
+                    ${o.delivery.branch_name ? '<p><strong>Collection branch:</strong> ' + esc(o.delivery.branch_name) + '</p><p>' + esc(o.delivery.branch_address || '') + '</p>' : '<p>Collection at your supplier location.</p>'}
+                ` : `
+                    <p><strong>Delivery:</strong> R${Number(o.delivery.fee || 0).toFixed(2)}</p>
+                `}
+                ` : ""}
 
                 <h4>Your products</h4>
                 ${o.items.map(function(i) {
