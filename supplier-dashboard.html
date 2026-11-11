@@ -732,11 +732,14 @@ const MAX_PRODUCT_VIDEO_BYTES = 25 * 1024 * 1024;
 const MAX_PRODUCT_VIDEO_SECONDS = 30;
 
 function hasActivePremiumVideoPlan() {
-    return !!(SELLER_STATUS && SELLER_STATUS.plan_active && (SELLER_STATUS.plan === "pro" || SELLER_STATUS.plan === "business"));
+    return !!(SUPPLIER_PLAN_ACCESS && SUPPLIER_PLAN_ACCESS.plan_active && SUPPLIER_PLAN_ACCESS.can_manage_products);
 }
 function updatePremiumVideoFields() {
+    const visible = hasActivePremiumVideoPlan() ? "block" : "none";
     const panel = document.getElementById("premium-video-fields");
-    if (panel) panel.style.display = hasActivePremiumVideoPlan() ? "block" : "none";
+    const editPanel = document.getElementById("edit-premium-video-fields");
+    if (panel) panel.style.display = visible;
+    if (editPanel) editPanel.style.display = visible;
 }
 function normaliseYouTubeUrl(value) {
     try {
@@ -1297,7 +1300,16 @@ async function addProductInner() {
 }
 
     var SELLER_STATUS = null;
+    var SUPPLIER_PLAN_ACCESS = null;
     var SUP_PRODUCT_VIEW = "active";
+
+    async function loadSupplierPlanAccess() {
+        try {
+            const { data, error } = await supabaseClient.rpc("get_my_supplier_plan_access");
+            if (!error) SUPPLIER_PLAN_ACCESS = data || null;
+        } catch (e) { console.error("Could not load supplier plan access:", e); }
+        return SUPPLIER_PLAN_ACCESS;
+    }
     function setSupplierProductView(view) { SUP_PRODUCT_VIEW = view === "archived" ? "archived" : "active"; loadSupplierProducts(); }
 
     async function loadSellerStatus() {
@@ -1409,6 +1421,7 @@ async function loadSupplierProducts() {
     }
 
     await loadSellerStatus();
+    await loadSupplierPlanAccess();
     updatePremiumVideoFields();
     const allProducts = products || [];
     const activeProducts = allProducts.filter(product => product.status === "Active");
@@ -2417,15 +2430,12 @@ async function loadAdvancedAnalytics() {
     const panel = document.getElementById("advanced-analytics-panel");
     const content = document.getElementById("advanced-analytics-content");
     if (!panel || !content) return;
-    await loadSellerStatus();
-    const premiumActive = SELLER_STATUS && SELLER_STATUS.plan_active && ["pro","business"].includes(SELLER_STATUS.plan);
-    if (!premiumActive) { panel.style.display = "none"; return; }
     panel.style.display = "block";
     content.innerHTML = "<p style=\"color:#777;\">Loading analytics...</p>";
     const { data, error } = await supabaseClient.rpc("get_supplier_advanced_analytics", { p_months: 6 });
     if (error || !data) {
+        panel.style.display = "none";
         console.error("ADVANCED ANALYTICS ERROR:", error);
-        content.innerHTML = "<p style=\"color:#777;\">Analytics could not be loaded right now. Please refresh and try again.</p>";
         return;
     }
     renderAdvancedAnalytics(data, content);
