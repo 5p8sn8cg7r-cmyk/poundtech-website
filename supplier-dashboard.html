@@ -256,6 +256,7 @@ Logout
         <button type="button" id="supplier-branches-tab" data-supplier-tab="supplier-branches-panel" style="display:none" onclick="showSupplierSection('supplier-branches-panel', this)">Branches</button>
         <button type="button" data-supplier-tab="supplier-earnings-panel" onclick="showSupplierSection('supplier-earnings-panel', this)">Payments &amp; Earnings</button>
         <button type="button" data-supplier-tab="supplier-help-panel" onclick="showSupplierSection('supplier-help-panel', this)">Help &amp; Guides</button>
+        <button type="button" id="supplier-support-tab" data-supplier-tab="supplier-support-panel" style="display:none" onclick="showSupplierSection('supplier-support-panel', this)">Priority Support</button>
         <button type="button" id="supplier-team-tab" style="display:none" onclick="window.location.href='supplier-team.html'">Team</button>
     </nav>
 
@@ -748,6 +749,22 @@ Add Product
     </div>
 </section>
 
+<section class="supplier-panel" id="supplier-support-panel">
+    <div class="card">
+        <h2>Priority Business Support</h2>
+        <p style="color:#666;line-height:1.55;">Send a request directly to the PoundTech support team. Your request is marked as Business priority and you can track its status here.</p>
+        <div style="background:#fff8e8;border-left:4px solid #d6ad52;border-radius:7px;padding:12px 14px;margin:16px 0;font-size:13px;line-height:1.5;color:#59451d;"><strong>Business support channel</strong><br>Include the relevant order number or product name where possible. Never include passwords, payment card details or one-time PINs.</div>
+        <form id="business-support-form" onsubmit="submitBusinessSupportTicket(event)" style="display:grid;gap:12px;max-width:760px;">
+            <div><label for="business-support-category" style="display:block;font-weight:700;font-size:13px;margin-bottom:6px;">What do you need help with?</label><select id="business-support-category" required style="width:100%;padding:12px;border:1px solid #ccc;border-radius:7px;background:#fff;"><option value="Orders">Orders</option><option value="Products & listings">Products &amp; listings</option><option value="Payments & payouts">Payments &amp; payouts</option><option value="Account & team">Account &amp; team</option><option value="Branches">Branches</option><option value="Technical issue">Technical issue</option><option value="Other">Other</option></select></div>
+            <div><label for="business-support-subject" style="display:block;font-weight:700;font-size:13px;margin-bottom:6px;">Subject</label><input id="business-support-subject" required minlength="4" maxlength="160" placeholder="Briefly describe what you need help with" style="width:100%;padding:12px;border:1px solid #ccc;border-radius:7px;"></div>
+            <div><label for="business-support-message" style="display:block;font-weight:700;font-size:13px;margin-bottom:6px;">How can we help?</label><textarea id="business-support-message" required minlength="20" maxlength="3000" rows="5" placeholder="Explain the issue and include any relevant order number, product name or steps to reproduce it." style="width:100%;padding:12px;border:1px solid #ccc;border-radius:7px;resize:vertical;"></textarea></div>
+            <button id="business-support-submit" type="submit" style="background:#111;color:#fff;border:0;border-radius:7px;padding:13px 18px;font-weight:800;cursor:pointer;width:max-content;">Submit support request</button>
+            <p id="business-support-status" role="status" aria-live="polite" style="margin:0;color:#555;font-size:13px;line-height:1.5;"></p>
+        </form>
+    </div>
+    <div class="card" style="margin-top:18px;"><h2>Your support requests</h2><div id="business-support-ticket-list"><p style="color:#777;">Your requests will appear here.</p></div></div>
+</section>
+
 </div>
 
 
@@ -1106,17 +1123,21 @@ const teamTab = document.getElementById("supplier-team-tab");
 if (teamTab) teamTab.style.display = supplierRole === "owner" ? "" : "none";
 
 const roleTabs = {
-    owner: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-help-panel"],
-    admin: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-help-panel"],
-    sales: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-help-panel"],
-    inventory: ["supplier-overview","supplier-products-panel","supplier-help-panel"],
-    finance: ["supplier-overview","supplier-earnings-panel","supplier-help-panel"],
-    custom: ["supplier-overview","supplier-help-panel"]
+    owner: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-help-panel","supplier-support-panel"],
+    admin: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-help-panel","supplier-support-panel"],
+    sales: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-help-panel","supplier-support-panel"],
+    inventory: ["supplier-overview","supplier-products-panel","supplier-help-panel","supplier-support-panel"],
+    finance: ["supplier-overview","supplier-earnings-panel","supplier-help-panel","supplier-support-panel"],
+    custom: ["supplier-overview","supplier-help-panel","supplier-support-panel"]
 };
 const visibleTabs = roleTabs[supplierRole] || roleTabs.custom;
 document.querySelectorAll("[data-supplier-tab]").forEach(function(tab) {
     tab.style.display = visibleTabs.includes(tab.getAttribute("data-supplier-tab")) ? "" : "none";
 });
+await loadSupplierPlanAccess();
+const supportTab = document.getElementById("supplier-support-tab");
+const businessSupportActive = !!(SUPPLIER_PLAN_ACCESS && SUPPLIER_PLAN_ACCESS.plan === "business" && SUPPLIER_PLAN_ACCESS.plan_active);
+if (supportTab) supportTab.style.display = businessSupportActive && visibleTabs.includes("supplier-support-panel") ? "" : "none";
 window.POUNDTECH_CAN_MANAGE_PRODUCTS = ["owner","admin","inventory"].includes(supplierRole);
 const addProductToggle = document.getElementById("add-product-toggle");
 if (addProductToggle && !window.POUNDTECH_CAN_MANAGE_PRODUCTS) addProductToggle.style.display = "none";
@@ -3023,6 +3044,7 @@ function showSupplierSection(sectionId, button) {
     if (sectionId === "supplier-orders-panel") { loadSupplierOrders(); }
     if (sectionId === "supplier-products-panel") { loadSupplierProducts(); }
     if (sectionId === "supplier-branches-panel") { loadSupplierBranches(); }
+    if (sectionId === "supplier-support-panel") { loadBusinessSupportTickets(); }
     if (sectionId === "supplier-earnings-panel") {
         loadSupplierEarnings();
         loadSupplierPayouts();
