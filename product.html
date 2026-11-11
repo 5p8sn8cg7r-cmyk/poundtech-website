@@ -508,11 +508,11 @@
 .more-card .mc-info { padding: 12px 14px 14px; }
 
 .mc-seller { margin: 5px 0 5px; color: #777; font-size: 11px; line-height: 1.35; overflow-wrap:anywhere; }
-.mc-seller a { display:inline-flex; align-items:center; flex-wrap:wrap; gap:3px 5px; color:#333; text-decoration:none; border-radius:4px; }
-.mc-seller a strong { color:#333; font-weight:750; text-decoration:underline; text-decoration-color:rgba(224,0,0,.55); text-underline-offset:2px; }
-.mc-seller a:hover strong,.mc-seller a:focus-visible strong { color:#d00000; text-decoration-color:#d00000; }
-.mc-store-cue { color:#d00000; font-size:9px; font-weight:800; white-space:nowrap; }
-.mc-seller a:focus-visible { outline:2px solid #d00000; outline-offset:3px; }
+.mc-seller a { display:inline-flex; align-items:center; gap:5px; padding:6px 9px; border:1px solid #e2e3e7; border-radius:7px; background:#f7f7f8; color:#292929; text-decoration:none; font-weight:750; transition:background .16s ease,border-color .16s ease,color .16s ease; }
+.mc-seller a:hover,.mc-seller a:focus-visible { background:#fff3f3; border-color:#e00000; color:#c90000; }
+.mc-seller a:focus-visible { outline:2px solid rgba(224,0,0,.25); outline-offset:2px; }
+.mc-seller-store-icon { width:14px; height:14px; flex:0 0 14px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.mc-store-cue { color:inherit; font-size:10px; font-weight:800; white-space:nowrap; }
 .mc-pro-badge { display:inline-flex; align-items:center; gap:4px; margin:0 0 7px; padding:3px 7px; border-radius:999px; color:#241a08; background:linear-gradient(135deg,#ffd75e 0%,#f2b923 55%,#d99a08 100%); border:1px solid #bd8500; font-size:9px; font-weight:850; letter-spacing:.3px; line-height:1.2; white-space:nowrap; }
 .mc-pro-badge svg { width:10px; height:10px; fill:currentColor; flex:none; }
 
@@ -537,6 +537,35 @@
     .product-info h1 { font-size: 24px; }
 }
 
+
+/* SUPPLIER STOREFRONT LINK */
+.supplier-store-button {
+    display:inline-flex; align-items:center; gap:7px;
+    margin-left:5px; padding:7px 11px;
+    border:1px solid #dedfe3; border-radius:8px;
+    background:#f7f7f8; color:#222; text-decoration:none;
+    font-size:13px; font-weight:750; line-height:1.2;
+    transition:background .16s ease,border-color .16s ease,color .16s ease;
+}
+.supplier-store-button span {
+    text-decoration:underline;
+    text-decoration-color:rgba(224,0,0,.55);
+    text-underline-offset:3px;
+}
+.supplier-store-button svg {
+    width:16px; height:16px; flex:0 0 16px;
+    fill:none; stroke:currentColor; stroke-width:1.8;
+    stroke-linecap:round; stroke-linejoin:round;
+}
+.supplier-store-button small { color:#d00000; font-size:10px; font-weight:850; white-space:nowrap; }
+.supplier-store-button:hover,.supplier-store-button:focus-visible {
+    background:#fff2f2; border-color:#e00000; color:#c90000;
+}
+.supplier-store-button:focus-visible { outline:2px solid rgba(224,0,0,.22); outline-offset:2px; }
+@media(max-width:480px) {
+    .supplier-store-button { gap:5px; padding:7px 9px; font-size:12px; }
+    .supplier-store-button small { font-size:9px; }
+}
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
@@ -709,7 +738,7 @@ async function enrichSimilarSupplierDetails(products) {
 
 function similarSupplierMarkup(product) {
     const name = product._ptSupplierName
-        ? '<p class="mc-seller">Sold by <a href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '" onclick="event.stopPropagation()" aria-label="Visit ' + esc(product._ptSupplierName) + ' storefront"><strong>' + esc(product._ptSupplierName) + '</strong><span class="mc-store-cue">Visit store ↗</span></a></p>'
+        ? '<p class="mc-seller">Sold by <a href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '" onclick="event.stopPropagation()" aria-label="Visit ' + esc(product._ptSupplierName) + ' storefront"><svg class="mc-seller-store-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 5 4h14l2 6.5"/><path d="M4 10.5V20h16v-9.5M9 20v-6h6v6"/><path d="M3 10.5a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg><strong>' + esc(product._ptSupplierName) + '</strong><span class="mc-store-cue">Visit store</span></a></p>'
         : "";
     const badge = product._ptProActive
         ? '<span class="mc-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>'
@@ -733,7 +762,7 @@ function fillSupplier(product, supplier) {
         ? '<span class="pro-seller-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>POUNDTECH PRO</span>'
         : "";
 
-    el.innerHTML = 'Sold by <a href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '">' + esc(supplier.business_name) + '</a>' + proBadge;
+    el.innerHTML = 'Sold by <a class="supplier-store-button" href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 5 4h14l2 6.5"/><path d="M4 10.5V20h16v-9.5M9 20v-6h6v6"/><path d="M3 10.5a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg><span>' + esc(supplier.business_name) + '</span><small>Visit store</small></a>' + proBadge;
 }
 
 
