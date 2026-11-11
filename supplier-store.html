@@ -581,6 +581,30 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
     width:100%;
 }
 
+
+/* SEAMLESS, SHOP-FIRST STOREFRONT FLOW */
+.container { padding-top:12px; }
+.back { margin-bottom:10px; }
+.supplier-header { padding:24px 30px; margin-bottom:12px; }
+.supplier-banner-photo { aspect-ratio:16/5; max-height:205px; margin-bottom:15px; }
+.store-section-head {
+    margin-top:12px;
+    padding-top:16px;
+    margin-bottom:14px;
+}
+.supplier-branches { margin-top:30px; }
+@media (max-width:700px) {
+    .container { padding:10px 14px 38px; }
+    .back { margin-bottom:8px; }
+    .supplier-header { padding:18px 17px; margin-bottom:10px; }
+    .supplier-banner-photo { aspect-ratio:16/7; max-height:135px; margin-bottom:12px; }
+    .supplier-header h2 { margin-bottom:8px; }
+    .supplier-meta { margin-top:12px; }
+    .supplier-rating-quick { margin-top:9px; }
+    .supplier-location { margin-top:11px; }
+    .store-section-head { margin-top:10px; padding-top:13px; margin-bottom:11px; }
+    .supplier-branches { margin-top:24px; }
+}
 </style>
 
   <link rel="icon" href="/favicon.ico?v=10" sizes="any">
@@ -629,15 +653,6 @@ Loading supplier...
 
 </div>
 
-<section id="supplier-branches" class="supplier-branches" hidden aria-label="Supplier branch locations">
-    <div class="supplier-branches-head">
-        <div>
-            <h2>Our locations</h2>
-            <p>Visit or collect from one of our active branches.</p>
-        </div>
-    </div>
-    <div id="supplier-branch-list" class="supplier-branch-grid"></div>
-</section>
 
 
     
@@ -678,6 +693,17 @@ Loading products...
 </p>
 
 </div>
+
+<section id="supplier-branches" class="supplier-branches" hidden aria-label="Supplier branch locations">
+    <div class="supplier-branches-head">
+        <div>
+            <h2>Our locations</h2>
+            <p>Visit or collect from one of our active branches.</p>
+        </div>
+    </div>
+    <div id="supplier-branch-list" class="supplier-branch-grid"></div>
+</section>
+
 <div id="reviews-section" style="
     background:white;
     padding:25px;
