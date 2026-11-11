@@ -11,6 +11,7 @@
 <meta name="pt-build" content="20261111-store-links-2">
 
 <title>PoundTech | South Africa's Automotive Marketplace</title>
+<meta name="description" content="Shop automotive parts and accessories, find mechanics and vehicle services, or grow your automotive business with PoundTech South Africa.">
 <link rel="canonical" href="https://poundtech.co.za/">
 <link rel="icon" href="/favicon.ico?v=20261108" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20261108">
@@ -1249,6 +1250,140 @@ footer {
     color: #e00000;
     font-weight: bold;
 }
+/* HOMEPAGE EXPERIENCE PATHWAYS */
+.hero {
+    padding-top: 58px;
+    padding-bottom: 48px;
+}
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 auto 17px;
+    color: #e8b2b2;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+.hero-eyebrow::before,
+.hero-eyebrow::after {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: #a52a2a;
+}
+.hero h1 {
+    max-width: 900px;
+    font-size: clamp(36px, 4.4vw, 54px);
+    letter-spacing: -.035em;
+}
+.hero h1 span { display: block; }
+.hero > p:not(#garage-vehicle-status) {
+    max-width: 680px;
+    margin-top: 15px;
+    margin-bottom: 24px;
+}
+.hero-pathways {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    width: min(920px, 100%);
+    margin: 25px auto 0;
+    text-align: left;
+}
+.hero-pathway {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+    min-height: 78px;
+    padding: 15px 16px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 10px;
+    background: rgba(12,14,18,.76);
+    color: #fff;
+    text-decoration: none;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.hero-pathway:hover {
+    border-color: rgba(224,0,0,.8);
+    background: rgba(30,31,35,.96);
+    transform: translateY(-2px);
+}
+.hero-pathway:focus-visible {
+    outline: 2px solid #ff5555;
+    outline-offset: 3px;
+}
+.hero-pathway-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 9px;
+    background: rgba(224,0,0,.13);
+    color: #ff5a5a;
+}
+.hero-pathway-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.hero-pathway-copy { display: block; min-width: 0; flex: 1; }
+.hero-pathway-copy strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.25;
+}
+.hero-pathway-copy small {
+    display: block;
+    color: #aeb2ba;
+    font-size: 11px;
+    line-height: 1.4;
+}
+.hero-pathway-arrow {
+    flex: 0 0 auto;
+    color: #e00000;
+    font-size: 21px;
+    line-height: 1;
+}
+@media (max-width: 700px) {
+    .hero {
+        padding: 42px 5% 34px;
+        background-size: auto 86%, auto;
+        background-position: center 70%, center;
+    }
+    .hero-eyebrow { font-size: 9px; letter-spacing: .13em; margin-bottom: 14px; }
+    .hero h1 { font-size: clamp(32px, 8.5vw, 42px); line-height: 1.08; }
+    .hero > p:not(#garage-vehicle-status) { font-size: 15px; margin: 13px auto 20px; }
+    .hero-pathways {
+        display: flex;
+        overflow-x: auto;
+        gap: 9px;
+        margin-top: 19px;
+        padding: 2px 1px 9px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+    .hero-pathway {
+        flex: 0 0 min(78vw, 270px);
+        min-height: 72px;
+        padding: 12px;
+        scroll-snap-align: start;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-pathway { transition: none; }
+    .hero-pathway:hover { transform: none; }
+}
+
 </style>
 </head>
 
@@ -1299,12 +1434,14 @@ footer {
 
 <section class="hero">
 
+<div class="hero-eyebrow">South Africa's automotive marketplace</div>
+
 <h1>
-South Africa's <span>Automotive Marketplace</span>
+Everything your vehicle needs. <span>All in one place.</span>
 </h1>
 
 <p>
-Find car parts, accessories and automotive services from businesses across South Africa.
+Shop parts and accessories, find automotive services, or connect your business with customers across South Africa.
 </p>
 
 <div class="shop-card">
@@ -1313,7 +1450,8 @@ Find car parts, accessories and automotive services from businesses across South
 
         <input
             type="text"
-            placeholder="Search for parts, accessories or services..."
+            placeholder="What does your vehicle need today?"
+            aria-label="Search automotive parts, accessories and services"
             onkeydown="if(event.key === 'Enter') searchProducts()"
         >
 
@@ -1351,7 +1489,42 @@ Find car parts, accessories and automotive services from businesses across South
 <p id="garage-vehicle-status">
     Choose a vehicle from My Garage to find compatible products.
 </p>
-    
+
+<nav class="hero-pathways" aria-label="Explore PoundTech">
+    <a class="hero-pathway" href="#category-section">
+        <span class="hero-pathway-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6"/><circle cx="10" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>
+        </span>
+        <span class="hero-pathway-copy">
+            <strong>Shop parts</strong>
+            <small>Parts, accessories and upgrades</small>
+        </span>
+        <span class="hero-pathway-arrow" aria-hidden="true">›</span>
+    </a>
+
+    <a class="hero-pathway" href="mechanics.html">
+        <span class="hero-pathway-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3.5 17.5a2.1 2.1 0 0 0 3 3l4.8-4.8a5 5 0 0 0 6.4-6.4l-3 3-3.5-3.5z"/></svg>
+        </span>
+        <span class="hero-pathway-copy">
+            <strong>Find a service</strong>
+            <small>Mechanics, car washes and detailers</small>
+        </span>
+        <span class="hero-pathway-arrow" aria-hidden="true">›</span>
+    </a>
+
+    <a class="hero-pathway" href="supplier.html">
+        <span class="hero-pathway-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 10h18l-1.5-6h-15z"/><path d="M5 10v10h14V10M9 20v-6h6v6"/><path d="M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg>
+        </span>
+        <span class="hero-pathway-copy">
+            <strong>Sell on PoundTech</strong>
+            <small>Grow your automotive business</small>
+        </span>
+        <span class="hero-pathway-arrow" aria-hidden="true">›</span>
+    </a>
+</nav>
+
 </section>
 
 
