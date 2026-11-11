@@ -1439,6 +1439,13 @@ Find car parts, accessories and automotive services from businesses across South
     <p>Loading products...</p>
 
 </div>
+
+<div style="display:flex;justify-content:center;margin:24px 0 8px;">
+    <button type="button" id="products-load-more" onclick="loadMoreProducts()" hidden
+        style="min-height:44px;padding:0 22px;border:1px solid #e00000;border-radius:8px;background:#e00000;color:#fff;font-weight:750;cursor:pointer;">
+        Load more products
+    </button>
+</div>
 </section>
 
 
@@ -3066,11 +3073,26 @@ async function loadBusinessPartners() {
 
 loadBusinessPartners();
 
-async function loadProducts() {
+async function loadProducts(append) {
+
+    append = append === true;
+    if (PRODUCT_LOADING) return;
+    PRODUCT_LOADING = true;
 
     const container = document.getElementById("products-container");
+    const loadMoreButton = document.getElementById("products-load-more");
+    if (loadMoreButton) {
+        loadMoreButton.disabled = true;
+        loadMoreButton.textContent = "Loading products...";
+    }
 
-       updateCategoryUI();
+    if (!append) {
+        PRODUCT_OFFSET = 0;
+        PRODUCT_HAS_MORE = true;
+        loadedProducts = [];
+    }
+
+    updateCategoryUI();
 
     let query = supabaseClient
         .from("products")
@@ -3082,22 +3104,32 @@ async function loadProducts() {
     }
 
     const { data: products, error } = await query
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(PRODUCT_OFFSET, PRODUCT_OFFSET + PRODUCT_PAGE_SIZE - 1);
 
     if (error) {
         console.error("PRODUCTS ERROR:", error);
-        container.innerHTML = "<p>Unable to load products.</p>";
+        if (!append) container.innerHTML = "<p>Unable to load products.</p>";
+        PRODUCT_LOADING = false;
+        updateLoadMoreButton();
         return;
     }
 
     if (!products || products.length === 0) {
-        container.innerHTML = activeFilter
-            ? "<p>No products found in <strong>" + esc(activeFilter.title) + "</strong> yet.</p>"
-            : "<p>No products available yet.</p>";
+        if (!append) {
+            container.innerHTML = activeFilter
+                ? "<p>No products found in <strong>" + esc(activeFilter.title) + "</strong> yet.</p>"
+                : "<p>No products available yet.</p>";
+        }
+        PRODUCT_HAS_MORE = false;
+        PRODUCT_LOADING = false;
+        updateLoadMoreButton();
         return;
     }
 
-    loadedProducts = products;
+    PRODUCT_OFFSET += products.length;
+    PRODUCT_HAS_MORE = products.length === PRODUCT_PAGE_SIZE;
+    loadedProducts = append ? loadedProducts.concat(products) : products;
 
     // Add the Pro badge only when the supplier has an active Pro plan.
     const supplierIds = [...new Set(products.map(function (p) { return p.supplier_id; }).filter(Boolean))];
@@ -3119,11 +3151,29 @@ async function loadProducts() {
         }
     }
 
+    PRODUCT_LOADING = false;
     await renderLoaded();
+    updateLoadMoreButton();
 }
 
 
 let loadedProducts = [];
+const PRODUCT_PAGE_SIZE = 24;
+let PRODUCT_OFFSET = 0;
+let PRODUCT_HAS_MORE = true;
+let PRODUCT_LOADING = false;
+
+function updateLoadMoreButton() {
+    const button = document.getElementById("products-load-more");
+    if (!button) return;
+    button.hidden = !PRODUCT_HAS_MORE;
+    button.disabled = PRODUCT_LOADING;
+    button.textContent = PRODUCT_LOADING ? "Loading products..." : "Load more products";
+}
+
+function loadMoreProducts() {
+    return loadProducts(true);
+}
 let sortMode = "recommended";
 let onlyDeals = false;
 let onlyInStock = false;
@@ -3377,13 +3427,15 @@ searchStatus.innerHTML = `
     </div>
 `;
 
+    PRODUCT_HAS_MORE = false;
+    updateLoadMoreButton();
     const { data, error } = await supabaseClient
         .from("products")
         .select("*")
         .eq("status", "Active")
         .or(
             `name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%,vehicle_compatibility.ilike.%${searchTerm}%`
-        );
+        ).limit(60);
 
     if (error) {
         console.error("SEARCH ERROR:", error);
