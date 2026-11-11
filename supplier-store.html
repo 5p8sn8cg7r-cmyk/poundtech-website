@@ -1094,7 +1094,7 @@ async function loadSupplierBranches() {
                 </div>
                 <p class="supplier-branch-address">${address}</p>
                 ${hours ? '<p class="supplier-branch-detail"><strong>Hours:</strong> ' + hours + '</p>' : ""}
-                ${phone ? '<p class="supplier-branch-detail"><strong>Phone:</strong> <a href="tel:' + PT.esc(phone.replace(/[^+\\d]/g, "")) + '">' + PT.esc(phone) + '</a></p>' : ""}
+                ${phone ? '<p class="supplier-branch-detail"><strong>Phone:</strong> <a href="tel:' + PT.esc(phone.replace(/[^+\d]/g, "")) + '">' + PT.esc(phone) + '</a></p>' : ""}
                 ${email ? '<p class="supplier-branch-detail"><strong>Email:</strong> <a href="mailto:' + PT.esc(email) + '">' + PT.esc(email) + '</a></p>' : ""}
                 ${branch.collection_available ? '<span class="supplier-branch-collection">Collection available</span>' : ""}
             </article>
