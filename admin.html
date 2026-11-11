@@ -1023,6 +1023,7 @@ async function loadPlansAdmin() {
 
     const revenue = rev.data || {};
     const suppliers = suppliersResult.data || [];
+    ADM_PLAN_SUPPLIERS = suppliers;
     const requests = suppliers.filter(function(s) {
         return s.plan_requested_at && (s.plan !== "pro" || !s.plan_ends_at || new Date(s.plan_ends_at) < new Date());
     });
@@ -1037,15 +1038,6 @@ async function loadPlansAdmin() {
                     <button type="button" onclick="activatePro('${esc(s.id)}')">Activate Pro</button>
                 </div></div>`;
     }).join("") || '<div class="od-empty">No one has asked for the Pro plan.</div>';
-
-    const tierRows = suppliers.map(function(s) {
-        const plan = (s.plan || "standard").toLowerCase();
-        const labels = {standard:"Standard", pro:"Pro", business:"Business", enterprise:"Corporate / Enterprise", corporate:"Corporate / Enterprise"};
-        const isPaidTier = ["pro","business"].includes(plan);
-        const active = isPaidTier ? (s.plan_ends_at && new Date(s.plan_ends_at) > new Date()) : (plan === "enterprise" || plan === "corporate" ? (!s.plan_ends_at || new Date(s.plan_ends_at) > new Date()) : true);
-        const expiry = s.plan_ends_at ? new Date(s.plan_ends_at).toLocaleDateString("en-ZA") : (plan === "enterprise" || plan === "corporate" ? "Custom terms" : "—");
-        return '<tr><td>' + esc(s.business_name || "Supplier") + '</td><td><span class="od-pill ' + (plan === "business" || plan === "enterprise" || plan === "corporate" ? "dark" : plan === "pro" ? "amber" : "") + '">' + esc(labels[plan] || plan) + '</span></td><td>' + (active ? '<span class="od-pill green">Active</span>' : '<span class="od-pill amber">Expired</span>') + '</td><td>' + esc(expiry) + '</td></tr>';
-    }).join("") || '<tr><td colspan="4">No suppliers found.</td></tr>';
 
     box.innerHTML = `
         <h2 class="rev-title">Supplier plans</h2>
@@ -1063,9 +1055,48 @@ async function loadPlansAdmin() {
         <p class="rev-note">Pro upgrades can be activated here after payment is received. Business and Corporate / Enterprise enquiries are handled through their enquiry process and negotiated terms.</p>
         ${reqRows}
         <h3 style="font-size:16px;margin:24px 0 10px;">All supplier accounts by plan</h3>
-        <div style="overflow-x:auto;"><table class="rev-table"><thead><tr><th>Supplier</th><th>Plan</th><th>Status</th><th>Expiry / terms</th></tr></thead><tbody>${tierRows}</tbody></table></div>
+        <div class="pt-filter-panel" style="margin-bottom:10px;">
+            <label for="admin-plan-filter">Filter by plan</label>
+            <select id="admin-plan-filter" onchange="renderAdminSupplierPlanRows()">
+                <option value="all">All plans</option><option value="standard">Standard</option><option value="pro">Pro</option><option value="business">Business</option><option value="enterprise">Corporate / Enterprise</option>
+            </select>
+            <input id="admin-plan-search" type="search" placeholder="Search supplier name…" oninput="renderAdminSupplierPlanRows()" style="flex:1;min-width:220px;width:auto;margin:0;">
+        </div>
+        <div id="admin-plan-results-count" class="rev-note" style="margin-bottom:8px;"></div>
+        <div style="overflow-x:auto;"><table class="rev-table"><thead><tr><th>Supplier</th><th>Plan</th><th>Status</th><th>Expiry / terms</th></tr></thead><tbody id="admin-plan-rows"></tbody></table></div>
         <p class="rev-note">Total plan revenue to date: ${esc(money(revenue.total))}. Business and Enterprise commercial terms are subject to confirmation with PoundTech.</p>
     `;
+}
+
+var ADM_PLAN_SUPPLIERS = [];
+
+function renderAdminSupplierPlanRows() {
+    var filter = document.getElementById("admin-plan-filter");
+    var search = document.getElementById("admin-plan-search");
+    var body = document.getElementById("admin-plan-rows");
+    var count = document.getElementById("admin-plan-results-count");
+    if (!filter || !search || !body || !count) return;
+
+    var selectedPlan = filter.value;
+    var query = search.value.trim().toLowerCase();
+    var labels = {standard:"Standard", pro:"Pro", business:"Business", enterprise:"Corporate / Enterprise", corporate:"Corporate / Enterprise"};
+
+    var rows = ADM_PLAN_SUPPLIERS.filter(function(s) {
+        var plan = (s.plan || "standard").toLowerCase();
+        var normalPlan = plan === "corporate" ? "enterprise" : plan;
+        return (selectedPlan === "all" || normalPlan === selectedPlan) &&
+            (!query || (s.business_name || "Supplier").toLowerCase().includes(query));
+    });
+
+    body.innerHTML = rows.map(function(s) {
+        var plan = (s.plan || "standard").toLowerCase();
+        var isPaidTier = ["pro","business"].includes(plan);
+        var active = isPaidTier ? (s.plan_ends_at && new Date(s.plan_ends_at) > new Date()) : (plan === "enterprise" || plan === "corporate" ? (!s.plan_ends_at || new Date(s.plan_ends_at) > new Date()) : true);
+        var expiry = s.plan_ends_at ? new Date(s.plan_ends_at).toLocaleDateString("en-ZA") : (plan === "enterprise" || plan === "corporate" ? "Custom terms" : "—");
+        return '<tr><td>' + esc(s.business_name || "Supplier") + '</td><td><span class="od-pill ' + (plan === "business" || plan === "enterprise" || plan === "corporate" ? "dark" : plan === "pro" ? "amber" : "") + '">' + esc(labels[plan] || plan) + '</span></td><td>' + (active ? '<span class="od-pill green">Active</span>' : '<span class="od-pill amber">Expired</span>') + '</td><td>' + esc(expiry) + '</td></tr>';
+    }).join("") || '<tr><td colspan="4">No supplier accounts match these filters.</td></tr>';
+
+    count.textContent = "Showing " + rows.length + " of " + ADM_PLAN_SUPPLIERS.length + " supplier accounts";
 }
 
 async function activatePro(id) {
