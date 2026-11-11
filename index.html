@@ -291,6 +291,46 @@ nav a:hover {
 
 /* PRODUCTS */
 
+.product-showcase-section {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #f8f9fb;
+}
+
+.product-showcase-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: .22;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='320' viewBox='0 0 420 320'%3E%3Cg fill='none' stroke='%239ba5b2' stroke-width='1.2' opacity='.7'%3E%3Ccircle cx='78' cy='76' r='34'/%3E%3Ccircle cx='78' cy='76' r='23'/%3E%3Ccircle cx='78' cy='76' r='5'/%3E%3Cpath d='M78 34v9m0 66v9M36 76h9m66 0h9M48 46l7 7m46 46 7 7m0-60-7 7m-46 46-7 7'/%3E%3Ccircle cx='332' cy='236' r='45'/%3E%3Ccircle cx='332' cy='236' r='31'/%3E%3Ccircle cx='332' cy='236' r='7'/%3E%3Cpath d='M332 181v10m0 90v10m-55-55h10m90 0h10m-94-39 7 7m64 64 7 7m0-78-7 7m-64 64-7 7'/%3E%3Cpath d='M145 0c35 45 35 83 0 120s-35 75 0 112 35 58 0 88M190 0c35 45 35 83 0 120s-35 75 0 112 35 58 0 88' stroke-dasharray='4 7'/%3E%3Cpath d='M0 230h115l25-25h60m80-145h55l25 25h60'/%3E%3Ccircle cx='115' cy='230' r='3'/%3E%3Ccircle cx='280' cy='60' r='3'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 420px 320px;
+    background-position: center center;
+}
+
+.product-showcase-section > * {
+    position: relative;
+    z-index: 1;
+}
+
+.product-card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: auto;
+}
+
+.product-card-footer .pt-pricebox {
+    margin: 0;
+}
+
+.product-card-footer .pt-ends {
+    margin: -2px 0 0;
+}
+
 .products {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -387,7 +427,7 @@ nav a:hover {
 }
 
 .product-info button {
-    margin-top: auto;
+    margin-top: 0;
     width: 100%;
     padding: 12px;
     border: 1px solid #111;
@@ -1427,7 +1467,7 @@ Find car parts, accessories and automotive services from businesses across South
 <div class="business-partners-grid" id="business-partners-grid"></div>
 </section>
 
-<section class="section">
+<section class="section product-showcase-section">
 
 <h2 id="products-heading">Featured Products</h2>
 
@@ -3015,12 +3055,13 @@ function renderProductCard(product, status) {
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
 
-                ${PT.price(product)}
-
-${Number(product.stock) > 0
-                    ? `<button onclick="${esc(handler)}">Add to Cart</button>`
-                    : '<button type="button" disabled style="background:#777;cursor:not-allowed;">Out of stock</button>'}
-                ${Number(product.stock) <= 0 ? '<p style="margin:6px 0 0;color:#a00;font-size:12px;font-weight:700;">Currently unavailable</p>' : ''}
+                <div class="product-card-footer">
+                    ${PT.price(product)}
+                    ${Number(product.stock) > 0
+                        ? `<button onclick="${esc(handler)}">Add to Cart</button>`
+                        : '<button type="button" disabled style="background:#777;cursor:not-allowed;">Out of stock</button>'}
+                    ${Number(product.stock) <= 0 ? '<p style="margin:6px 0 0;color:#a00;font-size:12px;font-weight:700;">Currently unavailable</p>' : ''}
+                </div>
             </div>
         </div>
     `;
