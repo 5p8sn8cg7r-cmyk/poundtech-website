@@ -573,6 +573,11 @@ async function submitBooking() {
         return;
     }
 
+    if (window.PTReferral) {
+        const referralResult = await window.PTReferral.attach("Service Booking", data.booking_id, email);
+        if (referralResult && referralResult.error) console.warn("Referral attribution could not be attached:", referralResult.error);
+    }
+
     showDone(data);
 }
 
