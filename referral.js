@@ -24,7 +24,6 @@
         return;
     }
 
-    if (!incomingCode || !/^[A-Z0-9-]{4,24}$/.test(incomingCode)) return;
     if (!window.supabase || !window.supabase.createClient) return;
 
     var client = window.supabase.createClient(
@@ -46,6 +45,8 @@
             });
         }
     };
+
+    if (!incomingCode || !/^[A-Z0-9-]{4,24}$/.test(incomingCode)) return;
 
     client.rpc("capture_referral_attribution", {
         p_referral_code: incomingCode,
