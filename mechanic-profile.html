@@ -167,7 +167,9 @@
             .profile-service-side { min-width: 105px; }
         }
 
-    </style>
+        .profile-specialties { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0 18px; }
+    .profile-specialty { display:inline-block; padding:6px 10px; border-radius:999px; background:#f4f5f7; color:#444; font-size:13px; }
+</style>
 
   <link rel="icon" href="/favicon.ico?v=10" sizes="any">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=10">
@@ -326,6 +328,10 @@ async function loadMechanicProfile() {
 
     const activeServices = services || [];
     const businessType = TYPE_LABELS[mechanic.business_type] || "Automotive services";
+    const specialties = Array.isArray(mechanic.specialties) ? mechanic.specialties : [];
+    const specialtiesHtml = specialties.length
+        ? '<div class="profile-specialties">' + specialties.map(item => '<span class="profile-specialty">' + escapeHtml(item) + '</span>').join("") + '</div>'
+        : "";
 
     const servicesHtml = activeServices.length
         ? activeServices.map(function (service) {
@@ -398,6 +404,8 @@ async function loadMechanicProfile() {
         <h1>
             ${escapeHtml(mechanic.business_name)}
         </h1>
+
+        ${specialtiesHtml}
 
  <div class="rating">
 
