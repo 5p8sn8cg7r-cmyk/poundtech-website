@@ -100,6 +100,10 @@ input[type="checkbox"] {
 }
 
 .service h3 { font-size: 16px; margin-bottom: 2px; }
+.service-suggestions{margin:14px 0 18px;padding:14px;border:1px solid #e8e8e8;border-radius:10px;background:#fafafa}
+.service-suggestion-list{display:flex;flex-wrap:wrap;gap:8px}
+.service-suggestion{border:1px solid #ddd;border-radius:999px;background:#fff;color:#333;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer}
+.service-suggestion:hover{border-color:#e00000;color:#c00}
 .service p { color: #666; font-size: 14px; }
 .service .meta { margin-top: 8px; }
 .service .actions { display: flex; gap: 8px; flex-shrink: 0; }
@@ -304,6 +308,7 @@ html{scroll-behavior:smooth}
             <hr class="divider">
 
             <h2 id="service-form-title" style="font-size:18px;">Add a service</h2>
+<div class="service-suggestions" id="service-suggestions"><p class="hint" style="margin:0 0 9px;">Quick-start suggestions for your business type. Select one to fill in the service name and description, then set your own price and duration.</p><div class="service-suggestion-list" id="service-suggestion-list"></div></div>
 
             <label for="service-name">Service name</label>
             <input type="text" id="service-name" maxlength="80" placeholder="e.g. Full Interior Detail">
@@ -531,6 +536,8 @@ async function init() {
     el("signed-in-as").textContent =
         "Signed in as " + (session.user.email || "your account");
     el("business-type").value = business.business_type || "mechanic";
+    business.business_type = business.business_type || "mechanic";
+    renderServiceSuggestions();
 
     show("app", true);
 
@@ -679,11 +686,33 @@ async function saveType() {
     }
 
     business.business_type = type;
+    renderServiceSuggestions();
     msg("type-msg", "Saved. You're listed as: " + TYPE_LABELS[type] + ".", "success");
 }
 
 
 /* ---------- SERVICES ---------- */
+
+const SERVICE_SUGGESTIONS = {
+mechanic:[["Vehicle servicing","Routine vehicle maintenance and scheduled servicing."],["Engine diagnostics","Diagnostic scan and fault-code assessment."],["Brake inspection and repairs","Inspection and repair of braking components."],["Clutch repairs","Clutch inspection, replacement and related repairs."],["Auto electrical repairs","Diagnosis and repair of vehicle electrical faults."],["Suspension repairs","Inspection and repair of suspension and steering components."]],
+car_wash:[["Basic car wash","Exterior wash and dry."],["Full valet","Interior and exterior vehicle cleaning."],["Interior cleaning","Vacuuming and cleaning of interior surfaces."],["Engine bay cleaning","Careful cleaning of the vehicle engine bay."],["SUV and 4x4 wash","Wash service for larger vehicles and 4x4s."]],
+detailer:[["Full vehicle detail","Comprehensive interior and exterior detailing."],["Paint correction","Machine polishing to improve paint clarity and reduce defects."],["Ceramic coating","Preparation and application of a protective ceramic coating."],["Interior deep clean","Deep cleaning of seats, carpets and interior surfaces."],["Paint protection film","Installation of paint protection film on selected vehicle panels."]],
+panel_beater:[["Dent removal","Assessment and repair of dents and minor body damage."],["Accident damage repair","Repair of vehicle bodywork following an accident."],["Panel replacement","Removal and replacement of damaged body panels."],["Spray painting","Preparation, colour matching and refinishing of vehicle panels."],["Bumper repair","Repair or replacement of damaged bumpers."]],
+truck_fleet:[["Truck and trailer repairs","Repairs and maintenance for heavy vehicles and trailers."],["Diesel engine diagnostics","Diagnosis of diesel engine faults and performance issues."],["Hydraulic system repairs","Inspection, servicing and repair of hydraulic systems."],["Fleet maintenance","Scheduled maintenance for commercial vehicle fleets."],["Truck brake repairs","Inspection and repair of heavy-vehicle braking systems."],["Mobile roadside assistance","On-site assistance for commercial vehicles where available."]]
+};
+function renderServiceSuggestions(){
+ const type=business&&SERVICE_SUGGESTIONS[business.business_type]?business.business_type:"mechanic";
+ el("service-suggestion-list").innerHTML=(SERVICE_SUGGESTIONS[type]||[]).map((item,index)=>'<button type="button" class="service-suggestion" data-suggestion-index="'+index+'">'+esc(item[0])+'</button>').join("");
+}
+function chooseServiceSuggestion(index){
+ const type=business&&SERVICE_SUGGESTIONS[business.business_type]?business.business_type:"mechanic";
+ const item=(SERVICE_SUGGESTIONS[type]||[])[Number(index)];
+ if(!item)return;
+ el("service-name").value=item[0];
+ el("service-desc").value=item[1];
+ el("service-name").focus();
+ msg("service-msg","Suggestion added. Set your own price and duration before saving.","info");
+}
 
 async function loadServices() {
 
@@ -739,6 +768,7 @@ function renderServices() {
 
 function resetServiceForm() {
     editingServiceId = null;
+    renderServiceSuggestions();
     el("service-form-title").textContent = "Add a service";
     el("service-name").value = "";
     el("service-desc").value = "";
@@ -1059,6 +1089,11 @@ el("membership-professional-btn").addEventListener("click", () => chooseMembersh
 el("nobiz-signout").addEventListener("click", signOut);
 el("save-type-btn").addEventListener("click", saveType);
 el("save-service-btn").addEventListener("click", saveService);
+el("service-suggestion-list").addEventListener("click", e => {
+    const button = e.target.closest("button[data-suggestion-index]");
+    if (!button) return;
+    chooseServiceSuggestion(button.dataset.suggestionIndex);
+});
 el("cancel-edit-btn").addEventListener("click", () => {
     resetServiceForm();
     msg("service-msg", "");
