@@ -497,6 +497,14 @@ function renderSpecialties() {
         return '<div><p class="specialty-group-title">' + esc(group[0]) + '</p><div class="specialty-chips">' + chips + '</div></div>';
     }).join("");
 
+    const suggested = groups.flatMap(group => group[1]).map(item => item.toLowerCase());
+    const customSelected = selectedSpecialties.filter(item => !suggested.includes(item.toLowerCase()));
+    if (customSelected.length) {
+        el("specialty-groups").innerHTML += '<div><p class="specialty-group-title">Your added specialities</p><div class="specialty-chips">' +
+            customSelected.map(item => '<button type="button" class="specialty-chip selected" aria-pressed="true" data-specialty="' + esc(item) + '">' + esc(item) + ' ×</button>').join("") +
+            '</div></div>';
+    }
+
     el("specialty-count").textContent = selectedSpecialties.length +
         (selectedSpecialties.length === 1 ? " speciality selected" : " specialities selected");
 }
