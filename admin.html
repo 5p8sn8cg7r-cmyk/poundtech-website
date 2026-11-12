@@ -228,6 +228,7 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-se
 .support-detail-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}.support-detail-actions span{font-size:11px;color:#777}.support-detail-actions button{margin:0;border-radius:9px}
 #admin-support-message{margin-top:12px}
 @media(max-width:850px){.support-workspace{grid-template-columns:1fr}.support-list{order:1}.support-detail{order:2;min-height:0}.support-list{max-height:none}.section-heading{align-items:flex-start;flex-direction:column}}
+.ref-table-wrap{overflow-x:auto;background:#fff;border:1px solid #e7e7e7;border-radius:12px;margin-bottom:16px}.ref-table{width:100%;border-collapse:collapse;min-width:760px}.ref-table th,.ref-table td{padding:11px 13px;border-bottom:1px solid #eee;text-align:left;font-size:13px;vertical-align:middle}.ref-table th{background:#fafafa;color:#666}.ref-table input,.ref-table select{width:auto;max-width:170px;padding:8px;margin:3px;border:1px solid #ccc;border-radius:7px}.ref-link{font-size:12px;overflow-wrap:anywhere;color:#555}.ref-action{padding:8px 11px;margin:3px;font-size:12px}.ref-status{display:inline-block;padding:4px 8px;border-radius:20px;background:#eee;font-size:11px;font-weight:700}.ref-status.active,.ref-status.payable,.ref-status.paid{background:#e4f5ea;color:#176b35}.ref-status.pending,.ref-status.approved{background:#fff3cd;color:#7a5a00}.ref-status.suspended,.ref-status.reversed{background:#fdecec;color:#8a1111}.ref-empty{background:#fff;border:1px dashed #ccc;border-radius:12px;padding:25px;text-align:center;color:#666}
 @media(max-width:600px){.pt-admin-header{padding:14px 15px}.pt-brand{font-size:19px}.pt-admin-user{gap:8px}.pt-admin-user #admin-user-label{display:none}.pt-nav{padding:8px 10px}.pt-nav-btn{padding:10px 12px}.pt-admin-container{margin:18px auto;padding:0 12px 36px}.section-heading h2{font-size:24px}.support-stats{gap:7px}.support-stat{padding:12px}.support-stat strong{font-size:21px}.support-meta{grid-template-columns:1fr}.pt-filter-panel{align-items:stretch}.pt-filter-panel select{width:100%}.pt-filter-panel button{width:100%}}
 </style>
 </head>
@@ -246,6 +247,7 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-se
     <button type="button" class="pt-nav-btn" data-section="support" onclick="setAdminSection('support')">Support <span id="support-nav-count" class="pt-nav-count" hidden>0</span></button>
     <button type="button" class="pt-nav-btn" data-section="marketplace" onclick="setAdminSection('marketplace')">Marketplace</button>
     <button type="button" class="pt-nav-btn" data-section="finance" onclick="setAdminSection('finance')">Finance</button>
+    <button type="button" class="pt-nav-btn" data-section="referrals" onclick="setAdminSection('referrals')">Referrals</button>
     <button type="button" class="pt-nav-btn" data-section="settings" onclick="setAdminSection('settings')">Settings</button>
   </nav>
 </div>
@@ -309,6 +311,32 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-se
       <div id="payouts-admin"></div>
       <div id="preowned-payouts-admin"></div>
       <div id="plans-admin"></div>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="referrals" id="panel-referrals">
+      <div class="section-heading"><div><span class="section-kicker">Partner programme</span><h2>Referral programme</h2><p>Manage partners, track attributed business and pay rewards. Partner rewards are 15% of PoundTech's commission.</p></div><button type="button" class="pt-refresh" onclick="loadReferralAdmin()">Refresh</button></div>
+      <div id="referral-admin-message" class="rev-note" role="status"></div>
+      <div class="rev-grid" id="referral-stats">
+        <div class="rev-card"><small>Active partners</small><b>—</b></div>
+        <div class="rev-card"><small>Attributed visits</small><b>—</b></div>
+        <div class="rev-card"><small>Rewards generated</small><b>—</b></div>
+        <div class="rev-card accent"><small>Outstanding rewards</small><b>—</b></div>
+      </div>
+      <div class="panel-card" style="background:#fff;padding:20px;margin:16px 0;">
+        <h3 style="margin:0 0 14px;">Add referral partner</h3>
+        <form id="referral-create-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end;">
+          <label style="font-size:13px;font-weight:700;">Partner / business name<input id="ref-new-name" required maxlength="120" placeholder="e.g. Gauteng Auto Club"></label>
+          <label style="font-size:13px;font-weight:700;">Email address<input id="ref-new-email" type="email" required maxlength="254" placeholder="partner@example.com"></label>
+          <label style="font-size:13px;font-weight:700;">Referral code<input id="ref-new-code" maxlength="24" placeholder="Auto-generated if blank"></label>
+          <button type="submit" style="margin:0;">Create partner</button>
+        </form>
+        <p class="rev-note" style="margin:10px 0 0;">New partners start as Pending. Activate them once the agreement and payout details are confirmed. Their account can be linked after they register.</p>
+      </div>
+      <h3 class="rev-title">Referral partners</h3>
+      <div id="referral-partners-table"></div>
+      <h3 class="rev-title" style="margin-top:26px;">Referral rewards</h3>
+      <div class="pt-filter-panel"><label for="ref-reward-filter">Reward status</label><select id="ref-reward-filter"><option value="all">All statuses</option><option>Pending</option><option>Approved</option><option>Payable</option><option>Paid</option><option>Reversed</option></select></div>
+      <div id="referral-rewards-table"></div>
     </section>
 
     <section class="admin-panel" data-admin-panel="settings" id="panel-settings">
@@ -1464,10 +1492,116 @@ function setAdminSection(section) {
         loadAdminApplications(document.getElementById("application-kind").value);
     }
     if (section === "support") loadAdminSupportTickets();
+    if (section === "referrals") loadReferralAdmin();
 }
 document.getElementById("application-kind").addEventListener("change", function() {
     loadAdminApplications(this.value);
 });
+
+// ---------- Referral programme administration ----------
+var REF_PARTNERS = [];
+var REF_REWARDS = [];
+function refMoney(v) { return "R" + (Number(v)||0).toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function refDate(v) { return v ? new Date(v).toLocaleDateString("en-ZA") : "—"; }
+function refCode(value) {
+    var code = String(value || "").trim().toUpperCase().replace(/[^A-Z0-9-]/g,"");
+    if (!code) code = "PT-" + Math.random().toString(36).slice(2,8).toUpperCase();
+    return code.slice(0,24);
+}
+async function loadReferralAdmin() {
+    var msg = document.getElementById("referral-admin-message");
+    msg.textContent = "Loading referral programme…";
+    var results = await Promise.all([
+        supabaseClient.from("referral_partners").select("*").order("created_at",{ascending:false}),
+        supabaseClient.from("referral_rewards").select("*").order("created_at",{ascending:false}),
+        supabaseClient.from("referral_attributions").select("id",{count:"exact",head:true})
+    ]);
+    if (results[0].error || results[1].error || results[2].error) {
+        var err = results.find(function(r){return r.error;}).error;
+        msg.textContent = "Could not load referral data: " + err.message;
+        return;
+    }
+    REF_PARTNERS = results[0].data || [];
+    REF_REWARDS = results[1].data || [];
+    var active = REF_PARTNERS.filter(function(p){return p.status==="Active";}).length;
+    var generated = REF_REWARDS.reduce(function(n,r){return n+Number(r.reward_amount||0);},0);
+    var outstanding = REF_REWARDS.filter(function(r){return ["Pending","Approved","Payable"].includes(r.status);}).reduce(function(n,r){return n+Number(r.reward_amount||0);},0);
+    document.getElementById("referral-stats").innerHTML =
+      '<div class="rev-card"><small>Active partners</small><b>'+active+'</b></div>'+
+      '<div class="rev-card"><small>Attributed visits</small><b>'+(results[2].count||0)+'</b></div>'+
+      '<div class="rev-card"><small>Rewards generated</small><b>'+refMoney(generated)+'</b></div>'+
+      '<div class="rev-card accent"><small>Outstanding rewards</small><b>'+refMoney(outstanding)+'</b></div>';
+    renderReferralPartners();
+    renderReferralRewards();
+    msg.textContent = "Referral data updated.";
+}
+function renderReferralPartners() {
+    var box=document.getElementById("referral-partners-table");
+    if(!REF_PARTNERS.length){box.innerHTML='<div class="ref-empty">No referral partners yet. Add your first partner above.</div>';return;}
+    box.innerHTML='<div class="ref-table-wrap"><table class="ref-table"><thead><tr><th>Partner</th><th>Code / link</th><th>Status</th><th>Reward</th><th>Joined</th><th>Actions</th></tr></thead><tbody>'+
+      REF_PARTNERS.map(function(p){
+        var link=location.origin+'/?ref='+encodeURIComponent(p.referral_code);
+        return '<tr><td><strong>'+esc(p.display_name)+'</strong><br><span class="meta">'+esc(p.email)+'</span><br><span class="meta">'+(p.user_id?'Account linked':'Account not linked yet')+'</span></td>'+
+          '<td><strong>'+esc(p.referral_code)+'</strong><div class="ref-link">'+esc(link)+'</div><button class="ref-action" type="button" onclick="copyReferralLink('+JSON.stringify(link)+')">Copy link</button></td>'+
+          '<td><span class="ref-status '+esc(p.status.toLowerCase())+'">'+esc(p.status)+'</span></td><td>'+Number(p.reward_rate).toFixed(2)+'%</td><td>'+refDate(p.created_at)+'</td>'+
+          '<td><button class="ref-action" type="button" onclick="toggleReferralPartner(\''+p.id+'\',\''+(p.status==='Active'?'Suspended':'Active')+'\')">'+(p.status==='Active'?'Suspend':'Activate')+'</button></td></tr>';
+      }).join('')+'</tbody></table></div>';
+}
+function renderReferralRewards() {
+    var box=document.getElementById("referral-rewards-table");
+    var filter=document.getElementById("ref-reward-filter").value;
+    var rows=REF_REWARDS.filter(function(r){return filter==='all'||r.status===filter;});
+    if(!rows.length){box.innerHTML='<div class="ref-empty">No rewards in this view yet. Rewards appear after a referred transaction earns PoundTech commission.</div>';return;}
+    box.innerHTML='<div class="ref-table-wrap"><table class="ref-table"><thead><tr><th>Partner</th><th>Transaction</th><th>Gross sale</th><th>PoundTech commission</th><th>Partner reward</th><th>Status</th><th>Payout reference / action</th></tr></thead><tbody>'+
+      rows.map(function(r){
+        var partner=REF_PARTNERS.find(function(p){return p.id===r.partner_id;});
+        var action='';
+        if(r.status==='Pending') action='<button class="ref-action" onclick="updateReferralReward(\''+r.id+'\',\'Approved\')">Approve</button>';
+        if(r.status==='Approved') action='<button class="ref-action" onclick="updateReferralReward(\''+r.id+'\',\'Payable\')">Mark payable</button>';
+        if(r.status==='Payable') action='<input id="ref-payout-'+r.id+'" placeholder="Payout reference"><button class="ref-action" onclick="markReferralRewardPaid(\''+r.id+'\')">Mark paid</button>';
+        return '<tr><td><strong>'+esc(partner?partner.display_name:'Partner')+'</strong><br><span class="meta">'+esc(partner?partner.email:'')+'</span></td>'+
+          '<td>'+esc(r.transaction_type)+'<br><span class="meta">'+esc(r.transaction_id)+'</span></td><td>'+refMoney(r.gross_amount)+'</td><td>'+refMoney(r.platform_commission)+'</td><td><strong>'+refMoney(r.reward_amount)+'</strong><br><span class="meta">'+Number(r.reward_rate).toFixed(2)+'% of commission</span></td>'+
+          '<td><span class="ref-status '+esc(r.status.toLowerCase())+'">'+esc(r.status)+'</span></td><td>'+(r.status==='Paid'?esc(r.payout_reference||'Paid'):(r.status==='Reversed'?esc(r.reversal_reason||'Reversed'):action))+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+}
+async function createReferralPartner(event) {
+    event.preventDefault();
+    var name=document.getElementById("ref-new-name").value.trim();
+    var email=document.getElementById("ref-new-email").value.trim().toLowerCase();
+    var code=refCode(document.getElementById("ref-new-code").value);
+    if(!name||!email){return;}
+    var result=await supabaseClient.from("referral_partners").insert({display_name:name,email:email,referral_code:code,status:"Pending",reward_rate:15}).select().single();
+    if(result.error){document.getElementById("referral-admin-message").textContent="Could not create partner: "+result.error.message;return;}
+    document.getElementById("ref-new-name").value="";
+    document.getElementById("ref-new-email").value="";
+    document.getElementById("ref-new-code").value="";
+    await loadReferralAdmin();
+    document.getElementById("referral-admin-message").textContent="Partner created. Activate them when onboarding is complete.";
+}
+async function toggleReferralPartner(id,status) {
+    var result=await supabaseClient.from("referral_partners").update({status:status,updated_at:new Date().toISOString()}).eq("id",id);
+    if(result.error){alert("Could not update partner: "+result.error.message);return;}
+    await loadReferralAdmin();
+}
+async function updateReferralReward(id,status) {
+    var result=await supabaseClient.from("referral_rewards").update({status:status,updated_at:new Date().toISOString()}).eq("id",id);
+    if(result.error){alert("Could not update reward: "+result.error.message);return;}
+    await loadReferralAdmin();
+}
+async function markReferralRewardPaid(id) {
+    var input=document.getElementById("ref-payout-"+id);
+    var reference=input?input.value.trim():"";
+    if(!reference){alert("Enter the bank/payment reference before marking this reward paid.");return;}
+    var result=await supabaseClient.from("referral_rewards").update({status:"Paid",payout_reference:reference,paid_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",id).eq("status","Payable");
+    if(result.error){alert("Could not record payout: "+result.error.message);return;}
+    await loadReferralAdmin();
+}
+function copyReferralLink(link) {
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(link).then(function(){document.getElementById("referral-admin-message").textContent="Referral link copied.";}).catch(function(){prompt("Copy this referral link:",link);});}
+    else prompt("Copy this referral link:",link);
+}
+document.getElementById("referral-create-form").addEventListener("submit",createReferralPartner);
+document.getElementById("ref-reward-filter").addEventListener("change",renderReferralRewards);
 
 // ---------- Unified application review ----------
 async function loadAdminApplications(kind) {
