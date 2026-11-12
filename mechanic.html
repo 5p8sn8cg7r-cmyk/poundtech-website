@@ -115,6 +115,16 @@
         .hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
 
         #result .err { color: #b80000; }
+
+        .specialty-section { margin-top: 22px; padding: 16px; background: #f7f7f8; border-radius: 10px; }
+        .specialty-section > label { margin-top: 0; }
+        .specialty-help { margin: 6px 0 12px; color: #666; font-size: 13px; line-height: 1.5; }
+        .specialty-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .specialty-chip { width: auto; margin: 0; padding: 9px 13px; border: 1px solid #d5d5d5; border-radius: 999px; background: #fff; color: #333; font-size: 13px; cursor: pointer; }
+        .specialty-chip:hover { border-color: #d60000; }
+        .specialty-chip.selected { border-color: #d60000; background: #fff0f0; color: #b00000; font-weight: 700; }
+        .specialty-count { margin: 12px 0 0; color: #666; font-size: 12px; }
+
     </style>
 </head>
 
@@ -152,6 +162,14 @@
             <option value="panel_beater">Panel beating &amp; body repair</option>
             <option value="truck_fleet">Truck, fleet &amp; commercial services</option>
         </select>
+
+
+        <div class="specialty-section">
+            <label>What does your business specialise in?</label>
+            <p class="specialty-help">Choose all the types of work your business offers. These help customers find you when searching for a specific automotive service.</p>
+            <div id="specialty-chips" class="specialty-chips" aria-live="polite"></div>
+            <p id="specialty-count" class="specialty-count">0 specialities selected</p>
+        </div>
 
         <label>Contact Person</label>
         <input
@@ -274,6 +292,48 @@ const supabaseClient =
     );
 
 
+
+const SPECIALTY_OPTIONS = {
+    mechanic: ["Engine repair", "Brake repair", "Clutch repair", "Suspension", "Diagnostics", "Auto electrical", "Gearbox repairs", "Vehicle servicing", "Air conditioning", "Hydraulics", "Tyre services", "Wheel alignment", "Windscreen repair"],
+    car_wash: ["Basic wash", "Full valet", "Interior cleaning", "Engine bay cleaning", "Mobile car wash", "Fleet washing", "Upholstery cleaning"],
+    detailer: ["Full vehicle detail", "Paint correction", "Ceramic coating", "Interior deep clean", "Paint protection film", "Headlight restoration", "Upholstery cleaning"],
+    panel_beater: ["Panel beating", "Spray painting", "Dent removal", "Bumper repairs", "Windscreen repair", "Accident repairs", "Chassis straightening"],
+    truck_fleet: ["Diesel repairs", "Truck and trailer repairs", "Hydraulics", "Fleet maintenance", "Heavy-duty brakes", "Truck tyre services", "Mobile roadside assistance", "Truck diagnostics"]
+};
+
+let selectedSpecialties = [];
+
+function renderSpecialtyChips() {
+    const type = document.getElementById("business-type").value;
+    const options = SPECIALTY_OPTIONS[type] || [];
+    selectedSpecialties = selectedSpecialties.filter(item => options.includes(item));
+    const container = document.getElementById("specialty-chips");
+    container.innerHTML = options.map(item => {
+        const selected = selectedSpecialties.includes(item);
+        return '<button type="button" class="specialty-chip' + (selected ? ' selected' : '') +
+            '" aria-pressed="' + selected + '" data-specialty="' + item.replace(/&/g, '&amp;').replace(/"/g, '&quot;') +
+            '">' + item + '</button>';
+    }).join("");
+    document.getElementById("specialty-count").textContent =
+        selectedSpecialties.length + (selectedSpecialties.length === 1 ? " speciality selected" : " specialities selected");
+}
+
+document.getElementById("business-type").addEventListener("change", renderSpecialtyChips);
+document.getElementById("specialty-chips").addEventListener("click", function(event) {
+    const button = event.target.closest("button[data-specialty]");
+    if (!button) return;
+    const specialty = button.dataset.specialty;
+    if (selectedSpecialties.includes(specialty)) {
+        selectedSpecialties = selectedSpecialties.filter(item => item !== specialty);
+    } else {
+        selectedSpecialties.push(specialty);
+    }
+    renderSpecialtyChips();
+});
+
+renderSpecialtyChips();
+
+
 const DOC_BUCKET = "applicant-documents";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const OK_TYPES = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
@@ -319,6 +379,11 @@ document
     if (document.getElementById("website").value) {
         document.getElementById("mechanic-form").style.display = "none";
         result.innerHTML = "<p>Thank you. Your application has been received.</p>";
+        return;
+    }
+
+    if (selectedSpecialties.length === 0) {
+        fail("Please select at least one business speciality.");
         return;
     }
 
@@ -371,6 +436,9 @@ document
 
         business_type:
             document.getElementById("business-type").value,
+
+        specialties:
+            selectedSpecialties,
 
         contact_name:
             document.getElementById("contact-name").value.trim(),
@@ -438,7 +506,7 @@ document
 
             <p>
                 Thank you for applying to become a
-                PoundTech mechanic.
+                PoundTech Service Partner.
             </p>
 
             <p>
