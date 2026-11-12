@@ -1094,8 +1094,55 @@ body.pt-search-active .search-results-bar {
     padding: 8px 4px;
 }
 
+/* Lock the search screen: the header and search area stay still,
+   while only the product results panel scrolls. */
+body.pt-search-active {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
 body.pt-search-active .product-showcase-section {
-    scroll-margin-top: 12px;
+    position: fixed;
+    top: var(--pt-search-results-top, 220px);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    padding: 14px 6% 12px;
+    overflow: hidden;
+    border-radius: 0;
+}
+
+body.pt-search-active .product-showcase-section > h2,
+body.pt-search-active .product-showcase-section > .sortbar,
+body.pt-search-active .product-showcase-section > div:not(#products-container) {
+    flex: 0 0 auto;
+}
+
+body.pt-search-active #products-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    align-content: start;
+    padding: 4px 2px 18px;
+}
+
+body.pt-search-active .search-results-bar button {
+    background: #e00000;
+    border: 1px solid #e00000;
+    color: #fff;
+}
+
+body.pt-search-active .search-results-bar button:hover {
+    background: #b90000;
+    border-color: #b90000;
 }
 
 .search-results-bar {
@@ -3751,6 +3798,20 @@ async function searchProducts() {
     }
 
     document.body.classList.add("pt-search-active");
+
+    // Keep the header and compact search bar stationary; size the results
+    // panel to the space directly beneath them.
+    const updateSearchResultsPosition = () => {
+        const header = document.querySelector("header");
+        const hero = document.querySelector(".hero");
+        const top = hero ? hero.getBoundingClientRect().bottom : (header ? header.getBoundingClientRect().bottom : 0);
+        document.documentElement.style.setProperty("--pt-search-results-top", Math.max(0, top) + "px");
+    };
+    updateSearchResultsPosition();
+    window.removeEventListener("resize", window.ptSearchResizeHandler);
+    window.ptSearchResizeHandler = updateSearchResultsPosition;
+    window.addEventListener("resize", window.ptSearchResizeHandler);
+
     activeFilter = null;
     updateCategoryUI();
     document.getElementById("category-section").style.display = "none";
@@ -3794,12 +3855,13 @@ async function searchProducts() {
     await renderLoaded();
     updateLoadMoreButton();
 
-    document.querySelector(".product-showcase-section")
-        .scrollIntoView({ behavior: "smooth", block: "start" });
+    // Results scroll inside #products-container; the page itself stays fixed.
 }
 
 function clearSearch() {
     document.body.classList.remove("pt-search-active");
+    window.removeEventListener("resize", window.ptSearchResizeHandler);
+    document.documentElement.style.removeProperty("--pt-search-results-top");
     const searchInput = document.getElementById("product-search-input");
     if (searchInput) searchInput.value = "";
 
