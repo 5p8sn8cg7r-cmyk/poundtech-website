@@ -279,9 +279,11 @@ html{scroll-behavior:smooth}
 
             <label for="business-type">Business type</label>
             <select id="business-type">
-                <option value="mechanic">Mechanic / workshop</option>
+                <option value="mechanic">Mechanic &amp; automotive repairs</option>
                 <option value="car_wash">Car wash</option>
-                <option value="detailer">Detailing studio</option>
+                <option value="detailer">Vehicle detailing</option>
+                <option value="panel_beater">Panel beating &amp; body repair</option>
+                <option value="truck_fleet">Truck, fleet &amp; commercial services</option>
             </select>
 
             <button class="btn" id="save-type-btn">Save business type</button>
@@ -422,9 +424,11 @@ const supabaseClient =
 
 
 const TYPE_LABELS = {
-    mechanic: "Mechanic / workshop",
+    mechanic: "Mechanic & automotive repairs",
     car_wash: "Car wash",
-    detailer: "Detailing studio"
+    detailer: "Vehicle detailing",
+    panel_beater: "Panel beating & body repair",
+    truck_fleet: "Truck, fleet & commercial services"
 };
 
 // Display order Monday first. Database uses 0 = Sunday ... 6 = Saturday.
