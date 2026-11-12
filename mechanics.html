@@ -152,6 +152,8 @@
 .svc-book:hover { background: #e00000; color: white; }
 
 .legacy-services { font-size: 14px; color: #444; }
+.specialty-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.specialty-tag { display: inline-block; padding: 5px 9px; border-radius: 999px; background: #f4f5f7; color: #444; font-size: 12px; }
 
 details { margin-top: 6px; font-size: 14px; }
 
@@ -372,7 +374,7 @@ async function loadMechanics() {
     // Only the fields customers need to see. Contact details are not loaded here.
     const mechanicsQuery = supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, service_area, services, description, created_at, verified")
+        .select("id, business_name, business_type, specialties, service_area, services, description, created_at, verified")
         .eq("status", "Approved")
         .order("created_at", { ascending: false });
 
@@ -495,6 +497,10 @@ function businessCard(mechanic) {
     const rating = ratingsByBusiness[mechanic.id];
 
     const hasInstant = services.some(s => s.booking_mode === "instant");
+    const specialtyTags = Array.isArray(mechanic.specialties) ? mechanic.specialties : [];
+    const specialtiesHtml = specialtyTags.length
+        ? '<div class="specialty-tags" aria-label="Business specialities">' + specialtyTags.map(item => '<span class="specialty-tag">' + esc(item) + '</span>').join("") + '</div>'
+        : "";
 
     const ratingHtml = rating
         ? '<span class="star">★</span> <strong>' + (rating.sum / rating.count).toFixed(1) + '</strong> (' +
@@ -559,6 +565,8 @@ function businessCard(mechanic) {
 
             <div class="area">${esc(mechanic.service_area || "Service area not provided")}</div>
 
+            ${specialtiesHtml}
+
             ${mechanic.description ? `<div class="desc">${esc(mechanic.description)}</div>` : ""}
 
             ${servicesHtml}
@@ -611,6 +619,7 @@ function applyFilters() {
             mechanic.business_name,
             mechanic.service_area,
             mechanic.services,
+            (mechanic.specialties || []).join(" "),
             serviceNames,
             TYPE_LABELS[type]
         ].join(" ").toLowerCase();
