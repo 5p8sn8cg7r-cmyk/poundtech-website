@@ -452,7 +452,7 @@ function isValidPoundTechEmail(value) {
 
     // Require a real-looking domain with at least one dot and valid DNS labels.
     const localPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/;
-    const domainPattern = /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$/;
+    const domainPattern = /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?[.])+[A-Za-z]{2,63}$/;
     return localPattern.test(local) && domainPattern.test(domain);
 }
 
