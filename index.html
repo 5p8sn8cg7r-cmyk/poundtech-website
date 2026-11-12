@@ -1094,44 +1094,43 @@ body.pt-search-active .search-results-bar {
     padding: 8px 4px;
 }
 
-/* Lock the search screen: the header and search area stay still,
-   while only the product results panel scrolls. */
-body.pt-search-active {
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-}
-
+/* Search results use normal document flow and normal page scrolling. */
 body.pt-search-active .product-showcase-section {
-    position: fixed;
-    top: var(--pt-search-results-top, 220px);
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 5;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    margin: 0;
-    padding: 14px 6% 12px;
-    overflow: hidden;
-    border-radius: 0;
-}
-
-body.pt-search-active .product-showcase-section > h2,
-body.pt-search-active .product-showcase-section > .sortbar,
-body.pt-search-active .product-showcase-section > div:not(#products-container) {
-    flex: 0 0 auto;
+    margin-top: 8px;
+    padding-top: 28px;
 }
 
 body.pt-search-active #products-container {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    align-content: start;
-    padding: 4px 2px 18px;
+    min-height: 180px;
+}
+
+body.pt-search-active #products-container.pt-search-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    color: #626873;
+    font-size: 14px;
+}
+
+.pt-search-loader {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pt-search-loader::before {
+    content: "";
+    width: 17px;
+    height: 17px;
+    border: 2px solid #d7dbe1;
+    border-top-color: #e00000;
+    border-radius: 50%;
+    animation: pt-search-spin .7s linear infinite;
+}
+
+@keyframes pt-search-spin {
+    to { transform: rotate(360deg); }
 }
 
 body.pt-search-active .search-results-bar button {
@@ -3447,10 +3446,12 @@ async function loadBusinessPartners() {
 
 loadBusinessPartners();
 
+let productSearchActive = false;
+
 async function loadProducts(append) {
 
     append = append === true;
-    if (PRODUCT_LOADING) return;
+    if (productSearchActive || PRODUCT_LOADING) return;
     PRODUCT_LOADING = true;
 
     const container = document.getElementById("products-container");
@@ -3481,6 +3482,11 @@ async function loadProducts(append) {
         .order("created_at", { ascending: false })
         .range(PRODUCT_OFFSET, PRODUCT_OFFSET + PRODUCT_PAGE_SIZE - 1);
 
+    if (productSearchActive) {
+        PRODUCT_LOADING = false;
+        return;
+    }
+
     if (error) {
         console.error("PRODUCTS ERROR:", error);
         if (!append) container.innerHTML = "<p>Unable to load products.</p>";
@@ -3506,6 +3512,11 @@ async function loadProducts(append) {
     loadedProducts = append ? loadedProducts.concat(products) : products;
 
     await enrichProductSupplierDetails(products);
+
+    if (productSearchActive) {
+        PRODUCT_LOADING = false;
+        return;
+    }
 
     PRODUCT_LOADING = false;
     await renderLoaded();
@@ -3799,19 +3810,7 @@ async function searchProducts() {
 
     document.body.classList.add("pt-search-active");
 
-    // Keep the header and compact search bar stationary; size the results
-    // panel to the space directly beneath them.
-    const updateSearchResultsPosition = () => {
-        const header = document.querySelector("header");
-        const hero = document.querySelector(".hero");
-        const top = hero ? hero.getBoundingClientRect().bottom : (header ? header.getBoundingClientRect().bottom : 0);
-        document.documentElement.style.setProperty("--pt-search-results-top", Math.max(0, top) + "px");
-    };
-    updateSearchResultsPosition();
-    window.removeEventListener("resize", window.ptSearchResizeHandler);
-    window.ptSearchResizeHandler = updateSearchResultsPosition;
-    window.addEventListener("resize", window.ptSearchResizeHandler);
-
+    productSearchActive = true;
     activeFilter = null;
     updateCategoryUI();
     document.getElementById("category-section").style.display = "none";
@@ -3827,6 +3826,11 @@ async function searchProducts() {
     PRODUCT_HAS_MORE = false;
     PRODUCT_OFFSET = 0;
     loadedProducts = [];
+    const productsContainer = document.getElementById("products-container");
+    productsContainer.classList.add("pt-search-loading");
+    productsContainer.setAttribute("aria-busy", "true");
+    productsContainer.innerHTML = '<div class="pt-search-loader">Finding products...</div>';
+    document.getElementById("result-count").textContent = "";
     updateLoadMoreButton();
 
     const { data, error } = await supabaseClient
@@ -3840,7 +3844,9 @@ async function searchProducts() {
 
     if (error) {
         console.error("SEARCH ERROR:", error);
-        document.getElementById("products-container").innerHTML =
+        productsContainer.classList.remove("pt-search-loading");
+        productsContainer.removeAttribute("aria-busy");
+        productsContainer.innerHTML =
             "<p>We couldn't load those search results. Please try again.</p>";
         document.getElementById("result-count").textContent = "";
         ptAlert("We couldn't load those search results. Please try again.", "Search unavailable");
@@ -3852,16 +3858,22 @@ async function searchProducts() {
     PRODUCT_HAS_MORE = false;
 
     await enrichProductSupplierDetails(loadedProducts);
+    productsContainer.classList.remove("pt-search-loading");
+    productsContainer.removeAttribute("aria-busy");
     await renderLoaded();
     updateLoadMoreButton();
 
-    // Results scroll inside #products-container; the page itself stays fixed.
+    // Bring the results heading into view using ordinary page scrolling.
+    document.getElementById("products-heading")
+        .scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function clearSearch() {
+    productSearchActive = false;
     document.body.classList.remove("pt-search-active");
-    window.removeEventListener("resize", window.ptSearchResizeHandler);
-    document.documentElement.style.removeProperty("--pt-search-results-top");
+    const productsContainer = document.getElementById("products-container");
+    productsContainer.classList.remove("pt-search-loading");
+    productsContainer.removeAttribute("aria-busy");
     const searchInput = document.getElementById("product-search-input");
     if (searchInput) searchInput.value = "";
 
