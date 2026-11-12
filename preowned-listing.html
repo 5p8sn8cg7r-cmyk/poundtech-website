@@ -305,6 +305,11 @@ async function buyNow() {
         return;
     }
 
+    if (window.PTReferral) {
+        const referralResult = await window.PTReferral.attach("Private Seller Sale", orderNumber, email);
+        if (referralResult && referralResult.error) console.warn("Referral attribution could not be attached:", referralResult.error);
+    }
+
     msg.innerHTML = '<p class="message message-success">Taking you to secure payment&hellip;</p>';
     await startPayment(orderNumber);
 }
