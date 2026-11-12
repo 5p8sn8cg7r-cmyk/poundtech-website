@@ -125,6 +125,26 @@
         .specialty-chip.selected { border-color: #d60000; background: #fff0f0; color: #b00000; font-weight: 700; }
         .specialty-count { margin: 12px 0 0; color: #666; font-size: 12px; }
 
+
+        .wizard-top{margin:24px 0 28px}
+        .wizard-top>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+        #step-counter{font-size:11px;font-weight:700;letter-spacing:.08em;color:#777}
+        #step-title{font-size:14px;color:#222}
+        .wizard-track{height:6px;background:#eee;border-radius:99px;overflow:hidden}
+        #wizard-progress{display:block;height:100%;width:5.5%;background:#d60000;transition:width .2s}
+        .application-step{display:none;min-height:210px}
+        .application-step.active{display:block}
+        .step-prompt{font-size:18px;line-height:1.5;font-weight:600;margin:0 0 22px;color:#222}
+        .application-step label{margin-top:12px}
+        .application-step input,.application-step textarea,.application-step select{margin-bottom:8px}
+        .wizard-actions{display:flex;gap:12px;margin-top:26px}
+        .wizard-actions button{width:auto;flex:1;margin-top:0}
+        .wizard-actions .wizard-secondary{background:#eee;color:#222}
+        .wizard-actions .wizard-secondary:hover{background:#ddd}
+        .wizard-actions button:disabled{opacity:.45;cursor:not-allowed}
+        #wizard-error{min-height:20px;margin-top:12px}
+        @media(max-width:520px){.container{margin:16px 12px;padding:22px}.step-prompt{font-size:17px}.wizard-actions button{padding:13px 10px}}
+
     </style>
 </head>
 
@@ -145,132 +165,165 @@
     <p class="hint">We welcome mechanics, car washes, detailing studios, panel beaters and truck or heavy-vehicle service businesses. Choose the business type that best describes your operation.</p>
     <p style="margin:12px 0 22px;"><a href="/service-partner-plans.html" style="color:#d60000;font-weight:700;">View service partner plans and commission rates →</a></p>
 
-    <form id="mechanic-form">
-
-        <label>Business Name</label>
-        <input
-            type="text"
-            id="business-name"
-            required
-        >
-
-        <label for="business-type">Business Type</label>
-        <select id="business-type" required>
-            <option value="mechanic">Mechanic &amp; automotive repairs</option>
-            <option value="car_wash">Car wash</option>
-            <option value="detailer">Vehicle detailing</option>
-            <option value="panel_beater">Panel beating &amp; body repair</option>
-            <option value="truck_fleet">Truck, fleet &amp; commercial services</option>
-        </select>
-
-
-        <div class="specialty-section">
-            <label>What does your business specialise in?</label>
-            <p class="specialty-help">Choose all the types of work your business offers. These help customers find you when searching for a specific automotive service.</p>
-            <div id="specialty-chips" class="specialty-chips" aria-live="polite"></div>
-            <p id="specialty-count" class="specialty-count">0 specialities selected</p>
+    <form id="mechanic-form" novalidate>
+        <div class="wizard-top">
+            <div><span id="step-counter">STEP 1 OF 18</span><strong id="step-title">Business name</strong></div>
+            <div class="wizard-track"><span id="wizard-progress"></span></div>
         </div>
 
-        <label>Contact Person</label>
-        <input
-            type="text"
-            id="contact-name"
-            required
-        >
+        <section class="application-step active" data-title="Business name">
+            <p class="step-prompt">What is the registered or trading name of your business?</p>
+            <label for="business-name">Business name</label>
+            <input type="text" id="business-name" data-required="true" autocomplete="organization" placeholder="e.g. ABC Auto Repairs">
+        </section>
 
-        <label>Phone</label>
-        <input
-            type="tel"
-            id="phone"
-            required
-        >
+        <section class="application-step" data-title="Business type">
+            <p class="step-prompt">Which option best describes your business?</p>
+            <label for="business-type">Business type</label>
+            <select id="business-type" data-required="true">
+                <option value="mechanic">Mechanic &amp; automotive repairs</option>
+                <option value="car_wash">Car wash</option>
+                <option value="detailer">Vehicle detailing</option>
+                <option value="panel_beater">Panel beating &amp; body repair</option>
+                <option value="truck_fleet">Truck, fleet &amp; commercial services</option>
+            </select>
+        </section>
 
-        <label>Email</label>
-        <input
-            type="email"
-            id="email"
-            required
-        >
+        <section class="application-step" data-title="Business specialities">
+            <p class="step-prompt">What does your business specialise in? Select every type of work you offer.</p>
+            <div class="specialty-section">
+                <div id="specialty-chips" class="specialty-chips" aria-live="polite"></div>
+                <p id="specialty-count" class="specialty-count">0 specialities selected</p>
+            </div>
+        </section>
 
-        <label>Business Address</label>
-        <input
-            type="text"
-            id="address"
-        >
+        <section class="application-step" data-title="Contact person's full name">
+            <p class="step-prompt">Who is the main person PoundTech should contact about this business?</p>
+            <label for="contact-name">Full name and surname</label>
+            <input type="text" id="contact-name" data-required="true" autocomplete="name" placeholder="Enter your full name">
+        </section>
 
-        <label>Service Area</label>
-        <input
-            type="text"
-            id="service-area"
-            placeholder="e.g. Sandton, Randburg, Midrand"
-        >
+        <section class="application-step" data-title="Contact number">
+            <p class="step-prompt">What is the best phone number to reach you on?</p>
+            <label for="phone">Phone number</label>
+            <input type="tel" id="phone" data-required="true" autocomplete="tel" placeholder="e.g. 082 123 4567">
+        </section>
 
-        <label>Services Offered</label>
-        <textarea
-            id="services"
-            placeholder="e.g. Brake repairs, servicing, diagnostics, tyres"
-        ></textarea>
+        <section class="application-step" data-title="Email address">
+            <p class="step-prompt">Which email address should we use for application updates?</p>
+            <label for="email">Business or contact email</label>
+            <input type="email" id="email" data-required="true" autocomplete="email" placeholder="name@business.co.za">
+        </section>
 
-        <label>About Your Business</label>
-        <textarea
-            id="description"
-            placeholder="Tell customers about your business"
-        ></textarea>
+        <section class="application-step" data-title="Street address">
+            <p class="step-prompt">What is the physical street address of your workshop or business premises?</p>
+            <label for="address-line1">Street number and street name</label>
+            <input type="text" id="address-line1" data-required="true" placeholder="e.g. 25 Rivonia Road">
+            <p class="hint">This full address is for PoundTech's verification. It will not be displayed publicly.</p>
+        </section>
 
-        <label>Company registration number (optional)</label>
-        <input type="text" id="reg-number" maxlength="40" placeholder="e.g. 2020/123456/07">
-        <p class="hint">Leave blank if you trade as a sole proprietor.</p>
+        <section class="application-step" data-title="Suburb">
+            <p class="step-prompt">Which suburb is the business located in?</p>
+            <label for="address-suburb">Suburb</label>
+            <input type="text" id="address-suburb" data-required="true" placeholder="e.g. Sandton">
+        </section>
 
-        <h3 style="margin:28px 0 4px;">Documents we need to verify your business</h3>
-        <p class="hint" style="margin-top:0;">
-            PDF, JPG or PNG, up to 5 MB each. Only PoundTech's review team can open these files.
-            Customers book real jobs on your reputation, so we check every workshop.
-        </p>
+        <section class="application-step" data-title="City or town">
+            <p class="step-prompt">Which city or town is the business in?</p>
+            <label for="address-city">City or town</label>
+            <input type="text" id="address-city" data-required="true" placeholder="e.g. Johannesburg">
+        </section>
 
-        <div class="doc-box">
-            <label for="doc-id">Owner's ID document *</label>
-            <input id="doc-id" type="file" accept="application/pdf,image/jpeg,image/png">
-        </div>
+        <section class="application-step" data-title="Province">
+            <p class="step-prompt">Which province is the business located in?</p>
+            <label for="address-province">Province</label>
+            <select id="address-province" data-required="true">
+                <option value="">Choose province</option>
+                <option>Eastern Cape</option><option>Free State</option><option>Gauteng</option>
+                <option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option>
+                <option>North West</option><option>Northern Cape</option><option>Western Cape</option>
+            </select>
+        </section>
 
-        <div class="doc-box">
-            <label for="doc-address">Proof of workshop address *</label>
-            <input id="doc-address" type="file" accept="application/pdf,image/jpeg,image/png">
-            <p class="hint">A utility bill, lease or municipal account from the last 3 months.</p>
-        </div>
+        <section class="application-step" data-title="Postal code">
+            <p class="step-prompt">What is the postal code for this business address?</p>
+            <label for="address-postal">Postal code</label>
+            <input type="text" id="address-postal" data-required="true" inputmode="numeric" maxlength="10" placeholder="e.g. 2196">
+        </section>
 
-        <div class="doc-box">
-            <label for="doc-insurance">Public liability insurance (recommended)</label>
-            <input id="doc-insurance" type="file" accept="application/pdf,image/jpeg,image/png">
-        </div>
+        <section class="application-step" data-title="Service area">
+            <p class="step-prompt">Which suburbs, towns or areas do you serve? This is what customers will see on your public listing.</p>
+            <label for="service-area">Areas served</label>
+            <input type="text" id="service-area" data-required="true" placeholder="e.g. Sandton, Rosebank, Randburg and Midrand">
+        </section>
 
-        <div class="doc-box">
-            <label for="doc-accreditation">RMI / MIBCO accreditation or trade qualification (if you have one)</label>
-            <input id="doc-accreditation" type="file" accept="application/pdf,image/jpeg,image/png">
-            <p class="hint">We confirm accreditation directly with the issuing body.</p>
-        </div>
+        <section class="application-step" data-title="Services offered">
+            <p class="step-prompt">Briefly list the main services your business provides.</p>
+            <label for="services">Services offered</label>
+            <textarea id="services" data-required="true" placeholder="e.g. Brake repairs, vehicle servicing, diagnostics and tyre replacement"></textarea>
+        </section>
 
-        <div class="doc-box">
-            <label for="doc-premises">Photo of your workshop (optional)</label>
-            <input id="doc-premises" type="file" accept="image/jpeg,image/png">
-        </div>
+        <section class="application-step" data-title="About your business">
+            <p class="step-prompt">Tell customers a little about your business, experience and what makes your service different.</p>
+            <label for="description">Business description</label>
+            <textarea id="description" data-required="true" placeholder="Introduce your business to potential customers"></textarea>
+        </section>
 
-        <div class="check-row">
-            <input type="checkbox" id="accept-terms">
-            <label for="accept-terms">
-                I confirm that the information and documents are genuine and that any accreditation I claim is real,
-                and I accept the <a href="terms.html" target="_blank" style="color:#e00000;">Terms &amp; Conditions</a>.
-            </label>
-        </div>
+        <section class="application-step" data-title="Company registration">
+            <p class="step-prompt">Do you have a company registration number? This is optional if you trade as a sole proprietor.</p>
+            <label for="reg-number">Company registration number (optional)</label>
+            <input type="text" id="reg-number" maxlength="40" placeholder="e.g. 2020/123456/07">
+        </section>
+
+        <section class="application-step" data-title="Verification documents">
+            <p class="step-prompt">Please upload the documents we need to verify the business. PDF, JPG or PNG, up to 5 MB each.</p>
+            <div class="doc-box">
+                <label for="doc-id">Owner's ID document *</label>
+                <input id="doc-id" type="file" accept="application/pdf,image/jpeg,image/png" data-required="true">
+            </div>
+            <div class="doc-box">
+                <label for="doc-address">Proof of workshop address *</label>
+                <input id="doc-address" type="file" accept="application/pdf,image/jpeg,image/png" data-required="true">
+                <p class="hint">A utility bill, lease or municipal account from the last 3 months.</p>
+            </div>
+        </section>
+
+        <section class="application-step" data-title="Additional documents">
+            <p class="step-prompt">These documents are optional, but can help customers understand your qualifications and facilities.</p>
+            <div class="doc-box">
+                <label for="doc-insurance">Public liability insurance</label>
+                <input id="doc-insurance" type="file" accept="application/pdf,image/jpeg,image/png">
+            </div>
+            <div class="doc-box">
+                <label for="doc-accreditation">RMI / MIBCO accreditation or trade qualification</label>
+                <input id="doc-accreditation" type="file" accept="application/pdf,image/jpeg,image/png">
+                <p class="hint">We confirm accreditation directly with the issuing body.</p>
+            </div>
+            <div class="doc-box">
+                <label for="doc-premises">Photo of your workshop</label>
+                <input id="doc-premises" type="file" accept="image/jpeg,image/png">
+            </div>
+        </section>
+
+        <section class="application-step" data-title="Declaration and terms">
+            <p class="step-prompt">Please confirm that your details and documents are genuine before submitting your application.</p>
+            <div class="check-row">
+                <input type="checkbox" id="accept-terms" data-required="true">
+                <label for="accept-terms">I confirm that the information and documents are genuine, that any accreditation I claim is real, and I accept the <a href="terms.html" target="_blank" style="color:#e00000;">Terms &amp; Conditions</a>.</label>
+            </div>
+        </section>
 
         <div class="hp" aria-hidden="true">
             <label for="website">Leave this empty</label>
             <input id="website" type="text" tabindex="-1" autocomplete="off">
         </div>
 
-        <button type="submit">
-            Submit Application
-        </button>
-
+        <div class="wizard-actions">
+            <button type="button" id="wizard-back" class="wizard-secondary" disabled>Back</button>
+            <button type="button" id="wizard-next">Next</button>
+            <button type="submit" id="wizard-submit" hidden>Submit application</button>
+        </div>
+        <p id="wizard-error" class="err" role="alert"></p>
     </form>
 
     <div id="result"></div>
@@ -334,6 +387,57 @@ document.getElementById("specialty-chips").addEventListener("click", function(ev
 renderSpecialtyChips();
 
 
+
+const applicationSteps = Array.from(document.querySelectorAll(".application-step"));
+let currentApplicationStep = 0;
+
+function showApplicationStep(index) {
+    currentApplicationStep = Math.max(0, Math.min(index, applicationSteps.length - 1));
+    applicationSteps.forEach((step, i) => step.classList.toggle("active", i === currentApplicationStep));
+    document.getElementById("step-counter").textContent = "STEP " + (currentApplicationStep + 1) + " OF " + applicationSteps.length;
+    document.getElementById("step-title").textContent = applicationSteps[currentApplicationStep].dataset.title;
+    document.getElementById("wizard-progress").style.width = ((currentApplicationStep + 1) / applicationSteps.length * 100) + "%";
+    document.getElementById("wizard-back").disabled = currentApplicationStep === 0;
+    document.getElementById("wizard-next").hidden = currentApplicationStep === applicationSteps.length - 1;
+    document.getElementById("wizard-submit").hidden = currentApplicationStep !== applicationSteps.length - 1;
+    document.getElementById("wizard-error").textContent = "";
+    const first = applicationSteps[currentApplicationStep].querySelector("input:not([type=file]), textarea, select");
+    if (first) first.focus({preventScroll:true});
+}
+
+function validateApplicationStep(index) {
+    const step = applicationSteps[index];
+    const required = Array.from(step.querySelectorAll('[data-required="true"]'));
+    for (const field of required) {
+        const value = field.type === "checkbox" ? field.checked :
+            field.type === "file" ? !!(field.files && field.files.length) : !!String(field.value || "").trim();
+        if (!value) {
+            document.getElementById("wizard-error").textContent =
+                field.type === "file" ? "Please upload this document before continuing." :
+                field.type === "checkbox" ? "Please accept the declaration and Terms & Conditions to continue." :
+                "Please complete this field before continuing.";
+            field.focus();
+            return false;
+        }
+        if (field.type === "email" && !field.validity.valid) {
+            document.getElementById("wizard-error").textContent = "Please enter a valid email address.";
+            field.focus();
+            return false;
+        }
+    }
+    if (index === 2 && selectedSpecialties.length === 0) {
+        document.getElementById("wizard-error").textContent = "Please select at least one business speciality.";
+        return false;
+    }
+    return true;
+}
+
+document.getElementById("wizard-back").addEventListener("click", () => showApplicationStep(currentApplicationStep - 1));
+document.getElementById("wizard-next").addEventListener("click", () => {
+    if (validateApplicationStep(currentApplicationStep)) showApplicationStep(currentApplicationStep + 1);
+});
+showApplicationStep(0);
+
 const DOC_BUCKET = "applicant-documents";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const OK_TYPES = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
@@ -364,7 +468,7 @@ document
     event.preventDefault();
 
     const result = document.getElementById("result");
-    const submitButton = document.querySelector("#mechanic-form button[type=submit]");
+    const submitButton = document.getElementById("wizard-submit");
 
     function fail(text) {
         result.innerHTML = "";
@@ -382,8 +486,10 @@ document
         return;
     }
 
-    if (selectedSpecialties.length === 0) {
-        fail("Please select at least one business speciality.");
+    if (!applicationSteps.every((step, index) => validateApplicationStep(index))) {
+        const invalidIndex = applicationSteps.findIndex((step, index) => !validateApplicationStep(index));
+        showApplicationStep(invalidIndex < 0 ? 0 : invalidIndex);
+        submitButton.disabled = false;
         return;
     }
 
@@ -449,11 +555,15 @@ document
         email:
             document.getElementById("email").value.trim(),
 
-        address:
-            document.getElementById("address").value.trim(),
+        address: [
+            document.getElementById("address-line1").value.trim(),
+            document.getElementById("address-suburb").value.trim(),
+            document.getElementById("address-city").value.trim(),
+            document.getElementById("address-province").value.trim(),
+            document.getElementById("address-postal").value.trim()
+        ].join(", "),
 
-        service_area:
-            document.getElementById("service-area").value.trim(),
+        service_area: document.getElementById("service-area").value.trim(),
 
         services:
             document.getElementById("services").value.trim(),
