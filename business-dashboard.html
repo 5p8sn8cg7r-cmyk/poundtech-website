@@ -189,6 +189,19 @@ input[type="checkbox"] {
 .od-cards button,.od-tabs button{font-family:inherit}
 html{scroll-behavior:smooth}
 #services,#hours,#booking-settings{scroll-margin-top:16px}
+
+.specialty-editor{margin-top:14px;padding:16px;border:1px solid #e8e8e8;border-radius:10px;background:#fafafa}
+.specialty-groups{display:grid;gap:16px;margin-top:14px}
+.specialty-group-title{font-size:13px;font-weight:800;color:#555;margin:0 0 8px}
+.specialty-chips{display:flex;flex-wrap:wrap;gap:8px}
+.specialty-chip{width:auto;margin:0;padding:8px 12px;border:1px solid #d8d8d8;border-radius:999px;background:#fff;color:#333;font:inherit;font-size:13px;cursor:pointer}
+.specialty-chip.selected{border-color:#d60000;background:#fff0f0;color:#b00000;font-weight:700}
+.specialty-chip:focus-visible{outline:2px solid #d60000;outline-offset:2px}
+.specialty-custom-row{display:flex;gap:8px;align-items:center;margin-top:16px}
+.specialty-custom-row input{margin:0;flex:1;min-width:0}
+.specialty-count{font-size:12px;color:#777;margin:12px 0}
+@media(max-width:600px){.specialty-custom-row{align-items:stretch;flex-direction:column}.specialty-custom-row .btn{width:100%}}
+
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
@@ -293,6 +306,26 @@ html{scroll-behavior:smooth}
             <button class="btn" id="save-type-btn">Save business type</button>
             <div id="type-msg" role="status"></div>
         </div>
+
+
+        <!-- Business specialities -->
+        <section class="card" id="specialties">
+            <h2>Business specialities</h2>
+            <p class="lead">Choose all the types of work your business offers. These help customers find your business when they search PoundTech.</p>
+            <div class="specialty-editor">
+                <p id="specialty-category-label" class="specialty-group-title"></p>
+                <div id="specialty-groups" class="specialty-groups"></div>
+                <p id="specialty-count" class="specialty-count" aria-live="polite">Loading specialities…</p>
+                <label for="specialty-custom">Add another speciality</label>
+                <div class="specialty-custom-row">
+                    <input type="text" id="specialty-custom" maxlength="60" placeholder="e.g. Performance tuning">
+                    <button class="btn btn-dark btn-small" type="button" id="add-specialty-btn">Add speciality</button>
+                </div>
+                <p class="hint" style="margin:8px 0 0;">Your custom specialities will appear alongside the suggested options.</p>
+            </div>
+            <button class="btn" id="save-specialties-btn" type="button" style="margin-top:14px;">Save specialities</button>
+            <div id="specialties-msg" role="status"></div>
+        </section>
 
         <!-- Services -->
         <div class="card" id="services">
@@ -428,6 +461,84 @@ const supabaseClient =
     supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
+
+const SPECIALTY_GROUPS = {
+    mechanic: [
+        ["Mechanical", ["Engine repair", "Brake repair", "Clutch repair", "Suspension", "Diagnostics", "Auto electrical", "Gearbox repairs", "Vehicle servicing", "Air conditioning"]],
+        ["Wheels & tyres", ["Tyre replacement", "Puncture repair", "Wheel alignment", "Wheel balancing", "Rim repairs"]],
+        ["Specialist", ["Hydraulics", "Windscreen repair", "Glass replacement", "Performance tuning"]]
+    ],
+    car_wash: [
+        ["Washing & cleaning", ["Basic wash", "Full valet", "Interior cleaning", "Engine bay cleaning", "Mobile car wash", "Fleet washing", "Upholstery cleaning"]]
+    ],
+    detailer: [
+        ["Detailing & protection", ["Full vehicle detail", "Paint correction", "Ceramic coating", "Interior deep clean", "Paint protection film", "Headlight restoration", "Upholstery cleaning"]]
+    ],
+    panel_beater: [
+        ["Body & glass", ["Panel beating", "Spray painting", "Dent removal", "Bumper repairs", "Windscreen repair", "Accident repairs", "Chassis straightening"]]
+    ],
+    truck_fleet: [
+        ["Heavy vehicle services", ["Diesel repairs", "Truck and trailer repairs", "Hydraulics", "Fleet maintenance", "Heavy-duty brakes", "Truck tyre services", "Mobile roadside assistance", "Truck diagnostics"]]
+    ]
+};
+
+let selectedSpecialties = [];
+
+function renderSpecialties() {
+    const type = business && SPECIALTY_GROUPS[business.business_type] ? business.business_type : "mechanic";
+    const groups = SPECIALTY_GROUPS[type] || [];
+    el("specialty-category-label").textContent = "Suggested specialities for " + (TYPE_LABELS[type] || "your business");
+    el("specialty-groups").innerHTML = groups.map(group => {
+        const chips = group[1].map(item => {
+            const selected = selectedSpecialties.some(value => value.toLowerCase() === item.toLowerCase());
+            return '<button type="button" class="specialty-chip' + (selected ? ' selected' : '') +
+                '" aria-pressed="' + selected + '" data-specialty="' + esc(item) + '">' + esc(item) + '</button>';
+        }).join("");
+        return '<div><p class="specialty-group-title">' + esc(group[0]) + '</p><div class="specialty-chips">' + chips + '</div></div>';
+    }).join("");
+
+    el("specialty-count").textContent = selectedSpecialties.length +
+        (selectedSpecialties.length === 1 ? " speciality selected" : " specialities selected");
+}
+
+async function saveSpecialties() {
+    if (!selectedSpecialties.length) {
+        msg("specialties-msg", "Please select at least one speciality.", "error");
+        return;
+    }
+    el("save-specialties-btn").disabled = true;
+    const { error } = await supabaseClient
+        .from("mechanics")
+        .update({ specialties: selectedSpecialties })
+        .eq("id", business.id);
+    el("save-specialties-btn").disabled = false;
+
+    if (error) {
+        console.error(error);
+        msg("specialties-msg", "We couldn't save your specialities: " + error.message, "error");
+        return;
+    }
+    business.specialties = [...selectedSpecialties];
+    msg("specialties-msg", "Your business specialities have been saved.", "success");
+}
+
+function addCustomSpecialty() {
+    const input = el("specialty-custom");
+    const value = input.value.trim().replace(/\\s+/g, " ");
+    if (value.length < 2 || value.length > 60) {
+        msg("specialties-msg", "Please enter a speciality between 2 and 60 characters.", "error");
+        return;
+    }
+    if (selectedSpecialties.some(item => item.toLowerCase() === value.toLowerCase())) {
+        msg("specialties-msg", "That speciality is already selected.", "info");
+        return;
+    }
+    selectedSpecialties.push(value);
+    input.value = "";
+    renderSpecialties();
+    msg("specialties-msg", "Added. Remember to save your specialities.", "info");
+}
+
 const TYPE_LABELS = {
     mechanic: "Mechanic & automotive repairs",
     car_wash: "Car wash",
@@ -512,7 +623,7 @@ async function init() {
 
     const { data, error } = await supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, status")
+        .select("id, business_name, business_type, specialties, status")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: true })
         .limit(1);
@@ -530,6 +641,7 @@ async function init() {
     }
 
     business = data[0];
+    selectedSpecialties = Array.isArray(business.specialties) ? [...business.specialties] : [];
 
     el("hero-title").textContent = business.business_name;
     el("hero-sub").textContent = "Manage your services, opening hours and bookings.";
@@ -538,6 +650,7 @@ async function init() {
     el("business-type").value = business.business_type || "mechanic";
     business.business_type = business.business_type || "mechanic";
     renderServiceSuggestions();
+    renderSpecialties();
 
     show("app", true);
 
@@ -687,6 +800,7 @@ async function saveType() {
 
     business.business_type = type;
     renderServiceSuggestions();
+    renderSpecialties();
     msg("type-msg", "Saved. You're listed as: " + TYPE_LABELS[type] + ".", "success");
 }
 
@@ -1088,6 +1202,24 @@ el("membership-growth-btn").addEventListener("click", () => chooseMembershipPlan
 el("membership-professional-btn").addEventListener("click", () => chooseMembershipPlan("professional"));
 el("nobiz-signout").addEventListener("click", signOut);
 el("save-type-btn").addEventListener("click", saveType);
+el("save-specialties-btn").addEventListener("click", saveSpecialties);
+el("add-specialty-btn").addEventListener("click", addCustomSpecialty);
+el("specialty-custom").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        addCustomSpecialty();
+    }
+});
+el("specialty-groups").addEventListener("click", e => {
+    const button = e.target.closest("button[data-specialty]");
+    if (!button) return;
+    const value = button.dataset.specialty;
+    const index = selectedSpecialties.findIndex(item => item.toLowerCase() === value.toLowerCase());
+    if (index >= 0) selectedSpecialties.splice(index, 1);
+    else selectedSpecialties.push(value);
+    renderSpecialties();
+    msg("specialties-msg", "Selection changed. Remember to save your specialities.", "info");
+});
 el("save-service-btn").addEventListener("click", saveService);
 el("service-suggestion-list").addEventListener("click", e => {
     const button = e.target.closest("button[data-suggestion-index]");
