@@ -31,24 +31,28 @@
         "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
     );
 
+    var capturePromise = Promise.resolve();
+
     window.PTReferral = {
         getVisitorToken: function () { return visitorToken; },
         attach: function (transactionType, transactionId, customerEmail) {
             if (!visitorToken || !transactionId || !customerEmail) {
                 return Promise.resolve({ data: { success: true, result: "no_referral_token" }, error: null });
             }
-            return client.rpc("attach_referral_attribution", {
-                p_visitor_token: visitorToken,
-                p_transaction_type: transactionType,
-                p_transaction_id: String(transactionId),
-                p_customer_email: String(customerEmail).trim().toLowerCase()
+            return capturePromise.then(function () {
+                return client.rpc("attach_referral_attribution", {
+                    p_visitor_token: visitorToken,
+                    p_transaction_type: transactionType,
+                    p_transaction_id: String(transactionId),
+                    p_customer_email: String(customerEmail).trim().toLowerCase()
+                });
             });
         }
     };
 
     if (!incomingCode || !/^[A-Z0-9-]{4,24}$/.test(incomingCode)) return;
 
-    client.rpc("capture_referral_attribution", {
+    capturePromise = client.rpc("capture_referral_attribution", {
         p_referral_code: incomingCode,
         p_visitor_token: visitorToken
     }).then(function (result) {
