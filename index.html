@@ -1063,7 +1063,8 @@ footer {
 /* Focused homepage layout while a visitor is searching. */
 body.pt-search-active #category-section,
 body.pt-search-active #sponsored-section,
-body.pt-search-active #business-partners-section {
+body.pt-search-active #business-partners-section,
+body.pt-search-active .homepage-next-steps-section {
     display: none !important;
 }
 
@@ -1621,6 +1622,34 @@ body.pt-search-active .search-results-bar button:hover {
     }
 }
 
+
+/* HOMEPAGE: balanced service and supplier pathways */
+.homepage-next-steps-section{padding:42px 6% 50px;background:#f7f8fa}
+.homepage-next-steps-inner{width:min(1120px,100%);margin:0 auto}
+.homepage-next-steps-inner>h2{margin:0 0 9px;color:#15171b;text-align:center;font-size:clamp(22px,2.4vw,28px);letter-spacing:-.025em}
+.homepage-next-steps-intro{max-width:650px;margin:0 auto 23px;color:#68707c;text-align:center;font-size:14px;line-height:1.6}
+.homepage-next-steps-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.homepage-next-step-card{display:flex;align-items:center;gap:16px;min-width:0;min-height:148px;padding:22px;border:1px solid #292d34;border-radius:12px;background:linear-gradient(135deg,#17191e,#24272e);color:#fff;text-decoration:none;box-shadow:0 5px 18px rgba(15,23,42,.08);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.homepage-next-step-card:hover{transform:translateY(-3px);border-color:#e00000;box-shadow:0 9px 24px rgba(15,23,42,.14)}
+.homepage-next-step-card:focus-visible{outline:2px solid #e00000;outline-offset:3px}
+.homepage-next-step-icon{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:11px;background:rgba(224,0,0,.15);color:#ff5a5a}
+.homepage-next-step-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.homepage-next-step-copy{display:flex;flex:1;flex-direction:column;align-items:flex-start;min-width:0}
+.homepage-next-step-copy>strong{margin-bottom:6px;color:#fff;font-size:18px;line-height:1.25}
+.homepage-next-step-copy>small{color:#c2c6ce;font-size:13px;line-height:1.5}
+.homepage-next-step-link{margin-top:13px;color:#ff6666;font-size:12px;font-weight:750}
+.homepage-next-step-arrow{flex:0 0 auto;color:#ff5555;font-size:27px;line-height:1}
+@media(max-width:700px){
+ .homepage-next-steps-section{padding:32px 5% 38px}
+ .homepage-next-steps-intro{margin-bottom:18px;font-size:13px}
+ .homepage-next-steps-grid{grid-template-columns:1fr;gap:11px}
+ .homepage-next-step-card{min-height:126px;padding:17px;gap:13px}
+ .homepage-next-step-icon{flex-basis:42px;width:42px;height:42px}
+ .homepage-next-step-copy>strong{font-size:16px}
+ .homepage-next-step-copy>small{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.homepage-next-step-card{transition:none}.homepage-next-step-card:hover{transform:none}}
+
 </style>
 </head>
 
@@ -1918,47 +1947,35 @@ Discover parts and accessories, book trusted automotive services, and connect wi
 </section>
 
 
-<section class="section">
-
-<div class="mechanic">
-
-<h2>Need an Automotive Service?</h2>
-
-<p>
-Connect with automotive professionals and find the right service for your vehicle.
-</p>
-
-<button onclick="findMechanic()">
-Find a Service
-</button>
-
-</div>
-
-</section>
-
-<section class="sell">
-
-<h2>Are you an automotive business?</h2>
-
-<p>
-Join PoundTech and reach customers looking for automotive products and services.
-</p>
-
-<div class="sell-steps">
-    <div><span>1</span> Apply</div>
-    <div><span>2</span> We review your application</div>
-    <div><span>3</span> Create your account</div>
-</div>
-
-<button onclick="sellOnPoundTech()">
-Apply to Sell on PoundTech
-</button>
-
-<p class="sell-login">
-Already approved?
-<a href="supplier-login.html">Log in or create your account</a>
-</p>
-
+<section class="homepage-next-steps-section" aria-labelledby="homepage-next-steps-title">
+    <div class="homepage-next-steps-inner">
+        <h2 id="homepage-next-steps-title">More ways to use PoundTech</h2>
+        <p class="homepage-next-steps-intro">Whether you need a service or want to grow your automotive business, there’s a place for you here.</p>
+        <div class="homepage-next-steps-grid">
+            <a class="homepage-next-step-card" href="mechanics.html">
+                <span class="homepage-next-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3.5 17.5a2.1 2.1 0 0 0 3 3l4.8-4.8a5 5 0 0 0 6.4-6.4l-3 3-3.5-3.5z"/></svg>
+                </span>
+                <span class="homepage-next-step-copy">
+                    <strong>Find a service</strong>
+                    <small>Connect with mechanics, car washes, detailers, panel beaters and more.</small>
+                    <span class="homepage-next-step-link">Explore automotive services <span aria-hidden="true">→</span></span>
+                </span>
+                <span class="homepage-next-step-arrow" aria-hidden="true">›</span>
+            </a>
+            <a class="homepage-next-step-card" href="supplier.html">
+                <span class="homepage-next-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M3 10h18l-1.5-6h-15z"/><path d="M5 10v10h14V10M9 20v-6h6v6"/><path d="M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg>
+                </span>
+                <span class="homepage-next-step-copy">
+                    <strong>Sell on PoundTech</strong>
+                    <small>Reach customers across South Africa and grow your automotive business.</small>
+                    <span class="homepage-next-step-link">Become a PoundTech supplier <span aria-hidden="true">→</span></span>
+                </span>
+                <span class="homepage-next-step-arrow" aria-hidden="true">›</span>
+            </a>
+        </div>
+    </div>
 </section>
 
 <div id="checkout-panel" style="
