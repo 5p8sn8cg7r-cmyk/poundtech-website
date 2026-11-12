@@ -1449,6 +1449,7 @@ Discover parts and accessories, book trusted automotive services, and connect wi
     <div class="search-row">
 
         <input
+            id="product-search-input"
             type="text"
             placeholder="What does your vehicle need today?"
             aria-label="Search automotive parts, accessories and services"
@@ -2331,11 +2332,6 @@ function selectGarageVehicle() {
 
 loadGarageVehicles();
     
- function searchProducts() {
-    ptAlert("Product search is being improved and will be available shortly.", "Search coming soon");
-}
-
-
 function addCart(product_id, supplier_id, name, price, image_url) {
 
     let cart =
@@ -3697,79 +3693,75 @@ if (GROUPS[view]) {
     
 async function searchProducts() {
 
-    const searchInput = document.querySelector(
-        'input[placeholder="Search for parts, accessories or services..."]'
-    );
+    const searchInput = document.getElementById("product-search-input");
+    if (!searchInput) return;
 
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    
+    // Keep PostgREST's .or() filter syntax safe from punctuation in user input.
+    const searchTerm = searchInput.value
+        .trim()
+        .toLowerCase()
+        .replace(/[(),.%_*"\\\\]/g, " ")
+        .replace(/\\s+/g, " ")
+        .trim();
+
     const searchStatus = document.getElementById("search-status");
 
-if (!searchTerm) {
-    searchStatus.innerHTML = "";
-    loadProducts();
-    return;
-}
-    
-document.getElementById("category-section").style.display = "none";
-    
-searchStatus.innerHTML = `
-    <div class="search-results-bar">
-        <span>
-            Showing results for
-            <strong>"${esc(searchTerm)}"</strong>
-        </span>
+    if (!searchTerm) {
+        searchStatus.innerHTML = "";
+        return;
+    }
 
-        <button onclick="clearSearch()">
-            Clear
-        </button>
-    </div>
-`;
+    activeFilter = null;
+    updateCategoryUI();
+    document.getElementById("category-section").style.display = "none";
+    document.getElementById("products-heading").textContent = "Search results";
+
+    searchStatus.innerHTML = `
+        <div class="search-results-bar">
+            <span>Showing results for <strong>"${esc(searchTerm)}"</strong></span>
+            <button onclick="clearSearch()">Clear</button>
+        </div>
+    `;
 
     PRODUCT_HAS_MORE = false;
+    PRODUCT_OFFSET = 0;
+    loadedProducts = [];
     updateLoadMoreButton();
+
     const { data, error } = await supabaseClient
         .from("products")
         .select("*")
         .eq("status", "Active")
         .or(
             `name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%,vehicle_compatibility.ilike.%${searchTerm}%`
-        ).limit(60);
+        )
+        .limit(60);
 
     if (error) {
         console.error("SEARCH ERROR:", error);
+        document.getElementById("products-container").innerHTML =
+            "<p>We couldn't load those search results. Please try again.</p>";
+        document.getElementById("result-count").textContent = "";
         ptAlert("We couldn't load those search results. Please try again.", "Search unavailable");
         return;
     }
 
- const container =
-    document.getElementById("products-container");
+    loadedProducts = data || [];
+    PRODUCT_OFFSET = loadedProducts.length;
+    PRODUCT_HAS_MORE = false;
 
-    if (!data || data.length === 0) {
-        container.innerHTML =
-            "<p>No products found.</p>";
-        return;
-    }
-
- await enrichProductSupplierDetails(data);
-
- container.innerHTML = data.map(function(product) {
-    return renderProductCard(product, null);
-}).join("");
+    await enrichProductSupplierDetails(loadedProducts);
+    await renderLoaded();
+    updateLoadMoreButton();
 }
-    
-function clearSearch() {
-    const searchInput = document.querySelector(
-        'input[placeholder="Search for parts, accessories or services..."]'
-    );
 
-    searchInput.value = "";
+function clearSearch() {
+    const searchInput = document.getElementById("product-search-input");
+    if (searchInput) searchInput.value = "";
 
     document.getElementById("search-status").innerHTML = "";
-
     document.getElementById("category-section").style.display = "";
-
-    document.getElementById("products-heading").innerText = "Featured Products";
+    document.getElementById("products-heading").textContent = "Featured Products";
 
     loadProducts();
 }
