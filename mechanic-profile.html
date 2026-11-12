@@ -169,6 +169,10 @@
 
         .profile-specialties { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0 18px; }
     .profile-specialty { display:inline-block; padding:6px 10px; border-radius:999px; background:#f4f5f7; color:#444; font-size:13px; }
+        .profile-location{display:flex;align-items:flex-start;gap:12px;margin:18px 0;padding:15px 16px;border:1px solid #ececec;border-radius:10px;background:#fafafa}
+        .profile-location-pin{display:flex;align-items:center;justify-content:center;flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:#fff0f0;color:#c00000;font-size:19px}
+        .profile-location-label{display:block;margin:1px 0 4px;color:#888;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+        .profile-location-value{color:#222;font-size:15px;font-weight:700;line-height:1.45}
 </style>
 
   <link rel="icon" href="/favicon.ico?v=10" sizes="any">
@@ -430,11 +434,10 @@ async function loadMechanicProfile() {
 
 </div>
 
-        <p>
-            📍
-            <strong>Service Area:</strong>
-            ${mechanic.service_area || "Not provided"}
-        </p>
+        <div class="profile-location">
+            <span class="profile-location-pin" aria-hidden="true">⌖</span>
+            <span><span class="profile-location-label">Areas served</span><span class="profile-location-value">${escapeHtml(mechanic.service_area || "Not provided")}</span></span>
+        </div>
 
         <p>
             <strong>Services:</strong><br>
