@@ -9,7 +9,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Find Automotive Services | PoundTech</title>
-<meta name="description" content="Find mechanics, car washes and professional vehicle detailers across South Africa with PoundTech. Discover automotive services in your area.">
+<meta name="description" content="Find mechanics, car washes, vehicle detailers, panel beaters and truck and fleet services across South Africa with PoundTech.">
 
 
 
@@ -217,7 +217,7 @@ summary {
 
 <section class="page-hero">
     <h1>Find Automotive Services</h1>
-    <p>Discover mechanics, car washes and professional detailers across South Africa.</p>
+    <p>Discover mechanics, car washes, vehicle detailers, panel beaters and truck and fleet services across South Africa.</p>
     <p style="margin-top:12px;"><a href="/service-partner-plans.html" style="color:#e00000;font-weight:700;text-decoration:none;">Run an automotive service business? View partner plans &amp; join PoundTech →</a></p>
 </section>
 
@@ -235,9 +235,11 @@ summary {
 
         <div class="chips" id="type-chips">
             <button class="chip active" data-type="all">All</button>
-            <button class="chip" data-type="mechanic">Mechanics</button>
+            <button class="chip" data-type="mechanic">Mechanics &amp; repairs</button>
             <button class="chip" data-type="car_wash">Car washes</button>
             <button class="chip" data-type="detailer">Detailing</button>
+            <button class="chip" data-type="panel_beater">Panel beaters</button>
+            <button class="chip" data-type="truck_fleet">Truck &amp; fleet services</button>
         </div>
 
     </div>
@@ -273,9 +275,11 @@ const supabaseClient =
 
 
 const TYPE_LABELS = {
-    mechanic: "Mechanic",
+    mechanic: "Mechanic & automotive repairs",
     car_wash: "Car wash",
-    detailer: "Detailing"
+    detailer: "Vehicle detailing",
+    panel_beater: "Panel beating & body repair",
+    truck_fleet: "Truck, fleet & commercial services"
 };
 
 const MAX_SERVICES_SHOWN = 4;
