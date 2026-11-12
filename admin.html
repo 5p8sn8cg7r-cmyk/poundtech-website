@@ -1542,7 +1542,7 @@ function renderReferralPartners() {
       REF_PARTNERS.map(function(p){
         var link=location.origin+'/?ref='+encodeURIComponent(p.referral_code);
         return '<tr><td><strong>'+esc(p.display_name)+'</strong><br><span class="meta">'+esc(p.email)+'</span><br><span class="meta">'+(p.user_id?'Account linked':'Account not linked yet')+'</span></td>'+
-          '<td><strong>'+esc(p.referral_code)+'</strong><div class="ref-link">'+esc(link)+'</div><button class="ref-action" type="button" onclick="copyReferralLink('+JSON.stringify(link)+')">Copy link</button></td>'+
+          '<td><strong>'+esc(p.referral_code)+'</strong><div class="ref-link">'+esc(link)+'</div><button class="ref-action" type="button" onclick="copyReferralLink(\''+link+'\')">Copy link</button></td>'+
           '<td><span class="ref-status '+esc(p.status.toLowerCase())+'">'+esc(p.status)+'</span></td><td>'+Number(p.reward_rate).toFixed(2)+'%</td><td>'+refDate(p.created_at)+'</td>'+
           '<td><button class="ref-action" type="button" onclick="toggleReferralPartner(\''+p.id+'\',\''+(p.status==='Active'?'Suspended':'Active')+'\')">'+(p.status==='Active'?'Suspend':'Activate')+'</button></td></tr>';
       }).join('')+'</tbody></table></div>';
