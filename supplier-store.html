@@ -605,6 +605,16 @@ body { background:#f3f4f6; color:#111; font-family:Arial,Helvetica,sans-serif; }
     .store-section-head { margin-top:10px; padding-top:13px; margin-bottom:11px; }
     .supplier-branches { margin-top:24px; }
 }
+
+/* SUPPLIER STOREFRONT SHARING */
+.supplier-share-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;align-items:center}
+.supplier-share-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 16px;border:1px solid #fff;border-radius:8px;background:#e00000;color:#fff;font-size:13px;font-weight:800;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.supplier-share-btn:hover{background:#bd0000;transform:translateY(-1px)}
+.supplier-copy-btn{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.35)}
+.supplier-copy-btn:hover{background:rgba(255,255,255,.17)}
+.supplier-share-status{flex-basis:100%;margin:0;color:#cfcfcf;font-size:12px;min-height:15px}
+@media(max-width:700px){.supplier-share-actions{gap:8px}.supplier-share-btn{flex:1;padding:0 12px}}
+
 </style>
 
   <link rel="icon" href="/favicon.ico?v=10" sizes="any">
@@ -847,6 +857,65 @@ let supplierProducts = [];
 let supplierVehicles = [];
 let selectedSupplierVehicle = null;
 
+function getSupplierStoreUrl() {
+    const url = new URL(window.location.pathname, "https://poundtech.co.za");
+    url.search = "?id=" + encodeURIComponent(supplierId || "");
+    url.hash = "";
+    return url.href;
+}
+
+function supplierShareMessage() {
+    const heading = document.querySelector(".supplier-header h2");
+    const name = heading ? heading.textContent.trim() : "this supplier";
+    return "Explore " + name + "'s automotive store on PoundTech: " + getSupplierStoreUrl();
+}
+
+async function copySupplierStoreLink() {
+    if (!supplierId) return;
+    const url = getSupplierStoreUrl();
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(url);
+        } else {
+            const field = document.createElement("textarea");
+            field.value = url;
+            field.setAttribute("readonly", "");
+            field.style.position = "fixed";
+            field.style.opacity = "0";
+            document.body.appendChild(field);
+            field.select();
+            const copied = document.execCommand("copy");
+            field.remove();
+            if (!copied) throw new Error("Copy unavailable");
+        }
+        const status = document.getElementById("supplier-share-status");
+        if (status) status.textContent = "Store link copied. Share it with your customers.";
+        if (window.PT && PT.toast) PT.toast("Store link copied");
+    } catch (error) {
+        const status = document.getElementById("supplier-share-status");
+        if (status) status.textContent = "Copy unavailable. You can copy the store address from your browser.";
+    }
+}
+
+async function shareSupplierStore() {
+    if (!supplierId) return;
+    const message = supplierShareMessage();
+    const heading = document.querySelector(".supplier-header h2");
+    const title = (heading ? heading.textContent.trim() : "Supplier") + " | PoundTech";
+    if (typeof navigator.share === "function") {
+        try {
+            await navigator.share({ title: title, text: message, url: getSupplierStoreUrl() });
+        } catch (error) {
+            if (error && error.name !== "AbortError") {
+                const status = document.getElementById("supplier-share-status");
+                if (status) status.textContent = "Sharing wasn't available. Use Copy store link instead.";
+            }
+        }
+        return;
+    }
+    window.open("https://wa.me/?text=" + encodeURIComponent(message), "_blank", "noopener,noreferrer");
+}
+
 async function loadSupplierVehicles() {
     const filter = document.getElementById("supplier-fit-filter");
     const select = document.getElementById("supplier-vehicle-select");
@@ -1087,6 +1156,11 @@ async function loadSupplier() {
             </div>
             <div class="supplier-meta">
                 <span>▣ ${PT.esc(supplier.business_type || "Automotive supplier")}</span>
+            </div>
+            <div class="supplier-share-actions" aria-label="Share this supplier storefront">
+                <button type="button" class="supplier-share-btn" onclick="shareSupplierStore()" aria-label="Share supplier store">↗ Share store</button>
+                <button type="button" class="supplier-share-btn supplier-copy-btn" onclick="copySupplierStoreLink()">Copy store link</button>
+                <p id="supplier-share-status" class="supplier-share-status" role="status" aria-live="polite"></p>
             </div>
         </div>
 
