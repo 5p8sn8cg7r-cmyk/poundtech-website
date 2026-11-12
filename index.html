@@ -1060,6 +1060,44 @@ footer {
     margin: 12px auto 0;
 }
 
+/* Focused homepage layout while a visitor is searching. */
+body.pt-search-active #category-section,
+body.pt-search-active #sponsored-section,
+body.pt-search-active #business-partners-section {
+    display: none !important;
+}
+
+body.pt-search-active .hero {
+    padding: 18px 6% 12px;
+    background-image: linear-gradient(135deg, #090b0e, #1b1e23);
+}
+
+body.pt-search-active .hero > .hero-eyebrow,
+body.pt-search-active .hero > h1,
+body.pt-search-active .hero > p:not(#search-status),
+body.pt-search-active .hero .garage-row,
+body.pt-search-active .hero #garage-vehicle-status,
+body.pt-search-active .hero .hero-pathways {
+    display: none !important;
+}
+
+body.pt-search-active .shop-card {
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+body.pt-search-active #search-status {
+    margin-top: 4px;
+}
+
+body.pt-search-active .search-results-bar {
+    padding: 8px 4px;
+}
+
+body.pt-search-active .product-showcase-section {
+    scroll-margin-top: 12px;
+}
+
 .search-results-bar {
     display: flex;
     align-items: center;
@@ -3712,6 +3750,7 @@ async function searchProducts() {
         return;
     }
 
+    document.body.classList.add("pt-search-active");
     activeFilter = null;
     updateCategoryUI();
     document.getElementById("category-section").style.display = "none";
@@ -3754,9 +3793,13 @@ async function searchProducts() {
     await enrichProductSupplierDetails(loadedProducts);
     await renderLoaded();
     updateLoadMoreButton();
+
+    document.querySelector(".product-showcase-section")
+        .scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function clearSearch() {
+    document.body.classList.remove("pt-search-active");
     const searchInput = document.getElementById("product-search-input");
     if (searchInput) searchInput.value = "";
 
