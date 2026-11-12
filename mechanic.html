@@ -438,6 +438,24 @@ function showApplicationStep(index) {
     if (first) first.focus({preventScroll:true});
 }
 
+function isValidPoundTechEmail(value) {
+    const email = String(value || "").trim();
+    if (email.length > 254) return false;
+
+    const parts = email.split("@");
+    if (parts.length !== 2) return false;
+
+    const local = parts[0];
+    const domain = parts[1];
+    if (!local || local.length > 64 || !domain || domain.length > 253) return false;
+    if (local.startsWith(".") || local.endsWith(".") || local.includes("..")) return false;
+
+    // Require a real-looking domain with at least one dot and valid DNS labels.
+    const localPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/;
+    const domainPattern = /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$/;
+    return localPattern.test(local) && domainPattern.test(domain);
+}
+
 function validateApplicationStep(index) {
     const step = applicationSteps[index];
     const required = Array.from(step.querySelectorAll('[data-required="true"]'));
@@ -452,8 +470,8 @@ function validateApplicationStep(index) {
             field.focus();
             return false;
         }
-        if (field.type === "email" && !field.validity.valid) {
-            document.getElementById("wizard-error").textContent = "Please enter a valid email address.";
+        if (field.type === "email" && (!field.validity.valid || !isValidPoundTechEmail(field.value))) {
+            document.getElementById("wizard-error").textContent = "Please enter a valid email address, including a domain such as .co.za or .com.";
             field.focus();
             return false;
         }
