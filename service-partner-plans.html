@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Service Partner Plans | PoundTech</title>
+<meta name="description" content="Compare PoundTech plans for mechanics, car washes and vehicle detailers.">
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<link rel="stylesheet" href="/back-button.css?v=20261111">
+<style>
+:root{--pt-red:#d60000;--pt-black:#101010;--pt-gold:#c49a45}
+*{box-sizing:border-box}
+body{background:#f5f5f6;color:#171717}
+.plans-wrap{max-width:1320px;margin:0 auto;padding:44px 22px 72px}
+.intro{text-align:center;max-width:800px;margin:0 auto 28px}
+.kicker{color:var(--pt-red);font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.intro h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:12px 0}
+.intro p{color:#666;font-size:16px;line-height:1.65;margin:0}
+.launch{max-width:980px;margin:0 auto 30px;padding:16px 19px;border:1px solid #ead9b5;border-radius:13px;background:#fffaf0;color:#5e471c;text-align:center;line-height:1.6}
+.plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch}
+.plan{background:#fff;border:1px solid #e3e3e3;border-radius:17px;padding:22px;box-shadow:0 8px 28px rgba(0,0,0,.045);display:flex;flex-direction:column;min-width:0}
+.plan.growth{border:2px solid var(--pt-gold);box-shadow:0 14px 34px rgba(130,95,25,.12)}
+.plan.professional{border:1px solid #222}
+.tag{display:inline-flex;align-self:flex-start;border-radius:999px;padding:6px 10px;background:#f0f0f0;color:#333;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
+.growth .tag{background:#f8efd9;color:#78551a}
+.professional .tag{background:#171717;color:white}
+.enterprise .tag{background:#eceef2;color:#3e4654}
+.plan h2{font-size:23px;margin:16px 0 5px}
+.desc{color:#666;line-height:1.5;min-height:62px;margin:0;font-size:13px}
+.price{font-size:34px;font-weight:850;letter-spacing:-1px;margin:17px 0 2px}
+.price small{font-size:13px;font-weight:500;letter-spacing:0;color:#777}
+.rate{border-top:1px solid #eee;border-bottom:1px solid #eee;padding:12px 0;margin:12px 0 15px}
+.rate strong{font-size:25px}
+.rate span{display:block;color:#777;font-size:12px;margin-top:3px;line-height:1.4}
+.plan ul{list-style:none;padding:0;margin:0 0 20px;display:grid;gap:10px}
+.plan li{display:flex;gap:8px;color:#444;font-size:12px;line-height:1.45}
+.tick{color:#18834b;font-weight:900;font-size:15px;line-height:1.1}
+.action{display:block;text-align:center;text-decoration:none;background:#171717;color:white;padding:13px 12px;border-radius:10px;font-weight:800;font-size:13px;margin-top:auto}
+.growth .action{background:var(--pt-red)}
+.professional .action{background:#171717}
+.action:hover{filter:brightness(.88)}
+.section{margin:52px auto 0;max-width:1180px}
+.section h2{text-align:center;font-size:26px;margin:0 0 8px}
+.section-intro{text-align:center;color:#666;line-height:1.6;max-width:800px;margin:0 auto 22px}
+.table-wrap{overflow-x:auto;background:white;border:1px solid #e5e5e5;border-radius:14px}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{padding:14px 15px;text-align:center;border-bottom:1px solid #eee;font-size:13px}
+th{background:#171717;color:#fff;font-size:12px}
+th:first-child,td:first-child{text-align:left;font-weight:650;min-width:220px}
+tr:last-child td{border-bottom:0}
+.yes{color:#16803c;font-weight:800}
+.no{color:#aaa}
+.planned{color:#8a641d;font-weight:700}
+.note{color:#777;font-size:12px;line-height:1.6;margin:14px auto 0;max-width:1000px}
+.faq{max-width:900px;margin:48px auto 0}
+.faq h2{text-align:center;font-size:24px}
+.faq-item{background:#fff;border:1px solid #e7e7e7;border-radius:12px;padding:17px 19px;margin:10px 0}
+.faq-item strong{display:block;margin-bottom:5px}
+.faq-item p{margin:0;color:#666;line-height:1.55;font-size:14px}
+@media(max-width:1050px){.plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.plans-wrap{padding:28px 14px 48px}.plan-grid{grid-template-columns:1fr}.plan{padding:21px}.desc{min-height:0}.section{margin-top:40px}}
+</style>
+</head>
+<body>
+<header class="site-header">
+<a class="logo" href="/index.html">POUND<span>TECH</span></a>
+<a class="back pt-back-marketplace" href="/mechanics.html">&larr; Find automotive services</a>
+</header>
+<main class="plans-wrap">
+<section class="intro">
+<div class="kicker">For mechanics, car washes &amp; detailers</div>
+<h1>Build your business with PoundTech.</h1>
+<p>Choose a membership that fits the way you work. Start with the essentials, then unlock more tools and visibility as your operation grows.</p>
+</section>
+<div class="launch"><strong>Membership launch update:</strong> Free Partner is the starting option. Paid memberships will open once PayFast recurring billing is enabled and the relevant plan benefits are ready. We will not charge you for unavailable features.</div>
+<section class="plan-grid" aria-label="Service partner plans">
+<article class="plan">
+<span class="tag">Get listed</span><h2>Free Partner</h2>
+<p class="desc">For independent businesses getting started and building a customer base.</p>
+<div class="price">Free</div>
+<div class="rate"><strong>10%</strong><span>Commission on eligible completed bookings</span></div>
+<ul><li><span class="tick">✓</span><span>Business profile and service listing</span></li><li><span class="tick">✓</span><span>Receive bookings and enquiries</span></li><li><span class="tick">✓</span><span>Manage services, prices and opening hours</span></li><li><span class="tick">✓</span><span>Booking calendar and customer reviews</span></li></ul>
+<a class="action" href="/mechanic.html">Apply as a service partner</a>
+</article>
+<article class="plan growth">
+<span class="tag">Growing businesses</span><h2>Growth Partner</h2>
+<p class="desc">For businesses ready to promote themselves and manage a growing workload.</p>
+<div class="price">R199<small> / month</small></div>
+<div class="rate"><strong>10%</strong><span>Commission on eligible completed bookings</span></div>
+<ul><li><span class="tick">✓</span><span>Everything in Free Partner</span></li><li><span class="planned">＋</span><span>Up to 5 business photos <em>(planned)</em></span></li><li><span class="planned">＋</span><span>Up to 2 staff accounts <em>(planned)</em></span></li><li><span class="planned">＋</span><span>Promotional opportunities and enhanced analytics <em>(planned)</em></span></li></ul>
+<a class="action" href="/mechanic.html">Apply as a service partner</a>
+</article>
+<article class="plan professional">
+<span class="tag">More visibility</span><h2>Professional Partner</h2>
+<p class="desc">For established teams that want more visibility, capacity and insight.</p>
+<div class="price">R499<small> / month</small></div>
+<div class="rate"><strong>8.4%</strong><span>Commission on eligible completed bookings</span></div>
+<ul><li><span class="tick">✓</span><span>Everything in Growth Partner</span></li><li><span class="planned">＋</span><span>Up to 15 business photos <em>(planned)</em></span></li><li><span class="planned">＋</span><span>Up to 5 staff accounts and 3 branches <em>(planned)</em></span></li><li><span class="planned">＋</span><span>Featured business exposure and priority support <em>(planned)</em></span></li></ul>
+<a class="action" href="/mechanic.html">Apply as a service partner</a>
+</article>
+<article class="plan enterprise">
+<span class="tag">Larger operations</span><h2>Enterprise Partner</h2>
+<p class="desc">For multi-site operators and larger service networks with tailored requirements.</p>
+<div class="price">From R999<small> / month</small></div>
+<div class="rate"><strong>Custom</strong><span>Individually negotiated commission below 8.4%</span></div>
+<ul><li><span class="tick">✓</span><span>Everything in Professional Partner, tailored to your operation</span></li><li><span class="planned">＋</span><span>Custom staff and branch structure <em>(planned)</em></span></li><li><span class="planned">＋</span><span>Dedicated support and reporting <em>(planned)</em></span></li><li><span class="planned">＋</span><span>Custom promotional arrangements <em>(planned)</em></span></li></ul>
+<a class="action" href="mailto:info@poundtech.co.za?subject=Service%20Partner%20Enterprise%20Enquiry">Discuss Enterprise</a>
+</article>
+</section>
+<section class="section">
+<h2>Compare service partner plans</h2>
+<p class="section-intro">The core booking tools are available to service partners. Additional paid-plan benefits below are proposed rollout features and are not yet active.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Benefit</th><th>Free Partner</th><th>Growth Partner</th><th>Professional Partner</th><th>Enterprise</th></tr></thead>
+<tbody>
+<tr><td>Monthly membership</td><td>Free</td><td>R199</td><td>R499</td><td>From R999</td></tr>
+<tr><td>Booking commission</td><td>10%</td><td>10%</td><td>8.4%</td><td>Negotiated</td></tr>
+<tr><td>Business profile</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>List services and prices</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Receive bookings and enquiries</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Booking calendar and opening hours</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Customer reviews</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><td>Business photos</td><td>1</td><td>5 <span class="planned">(planned)</span></td><td>15 <span class="planned">(planned)</span></td><td>Custom</td></tr>
+<tr><td>Staff accounts</td><td>1</td><td>2 <span class="planned">(planned)</span></td><td>5 <span class="planned">(planned)</span></td><td>Custom</td></tr>
+<tr><td>Branch management</td><td>1</td><td>1</td><td>3 <span class="planned">(planned)</span></td><td>Custom</td></tr>
+<tr><td>Promotional opportunities</td><td class="no">—</td><td class="planned">Planned</td><td class="planned">Planned</td><td class="planned">Tailored</td></tr>
+<tr><td>Enhanced business analytics</td><td class="no">—</td><td class="planned">Planned</td><td class="planned">Planned</td><td class="planned">Tailored</td></tr>
+<tr><td>Featured business exposure</td><td class="no">—</td><td class="no">—</td><td class="planned">Planned</td><td class="planned">Planned</td></tr>
+<tr><td>Priority support</td><td class="no">—</td><td class="no">—</td><td class="planned">Planned</td><td class="planned">Dedicated</td></tr>
+</tbody></table></div>
+<p class="note">Membership fees are separate from booking commission. Commission applies only to eligible completed booking transactions and is calculated using the rate recorded for that booking. Existing bookings retain their original commission terms if a business later changes plans. Enterprise pricing and commission are agreed individually. Proposed benefits will only be advertised as active once built and enabled.</p>
+</section>
+<section class="faq">
+<h2>Plan questions</h2>
+<div class="faq-item"><strong>Can I start for free?</strong><p>Yes. Free Partner is designed to let your business get listed and begin receiving customer enquiries and bookings without a monthly membership fee.</p></div>
+<div class="faq-item"><strong>Is the monthly fee the same as booking commission?</strong><p>No. A paid membership fee is separate from commission on eligible completed bookings.</p></div>
+<div class="faq-item"><strong>When can I upgrade?</strong><p>Paid memberships will become available once recurring billing is enabled and the advertised benefits are ready. Your existing bookings will keep the commission terms recorded when they were created.</p></div>
+<div class="faq-item"><strong>How is Enterprise priced?</strong><p>Enterprise membership starts from R999 per month. Commission and the final package are agreed according to the size and requirements of the operation.</p></div>
+</section>
+</main>
+</body>
+</html>
