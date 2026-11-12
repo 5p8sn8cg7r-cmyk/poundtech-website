@@ -14,7 +14,38 @@
 
 .page-main { max-width: 860px; }
 
+
 .card { margin-bottom: 22px; }
+
+.membership-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+}
+.membership-plan {
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.membership-plan h3 { margin: 0; font-size: 17px; }
+.membership-price { font-size: 22px; font-weight: 800; margin: 0; color: #111; }
+.membership-plan p { margin: 0; color: #666; font-size: 14px; }
+.membership-plan .btn { margin-top: auto; }
+.membership-current {
+    background: #f6f6f6;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 12px 0;
+}
+.membership-current strong { color: #111; }
+@media (max-width: 600px) {
+    .membership-options { grid-template-columns: 1fr; }
+}
+
 
 input[type="checkbox"] {
     width: auto;
@@ -208,10 +239,37 @@ html{scroll-behavior:smooth}
         <a href="business-dashboard.html#booking-settings">Booking settings</a>
     </nav>
 
+
         <div class="top-bar">
             <p id="signed-in-as"></p>
             <button class="btn btn-dark btn-small" id="signout-btn">Sign out</button>
         </div>
+
+        <!-- Service partner membership -->
+        <section class="card" id="membership">
+            <h2>Service Partner Membership</h2>
+            <p class="lead">Choose the membership that suits your business. Your monthly membership fee is separate from PoundTech's commission on completed bookings.</p>
+            <div class="membership-current" id="membership-current" aria-live="polite">Loading your membership…</div>
+            <div id="membership-msg" role="status"></div>
+
+            <div class="membership-options">
+                <div class="membership-plan">
+                    <h3>Growth Partner</h3>
+                    <p class="membership-price">R199 <span style="font-size:13px;font-weight:500;">/ month</span></p>
+                    <p>10% commission on completed bookings.</p>
+                    <button class="btn" id="membership-growth-btn" type="button">Choose Growth</button>
+                </div>
+                <div class="membership-plan">
+                    <h3>Professional Partner</h3>
+                    <p class="membership-price">R499 <span style="font-size:13px;font-weight:500;">/ month</span></p>
+                    <p>8,4% commission on completed bookings.</p>
+                    <button class="btn" id="membership-professional-btn" type="button">Choose Professional</button>
+                </div>
+            </div>
+
+            <p class="hint">Free Partner remains available at R0 per month with 10% commission. Enterprise Partner starts from R999 per month, with an individually agreed commission rate below 8,4%. Contact PoundTech to discuss Enterprise.</p>
+            <p class="hint">Yoco does not currently support automatic recurring billing. Monthly membership payments are made manually through a secure Yoco checkout. Your paid membership activates only after PoundTech verifies the payment. Existing bookings are not stopped if a renewal is late.</p>
+        </section>
 
         <!-- Business type -->
         <div class="card">
@@ -471,7 +529,7 @@ async function init() {
 
     show("app", true);
 
-    await Promise.all([loadServices(), loadHours(), loadSettings()]);
+    await Promise.all([loadMembership(), loadServices(), loadHours(), loadSettings()]);
 }
 
 
@@ -507,6 +565,108 @@ async function signOut() {
     window.location.reload();
 }
 
+
+
+/* ---------- SERVICE PARTNER MEMBERSHIP ---------- */
+
+let membership = null;
+let membershipPlans = [];
+
+function membershipPercent(value) {
+    return String(Number(value)).replace(".", ",") + "%";
+}
+
+async function loadMembership() {
+    const [subResult, planResult] = await Promise.all([
+        supabaseClient
+            .from("service_partner_subscriptions")
+            .select("plan_code, status, current_period_end, cancel_at_period_end")
+            .eq("mechanic_id", business.id)
+            .maybeSingle(),
+        supabaseClient
+            .from("service_partner_plans")
+            .select("code, display_name, monthly_price, commission_rate")
+            .eq("is_active", true)
+            .order("monthly_price", { ascending: true })
+    ]);
+
+    if (subResult.error || planResult.error) {
+        console.error(subResult.error || planResult.error);
+        el("membership-current").textContent = "We couldn't load your membership. Please refresh the page.";
+        return;
+    }
+
+    membership = subResult.data;
+    membershipPlans = planResult.data || [];
+
+    const expired = !!(
+        membership?.current_period_end &&
+        new Date(membership.current_period_end).getTime() <= Date.now()
+    );
+    const effectiveCode = membership?.status === "active" && !expired
+        ? (membership.plan_code || "free")
+        : "free";
+    const currentPlan = membershipPlans.find(p => p.code === effectiveCode)
+        || membershipPlans.find(p => p.code === "free");
+
+    if (currentPlan) {
+        let summary = "<strong>" + esc(currentPlan.display_name) + "</strong>";
+        summary += " · " + (Number(currentPlan.monthly_price) === 0
+            ? "No monthly membership fee"
+            : money(currentPlan.monthly_price) + " per month");
+        if (currentPlan.commission_rate != null) {
+            summary += " · " + membershipPercent(currentPlan.commission_rate) + " commission on completed bookings";
+        } else {
+            summary += " · Individually agreed commission";
+        }
+        if (membership?.current_period_end && !expired && effectiveCode !== "free") {
+            summary += "<br><span style='font-size:13px;color:#666;'>Paid through " +
+                esc(new Date(membership.current_period_end).toLocaleDateString("en-ZA")) + "</span>";
+        } else if (expired) {
+            summary += "<br><span style='font-size:13px;color:#8a1111;'>Your paid membership period has ended. Your account is on Free Partner.</span>";
+        }
+        el("membership-current").innerHTML = summary;
+    }
+
+    el("membership-growth-btn").disabled = effectiveCode === "growth";
+    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Choose Growth";
+    el("membership-professional-btn").disabled = effectiveCode === "professional";
+    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Choose Professional";
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("membership") === "success") {
+        msg("membership-msg", "You've returned from Yoco. We're confirming your payment now; your plan will update once the verified payment webhook has been processed.", "info");
+    } else if (params.get("membership") === "cancelled") {
+        msg("membership-msg", "The checkout was cancelled. Your current membership has not been changed.", "info");
+    } else if (params.get("membership") === "failed") {
+        msg("membership-msg", "The checkout was not completed. Your current membership has not been changed.", "error");
+    }
+}
+
+async function chooseMembershipPlan(planCode) {
+    const button = planCode === "growth"
+        ? el("membership-growth-btn")
+        : el("membership-professional-btn");
+
+    el("membership-growth-btn").disabled = true;
+    el("membership-professional-btn").disabled = true;
+    msg("membership-msg", "Preparing your secure Yoco checkout…", "info");
+
+    const { data, error } = await supabaseClient.functions.invoke(
+        "create-service-membership-checkout",
+        { body: { plan_code: planCode } }
+    );
+
+    if (error || !data?.redirectUrl) {
+        console.error(error || data);
+        msg("membership-msg", data?.error || "We couldn't start your membership payment. Please try again.", "error");
+        el("membership-growth-btn").disabled = false;
+        el("membership-professional-btn").disabled = false;
+        return;
+    }
+
+    window.location.href = data.redirectUrl;
+}
 
 /* ---------- BUSINESS TYPE ---------- */
 
@@ -909,6 +1069,8 @@ el("login-password").addEventListener("keydown", e => {
     if (e.key === "Enter") signIn();
 });
 el("signout-btn").addEventListener("click", signOut);
+el("membership-growth-btn").addEventListener("click", () => chooseMembershipPlan("growth"));
+el("membership-professional-btn").addEventListener("click", () => chooseMembershipPlan("professional"));
 el("nobiz-signout").addEventListener("click", signOut);
 el("save-type-btn").addEventListener("click", saveType);
 el("save-service-btn").addEventListener("click", saveService);
