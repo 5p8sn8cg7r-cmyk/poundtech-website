@@ -3062,6 +3062,11 @@ async function placeOrder() {
 
     const orderNumber = result.order_number;
 
+    if (window.PTReferral) {
+        const referralResult = await window.PTReferral.attach("Product Sale", orderNumber, email);
+        if (referralResult && referralResult.error) console.warn("Referral attribution could not be attached:", referralResult.error);
+    }
+
     await startPayment(orderNumber);
 }
 
