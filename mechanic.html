@@ -144,6 +144,15 @@
             required
         >
 
+        <label for="business-type">Business Type</label>
+        <select id="business-type" required>
+            <option value="mechanic">Mechanic &amp; automotive repairs</option>
+            <option value="car_wash">Car wash</option>
+            <option value="detailer">Vehicle detailing</option>
+            <option value="panel_beater">Panel beating &amp; body repair</option>
+            <option value="truck_fleet">Truck, fleet &amp; commercial services</option>
+        </select>
+
         <label>Contact Person</label>
         <input
             type="text"
@@ -359,6 +368,9 @@ document
 
         business_name:
             document.getElementById("business-name").value.trim(),
+
+        business_type:
+            document.getElementById("business-type").value,
 
         contact_name:
             document.getElementById("contact-name").value.trim(),
