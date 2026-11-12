@@ -15,6 +15,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="pt-build" content="20261111-store-links-2">
 <title>Product | PoundTech</title>
+<meta name="description" content="Shop automotive parts and accessories from trusted South African suppliers on PoundTech.">
 
 
 
@@ -629,6 +630,95 @@ const esc = PT.esc;
 let currentProduct = null;
 let selectedQuantity = 1;
 
+function setSeoMeta(attribute, key, value) {
+    let element = document.head.querySelector('meta[' + attribute + '="' + key + '"]');
+    if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attribute, key);
+        document.head.appendChild(element);
+    }
+    element.setAttribute("content", String(value == null ? "" : value));
+}
+
+function updateProductSeo(product) {
+    if (!product || !product.id || !product.name) return;
+
+    const pageUrl = new URL("/product.html?id=" + encodeURIComponent(product.id), window.location.origin).href;
+    const vehicle = String(product.vehicle_compatibility || "").trim();
+    const category = String(product.category || "").trim();
+    const details = String(product.description || "").trim();
+    const seoDescription = [
+        product.name,
+        vehicle ? "Compatible with " + vehicle + "." : "",
+        category ? "Category: " + category + "." : "",
+        details
+    ].filter(Boolean).join(" ").replace(/\\s+/g, " ").slice(0, 300);
+    const description = seoDescription.length > 160
+        ? seoDescription.slice(0, 157).replace(/\\s+\\S*$/, "") + "..."
+        : seoDescription;
+    const price = PT.sale(product).now;
+    const stock = Number(product.stock) || 0;
+    const image = product.image_url
+        ? new URL(product.image_url, window.location.origin).href
+        : "";
+
+    document.title = product.name + " | PoundTech";
+    setSeoMeta("name", "description", description);
+    setSeoMeta("property", "og:type", "product");
+    setSeoMeta("property", "og:site_name", "PoundTech");
+    setSeoMeta("property", "og:title", document.title);
+    setSeoMeta("property", "og:description", description);
+    setSeoMeta("property", "og:url", pageUrl);
+    setSeoMeta("name", "twitter:card", image ? "summary_large_image" : "summary");
+    setSeoMeta("name", "twitter:title", document.title);
+    setSeoMeta("name", "twitter:description", description);
+
+    if (image) {
+        setSeoMeta("property", "og:image", image);
+        setSeoMeta("name", "twitter:image", image);
+    }
+
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+        canonical = document.createElement("link");
+        canonical.rel = "canonical";
+        document.head.appendChild(canonical);
+    }
+    canonical.href = pageUrl;
+
+    setSeoMeta("property", "product:price:amount", Number(price).toFixed(2));
+    setSeoMeta("property", "product:price:currency", "ZAR");
+    setSeoMeta("property", "product:availability", stock > 0 ? "in stock" : "out of stock");
+
+    let structuredData = document.getElementById("product-jsonld");
+    if (!structuredData) {
+        structuredData = document.createElement("script");
+        structuredData.id = "product-jsonld";
+        structuredData.type = "application/ld+json";
+        document.head.appendChild(structuredData);
+    }
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.name,
+        "description": description,
+        "category": category || undefined,
+        "image": image ? [image] : undefined,
+        "url": pageUrl,
+        "offers": {
+            "@type": "Offer",
+            "url": pageUrl,
+            "priceCurrency": "ZAR",
+            "price": Number(price).toFixed(2),
+            "availability": stock > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock"
+        }
+    };
+    structuredData.textContent = JSON.stringify(schema);
+}
+
 const productPageParams = new URLSearchParams(window.location.search);
 if (productPageParams.get("fromCart") === "1") {
     const backToCart = document.querySelector(".site-header .back");
@@ -1019,6 +1109,8 @@ function openLightbox(product, photos, start) {
 function renderProduct(product) {
 
     currentProduct = product;
+
+    updateProductSeo(product);
 
     const stock = Number(product.stock) || 0;
 
