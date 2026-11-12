@@ -53,18 +53,51 @@
             font-weight: bold;
         }
 
-        input,
-        textarea {
+        input:not([type="checkbox"]):not([type="file"]),
+        textarea,
+        select {
             width: 100%;
-            padding: 12px;
+            min-height: 48px;
+            padding: 12px 14px;
             box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: 1px solid #d6d6d6;
+            border-radius: 9px;
+            background-color: #fff;
+            color: #202020;
+            font-family: inherit;
             font-size: 15px;
+            line-height: 1.4;
+            transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+        }
+
+        /* Keep the familiar native browser dropdown and its platform arrow. */
+        select {
+            appearance: auto;
+            -webkit-appearance: menulist;
+            cursor: pointer;
+        }
+
+        input:not([type="checkbox"]):not([type="file"]):hover,
+        textarea:hover,
+        select:hover {
+            border-color: #aaa;
+        }
+
+        input:not([type="checkbox"]):not([type="file"]):focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #d60000;
+            box-shadow: 0 0 0 3px rgba(214, 0, 0, .10);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #999;
         }
 
         textarea {
-            min-height: 100px;
+            min-height: 112px;
             resize: vertical;
         }
 
