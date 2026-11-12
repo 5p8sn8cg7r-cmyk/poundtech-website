@@ -102,7 +102,11 @@
 .rating { font-size: 14px; color: #333; margin-bottom: 4px; }
 .rating .star { color: #e0a000; }
 
-.area { font-size: 14px; color: #666; }
+.area { display:flex; align-items:flex-start; gap:9px; margin:10px 0 2px; padding:11px 12px; border:1px solid #ececec; border-radius:9px; background:#fafafa; color:#333; font-size:14px; line-height:1.45; }
+.area-pin { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; flex:0 0 28px; border-radius:50%; background:#fff0f0; color:#c00000; font-size:15px; }
+.area-copy { min-width:0; }
+.area-label { display:block; margin-bottom:2px; color:#888; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.area-value { display:block; color:#222; font-weight:600; }
 
 .desc { font-size: 14px; color: #444; margin-top: 10px; }
 
@@ -563,7 +567,7 @@ function businessCard(mechanic) {
 
             <div class="rating">${ratingHtml}</div>
 
-            <div class="area">${esc(mechanic.service_area || "Service area not provided")}</div>
+            <div class="area"><span class="area-pin" aria-hidden="true">⌖</span><span class="area-copy"><span class="area-label">Service area</span><span class="area-value">${esc(mechanic.service_area || "Not provided")}</span></span></div>
 
             ${specialtiesHtml}
 
