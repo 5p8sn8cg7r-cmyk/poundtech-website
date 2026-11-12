@@ -257,18 +257,19 @@ html{scroll-behavior:smooth}
                     <h3>Growth Partner</h3>
                     <p class="membership-price">R199 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>10% commission on completed bookings.</p>
-                    <button class="btn" id="membership-growth-btn" type="button">Choose Growth</button>
+                    <button class="btn" id="membership-growth-btn" type="button" disabled>Coming soon</button>
                 </div>
                 <div class="membership-plan">
                     <h3>Professional Partner</h3>
                     <p class="membership-price">R499 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>8,4% commission on completed bookings.</p>
-                    <button class="btn" id="membership-professional-btn" type="button">Choose Professional</button>
+                    <button class="btn" id="membership-professional-btn" type="button" disabled>Coming soon</button>
                 </div>
             </div>
 
-            <p class="hint">Free Partner remains available at R0 per month with 10% commission. Enterprise Partner starts from R999 per month, with an individually agreed commission rate below 8,4%. Contact PoundTech to discuss Enterprise.</p>
-            <p class="hint">Yoco does not currently support automatic recurring billing. Monthly membership payments are made manually through a secure Yoco checkout. Your paid membership activates only after PoundTech verifies the payment. Existing bookings are not stopped if a renewal is late.</p>
+            <p class="hint">Free Partner remains available at R0 per month with 10% commission. Enterprise Partner starts from R999 per month, with an individually agreed commission rate below 8,4%.</p>
+            <p class="hint">Paid memberships are temporarily unavailable while PayFast recurring billing is being finalised. We will enable upgrades once recurring payments and the advertised plan benefits are ready. Your existing bookings will continue under the commission rate recorded for each booking.</p>
+            <p><a href="/service-partner-plans.html" style="color:#d60000;font-weight:700;">View the full membership comparison →</a></p>
         </section>
 
         <!-- Business type -->
@@ -628,14 +629,15 @@ async function loadMembership() {
         el("membership-current").innerHTML = summary;
     }
 
-    el("membership-growth-btn").disabled = effectiveCode === "growth";
-    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Choose Growth";
-    el("membership-professional-btn").disabled = effectiveCode === "professional";
-    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Choose Professional";
+    // Paid upgrades stay disabled until PayFast recurring billing and plan benefits are live.
+    el("membership-growth-btn").disabled = true;
+    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Coming soon";
+    el("membership-professional-btn").disabled = true;
+    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Coming soon";
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("membership") === "success") {
-        msg("membership-msg", "You've returned from Yoco. We're confirming your payment now; your plan will update once the verified payment webhook has been processed.", "info");
+        msg("membership-msg", "A previous membership checkout was completed. If your membership has not updated, please contact PoundTech while we transition to recurring billing.", "info");
     } else if (params.get("membership") === "cancelled") {
         msg("membership-msg", "The checkout was cancelled. Your current membership has not been changed.", "info");
     } else if (params.get("membership") === "failed") {
@@ -644,28 +646,7 @@ async function loadMembership() {
 }
 
 async function chooseMembershipPlan(planCode) {
-    const button = planCode === "growth"
-        ? el("membership-growth-btn")
-        : el("membership-professional-btn");
-
-    el("membership-growth-btn").disabled = true;
-    el("membership-professional-btn").disabled = true;
-    msg("membership-msg", "Preparing your secure Yoco checkout…", "info");
-
-    const { data, error } = await supabaseClient.functions.invoke(
-        "create-service-membership-checkout",
-        { body: { plan_code: planCode } }
-    );
-
-    if (error || !data?.redirectUrl) {
-        console.error(error || data);
-        msg("membership-msg", data?.error || "We couldn't start your membership payment. Please try again.", "error");
-        el("membership-growth-btn").disabled = false;
-        el("membership-professional-btn").disabled = false;
-        return;
-    }
-
-    window.location.href = data.redirectUrl;
+    msg("membership-msg", "Paid membership upgrades will open once PayFast recurring billing is enabled.", "info");
 }
 
 /* ---------- BUSINESS TYPE ---------- */
