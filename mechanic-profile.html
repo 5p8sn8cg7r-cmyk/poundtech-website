@@ -97,6 +97,76 @@
             padding: 50px;
         }
 
+        .business-type {
+            display: inline-block;
+            background: #fce8e8;
+            color: #b00000;
+            border: 1px solid #f3caca;
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            margin: 0 0 12px;
+        }
+
+        .profile-services {
+            margin-top: 28px;
+            border-top: 1px solid #e5e5e5;
+            padding-top: 18px;
+        }
+
+        .profile-service {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .profile-service h3 {
+            margin: 0 0 6px;
+            font-size: 16px;
+        }
+
+        .profile-service p {
+            margin: 0;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .profile-service-side {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .profile-service-price {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .profile-book {
+            display: inline-block;
+            background: #e60000;
+            color: white;
+            text-decoration: none;
+            padding: 9px 16px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .profile-book:hover {
+            background: #c00000;
+        }
+
+        @media (max-width: 520px) {
+            .container { margin: 15px auto; padding: 12px; }
+            .profile-card, .reviews-card { padding: 20px; }
+            .profile-service { align-items: flex-start; }
+            .profile-service-side { min-width: 105px; }
+        }
+
     </style>
 
   <link rel="icon" href="/favicon.ico?v=10" sizes="any">
@@ -157,6 +227,47 @@ const params =
 const mechanicId =
     params.get("id");
 
+const TYPE_LABELS = {
+    mechanic: "Mechanic & automotive repairs",
+    car_wash: "Car wash",
+    detailer: "Vehicle detailing",
+    panel_beater: "Panel beating & body repair",
+    truck_fleet: "Truck, fleet & commercial services"
+};
+
+function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char];
+    });
+}
+
+function formatPrice(value) {
+    if (value === null || value === undefined || value === "") {
+        return "Price on request";
+    }
+    return new Intl.NumberFormat("en-ZA", {
+        style: "currency",
+        currency: "ZAR",
+        maximumFractionDigits: 2
+    }).format(Number(value));
+}
+
+function formatDuration(value) {
+    const minutes = Number(value);
+    if (!minutes || minutes < 1) return "Duration confirmed by business";
+    if (minutes < 60) return minutes + " min";
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    return hours + " hr" + (hours === 1 ? "" : "s") +
+        (remainder ? " " + remainder + " min" : "");
+}
+
 
 async function loadMechanicProfile() {
 
@@ -199,6 +310,40 @@ async function loadMechanicProfile() {
         return;
     }
 
+
+    const { data: services, error: servicesError } =
+        await supabaseClient
+        .from("business_services")
+        .select("id, mechanic_id, name, description, price, duration_minutes, booking_mode, sort_order")
+        .eq("mechanic_id", mechanicId)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+
+    if (servicesError) {
+        console.error("Unable to load business services:", servicesError);
+    }
+
+    const activeServices = services || [];
+    const businessType = TYPE_LABELS[mechanic.business_type] || "Automotive services";
+
+    const servicesHtml = activeServices.length
+        ? activeServices.map(function (service) {
+            const bookingUrl = "book.html?mechanic_id=" +
+                encodeURIComponent(mechanicId) +
+                "&service_id=" + encodeURIComponent(service.id);
+            const actionLabel = service.booking_mode === "instant" ? "Book" : "Request";
+            return '<div class="profile-service">' +
+                '<div><h3>' + escapeHtml(service.name) + '</h3>' +
+                '<p>' + escapeHtml(formatDuration(service.duration_minutes)) +
+                (service.description ? ' · ' + escapeHtml(service.description) : '') +
+                '</p></div>' +
+                '<div class="profile-service-side"><div class="profile-service-price">' +
+                escapeHtml(formatPrice(service.price)) + '</div>' +
+                '<a class="profile-book" href="' + bookingUrl + '">' +
+                actionLabel + '</a></div></div>';
+        }).join("")
+        : '<p>Contact this business for available services and pricing.</p>';
 
     const { data: reviews, error: reviewsError } =
         await supabaseClient
@@ -246,8 +391,12 @@ async function loadMechanicProfile() {
             Approved
         </span>
 
+        <div class="business-type">
+            ${escapeHtml(businessType)}
+        </div>
+
         <h1>
-            ${mechanic.business_name}
+            ${escapeHtml(mechanic.business_name)}
         </h1>
 
  <div class="rating">
@@ -287,6 +436,11 @@ async function loadMechanicProfile() {
         <p>
             ${mechanic.description || ""}
         </p>
+
+        <section class="profile-services">
+            <h2>Services &amp; Pricing</h2>
+            ${servicesHtml}
+        </section>
 
         <button
             class="quote-button"
