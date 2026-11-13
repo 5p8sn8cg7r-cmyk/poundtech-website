@@ -761,11 +761,10 @@ async function loadMembership() {
         el("membership-current").innerHTML = summary;
     }
 
-    // Paid upgrades stay disabled until PayFast recurring billing and plan benefits are live.
-    el("membership-growth-btn").disabled = true;
-    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Coming soon";
-    el("membership-professional-btn").disabled = true;
-    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Coming soon";
+    el("membership-growth-btn").disabled = effectiveCode === "growth";
+    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Subscribe · R199/month";
+    el("membership-professional-btn").disabled = effectiveCode === "professional";
+    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Subscribe · R499/month";
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("membership") === "success") {
@@ -778,7 +777,40 @@ async function loadMembership() {
 }
 
 async function chooseMembershipPlan(planCode) {
-    msg("membership-msg", "Paid membership upgrades will open once PayFast recurring billing is enabled.", "info");
+    if (!["growth", "professional"].includes(planCode)) return;
+    const growthButton = el("membership-growth-btn");
+    const professionalButton = el("membership-professional-btn");
+    growthButton.disabled = true;
+    professionalButton.disabled = true;
+    msg("membership-msg", "Preparing secure PayFast checkout…", "info");
+
+    try {
+        const { data, error } = await supabaseClient.functions.invoke("create-payfast-subscription", {
+            body: { business_type: "service_partner", plan_code: planCode }
+        });
+        if (error || !data || !data.action || !data.fields) {
+            throw new Error(data?.error || error?.message || "Could not start PayFast checkout.");
+        }
+
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = data.action;
+        form.style.display = "none";
+        Object.entries(data.fields).forEach(([name, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            input.value = String(value);
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+    } catch (error) {
+        console.error("PayFast service membership checkout error:", error);
+        msg("membership-msg", error.message || "We couldn't start checkout. Please try again.", "error");
+        growthButton.disabled = membership?.status === "active" && membership?.plan_code === "growth";
+        professionalButton.disabled = membership?.status === "active" && membership?.plan_code === "professional";
+    }
 }
 
 /* ---------- BUSINESS TYPE ---------- */
