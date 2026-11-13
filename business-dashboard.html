@@ -768,7 +768,7 @@ async function loadMembership() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("membership") === "success") {
-        msg("membership-msg", "A previous membership checkout was completed. If your membership has not updated, please contact PoundTech while we transition to recurring billing.", "info");
+        msg("membership-msg", "Thanks. PayFast has returned you to PoundTech. Your membership will update once our server verifies the payment; refresh this page in a moment.", "info");
     } else if (params.get("membership") === "cancelled") {
         msg("membership-msg", "The checkout was cancelled. Your current membership has not been changed.", "info");
     } else if (params.get("membership") === "failed") {
