@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://poundtech.co.za/sitemap.xml
