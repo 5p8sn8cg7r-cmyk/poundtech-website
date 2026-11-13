@@ -2743,9 +2743,7 @@ function planBoxHTML(st) {
     let proOffer = "";
 
     if (!st.plan_active && st.break_even_sales) {
-        proOffer = st.plan_requested
-            ? `<p style="margin:10px 0 0;color:#666;">We've received your request for the Pro plan and will activate it once payment is received.</p>`
-            : `<div style="margin-top:12px;padding:14px;background:#f5f5f5;border-radius:8px;">
+        proOffer = `<div style="margin-top:12px;padding:14px;background:#f5f5f5;border-radius:8px;">
                    <p style="margin:0 0 8px;"><strong>Pro plan:</strong> ${esc(st.pro_rate)}% commission for R${esc(st.pro_price)}/month.
                    Worth it once you sell roughly R${esc(st.break_even_sales)} a month.</p>
                    <ul style="margin:0 0 10px; padding-left:18px; color:#444; font-size:14px;">
@@ -2754,7 +2752,8 @@ function planBoxHTML(st) {
                        <li>No payout holds, however new your account is</li>
                        <li>No cap on how many active listings you can run</li>
                    </ul>
-                   <button onclick="requestProPlan()">View plans &amp; request Pro</button>
+                   <button id="supplier-pro-subscribe-btn" onclick="requestProPlan()">Subscribe to Pro · R299/month</button>
+                   <p style="margin:8px 0 0;color:#777;font-size:12px;">Monthly recurring card payment. Cancel through PoundTech support.</p>
                </div>`;
     }
 
@@ -2768,16 +2767,35 @@ function planBoxHTML(st) {
 }
 
 async function requestProPlan() {
+    const button = document.getElementById("supplier-pro-subscribe-btn");
+    if (button) { button.disabled = true; button.textContent = "Preparing secure checkout…"; }
 
-    const { error } = await supabaseClient.rpc("request_pro_plan");
+    try {
+        const { data, error } = await supabaseClient.functions.invoke("create-payfast-subscription", {
+            body: { business_type: "supplier", plan_code: "pro" }
+        });
+        if (error || !data || !data.action || !data.fields) {
+            throw new Error(data?.error || error?.message || "Could not start PayFast checkout.");
+        }
 
-    if (error) {
-        alert("Could not send the request: " + error.message);
-        return;
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = data.action;
+        form.style.display = "none";
+        Object.entries(data.fields).forEach(([name, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            input.value = String(value);
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+    } catch (error) {
+        console.error("PayFast supplier checkout error:", error);
+        alert(error.message || "We couldn't start checkout. Please try again.");
+        if (button) { button.disabled = false; button.textContent = "Subscribe to Pro · R299/month"; }
     }
-
-    alert("Thanks. We'll be in touch to arrange payment and activate the Pro plan.");
-    loadPlanBox();
 }
 
 async function loadPlanBox() {
