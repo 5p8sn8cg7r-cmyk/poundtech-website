@@ -164,6 +164,27 @@
     <div class="empty-state">Loading listings&hellip;</div>
 </div>
 
+<section class="preowned-guide" aria-labelledby="preowned-guide-title">
+    <div class="guide-inner">
+        <h2 id="preowned-guide-title">Find pre-owned car parts in South Africa</h2>
+        <p>PoundTech’s pre-owned marketplace is a place to discover used and refurbished automotive parts offered by private sellers. Buying pre-owned can be a useful option when you are looking for a particular component or comparing more affordable alternatives to new parts.</p>
+
+        <h3>What should you check before buying?</h3>
+        <ul>
+            <li><strong>Vehicle compatibility:</strong> Confirm the make, model, year, engine and, where relevant, the exact part number with the seller before agreeing to buy.</li>
+            <li><strong>Condition:</strong> Read the stated condition carefully and ask the seller about wear, damage, repairs or missing components.</li>
+            <li><strong>Photos and details:</strong> Review the listing images and description. Ask for additional information if anything is unclear.</li>
+            <li><strong>Collection or delivery:</strong> Confirm the available handover arrangements and any related costs directly before completing a transaction.</li>
+        </ul>
+
+        <h3>Buying from private sellers</h3>
+        <p>Pre-owned parts are listed by private sellers. Listings are sold as-is and are not inspected or guaranteed by PoundTech. Buyers should make their own checks, ask questions and confirm that a part is suitable for their vehicle before making a purchase.</p>
+
+        <h3>Want to list a pre-owned part?</h3>
+        <p>If you have a used or refurbished automotive part to sell, you can <a href="sell-preowned-apply.html">apply to become a PoundTech private seller</a>.</p>
+    </div>
+</section>
+
 <footer class="site-footer">
     <nav>
         <a href="terms.html">Terms &amp; Conditions</a>
@@ -242,7 +263,7 @@ function renderListings() {
     });
 
     if (filtered.length === 0) {
-        grid.innerHTML = '<div class="empty-state">No pre-owned listings match that search yet. Check back soon.</div>';
+        grid.innerHTML = '<div class="empty-state">There are no approved pre-owned listings available yet. New listings will appear here as private sellers join PoundTech. Please check back soon.</div>';
         return;
     }
 
