@@ -101,10 +101,15 @@
         <input
             type="password"
             id="password"
+            autocomplete="current-password"
             required
         >
 
-        <button type="submit">
+        <p style="text-align:right;margin:10px 0 0;">
+            <a href="#" id="forgot-password" style="color:#c62828;font-size:14px;font-weight:bold;">Forgot password?</a>
+        </p>
+
+        <button id="login-button" type="submit">
             Login
         </button>
 
@@ -127,6 +132,38 @@ const supabaseClient =
         SUPABASE_URL,
         SUPABASE_KEY
     );
+
+
+document.getElementById("forgot-password").addEventListener("click", async function(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const message = document.getElementById("message");
+    const button = document.getElementById("login-button");
+
+    if (!email) {
+        message.innerText = "Enter your account email address first, then select Forgot password.";
+        document.getElementById("email").focus();
+        return;
+    }
+
+    button.disabled = true;
+    message.innerText = "Sending password reset instructions…";
+
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset-password.html"
+    });
+
+    button.disabled = false;
+
+    if (error) {
+        console.error(error);
+        message.innerText = "We couldn't send the reset email. Please try again or contact PoundTech support.";
+        return;
+    }
+
+    message.innerText = "If an account exists for that email, password reset instructions will arrive shortly. Check your inbox and spam folder.";
+});
 
 
 document
