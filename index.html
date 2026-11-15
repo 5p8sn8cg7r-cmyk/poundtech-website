@@ -819,6 +819,67 @@ footer {
     .sortbar .result-count { margin-left: 0; width: 100%; }
 }
 
+/* PRODUCT SPECIFICATION FILTERS */
+.product-filter-panel {
+    margin: -5px 0 22px;
+    padding: 16px;
+    border: 1px solid #e3e4e8;
+    border-radius: 10px;
+    background: rgba(255,255,255,.94);
+}
+.product-filter-heading {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+    color:#222;
+    font-size:14px;
+}
+.product-filter-heading button {
+    border:0;
+    background:transparent;
+    color:#d00000;
+    font-size:12px;
+    font-weight:800;
+    cursor:pointer;
+}
+.product-filter-grid {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+}
+.product-filter-grid label {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:0;
+    color:#555;
+    font-size:12px;
+    font-weight:700;
+}
+.product-filter-grid select,
+.product-filter-grid input {
+    width:100%;
+    min-width:0;
+    min-height:42px;
+    padding:9px 10px;
+    border:1px solid #dfe1e5;
+    border-radius:7px;
+    background:#fff;
+    color:#222;
+    font:inherit;
+    font-size:13px;
+}
+.product-filter-note { margin-top:10px; color:#888; font-size:11px; }
+@media (max-width:700px) {
+    .product-filter-panel { padding:13px; }
+    .product-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+}
+@media (max-width:380px) {
+    .product-filter-grid { grid-template-columns:1fr; }
+}
+
 /* MOBILE HEADER: icons with count badges, evenly spaced menu */
 
 .ha-icon { display: none; }
@@ -1983,6 +2044,27 @@ Discover parts and accessories, book trusted automotive services, and connect wi
     <button type="button" class="chip" id="chip-deals">On special</button>
     <button type="button" class="chip" id="chip-stock">In stock</button>
     <span class="result-count" id="result-count"></span>
+</div>
+<div class="product-filter-panel" id="product-filter-panel" aria-label="Filter products">
+    <div class="product-filter-heading">
+        <strong>Refine your search</strong>
+        <button type="button" id="clear-product-filters">Clear filters</button>
+    </div>
+    <div class="product-filter-grid">
+        <label>Brand
+            <select id="filter-brand"><option value="">All brands</option></select>
+        </label>
+        <label>Vehicle compatibility
+            <input id="filter-fitment" type="search" placeholder="e.g. VW Polo, BMW 3 Series">
+        </label>
+        <label>Condition
+            <select id="filter-condition"><option value="">All conditions</option></select>
+        </label>
+        <label>Volume
+            <select id="filter-volume"><option value="">All volumes</option></select>
+        </label>
+    </div>
+    <p class="product-filter-note">Filter options appear as suppliers add verified product specifications.</p>
 </div>
 
 <div class="products" id="products-container">
@@ -3791,12 +3873,76 @@ function loadMoreProducts() {
 let sortMode = "recommended";
 let onlyDeals = false;
 let onlyInStock = false;
+let selectedProductBrand = "";
+let selectedProductCondition = "";
+let selectedProductVolume = "";
+let selectedProductFitment = "";
+
+function productSpecValue(product, key) {
+    const specs = product && product.specifications && typeof product.specifications === "object"
+        ? product.specifications : {};
+    return String(specs[key] || "").trim();
+}
+
+function updateProductFilterOptions() {
+    const definitions = [
+        { id: "filter-brand", key: "Brand", selected: selectedProductBrand, empty: "All brands", setter: function(v){ selectedProductBrand = v; } },
+        { id: "filter-condition", key: "Condition", selected: selectedProductCondition, empty: "All conditions", setter: function(v){ selectedProductCondition = v; } },
+        { id: "filter-volume", key: "Volume", selected: selectedProductVolume, empty: "All volumes", setter: function(v){ selectedProductVolume = v; } }
+    ];
+    definitions.forEach(function(def) {
+        const select = document.getElementById(def.id);
+        if (!select) return;
+        const values = [...new Set(loadedProducts.map(function(p){ return productSpecValue(p, def.key); }).filter(Boolean))];
+        if (def.selected && !values.includes(def.selected)) values.push(def.selected);
+        values.sort(function(a,b){ return a.localeCompare(b, undefined, {numeric:true, sensitivity:"base"}); });
+        select.innerHTML = '<option value="">' + esc(def.empty) + '</option>' +
+            values.map(function(value){ return '<option value="' + esc(value) + '">' + esc(value) + '</option>'; }).join("");
+        select.value = def.selected;
+    });
+    const note = document.querySelector(".product-filter-note");
+    if (note) {
+        const hasSpecs = loadedProducts.some(function(p) {
+            return productSpecValue(p,"Brand") || productSpecValue(p,"Condition") || productSpecValue(p,"Volume");
+        });
+        note.textContent = hasSpecs
+            ? "Choose one or more filters to narrow the products shown."
+            : "Filter options will appear as suppliers add verified brand, condition and volume specifications.";
+    }
+}
+
+function clearProductFilters() {
+    selectedProductBrand = "";
+    selectedProductCondition = "";
+    selectedProductVolume = "";
+    selectedProductFitment = "";
+    ["filter-brand","filter-condition","filter-volume","filter-fitment"].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+    renderLoaded();
+}
+
+document.getElementById("filter-brand").addEventListener("change", function(e) {
+    selectedProductBrand = e.target.value; renderLoaded();
+});
+document.getElementById("filter-condition").addEventListener("change", function(e) {
+    selectedProductCondition = e.target.value; renderLoaded();
+});
+document.getElementById("filter-volume").addEventListener("change", function(e) {
+    selectedProductVolume = e.target.value; renderLoaded();
+});
+document.getElementById("filter-fitment").addEventListener("input", function(e) {
+    selectedProductFitment = e.target.value.trim().toLowerCase(); renderLoaded();
+});
+document.getElementById("clear-product-filters").addEventListener("click", clearProductFilters);
 
 // Applies the garage vehicle, sort and filters to the products already loaded.
 async function renderLoaded() {
 
     const container = document.getElementById("products-container");
     const products = loadedProducts;
+    updateProductFilterOptions();
 
     let displayedProducts = products.map(function(product) {
         return { product: product, status: null };
@@ -3822,6 +3968,27 @@ async function renderLoaded() {
         });
 
         displayedProducts = [...matches, ...universal, ...unknown];
+    }
+
+    if (selectedProductBrand) {
+        displayedProducts = displayedProducts.filter(function(item) {
+            return productSpecValue(item.product, "Brand").toLowerCase() === selectedProductBrand.toLowerCase();
+        });
+    }
+    if (selectedProductCondition) {
+        displayedProducts = displayedProducts.filter(function(item) {
+            return productSpecValue(item.product, "Condition").toLowerCase() === selectedProductCondition.toLowerCase();
+        });
+    }
+    if (selectedProductVolume) {
+        displayedProducts = displayedProducts.filter(function(item) {
+            return productSpecValue(item.product, "Volume").toLowerCase() === selectedProductVolume.toLowerCase();
+        });
+    }
+    if (selectedProductFitment) {
+        displayedProducts = displayedProducts.filter(function(item) {
+            return String(item.product.vehicle_compatibility || "").toLowerCase().includes(selectedProductFitment);
+        });
     }
 
     if (displayedProducts.length === 0) {
@@ -3909,6 +4076,7 @@ function resetViewOptions() {
     sortMode = "recommended";
     onlyDeals = false;
     onlyInStock = false;
+    clearProductFilters();
     document.getElementById("sort-select").value = "recommended";
     document.getElementById("chip-deals").classList.remove("active");
     document.getElementById("chip-stock").classList.remove("active");
