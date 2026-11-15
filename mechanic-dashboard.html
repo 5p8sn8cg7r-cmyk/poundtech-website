@@ -199,6 +199,8 @@
         <a id="services-nav-link" href="business-dashboard.html#services">Services &amp; prices</a>
         <a id="hours-nav-link" href="business-dashboard.html#hours">Opening hours</a>
         <a id="settings-nav-link" href="business-dashboard.html#booking-settings">Booking settings</a>
+        <a id="photos-nav-link" href="business-dashboard.html#business-photos">Business photos</a>
+        <a id="branches-nav-link" href="business-dashboard.html#branches">Branches</a>
         <a id="team-nav-link" href="service-partner-team.html" style="display:none;">Manage team</a>
     </nav>
 
@@ -406,6 +408,8 @@ async function loadMechanic() {
     $("services-nav-link").style.display = currentTeamMember ? "none" : "";
     $("hours-nav-link").style.display = currentTeamMember ? "none" : "";
     $("settings-nav-link").style.display = currentTeamMember ? "none" : "";
+    $("photos-nav-link").style.display = currentTeamMember ? "none" : "";
+    $("branches-nav-link").style.display = currentTeamMember ? "none" : "";
     $("team-nav-link").style.display = currentTeamMember ? "none" : "";
 
     loadBookings();
