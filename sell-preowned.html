@@ -511,13 +511,25 @@ async function loadListings() {
         return;
     }
 
+    const { data: insightsData, error: insightsError } = await supabaseClient.rpc("get_my_preowned_listing_insights");
+    const insightsByListing = {};
+    if (!insightsError && Array.isArray(insightsData)) {
+        insightsData.forEach(function (item) {
+            insightsByListing[item.listing_id] = item;
+        });
+    }
+
     container.innerHTML = listings.map(function (l) {
+        const insights = insightsByListing[l.id] || {};
+        const views = Number(insights.view_count || 0).toLocaleString("en-ZA");
+        const orders = Number(insights.order_count || 0).toLocaleString("en-ZA");
         return `
             <div class="listing-row">
                 <img src="${esc(l.image_url || '')}" alt="">
                 <div class="info">
                     <strong>${esc(l.title)}</strong>
                     <div class="meta">${esc(l.category)} &middot; ${esc(l.condition)} &middot; ${money(l.price)}</div>
+                    <div class="meta" aria-label="Listing performance"><span aria-hidden="true">&#128065;</span> ${views} views &middot; ${orders} orders</div>
                 </div>
                 <span class="pill ${listingPillClass(l.status, l.listing_review)}">${listingLabel(l.status, l.listing_review)}</span>
                 ${l.status === "Active" ? `<button class="secondary" onclick="removeListing('${l.id}')">Remove</button>` : ""}
