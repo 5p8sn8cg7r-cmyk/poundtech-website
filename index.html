@@ -97,6 +97,39 @@ header {
     color: white;
 }
 
+/* Desktop cart: icon first, with a compact item-count badge. */
+@media (min-width: 701px) {
+    .header-actions .cart-btn {
+        position: relative;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 10px;
+    }
+    .header-actions .cart-btn .ha-label { display: none; }
+    .header-actions .cart-btn .cart-icon { width: 21px; height: 21px; }
+    .header-actions .cart-btn .ha-count {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 10px;
+        background: #fff;
+        color: #e00000;
+        border: 2px solid #08090b;
+        font-size: 0;
+        line-height: 14px;
+        text-align: center;
+    }
+    .header-actions .cart-btn .ha-count span {
+        font-size: 10px;
+        font-weight: 800;
+    }
+}
+
 /* Dedicated supplier portal entry point */
 .header-actions .supplier-login-btn {
     display:inline-flex;
@@ -1713,7 +1746,6 @@ body.pt-search-active .search-results-bar button:hover {
     <a href="/?view=accessories">Accessories</a>
     <a href="preowned.html">Pre-Owned</a>
     <a href="mechanics.html">Services</a>
-    <a href="supplier.html">Sell</a>
 </nav>
 
 </header>
