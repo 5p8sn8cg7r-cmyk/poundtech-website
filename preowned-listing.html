@@ -181,6 +181,33 @@ function money(value) {
     return "R" + n.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function getPreownedVisitorToken() {
+    const storageKey = "pt_preowned_visitor";
+    try {
+        let token = localStorage.getItem(storageKey);
+        if (!token) {
+            token = window.crypto && typeof window.crypto.randomUUID === "function"
+                ? window.crypto.randomUUID()
+                : "pt-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+            localStorage.setItem(storageKey, token);
+        }
+        return token;
+    } catch (e) {
+        return null;
+    }
+}
+
+function trackPreownedListingView(id) {
+    const visitorToken = getPreownedVisitorToken();
+    if (!visitorToken) return;
+    supabaseClient.rpc("record_preowned_listing_view", {
+        p_listing_id: id,
+        p_visitor_token: visitorToken
+    }).then(function (result) {
+        if (result.error) console.warn("Listing view could not be recorded:", result.error.message);
+    });
+}
+
 
 async function loadListing() {
 
@@ -205,6 +232,10 @@ async function loadListing() {
     const available = listing.status === "Active" && listing.listing_review === "approved";
     const sold = listing.status === "Sold";
     const reserved = listing.status === "Reserved";
+
+    if (available) {
+        trackPreownedListingView(listing.id);
+    }
 
     let buyBlock = "";
 
