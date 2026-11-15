@@ -287,6 +287,7 @@ html{scroll-behavior:smooth}
         <a href="business-dashboard.html#booking-settings">Booking settings</a>
         <a href="business-dashboard.html#business-photos">Business photos</a>
         <a href="business-dashboard.html#service-support">Priority support</a>
+        <a href="business-dashboard.html#service-campaigns">Promotions</a>
     </nav>
 
 
@@ -377,6 +378,37 @@ html{scroll-behavior:smooth}
             <div id="service-support-msg" role="status" aria-live="polite"></div>
             <h3 style="font-size:16px;margin:22px 0 10px;">Your support requests</h3>
             <div id="service-support-list"><p class="empty-note">Loading support requests…</p></div>
+        </section>
+
+
+        <!-- Service partner promotional campaigns -->
+        <section class="card" id="service-campaigns" hidden>
+            <h2>Promotional campaigns</h2>
+            <p class="lead">Request a paid PoundTech promotion to showcase an offer or bring more customers to your business.</p>
+            <p id="service-campaign-access" class="business-photo-limit" aria-live="polite"></p>
+            <form id="service-campaign-form" hidden>
+                <label for="service-campaign-name">Campaign name</label>
+                <input id="service-campaign-name" maxlength="80" minlength="4" required placeholder="e.g. Summer vehicle service special">
+                <label for="service-campaign-headline">Customer-facing headline</label>
+                <input id="service-campaign-headline" maxlength="100" minlength="5" required placeholder="e.g. Get your car road-trip ready">
+                <label for="service-campaign-body">Campaign description</label>
+                <textarea id="service-campaign-body" maxlength="500" minlength="20" required style="min-height:100px;" placeholder="Tell customers what the offer includes and why they should book."></textarea>
+                <div class="grid-2">
+                    <div><label for="service-campaign-cta">Button label</label><input id="service-campaign-cta" maxlength="30" minlength="2" required value="View offer"></div>
+                    <div><label for="service-campaign-area">Target area / audience</label><input id="service-campaign-area" maxlength="120" minlength="2" required placeholder="e.g. Sandton and surrounding areas"></div>
+                </div>
+                <label for="service-campaign-url">Where should the button take customers?</label>
+                <input id="service-campaign-url" type="text" maxlength="500" required>
+                <div class="grid-2">
+                    <div><label for="service-campaign-budget">Proposed campaign budget (R)</label><input id="service-campaign-budget" type="number" min="100" max="100000" step="50" required placeholder="500"></div>
+                    <div><label for="service-campaign-duration">Campaign duration (days)</label><input id="service-campaign-duration" type="number" min="1" max="30" step="1" required value="7"></div>
+                </div>
+                <p class="business-photo-note">This is a campaign request, not an automatic charge. PoundTech will review the details and contact you with the final quote and payment instructions. A campaign only appears publicly after approval and payment confirmation.</p>
+                <button class="btn" id="service-campaign-submit" type="submit">Request campaign</button>
+            </form>
+            <div id="service-campaign-msg" role="status" aria-live="polite"></div>
+            <h3 style="font-size:16px;margin:22px 0 10px;">Your campaigns</h3>
+            <div id="service-campaign-list"><p class="empty-note">Loading campaigns…</p></div>
         </section>
 
         <!-- Business type -->
@@ -793,6 +825,7 @@ async function init() {
     await Promise.all([loadMembership(), loadServices(), loadHours(), loadSettings()]);
     await loadServicePartnerAnalytics();
     await loadServicePartnerSupport();
+    await loadServicePartnerCampaigns();
     await loadBusinessPhotos();
     await loadBranches();
 }
@@ -1180,6 +1213,92 @@ async function submitServicePartnerSupport(event) {
     }
     button.disabled = false;
     button.textContent = "Send support request";
+}
+
+
+/* ---------- SERVICE PARTNER PROMOTIONAL CAMPAIGNS ---------- */
+
+function campaignStatusClass(status) {
+    if (["Active","Completed"].includes(status)) return "instant";
+    if (["Scheduled","Awaiting payment","Pending review"].includes(status)) return "request";
+    return "off";
+}
+
+async function loadServicePartnerCampaigns() {
+    show("service-campaigns", true);
+    const plan = currentServicePlan();
+    const eligible = !!(plan && ["growth","professional","enterprise"].includes(plan.code));
+    show("service-campaign-form", eligible);
+    el("service-campaign-access").textContent = eligible
+        ? "Campaign requests are available on your " + plan.display_name + " membership."
+        : "Promotional campaigns are available from Growth Partner. Your current plan does not include campaign requests.";
+    if (business && business.id && !el("service-campaign-url").value) {
+        el("service-campaign-url").value = "/mechanic-profile.html?id=" + encodeURIComponent(business.id);
+    }
+    await loadMyServicePartnerCampaigns();
+}
+
+async function loadMyServicePartnerCampaigns() {
+    const list = el("service-campaign-list");
+    list.innerHTML = '<p class="empty-note">Loading campaigns…</p>';
+    const { data, error } = await supabaseClient.rpc("get_my_service_partner_campaigns");
+    if (error) {
+        console.error("Service partner campaigns:", error);
+        list.innerHTML = '<p class="empty-note">We could not load your campaigns. Please refresh the page.</p>';
+        return;
+    }
+    const campaigns = data || [];
+    if (!campaigns.length) {
+        list.innerHTML = '<p class="empty-note">You have not requested a campaign yet.</p>';
+        return;
+    }
+    list.innerHTML = campaigns.map(campaign => {
+        const quote = campaign.quoted_amount == null ? "Quote pending" : money(campaign.quoted_amount);
+        const clicks = Number(campaign.click_count || 0);
+        const dates = campaign.starts_at && campaign.ends_at
+            ? new Date(campaign.starts_at).toLocaleDateString("en-ZA") + " – " + new Date(campaign.ends_at).toLocaleDateString("en-ZA")
+            : "Dates to be confirmed";
+        return '<div class="branch-item" style="display:block;"><strong>' + esc(campaign.campaign_name) +
+            ' <span class="tag ' + campaignStatusClass(campaign.status) + '">' + esc(campaign.status) +
+            '</span></strong><div class="branch-item-meta">' + esc(campaign.headline) +
+            '<br>Payment: ' + esc(campaign.payment_status) + ' · ' + esc(quote) +
+            '<br>Target: ' + esc(campaign.target_area) + ' · ' + esc(campaign.duration_days) + ' days' +
+            '<br>' + esc(dates) + ' · ' + clicks + ' campaign clicks</div></div>';
+    }).join("");
+}
+
+async function submitServicePartnerCampaign(event) {
+    event.preventDefault();
+    const button = el("service-campaign-submit");
+    const values = {
+        p_campaign_name: el("service-campaign-name").value.trim(),
+        p_headline: el("service-campaign-headline").value.trim(),
+        p_body_text: el("service-campaign-body").value.trim(),
+        p_cta_label: el("service-campaign-cta").value.trim(),
+        p_cta_url: el("service-campaign-url").value.trim(),
+        p_target_area: el("service-campaign-area").value.trim(),
+        p_proposed_budget: Number(el("service-campaign-budget").value),
+        p_duration_days: Number(el("service-campaign-duration").value)
+    };
+    button.disabled = true;
+    button.textContent = "Submitting…";
+    el("service-campaign-msg").textContent = "";
+    const { data, error } = await supabaseClient.rpc("create_service_partner_campaign_request", values);
+    if (error || !data) {
+        console.error("Campaign request:", error);
+        el("service-campaign-msg").textContent = error?.message || "We couldn't submit your campaign request.";
+        button.disabled = false;
+        button.textContent = "Request campaign";
+        return;
+    }
+    el("service-campaign-form").reset();
+    el("service-campaign-cta").value = "View offer";
+    el("service-campaign-duration").value = "7";
+    el("service-campaign-url").value = "/mechanic-profile.html?id=" + encodeURIComponent(business.id);
+    el("service-campaign-msg").textContent = "Your campaign request has been sent to PoundTech. We'll review it and contact you with a quote and payment instructions.";
+    await loadMyServicePartnerCampaigns();
+    button.disabled = false;
+    button.textContent = "Request campaign";
 }
 
 /* ---------- BUSINESS PHOTO GALLERY ---------- */
@@ -1991,6 +2110,7 @@ el("save-settings-btn").addEventListener("click", saveSettings);
 el("analytics-refresh").addEventListener("click", loadServicePartnerAnalytics);
 el("analytics-export").addEventListener("click", exportEnterpriseReport);
 el("service-support-form").addEventListener("submit", submitServicePartnerSupport);
+el("service-campaign-form").addEventListener("submit", submitServicePartnerCampaign);
 
 el("service-list").addEventListener("click", e => {
     const button = e.target.closest("button[data-action]");
