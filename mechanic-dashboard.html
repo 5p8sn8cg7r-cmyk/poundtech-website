@@ -196,9 +196,10 @@
 
     <nav class="dash-nav" aria-label="Dashboard sections">
         <a href="mechanic-dashboard.html" class="on">Bookings &amp; quotes</a>
-        <a href="business-dashboard.html#services">Services &amp; prices</a>
-        <a href="business-dashboard.html#hours">Opening hours</a>
-        <a href="business-dashboard.html#booking-settings">Booking settings</a>
+        <a id="services-nav-link" href="business-dashboard.html#services">Services &amp; prices</a>
+        <a id="hours-nav-link" href="business-dashboard.html#hours">Opening hours</a>
+        <a id="settings-nav-link" href="business-dashboard.html#booking-settings">Booking settings</a>
+        <a id="team-nav-link" href="service-partner-team.html" style="display:none;">Manage team</a>
     </nav>
 
     <div class="top-bar">
@@ -244,6 +245,7 @@ const supabaseClient =
 
 
 let currentMechanic = null;
+let currentTeamMember = null;
 let messageTimer = null;
 
 
@@ -355,16 +357,38 @@ async function loadMechanic() {
         return;
     }
 
-    const { data: mechanic, error } = await supabaseClient
+    let { data: mechanic, error } = await supabaseClient
         .from("mechanics")
         .select("*")
         .eq("user_id", user.id)
         .eq("status", "Approved")
         .maybeSingle();
 
-    // Logged in, but not an approved business
+    // If this login is not the owner, check whether it is an active service partner staff account.
+    if (!mechanic && !error) {
+        const { data: teamMember, error: teamError } = await supabaseClient
+            .from("service_partner_team_members")
+            .select("id, mechanic_id, full_name, email, role")
+            .eq("user_id", user.id)
+            .eq("status", "active")
+            .maybeSingle();
+
+        if (!teamError && teamMember) {
+            currentTeamMember = teamMember;
+            const result = await supabaseClient
+                .from("mechanics")
+                .select("*")
+                .eq("id", teamMember.mechanic_id)
+                .eq("status", "Approved")
+                .maybeSingle();
+            mechanic = result.data;
+            error = result.error;
+        }
+    }
+
+    // Logged in, but not an approved business owner or active staff member.
     if (error || !mechanic) {
-        alert("You do not have an approved business account.");
+        alert("You do not have an active service partner account.");
         await supabaseClient.auth.signOut();
         window.location.href = "mechanic-login.html";
         return;
@@ -373,7 +397,14 @@ async function loadMechanic() {
     currentMechanic = mechanic;
 
     $("hero-title").textContent = mechanic.business_name;
-    $("hero-sub").textContent = "Your bookings and quote requests in one place.";
+    $("hero-sub").textContent = currentTeamMember
+        ? "Staff access · Manage bookings and quote requests."
+        : "Your bookings and quote requests in one place.";
+
+    $("services-nav-link").style.display = currentTeamMember ? "none" : "";
+    $("hours-nav-link").style.display = currentTeamMember ? "none" : "";
+    $("settings-nav-link").style.display = currentTeamMember ? "none" : "";
+    $("team-nav-link").style.display = currentTeamMember ? "none" : "";
 
     loadBookings();
     loadQuoteRequests();
