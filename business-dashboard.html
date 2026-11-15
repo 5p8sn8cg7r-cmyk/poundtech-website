@@ -58,6 +58,21 @@
     margin: 12px 0;
 }
 .membership-current strong { color: #111; }
+
+.analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.analytics-metric{border:1px solid #e8e8e8;border-radius:11px;padding:14px;background:#fff;min-width:0}
+.analytics-metric .value{display:block;font-size:25px;font-weight:800;line-height:1.2;color:#111}
+.analytics-metric .label{display:block;color:#666;font-size:12px;margin-top:5px}
+.analytics-chart{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;align-items:end;min-height:150px;margin:18px 0 8px}
+.analytics-month{text-align:center;min-width:0}
+.analytics-bar-wrap{height:105px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #ddd}
+.analytics-bar{width:min(34px,70%);min-height:3px;background:#d60000;border-radius:6px 6px 0 0}
+.analytics-month strong{display:block;font-size:12px;margin-top:7px}
+.analytics-month span{display:block;font-size:11px;color:#777;margin-top:2px}
+.analytics-note{font-size:12px;color:#777;line-height:1.5;margin:10px 0 0}
+.analytics-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+@media(max-width:650px){.analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-chart{gap:5px}.analytics-month strong{font-size:11px}}
+
 @media (max-width: 600px) {
     .membership-options { grid-template-columns: 1fr; }
 }
@@ -303,6 +318,25 @@ html{scroll-behavior:smooth}
 
             <p class="hint">Free Partner remains available at R0 per month with 10% commission. Enterprise Partner starts from R999 per month, with an individually agreed commission rate below 8,4%.</p>
             <p><a href="/service-partner-plans.html" style="color:#d60000;font-weight:700;">View the full membership comparison →</a></p>
+        </section>
+
+        <!-- Service partner analytics -->
+        <section class="card" id="service-analytics" hidden>
+            <div class="analytics-head">
+                <div>
+                    <h2>Business analytics</h2>
+                    <p class="lead">A six-month view of your bookings, customers, payments and customer feedback.</p>
+                </div>
+                <button class="btn btn-dark btn-small" id="analytics-refresh" type="button">Refresh</button>
+            </div>
+            <div id="analytics-access-note" class="business-photo-limit" aria-live="polite"></div>
+            <div id="analytics-content" hidden>
+                <div class="analytics-grid" id="analytics-metrics"></div>
+                <h3 style="font-size:15px;margin:20px 0 6px;">Bookings by month</h3>
+                <div class="analytics-chart" id="analytics-chart" aria-label="Bookings over the last six months"></div>
+                <p class="analytics-note" id="analytics-footnote"></p>
+            </div>
+            <div id="analytics-msg" role="status" aria-live="polite"></div>
         </section>
 
         <!-- Business type -->
@@ -717,6 +751,7 @@ async function init() {
     show("app", true);
 
     await Promise.all([loadMembership(), loadServices(), loadHours(), loadSettings()]);
+    await loadServicePartnerAnalytics();
     await loadBusinessPhotos();
     await loadBranches();
 }
@@ -827,6 +862,127 @@ async function loadMembership() {
         msg("membership-msg", "The checkout was cancelled. Your current membership has not been changed.", "info");
     } else if (params.get("membership") === "failed") {
         msg("membership-msg", "The checkout was not completed. Your current membership has not been changed.", "error");
+    }
+}
+
+
+/* ---------- SERVICE PARTNER ANALYTICS ---------- */
+
+function analyticsMoney(value) {
+    return "R" + Number(value || 0).toLocaleString("en-ZA", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+}
+
+function analyticsMonthKey(date) {
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+}
+
+function analyticsMonthLabel(date) {
+    return date.toLocaleDateString("en-ZA", { month: "short" });
+}
+
+function renderAnalyticsMetrics(bookings, reviews) {
+    const paid = bookings.filter(row => row.payment_status === "Paid");
+    const completed = bookings.filter(row => row.status === "Completed");
+    const customerCounts = new Map();
+    bookings.forEach(row => {
+        const email = String(row.customer_email || "").trim().toLowerCase();
+        if (email) customerCounts.set(email, (customerCounts.get(email) || 0) + 1);
+    });
+    const returning = Array.from(customerCounts.values()).filter(count => count > 1).length;
+    const ratingRows = reviews.filter(row => Number(row.rating) >= 1 && Number(row.rating) <= 5);
+    const averageRating = ratingRows.length
+        ? (ratingRows.reduce((sum, row) => sum + Number(row.rating), 0) / ratingRows.length).toFixed(1)
+        : "—";
+    const paidTotal = paid.reduce((sum, row) => sum + Number(row.agreed_price || 0), 0);
+
+    el("analytics-metrics").innerHTML = [
+        [bookings.length.toLocaleString("en-ZA"), "Bookings received"],
+        [completed.length.toLocaleString("en-ZA"), "Completed bookings"],
+        [analyticsMoney(paidTotal), "Payments received"],
+        [customerCounts.size.toLocaleString("en-ZA"), "Unique customers"]
+    ].map(item => '<div class="analytics-metric"><span class="value">' + esc(item[0]) +
+        '</span><span class="label">' + esc(item[1]) + '</span></div>').join("");
+
+    const now = new Date();
+    const months = [];
+    for (let offset = 5; offset >= 0; offset--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+        months.push({ key: analyticsMonthKey(date), label: analyticsMonthLabel(date), count: 0 });
+    }
+    const monthMap = new Map(months.map(month => [month.key, month]));
+    bookings.forEach(row => {
+        const sourceDate = row.created_at ? new Date(row.created_at) :
+            row.booking_date ? new Date(row.booking_date + "T12:00:00") : null;
+        if (!sourceDate || Number.isNaN(sourceDate.getTime())) return;
+        const month = monthMap.get(analyticsMonthKey(sourceDate));
+        if (month) month.count++;
+    });
+    const maxCount = Math.max(1, ...months.map(month => month.count));
+    el("analytics-chart").innerHTML = months.map(month =>
+        '<div class="analytics-month"><div class="analytics-bar-wrap"><div class="analytics-bar" style="height:' +
+        Math.max(3, Math.round(month.count / maxCount * 100)) + '%" title="' + month.count +
+        ' bookings"></div></div><strong>' + esc(month.count.toLocaleString("en-ZA")) +
+        '</strong><span>' + esc(month.label) + '</span></div>'
+    ).join("");
+
+    const returningText = returning + " returning customer" + (returning === 1 ? "" : "s");
+    const ratingText = averageRating === "—" ? "No customer ratings yet" :
+        averageRating + " / 5 average rating from " + ratingRows.length + " review" + (ratingRows.length === 1 ? "" : "s");
+    el("analytics-footnote").textContent =
+        "Customer insight: " + returningText + ". " + ratingText +
+        ". Payment totals include bookings marked Paid only; they are not a statement of profit.";
+}
+
+async function loadServicePartnerAnalytics() {
+    const plan = currentServicePlan();
+    const isPaid = !!(plan && plan.code !== "free");
+    show("service-analytics", true);
+    show("analytics-content", false);
+    el("analytics-msg").textContent = "";
+
+    if (!isPaid) {
+        el("analytics-access-note").textContent = "Business analytics are included with Growth Partner, Professional Partner and Enterprise Partner memberships.";
+        return;
+    }
+
+    el("analytics-access-note").textContent = "Showing the last six months of activity.";
+    el("analytics-msg").textContent = "Loading analytics…";
+
+    const start = new Date();
+    start.setDate(1);
+    start.setMonth(start.getMonth() - 5);
+    start.setHours(0, 0, 0, 0);
+
+    const [bookingResult, reviewResult] = await Promise.all([
+        supabaseClient.from("mechanic_bookings")
+            .select("id,status,agreed_price,payment_status,booking_date,created_at,customer_email")
+            .eq("mechanic_id", business.id)
+            .gte("created_at", start.toISOString())
+            .order("created_at", { ascending: false })
+            .limit(1000),
+        supabaseClient.from("mechanic_reviews")
+            .select("rating,created_at")
+            .eq("mechanic_id", business.id)
+            .gte("created_at", start.toISOString())
+            .limit(1000)
+    ]);
+
+    if (bookingResult.error || reviewResult.error) {
+        console.error("Service partner analytics error:", bookingResult.error || reviewResult.error);
+        el("analytics-msg").textContent = "We couldn't load analytics. Please refresh and try again.";
+        return;
+    }
+
+    const bookings = bookingResult.data || [];
+    const reviews = reviewResult.data || [];
+    renderAnalyticsMetrics(bookings, reviews);
+    show("analytics-content", true);
+    el("analytics-msg").textContent = "";
+    if (bookings.length === 1000 || reviews.length === 1000) {
+        el("analytics-footnote").textContent += " This view is limited to the latest 1,000 records in each category.";
     }
 }
 
@@ -1636,6 +1792,7 @@ el("cancel-edit-btn").addEventListener("click", () => {
 });
 el("save-hours-btn").addEventListener("click", saveHours);
 el("save-settings-btn").addEventListener("click", saveSettings);
+el("analytics-refresh").addEventListener("click", loadServicePartnerAnalytics);
 
 el("service-list").addEventListener("click", e => {
     const button = e.target.closest("button[data-action]");
