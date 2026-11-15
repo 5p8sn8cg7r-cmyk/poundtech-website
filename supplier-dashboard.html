@@ -1403,7 +1403,7 @@ let savingProduct = false;
 
 // Stops a double tap from saving the same product twice while a photo uploads.
 function downloadBusinessProductCsvTemplate() {
-    const csv = "name,category,description,price,stock,vehicle_compatibility\nExample LED Headlight Kit,Lighting,Pair of LED headlights,899,12,VW Polo 2018-2022";
+    const csv = 'name,category,description,price,stock,vehicle_compatibility\nExample LED Headlight Kit,Lighting,"LED headlight kit for compatible vehicle headlamp assemblies. Check the bulb type, connector, model year and fitment requirements with the supplier before ordering or installation.",899,12,"VW Polo 2018-2022; confirm exact model and connector"';
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a"); link.href = url; link.download = "poundtech-product-import-template.csv";
