@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Service Partner Team | PoundTech</title>
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<link rel="stylesheet" href="/site.css">
+<style>
+*{box-sizing:border-box}
+.team-wrap{max-width:900px;margin:30px auto;padding:0 18px}
+.team-card{background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:22px;margin-bottom:16px}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.team-stats{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}
+.team-stat{background:#f5f5f5;border-radius:10px;padding:13px 16px;min-width:150px}
+.team-stat strong{display:block;font-size:22px}.team-stat span{font-size:12px;color:#666}
+.team-card label{display:block;font-weight:700;font-size:13px;margin:13px 0 6px}
+.team-card input{width:100%;padding:12px;border:1px solid #ccc;border-radius:9px;font:inherit;min-height:44px}
+.team-muted{color:#666;line-height:1.5}
+.team-member{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid #eee;flex-wrap:wrap}
+.team-member:first-child{border-top:0}
+.team-member strong{display:block;overflow-wrap:anywhere}
+.team-meta{font-size:12px;color:#777;margin-top:4px}
+.team-status{display:inline-block;padding:4px 9px;border-radius:20px;background:#eee;font-size:11px;font-weight:700;text-transform:capitalize}
+.team-message{margin-top:12px;font-size:14px;line-height:1.5}
+.team-message.error{color:#b00020}.team-message.success{color:#16723a}
+.team-card button{border:0;border-radius:9px;background:#d00000;color:#fff;padding:12px 16px;font-weight:700;cursor:pointer}
+.team-card button:disabled{opacity:.5;cursor:not-allowed}
+.team-card button.secondary{background:#eee;color:#222}
+.team-card button.danger{background:#555}
+@media(max-width:620px){.team-grid{grid-template-columns:1fr}.team-card{padding:18px}.team-wrap{margin:18px auto}.team-member button{width:100%}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="logo" href="/index.html">POUND<span>TECH</span></a>
+  <a class="back pt-back-marketplace" href="/mechanic-dashboard.html">← Back to bookings</a>
+</header>
+<main class="team-wrap">
+  <section class="team-card">
+    <h1>Manage your service team</h1>
+    <p class="team-muted" id="business-name">Loading your business…</p>
+    <p class="team-muted">Invite staff to use their own secure PoundTech login. Staff can manage bookings and quote requests for your business. Only you can manage the team, membership and business settings.</p>
+    <div class="team-stats">
+      <div class="team-stat"><strong id="staff-usage">—</strong><span>Staff accounts in use</span></div>
+      <div class="team-stat"><strong id="staff-limit">—</strong><span>Included in your plan</span></div>
+      <div class="team-stat"><strong id="plan-name">—</strong><span>Current membership</span></div>
+    </div>
+    <p id="plan-note" class="team-muted"></p>
+  </section>
+  <section class="team-card">
+    <h2>Invite a staff member</h2>
+    <p class="team-muted">An invitation will be sent by email. Each person has their own login.</p>
+    <form id="invite-form">
+      <div class="team-grid">
+        <div><label for="staff-name">Staff member name</label><input id="staff-name" maxlength="100" placeholder="e.g. Thabo Mokoena"></div>
+        <div><label for="staff-email">Email address</label><input id="staff-email" type="email" required autocomplete="email" placeholder="employee@business.co.za"></div>
+      </div>
+      <button id="invite-button" type="submit" style="margin-top:16px">Send invitation</button>
+      <div id="invite-message" class="team-message" role="status"></div>
+    </form>
+  </section>
+  <section class="team-card">
+    <h2>Your team</h2>
+    <p class="team-muted">Remove access at any time. The employee's login and historical activity are not deleted.</p>
+    <div id="team-list" class="team-muted">Loading staff accounts…</div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient=supabase.createClient(
+ "https://uezacbssvvvtlosnaroh.supabase.co",
+ "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
+);
+const $=id=>document.getElementById(id);
+let mechanicId=null,staffLimit=0,memberRows=[];
+function esc(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function showMessage(text,type){$("invite-message").textContent=text;$("invite-message").className="team-message "+(type||"");}
+async function loadTeam(){
+ const {data:{user},error:userError}=await supabaseClient.auth.getUser();
+ if(userError||!user){location.href="mechanic-login.html";return;}
+ const {data:mechanic,error:mechanicError}=await supabaseClient
+  .from("mechanics").select("id,business_name,status").eq("user_id",user.id).eq("status","Approved").maybeSingle();
+ if(mechanicError||!mechanic){
+  document.querySelector(".team-wrap").innerHTML='<section class="team-card"><h1>Owner access only</h1><p class="team-muted">Only the approved service partner business owner can manage staff accounts.</p><a href="mechanic-dashboard.html">Return to bookings</a></section>';
+  return;
+ }
+ mechanicId=mechanic.id;
+ $("business-name").textContent=mechanic.business_name||"Your service partner business";
+ const {data:subscription,error:subscriptionError}=await supabaseClient
+  .from("service_partner_subscriptions").select("plan_code,status,current_period_end").eq("mechanic_id",mechanicId).maybeSingle();
+ if(subscriptionError){showMessage("We couldn't load your membership details. Please refresh.","error");return;}
+ const active=subscription?.status==="active"&&(!subscription.current_period_end||new Date(subscription.current_period_end)>new Date());
+ const planCode=active?(subscription.plan_code||"free"):"free";
+ const {data:plan,error:planError}=await supabaseClient
+  .from("service_partner_plans").select("display_name,staff_account_limit").eq("code",planCode).maybeSingle();
+ if(planError||!plan){showMessage("We couldn't load your staff allowance. Please refresh.","error");return;}
+ staffLimit=plan.staff_account_limit==null?null:Number(plan.staff_account_limit);
+ $("plan-name").textContent=plan.display_name||planCode;
+ const {data:members,error:memberError}=await supabaseClient
+  .from("service_partner_team_members")
+  .select("id,email,full_name,role,status,invited_at,joined_at")
+  .eq("mechanic_id",mechanicId)
+  .in("status",["active","invited"])
+  .order("created_at",{ascending:true});
+ if(memberError){$("team-list").textContent="Couldn't load staff accounts. Please refresh.";return;}
+ memberRows=members||[];
+ const used=memberRows.length;
+ $("staff-usage").textContent=String(used);
+ $("staff-limit").textContent=staffLimit==null?"Custom":String(staffLimit);
+ const custom=staffLimit==null;
+ $("plan-note").textContent=custom
+  ?"Your Enterprise staff allowance is customised. Contact PoundTech to configure your agreed limit."
+  :staffLimit===0
+   ?"Your current plan includes the owner login only. Upgrade to Growth Partner to add staff accounts."
+   ? "Your current plan includes the owner login only. Upgrade to Growth Partner to add staff accounts."
+   :"Your plan includes "+staffLimit+" additional staff account"+(staffLimit===1?"":"s")+".";
+ const disabled=custom||staffLimit<1||used>=staffLimit;
+ $("invite-button").disabled=disabled;
+ $("invite-button").textContent=custom?"Contact PoundTech":staffLimit<1?"Upgrade to add staff":used>=staffLimit?"Staff limit reached":"Send invitation";
+ renderMembers();
+}
+function renderMembers(){
+ const list=$("team-list");
+ if(!memberRows.length){list.innerHTML='<p class="team-muted">No staff accounts yet. You are currently the only person with access.</p>';return;}
+ list.innerHTML=memberRows.map(m=>'<div class="team-member"><div><strong>'+esc(m.full_name||m.email)+'</strong><div class="team-meta">'+esc(m.email)+' · Staff member · <span class="team-status">'+esc(m.status)+'</span></div></div><button type="button" class="danger" data-remove-member="'+esc(m.id)+'">Remove access</button></div>').join("");
+}
+$("invite-form").addEventListener("submit",async event=>{
+ event.preventDefault();
+ const email=$("staff-email").value.trim().toLowerCase();
+ const full_name=$("staff-name").value.trim();
+ const button=$("invite-button");
+ button.disabled=true;showMessage("Sending invitation…");
+ const {data,error}=await supabaseClient.functions.invoke("service-partner-team-invite",{body:{email,full_name}});
+ if(error||data?.error){showMessage(data?.error||error?.message||"The invitation could not be sent.","error");await loadTeam();return;}
+ showMessage(data.message||"Invitation sent.","success");
+ $("invite-form").reset();
+ await loadTeam();
+});
+$("team-list").addEventListener("click",async event=>{
+ const button=event.target.closest("[data-remove-member]");
+ if(!button)return;
+ const id=button.dataset.removeMember;
+ const member=memberRows.find(row=>row.id===id);
+ if(!member||!confirm("Remove "+(member.full_name||member.email)+" from your service partner team? They will immediately lose access to your bookings and quote requests."))return;
+ button.disabled=true;button.textContent="Removing…";
+ const {data,error}=await supabaseClient.rpc("remove_service_partner_team_member",{p_member_id:id});
+ if(error||!data){showMessage("We couldn't remove access. Please try again.","error");await loadTeam();return;}
+ showMessage("Staff access removed.","success");
+ await loadTeam();
+});
+loadTeam();
+</script>
+</body>
+</html>
