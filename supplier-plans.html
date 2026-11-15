@@ -37,7 +37,7 @@ body{background:#f5f5f6;color:#171717}
 .features{list-style:none;padding:0;margin:0 0 22px;display:grid;gap:11px}
 .features li{display:flex;gap:8px;align-items:flex-start;color:#444;font-size:12px;line-height:1.45}
 .tick{color:#18834b;font-weight:900;font-size:15px;line-height:1.2}
-.plan-action{display:block;text-align:center;text-decoration:none;background:#171717;color:#fff;padding:13px 12px;border-radius:10px;font-weight:800;font-size:13px;margin-top:auto}
+.plan-action{display:block;width:100%;border:0;cursor:pointer;text-align:center;text-decoration:none;background:#171717;color:#fff;padding:13px 12px;border-radius:10px;font-weight:800;font-size:13px;margin-top:auto}
 .plan-action:hover{background:#333}
 .pro .plan-action{background:var(--pt-red)}
 .pro .plan-action:hover{background:#b90000}
@@ -80,7 +80,7 @@ body{background:#f5f5f6;color:#171717}
 <li><span class="tick">✓</span><span>Sales, commission and payout information</span></li>
 <li><span class="tick">✓</span><span>Core supplier dashboard</span></li>
 </ul>
-<a class="plan-action" href="/supplier-login.html">Continue with Standard</a>
+<button class="plan-action" type="button" data-plan-choice="standard">Continue with Standard</button>
 </article>
 <article class="plan-card pro">
 <span class="plan-tag">Popular · Growing sellers</span>
@@ -98,7 +98,7 @@ body{background:#f5f5f6;color:#171717}
 <li><span class="tick">✓</span><span>Enhanced analytics and priority email support</span></li>
 <li><span class="tick">✓</span><span>No probationary payout holds</span></li>
 </ul>
-<a class="plan-action" href="/supplier-login.html">Log in to upgrade to Pro</a>
+<button class="plan-action" type="button" data-plan-choice="pro">Subscribe to Pro · R299/month</button>
 </article>
 <article class="plan-card business">
 <span class="plan-tag">Established businesses</span>
@@ -116,7 +116,7 @@ body{background:#f5f5f6;color:#171717}
 <li><span class="tick">✓</span><span>Business Partner badge on your public storefront</span></li>
 <li><span class="tick">✓</span><span>Featured in the Business Partner showcase on the PoundTech homepage</span></li>
 </ul>
-<a class="plan-action" href="/business-enquiry.html?plan=business">Enquire about Business</a>
+<button class="plan-action" type="button" data-plan-choice="business">Subscribe to Business · R999/month</button>
 </article>
 <article class="plan-card enterprise">
 <span class="plan-tag">Large operations</span>
@@ -144,5 +144,37 @@ body{background:#f5f5f6;color:#171717}
 <div class="faq-item"><strong>How does Enterprise pricing work?</strong><p>Enterprise pricing and commission are tailored to the supplier's size, sales volume, locations and integration requirements.</p></div>
 </section>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const planSupabase = supabase.createClient(
+  "https://uezacbssvvvtlosnaroh.supabase.co",
+  "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
+);
+document.querySelectorAll("[data-plan-choice]").forEach(function(button) {
+  button.addEventListener("click", async function() {
+    const choice = button.getAttribute("data-plan-choice");
+    button.disabled = true;
+    const original = button.textContent;
+    button.textContent = "Opening your supplier account…";
+    try {
+      const { data } = await planSupabase.auth.getSession();
+      const target = choice === "standard"
+        ? "/supplier-dashboard.html?open=plans"
+        : "/supplier-dashboard.html?open=plans&upgrade=" + encodeURIComponent(choice);
+      if (data && data.session) {
+        window.location.href = target;
+        return;
+      }
+      window.location.href = "/supplier-login.html?next=" + encodeURIComponent(target.replace(/^\\//, ""));
+    } catch (error) {
+      console.error("Could not check supplier sign-in:", error);
+      window.location.href = "/supplier-login.html?next=" + encodeURIComponent("supplier-dashboard.html?open=plans&upgrade=" + choice);
+    } finally {
+      button.disabled = false;
+      button.textContent = original;
+    }
+  });
+});
+</script>
 </body>
 </html>
