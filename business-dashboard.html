@@ -336,6 +336,18 @@ html{scroll-behavior:smooth}
                 <h3 style="font-size:15px;margin:20px 0 6px;">Bookings by month</h3>
                 <div class="analytics-chart" id="analytics-chart" aria-label="Bookings over the last six months"></div>
                 <p class="analytics-note" id="analytics-footnote"></p>
+                <section id="enterprise-report" hidden style="margin-top:22px;">
+                    <div class="analytics-head">
+                        <div><h3 style="font-size:15px;margin:0;">Enterprise branch report</h3><p class="analytics-note">Compare booking activity and payments across your business locations.</p></div>
+                        <button class="btn btn-dark btn-small" id="analytics-export" type="button">Export CSV</button>
+                    </div>
+                    <div style="overflow-x:auto;margin-top:12px;">
+                        <table style="width:100%;border-collapse:collapse;min-width:520px;font-size:13px;">
+                            <thead><tr style="background:#f5f5f5;text-align:left;"><th style="padding:10px;">Branch</th><th style="padding:10px;">Bookings</th><th style="padding:10px;">Completed</th><th style="padding:10px;">Payments received</th></tr></thead>
+                            <tbody id="enterprise-report-rows"></tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
             <div id="analytics-msg" role="status" aria-live="polite"></div>
         </section>
@@ -912,6 +924,62 @@ function analyticsMonthLabel(date) {
     return date.toLocaleDateString("en-ZA", { month: "short" });
 }
 
+
+let enterpriseReportRows = [];
+
+function renderEnterpriseReport(bookings, branches) {
+    const rows = el("enterprise-report-rows");
+    const branchList = branches || [];
+    const primary = branchList.find(branch => branch.is_primary) || branchList[0] || null;
+    const grouped = new Map();
+
+    branchList.forEach(branch => grouped.set(branch.id, {
+        name: branch.name + (branch.is_primary ? " (Primary)" : ""),
+        bookings: 0, completed: 0, paid: 0
+    }));
+
+    bookings.forEach(booking => {
+        const branchId = booking.branch_id || (primary ? primary.id : null);
+        const key = branchId || "unassigned";
+        if (!grouped.has(key)) grouped.set(key, {
+            name: branchId ? "Inactive / historical branch" : "Main branch (legacy bookings)",
+            bookings: 0, completed: 0, paid: 0
+        });
+        const item = grouped.get(key);
+        item.bookings++;
+        if (booking.status === "Completed") item.completed++;
+        if (booking.payment_status === "Paid") item.paid += Number(booking.agreed_price || 0);
+    });
+
+    enterpriseReportRows = Array.from(grouped.values()).sort((a,b) => a.name.localeCompare(b.name));
+    rows.innerHTML = enterpriseReportRows.length ? enterpriseReportRows.map(item =>
+        '<tr><td style="padding:10px;border-bottom:1px solid #eee;">' + esc(item.name) +
+        '</td><td style="padding:10px;border-bottom:1px solid #eee;">' + item.bookings +
+        '</td><td style="padding:10px;border-bottom:1px solid #eee;">' + item.completed +
+        '</td><td style="padding:10px;border-bottom:1px solid #eee;">' + esc(analyticsMoney(item.paid)) +
+        '</td></tr>'
+    ).join("") : '<tr><td colspan="4" style="padding:12px;color:#777;">No branch activity in this period.</td></tr>';
+    show("enterprise-report", true);
+}
+
+function exportEnterpriseReport() {
+    if (!enterpriseReportRows.length) return;
+    const quote = value => '"' + String(value == null ? "" : value).replace(/"/g, '""') + '"';
+    const csv = [
+        ["Branch","Bookings","Completed bookings","Payments received (ZAR)"],
+        ...enterpriseReportRows.map(item => [item.name,item.bookings,item.completed,item.paid.toFixed(2)])
+    ].map(row => row.map(quote).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "poundtech-enterprise-branch-report.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
 function renderAnalyticsMetrics(bookings, reviews) {
     const paid = bookings.filter(row => row.payment_status === "Paid");
     const completed = bookings.filter(row => row.status === "Completed");
@@ -985,9 +1053,10 @@ async function loadServicePartnerAnalytics() {
     start.setMonth(start.getMonth() - 5);
     start.setHours(0, 0, 0, 0);
 
-    const [bookingResult, reviewResult] = await Promise.all([
+    const isEnterprise = plan.code === "enterprise";
+    const queries = [
         supabaseClient.from("mechanic_bookings")
-            .select("id,status,agreed_price,payment_status,booking_date,created_at,customer_email")
+            .select("id,status,agreed_price,payment_status,booking_date,created_at,customer_email,branch_id")
             .eq("mechanic_id", business.id)
             .gte("created_at", start.toISOString())
             .order("created_at", { ascending: false })
@@ -997,9 +1066,20 @@ async function loadServicePartnerAnalytics() {
             .eq("mechanic_id", business.id)
             .gte("created_at", start.toISOString())
             .limit(1000)
-    ]);
+    ];
+    if (isEnterprise) {
+        queries.push(supabaseClient.from("service_partner_branches")
+            .select("id,name,is_primary,is_active")
+            .eq("mechanic_id", business.id)
+            .order("is_primary", { ascending: false })
+            .order("created_at", { ascending: true }));
+    }
+    const results = await Promise.all(queries);
+    const bookingResult = results[0];
+    const reviewResult = results[1];
+    const branchResult = isEnterprise ? results[2] : { data: [], error: null };
 
-    if (bookingResult.error || reviewResult.error) {
+    if (bookingResult.error || reviewResult.error || branchResult.error) {
         console.error("Service partner analytics error:", bookingResult.error || reviewResult.error);
         el("analytics-msg").textContent = "We couldn't load analytics. Please refresh and try again.";
         return;
@@ -1008,6 +1088,8 @@ async function loadServicePartnerAnalytics() {
     const bookings = bookingResult.data || [];
     const reviews = reviewResult.data || [];
     renderAnalyticsMetrics(bookings, reviews);
+    if (isEnterprise) renderEnterpriseReport(bookings, branchResult.data || []);
+    else show("enterprise-report", false);
     show("analytics-content", true);
     el("analytics-msg").textContent = "";
     if (bookings.length === 1000 || reviews.length === 1000) {
@@ -1907,6 +1989,7 @@ el("cancel-edit-btn").addEventListener("click", () => {
 el("save-hours-btn").addEventListener("click", saveHours);
 el("save-settings-btn").addEventListener("click", saveSettings);
 el("analytics-refresh").addEventListener("click", loadServicePartnerAnalytics);
+el("analytics-export").addEventListener("click", exportEnterpriseReport);
 el("service-support-form").addEventListener("submit", submitServicePartnerSupport);
 
 el("service-list").addEventListener("click", e => {
