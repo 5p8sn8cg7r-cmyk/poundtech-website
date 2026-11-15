@@ -219,6 +219,18 @@ summary {
 .featured-section>p{font-size:13px;color:#6f5a32;line-height:1.5;margin:0 0 14px}
 .featured-section .grid{margin:0}
 
+
+.sponsored-section{margin:22px 0;padding:18px;border:1px solid #e5e5e5;border-radius:14px;background:#fff}
+.sponsored-section h2{font-size:20px;margin:0 0 6px}
+.sponsored-section>p{font-size:13px;color:#777;line-height:1.5;margin:0 0 14px}
+.sponsored-campaign-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.sponsored-campaign-card{border:1px solid #eee;border-radius:12px;padding:16px;min-width:0}
+.sponsored-campaign-card .sponsored-tag{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:4px 9px;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.sponsored-campaign-card h3{font-size:17px;margin:10px 0 6px}
+.sponsored-campaign-card p{font-size:13px;color:#666;line-height:1.5;margin:0 0 10px}
+.sponsored-campaign-card .sponsored-business{font-size:12px;font-weight:700;color:#333;margin-bottom:8px}
+.sponsored-campaign-card .sponsored-cta{display:inline-block;background:#d60000;color:#fff;text-decoration:none;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:800}
+
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
@@ -258,6 +270,12 @@ summary {
         </div>
 
     </div>
+
+    <section id="sponsored-service-campaigns" class="sponsored-section" hidden>
+        <h2>Sponsored promotions</h2>
+        <p>Offers and campaigns from service partners on PoundTech.</p>
+        <div id="sponsored-service-campaigns-container" class="sponsored-campaign-grid"></div>
+    </section>
 
     <section id="featured-service-partners" class="featured-section" hidden>
         <h2>Featured service partners</h2>
@@ -311,6 +329,7 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 
 let allMechanics = [];
 let featuredServicePartners = [];
+let sponsoredServiceCampaigns = [];
 let servicesByBusiness = {};
 let hoursByBusiness = {};
 let ratingsByBusiness = {};
@@ -420,9 +439,10 @@ async function loadMechanics() {
         .order("sort_order", { ascending: true });
 
     const featuredQuery = supabaseClient.rpc("get_featured_service_partners");
+    const sponsoredQuery = supabaseClient.rpc("get_active_service_partner_campaigns");
 
-    const [mechanicsRes, servicesRes, hoursRes, reviewsRes, photosRes, featuredRes] =
-        await Promise.all([mechanicsQuery, servicesQuery, hoursQuery, reviewsQuery, photosQuery, featuredQuery]);
+    const [mechanicsRes, servicesRes, hoursRes, reviewsRes, photosRes, featuredRes, sponsoredRes] =
+        await Promise.all([mechanicsQuery, servicesQuery, hoursQuery, reviewsQuery, photosQuery, featuredQuery, sponsoredQuery]);
 
     if (mechanicsRes.error) {
         console.error(mechanicsRes.error);
@@ -432,6 +452,8 @@ async function loadMechanics() {
 
     if (featuredRes.error) console.error("Featured service partners could not be loaded:", featuredRes.error);
     featuredServicePartners = featuredRes.data || [];
+    if (sponsoredRes.error) console.error("Sponsored promotions could not be loaded:", sponsoredRes.error);
+    sponsoredServiceCampaigns = sponsoredRes.data || [];
 
     [servicesRes, hoursRes, reviewsRes, photosRes].forEach(res => {
         if (res.error) { console.error(res.error); }
@@ -457,6 +479,7 @@ async function loadMechanics() {
         ratingsByBusiness[review.mechanic_id] = entry;
     });
 
+    renderSponsoredServiceCampaigns();
     renderFeaturedServicePartners();
     applyFilters();
 }
@@ -649,6 +672,25 @@ function displayMechanics(list) {
 
 
 
+
+function renderSponsoredServiceCampaigns() {
+    const section = document.getElementById("sponsored-service-campaigns");
+    const container = document.getElementById("sponsored-service-campaigns-container");
+    if (!sponsoredServiceCampaigns.length) {
+        section.hidden = true;
+        container.innerHTML = "";
+        return;
+    }
+    section.hidden = false;
+    container.innerHTML = sponsoredServiceCampaigns.map(campaign =>
+        '<article class="sponsored-campaign-card"><span class="sponsored-tag">Sponsored</span>' +
+        '<div class="sponsored-business">' + esc(campaign.business_name) + ' · ' + esc(campaign.target_area) + '</div>' +
+        '<h3>' + esc(campaign.headline) + '</h3><p>' + esc(campaign.body_text) + '</p>' +
+        '<a class="sponsored-cta" data-campaign-click="' + esc(campaign.id) + '" href="' + esc(campaign.cta_url) + '">' +
+        esc(campaign.cta_label) + '</a></article>'
+    ).join("");
+}
+
 function renderFeaturedServicePartners() {
     const section = document.getElementById("featured-service-partners");
     const container = document.getElementById("featured-service-partners-container");
@@ -719,6 +761,18 @@ document.getElementById("type-chips").addEventListener("click", e => {
     });
 
     applyFilters();
+});
+
+document.getElementById("sponsored-service-campaigns-container").addEventListener("click", async e => {
+    const link = e.target.closest("a[data-campaign-click]");
+    if (!link) return;
+    e.preventDefault();
+    const destination = link.href;
+    link.style.opacity = "0.65";
+    await supabaseClient.rpc("record_service_partner_campaign_click", {
+        p_campaign_id: link.dataset.campaignClick
+    });
+    window.location.href = destination;
 });
 
 document.getElementById("mechanics-container").addEventListener("click", e => {
