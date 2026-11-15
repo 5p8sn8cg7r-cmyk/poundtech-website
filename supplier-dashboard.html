@@ -1357,6 +1357,15 @@ loadSupplier().then(async function() {
             alert("Only the business owner can start a paid supplier subscription. Please ask the owner to complete checkout.");
             return;
         }
+        const currentPlan = window.POUNDTECH_SUPPLIER_PLAN || "standard";
+        if (requestedUpgrade === "pro" && (currentPlan === "pro" || currentPlan === "business")) {
+            alert("Your supplier account is already on Pro or a higher plan. Choose Business or contact Enterprise sales if you need a larger setup.");
+            return;
+        }
+        if (requestedUpgrade === "business" && currentPlan === "business") {
+            alert("Your supplier account is already on Business. Contact Enterprise sales if you need a tailored plan.");
+            return;
+        }
         await requestSupplierPlan(requestedUpgrade);
     }
 });
