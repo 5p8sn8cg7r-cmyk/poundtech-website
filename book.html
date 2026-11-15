@@ -447,7 +447,7 @@ async function start() {
 
     const initialBranch = branches.find(branch => branch.id === selectedBranchId);
     const branchSummary = initialBranch
-        ? '<div class="biz-name" style="margin-top:5px;">' + esc(initialBranch.name) + ' · ' + esc(initialBranch.address) + '</div>'
+        ? '<div id="branch-summary" class="biz-name" style="margin-top:5px;">' + esc(initialBranch.name) + ' · ' + esc(initialBranch.address) + '</div>'
         : "";
 
     $("service-card").innerHTML = `
@@ -670,6 +670,9 @@ $("booking-date").addEventListener("change", loadSlots);
 
 $("booking-branch").addEventListener("change", () => {
     selectedBranchId = $("booking-branch").value || null;
+    const branch = branches.find(item => item.id === selectedBranchId);
+    const summary = $("branch-summary");
+    if (summary && branch) summary.textContent = branch.name + " · " + branch.address;
     selectedSlot = null;
     $("details-card").hidden = true;
     $("slots").innerHTML = "";
