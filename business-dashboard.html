@@ -286,6 +286,7 @@ html{scroll-behavior:smooth}
         <a href="business-dashboard.html#hours">Opening hours</a>
         <a href="business-dashboard.html#booking-settings">Booking settings</a>
         <a href="business-dashboard.html#business-photos">Business photos</a>
+        <a href="business-dashboard.html#service-support">Priority support</a>
     </nav>
 
 
@@ -337,6 +338,33 @@ html{scroll-behavior:smooth}
                 <p class="analytics-note" id="analytics-footnote"></p>
             </div>
             <div id="analytics-msg" role="status" aria-live="polite"></div>
+        </section>
+
+        <!-- Service partner priority support -->
+        <section class="card" id="service-support" hidden>
+            <h2>Priority support</h2>
+            <p class="lead">Send a request to the PoundTech support team and track replies from your business dashboard.</p>
+            <p id="service-support-access" class="business-photo-limit" aria-live="polite"></p>
+            <form id="service-support-form" hidden>
+                <label for="service-support-subject">Subject</label>
+                <input id="service-support-subject" type="text" maxlength="160" minlength="4" required placeholder="Briefly describe what you need help with">
+                <label for="service-support-category">Category</label>
+                <select id="service-support-category" required>
+                    <option value="Bookings &amp; quotes">Bookings &amp; quotes</option>
+                    <option value="Membership &amp; billing">Membership &amp; billing</option>
+                    <option value="Business profile">Business profile</option>
+                    <option value="Staff &amp; branches">Staff &amp; branches</option>
+                    <option value="Payments &amp; payouts">Payments &amp; payouts</option>
+                    <option value="Technical issue">Technical issue</option>
+                    <option value="Other">Other</option>
+                </select>
+                <label for="service-support-message">How can we help?</label>
+                <textarea id="service-support-message" maxlength="3000" minlength="20" required style="min-height:120px;" placeholder="Please include the relevant details so our team can help."></textarea>
+                <button class="btn" id="service-support-submit" type="submit">Send support request</button>
+            </form>
+            <div id="service-support-msg" role="status" aria-live="polite"></div>
+            <h3 style="font-size:16px;margin:22px 0 10px;">Your support requests</h3>
+            <div id="service-support-list"><p class="empty-note">Loading support requests…</p></div>
         </section>
 
         <!-- Business type -->
@@ -752,6 +780,7 @@ async function init() {
 
     await Promise.all([loadMembership(), loadServices(), loadHours(), loadSettings()]);
     await loadServicePartnerAnalytics();
+    await loadServicePartnerSupport();
     await loadBusinessPhotos();
     await loadBranches();
 }
@@ -984,6 +1013,91 @@ async function loadServicePartnerAnalytics() {
     if (bookings.length === 1000 || reviews.length === 1000) {
         el("analytics-footnote").textContent += " This view is limited to the latest 1,000 records in each category.";
     }
+}
+
+
+/* ---------- SERVICE PARTNER PRIORITY SUPPORT ---------- */
+
+function serviceSupportStatusClass(status) {
+    if (status === "Resolved" || status === "Closed") return "instant";
+    if (status === "In progress" || status === "Awaiting supplier") return "request";
+    return "off";
+}
+
+async function loadServicePartnerSupport() {
+    show("service-support", true);
+    const plan = currentServicePlan();
+    const eligible = !!(plan && ["professional", "enterprise"].includes(plan.code));
+    show("service-support-form", eligible);
+    el("service-support-access").textContent = eligible
+        ? "Your " + plan.display_name + " membership includes priority support."
+        : "Priority support is included with Professional and Enterprise Partner memberships. Your existing support options remain available by email at info@poundtech.co.za.";
+    await loadMyServicePartnerSupportTickets();
+}
+
+async function loadMyServicePartnerSupportTickets() {
+    const list = el("service-support-list");
+    list.innerHTML = '<p class="empty-note">Loading support requests…</p>';
+    const { data, error } = await supabaseClient.rpc("get_my_service_partner_support_tickets");
+    if (error) {
+        console.error("Service partner support tickets:", error);
+        list.innerHTML = '<p class="empty-note">We could not load your support requests. Please refresh the page.</p>';
+        return;
+    }
+    const tickets = data || [];
+    if (!tickets.length) {
+        list.innerHTML = '<p class="empty-note">You have not submitted a support request yet.</p>';
+        return;
+    }
+    list.innerHTML = tickets.map(ticket => {
+        const reply = ticket.staff_response
+            ? '<div style="margin-top:10px;padding:12px;background:#f7f7f7;border-radius:8px;"><strong>PoundTech response</strong><p style="margin:6px 0 0;white-space:pre-wrap;">' + esc(ticket.staff_response) + '</p></div>'
+            : '<p class="business-photo-note" style="margin-top:8px;">The PoundTech team has not replied yet.</p>';
+        return '<details class="branch-item" style="display:block;"><summary style="cursor:pointer;font-weight:700;">' +
+            esc(ticket.subject) + ' <span class="tag ' + serviceSupportStatusClass(ticket.status) + '">' + esc(ticket.status) +
+            '</span><span style="display:block;font-size:12px;color:#777;font-weight:400;margin-top:5px;">' +
+            esc(ticket.category) + ' · ' + esc(new Date(ticket.created_at).toLocaleString("en-ZA")) +
+            '</span></summary><p style="margin:12px 0 0;white-space:pre-wrap;">' + esc(ticket.message) +
+            '</p>' + reply + '</details>';
+    }).join("");
+}
+
+async function submitServicePartnerSupport(event) {
+    event.preventDefault();
+    const button = el("service-support-submit");
+    const subject = el("service-support-subject").value.trim();
+    const category = el("service-support-category").value;
+    const message = el("service-support-message").value.trim();
+    button.disabled = true;
+    button.textContent = "Sending…";
+    el("service-support-msg").textContent = "";
+
+    const { data: ticketId, error } = await supabaseClient.rpc("create_service_partner_support_ticket", {
+        p_subject: subject,
+        p_category: category,
+        p_message: message
+    });
+    if (error || !ticketId) {
+        console.error("Service partner support submission:", error);
+        el("service-support-msg").textContent = error?.message || "We couldn't submit your support request.";
+        button.disabled = false;
+        button.textContent = "Send support request";
+        return;
+    }
+
+    el("service-support-form").reset();
+    el("service-support-msg").textContent = "Your support request has been submitted. Sending the PoundTech team a notification…";
+    const { data: notification, error: notificationError } = await supabaseClient.functions.invoke("business-support-notify", {
+        body: { ticket_id: ticketId }
+    });
+    await loadMyServicePartnerSupportTickets();
+    if (notificationError || !notification || !notification.notified) {
+        el("service-support-msg").textContent = "Your request is saved in the PoundTech support inbox. The email notification could not be confirmed.";
+    } else {
+        el("service-support-msg").textContent = "Your priority support request has been submitted successfully.";
+    }
+    button.disabled = false;
+    button.textContent = "Send support request";
 }
 
 /* ---------- BUSINESS PHOTO GALLERY ---------- */
@@ -1793,6 +1907,7 @@ el("cancel-edit-btn").addEventListener("click", () => {
 el("save-hours-btn").addEventListener("click", saveHours);
 el("save-settings-btn").addEventListener("click", saveSettings);
 el("analytics-refresh").addEventListener("click", loadServicePartnerAnalytics);
+el("service-support-form").addEventListener("submit", submitServicePartnerSupport);
 
 el("service-list").addEventListener("click", e => {
     const button = e.target.closest("button[data-action]");
