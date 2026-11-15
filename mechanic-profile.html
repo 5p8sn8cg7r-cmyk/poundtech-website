@@ -169,6 +169,11 @@
 
         .profile-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 22px}
         .profile-gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;background:#eee}
+        .profile-branches{margin:20px 0;padding:16px;border:1px solid #eee;border-radius:12px;background:#fafafa}
+        .profile-branch{padding:10px 0;border-top:1px solid #e9e9e9}
+        .profile-branch:first-of-type{border-top:0}
+        .profile-branch strong{display:block}
+        .profile-branch small{display:block;color:#666;line-height:1.5;margin-top:4px}
         .profile-specialties { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0 18px; }
     .profile-specialty { display:inline-block; padding:6px 10px; border-radius:999px; background:#f4f5f7; color:#444; font-size:13px; }
         .profile-location{display:flex;align-items:flex-start;gap:12px;margin:18px 0;padding:15px 16px;border:1px solid #ececec;border-radius:10px;background:#fafafa}
@@ -339,6 +344,26 @@ async function loadMechanicProfile() {
           ).join("") + '</div>'
         : "";
 
+    const { data: branches, error: branchesError } = await supabaseClient
+        .from("service_partner_branches")
+        .select("id,name,address,service_area,is_primary")
+        .eq("mechanic_id", mechanicId)
+        .eq("is_active", true)
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true });
+
+    if (branchesError) console.error("Unable to load service partner branches:", branchesError);
+    const branchRows = branches || [];
+    const branchesHtml = branchRows.length
+        ? '<section class="profile-branches"><h2>Locations</h2>' + branchRows.map(branch =>
+            '<div class="profile-branch"><strong>' + escapeHtml(branch.name) +
+            (branch.is_primary ? ' <small style="display:inline;color:#a00;font-weight:700;">Main location</small>' : '') +
+            '</strong><small>' + escapeHtml(branch.address) +
+            (branch.service_area ? ' · ' + escapeHtml(branch.service_area) : '') +
+            '</small></div>'
+          ).join("") + '</section>'
+        : "";
+
     const { data: services, error: servicesError } =
         await supabaseClient
         .from("business_services")
@@ -471,6 +496,8 @@ async function loadMechanicProfile() {
         <p>
             ${mechanic.description || ""}
         </p>
+
+        ${branchesHtml}
 
         <section class="profile-services">
             <h2>Services &amp; Pricing</h2>
