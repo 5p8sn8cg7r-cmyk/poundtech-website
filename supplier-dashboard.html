@@ -1262,11 +1262,11 @@ if (branchesTab) branchesTab.style.display = supplierRole === "owner" ? "" : "no
 
 const roleTabs = {
     owner: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-branches-panel","supplier-earnings-panel","supplier-plans-panel","supplier-help-panel","supplier-support-panel"],
-    admin: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-help-panel","supplier-support-panel"],
-    sales: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-help-panel","supplier-support-panel"],
-    inventory: ["supplier-overview","supplier-products-panel","supplier-help-panel","supplier-support-panel"],
-    finance: ["supplier-overview","supplier-earnings-panel","supplier-help-panel","supplier-support-panel"],
-    custom: ["supplier-overview","supplier-help-panel","supplier-support-panel"]
+    admin: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-earnings-panel","supplier-plans-panel","supplier-help-panel","supplier-support-panel"],
+    sales: ["supplier-overview","supplier-orders-panel","supplier-products-panel","supplier-plans-panel","supplier-help-panel","supplier-support-panel"],
+    inventory: ["supplier-overview","supplier-products-panel","supplier-plans-panel","supplier-help-panel","supplier-support-panel"],
+    finance: ["supplier-overview","supplier-earnings-panel","supplier-plans-panel","supplier-help-panel","supplier-support-panel"],
+    custom: ["supplier-overview","supplier-plans-panel","supplier-help-panel","supplier-support-panel"]
 };
 const visibleTabs = roleTabs[supplierRole] || roleTabs.custom;
 document.querySelectorAll("[data-supplier-tab]").forEach(function(tab) {
@@ -2732,7 +2732,7 @@ function supplierOrderHTML(o) {
 
         
 loadSupplierOrders();
-function planBoxHTML(st) {
+function planBoxHTML(st, canSubscribe) {
 
     if (!st) { return ""; }
 
@@ -2751,7 +2751,7 @@ function planBoxHTML(st) {
 
     let proOffer = "";
 
-    if (!st.plan_active) {
+    if (!st.plan_active && canSubscribe) {
         proOffer = `<div style="margin-top:12px;padding:14px;background:#f5f5f5;border-radius:8px;">
                    <p style="margin:0 0 8px;"><strong>Pro plan:</strong> ${esc(st.pro_rate)}% commission for R${esc(st.pro_price)}/month.${st.break_even_sales ? " Worth it once you sell roughly R" + esc(st.break_even_sales) + " a month." : ""}</p>
                    <ul style="margin:0 0 10px; padding-left:18px; color:#444; font-size:14px;">
@@ -2827,16 +2827,35 @@ async function loadPlanBox() {
     }
 
     window.POUNDTECH_SUPPLIER_ROLE = role;
-    if (role !== "owner") {
-        tab.style.display = "none";
-        box.style.display = "none";
+    tab.style.display = "";
+    box.style.display = "";
+
+    // Owners can view and purchase. Admins can view the full plan summary,
+    // while all other supplier team roles receive a read-only plan status.
+    if (role === "owner" || role === "admin") {
+        await loadSellerStatus();
+        box.innerHTML = planBoxHTML(SELLER_STATUS, role === "owner") ||
+            '<p style="color:#777;">Your plan details are temporarily unavailable. Please refresh the page.</p>';
+        if (role === "admin" && SELLER_STATUS && !SELLER_STATUS.plan_active) {
+            box.innerHTML += '<p style="margin-top:12px;color:#666;font-size:13px;">Only the business owner can start or change a paid supplier subscription.</p>';
+        }
         return;
     }
 
-    tab.style.display = "";
-    box.style.display = "";
-    await loadSellerStatus();
-    box.innerHTML = planBoxHTML(SELLER_STATUS) || '<p style="color:#777;">Your plan details are temporarily unavailable. Please refresh the page.</p>';
+    const access = await loadSupplierPlanAccess();
+    if (!access) {
+        box.innerHTML = '<p style="color:#777;">Your supplier plan status is temporarily unavailable. Please refresh the page.</p>';
+        return;
+    }
+    const planName = String(access.plan || "standard").replace(/_/g," ").replace(/\b\w/g, ch => ch.toUpperCase());
+    const activeLabel = access.plan_active ? "Active" : "Standard access";
+    box.innerHTML = '<div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:18px 20px;margin-top:20px;">' +
+        '<p style="margin:0;color:#666;">Your business plan</p>' +
+        '<h3 style="margin:6px 0 0;">' + esc(planName) + '</h3>' +
+        '<p style="margin:8px 0 0;color:#555;">Status: <strong>' + activeLabel + '</strong></p>' +
+        '<p style="margin:10px 0 0;color:#777;font-size:13px;">Subscription changes and payments are managed by the business owner.</p>' +
+        '<p style="margin:8px 0 0;font-size:13px;"><a href="/supplier-plans.html" style="color:#c00000;font-weight:700;text-decoration:none;">Compare supplier plans &amp; benefits →</a></p>' +
+        '</div>';
 }
 
 async function loadAdvancedAnalytics() {
