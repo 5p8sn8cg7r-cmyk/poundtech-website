@@ -2805,6 +2805,18 @@ async function requestSupplierPlan(planCode) {
     const originalText = button ? button.textContent : "";
     if (button) { button.disabled = true; button.textContent = "Preparing secure checkout…"; }
     try {
+        if (planCode === "business" &&
+            window.POUNDTECH_SUPPLIER_PLAN === "pro" &&
+            window.POUNDTECH_SUPPLIER_PLAN_ACTIVE) {
+            const upgrade = await supabaseClient.functions.invoke("upgrade-payfast-subscription", { body: {} });
+            if (upgrade.error || !upgrade.data || !upgrade.data.ok) {
+                throw new Error(upgrade.data?.error || upgrade.error?.message || "Could not upgrade your existing Pro subscription.");
+            }
+            alert(upgrade.data.message || "Your Business upgrade has been processed.");
+            await loadPlanBox();
+            return;
+        }
+
         const { data, error } = await supabaseClient.functions.invoke("create-payfast-subscription", {
             body: { business_type: "supplier", plan_code: planCode }
         });
@@ -2863,6 +2875,8 @@ async function loadPlanBox() {
     // while all other supplier team roles receive a read-only plan status.
     if (role === "owner" || role === "admin") {
         await loadSellerStatus();
+        window.POUNDTECH_SUPPLIER_PLAN = String(SELLER_STATUS && SELLER_STATUS.plan || "standard").toLowerCase();
+        window.POUNDTECH_SUPPLIER_PLAN_ACTIVE = !!(SELLER_STATUS && SELLER_STATUS.plan_active);
         box.innerHTML = planBoxHTML(SELLER_STATUS, role === "owner") ||
             '<p style="color:#777;">Your plan details are temporarily unavailable. Please refresh the page.</p>';
         if (role === "admin" && SELLER_STATUS && !SELLER_STATUS.plan_active) {
