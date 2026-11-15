@@ -167,6 +167,8 @@
             .profile-service-side { min-width: 105px; }
         }
 
+        .profile-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 22px}
+        .profile-gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;background:#eee}
         .profile-specialties { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0 18px; }
     .profile-specialty { display:inline-block; padding:6px 10px; border-radius:999px; background:#f4f5f7; color:#444; font-size:13px; }
         .profile-location{display:flex;align-items:flex-start;gap:12px;margin:18px 0;padding:15px 16px;border:1px solid #ececec;border-radius:10px;background:#fafafa}
@@ -316,6 +318,26 @@ async function loadMechanicProfile() {
         return;
     }
 
+
+    const { data: businessPhotos, error: photosError } =
+        await supabaseClient
+        .from("mechanic_business_photos")
+        .select("storage_path, sort_order")
+        .eq("mechanic_id", mechanicId)
+        .order("sort_order", { ascending: true });
+
+    if (photosError) console.error("Unable to load business photos:", photosError);
+
+    const galleryRows = businessPhotos || [];
+    let galleryUrls = galleryRows.map(row => row.storage_path.indexOf("legacy-url:") === 0
+        ? row.storage_path.slice("legacy-url:".length)
+        : supabaseClient.storage.from("service-partner-photos").getPublicUrl(row.storage_path).data.publicUrl);
+    if (!galleryUrls.length && mechanic.business_photo_url) galleryUrls = [mechanic.business_photo_url];
+    const galleryHtml = galleryUrls.length
+        ? '<div class="profile-gallery" aria-label="Business photos">' + galleryUrls.map((url,index) =>
+            '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(mechanic.business_name) + ' photo ' + (index + 1) + '" loading="lazy">'
+          ).join("") + '</div>'
+        : "";
 
     const { data: services, error: servicesError } =
         await supabaseClient
