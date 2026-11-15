@@ -291,18 +291,17 @@ html{scroll-behavior:smooth}
                     <h3>Growth Partner</h3>
                     <p class="membership-price">R199 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>10% commission on completed bookings.</p>
-                    <button class="btn" id="membership-growth-btn" type="button">Choose Growth · R199/month</button>
+                    <p class="hint">Paid membership upgrades are currently unavailable. Your existing membership and booking terms remain in effect.</p>
                 </div>
                 <div class="membership-plan">
                     <h3>Professional Partner</h3>
                     <p class="membership-price">R499 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>8,4% commission on completed bookings.</p>
-                    <button class="btn" id="membership-professional-btn" type="button">Choose Professional · R499/month</button>
+                    <p class="hint">For membership enquiries, contact <a href="mailto:info@poundtech.co.za">PoundTech</a>.</p>
                 </div>
             </div>
 
             <p class="hint">Free Partner remains available at R0 per month with 10% commission. Enterprise Partner starts from R999 per month, with an individually agreed commission rate below 8,4%.</p>
-            <p class="hint">Sandbox testing only: these temporary buttons create test checkout sessions and must not be used for live customer payments. Paid memberships remain unavailable for production until recurring billing is fully verified. Your existing bookings will continue under the commission rate recorded for each booking.</p>
             <p><a href="/service-partner-plans.html" style="color:#d60000;font-weight:700;">View the full membership comparison →</a></p>
         </section>
 
@@ -818,10 +817,6 @@ async function loadMembership() {
         el("membership-current").innerHTML = summary;
     }
 
-    el("membership-growth-btn").disabled = effectiveCode === "growth";
-    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Choose Growth · R199/month";
-    el("membership-professional-btn").disabled = effectiveCode === "professional";
-    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Choose Professional · R499/month";
     renderBusinessPhotoAllowance();
     renderBranchAllowance();
 
@@ -832,42 +827,6 @@ async function loadMembership() {
         msg("membership-msg", "The checkout was cancelled. Your current membership has not been changed.", "info");
     } else if (params.get("membership") === "failed") {
         msg("membership-msg", "The checkout was not completed. Your current membership has not been changed.", "error");
-    }
-}
-
-async function chooseMembershipPlan(planCode) {
-    if (!["growth", "professional"].includes(planCode)) return;
-    const growthButton = el("membership-growth-btn");
-    const professionalButton = el("membership-professional-btn");
-    growthButton.disabled = true;
-    professionalButton.disabled = true;
-    msg("membership-msg", "Preparing secure PayFast checkout…", "info");
-
-    try {
-        const { data, error } = await supabaseClient.functions.invoke("create-payfast-subscription", {
-            body: { business_type: "service_partner", plan_code: planCode }
-        });
-        if (error || !data || !data.action || !data.fields) {
-            throw new Error(data?.error || error?.message || "Could not start PayFast checkout.");
-        }
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = data.action;
-        form.style.display = "none";
-        Object.entries(data.fields).forEach(([name, value]) => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = name;
-            input.value = String(value);
-            form.appendChild(input);
-        });
-        document.body.appendChild(form);
-        form.submit();
-    } catch (error) {
-        console.error("Service membership checkout error:", error);
-        msg("membership-msg", error.message || "We couldn't start checkout. Please try again.", "error");
-        growthButton.disabled = membership?.status === "active" && membership?.plan_code === "growth";
-        professionalButton.disabled = membership?.status === "active" && membership?.plan_code === "professional";
     }
 }
 
@@ -1645,8 +1604,6 @@ el("login-password").addEventListener("keydown", e => {
     if (e.key === "Enter") signIn();
 });
 el("signout-btn").addEventListener("click", signOut);
-el("membership-growth-btn").addEventListener("click", () => chooseMembershipPlan("growth"));
-el("membership-professional-btn").addEventListener("click", () => chooseMembershipPlan("professional"));
 el("nobiz-signout").addEventListener("click", signOut);
 el("save-type-btn").addEventListener("click", saveType);
 el("save-specialties-btn").addEventListener("click", saveSpecialties);
