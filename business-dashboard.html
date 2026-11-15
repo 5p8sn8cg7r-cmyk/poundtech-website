@@ -782,16 +782,28 @@ async function chooseMembershipPlan(planCode) {
     const professionalButton = el("membership-professional-btn");
     growthButton.disabled = true;
     professionalButton.disabled = true;
-    msg("membership-msg", "Preparing secure membership checkout…", "info");
+    msg("membership-msg", "Preparing secure PayFast checkout…", "info");
 
     try {
-        const { data, error } = await supabaseClient.functions.invoke("create-service-membership-checkout", {
-            body: { plan_code: planCode }
+        const { data, error } = await supabaseClient.functions.invoke("create-payfast-subscription", {
+            body: { business_type: "service_partner", plan_code: planCode }
         });
-        if (error || !data || !data.redirectUrl) {
-            throw new Error(data?.error || error?.message || "Could not start membership checkout.");
+        if (error || !data || !data.action || !data.fields) {
+            throw new Error(data?.error || error?.message || "Could not start PayFast checkout.");
         }
-        window.location.assign(data.redirectUrl);
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = data.action;
+        form.style.display = "none";
+        Object.entries(data.fields).forEach(([name, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            input.value = String(value);
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
     } catch (error) {
         console.error("Service membership checkout error:", error);
         msg("membership-msg", error.message || "We couldn't start checkout. Please try again.", "error");
