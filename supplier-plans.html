@@ -162,8 +162,11 @@ document.querySelectorAll("[data-plan-choice]").forEach(function(button) {
         ? "/supplier-dashboard.html?open=plans"
         : "/supplier-dashboard.html?open=plans&upgrade=" + encodeURIComponent(choice);
       if (data && data.session) {
-        window.location.href = target;
-        return;
+        const supplierAccess = await planSupabase.rpc("get_my_supplier_id");
+        if (!supplierAccess.error && supplierAccess.data) {
+          window.location.href = target;
+          return;
+        }
       }
       window.location.href = "/supplier-login.html?next=" + encodeURIComponent(target.startsWith("/") ? target.slice(1) : target);
     } catch (error) {
