@@ -192,13 +192,27 @@ async function supplierLogin() {
 }
 
 
-// Already signed in? Continue to the dashboard.
+// Do not automatically route an existing session. A visitor may be signed
+// into a normal customer account and need to switch to their supplier login.
+// Keep the login form available so they can enter the supplier email/password.
 (async function checkExistingSession() {
+    const { data, error } = await supabaseClient.auth.getSession();
 
-    const { data } = await supabaseClient.auth.getSession();
+    if (error) {
+        console.warn("Could not check the existing login session.", error);
+        return;
+    }
 
-    if (data && data.session) {
-        await routeAfterLogin();
+    const currentEmail = data && data.session && data.session.user
+        ? data.session.user.email
+        : "";
+
+    if (currentEmail) {
+        showMessage(
+            "You're currently signed in as " + currentEmail +
+            ". To use your supplier account, enter its email address and password above, then select Log in.",
+            "info"
+        );
     }
 })();
 
