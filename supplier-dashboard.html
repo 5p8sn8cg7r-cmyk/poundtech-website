@@ -2749,7 +2749,7 @@ function supplierOrderHTML(o) {
 loadSupplierOrders();
 function planBoxHTML(st, canSubscribe) {
     if (!st) return "";
-    const rate = Number(st.commission_rate).toFixed(1).replace(/\\.0$/, "");
+    const rate = Number(st.commission_rate).toFixed(1).replace(/\.0$/, "");
     const currentPlan = String(st.plan || "standard").toLowerCase();
     const active = !!st.plan_active;
     const prettyPlan = currentPlan === "business" ? "Business" : currentPlan === "pro" ? "Pro" : "Standard";
