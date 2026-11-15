@@ -291,13 +291,13 @@ html{scroll-behavior:smooth}
                     <h3>Growth Partner</h3>
                     <p class="membership-price">R199 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>10% commission on completed bookings.</p>
-                    <button class="btn" id="membership-growth-btn" type="button">Test Growth (Sandbox)</button>
+                    <button class="btn" id="membership-growth-btn" type="button">Choose Growth · R199/month</button>
                 </div>
                 <div class="membership-plan">
                     <h3>Professional Partner</h3>
                     <p class="membership-price">R499 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>8,4% commission on completed bookings.</p>
-                    <button class="btn" id="membership-professional-btn" type="button">Test Professional (Sandbox)</button>
+                    <button class="btn" id="membership-professional-btn" type="button">Choose Professional · R499/month</button>
                 </div>
             </div>
 
@@ -819,9 +819,9 @@ async function loadMembership() {
     }
 
     el("membership-growth-btn").disabled = effectiveCode === "growth";
-    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Subscribe · R199/month";
+    el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Choose Growth · R199/month";
     el("membership-professional-btn").disabled = effectiveCode === "professional";
-    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Subscribe · R499/month";
+    el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Choose Professional · R499/month";
     renderBusinessPhotoAllowance();
     renderBranchAllowance();
 
