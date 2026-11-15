@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PoundTech | Service Partner Campaigns</title>
+<link rel="icon" href="/favicon.ico?v=20261108" sizes="any">
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#171717;background:#f3f4f6}
+*{box-sizing:border-box}body{margin:0}
+header{background:#090a0c;color:#fff;padding:17px 5%;display:flex;justify-content:space-between;align-items:center;gap:14px;border-bottom:3px solid #c90000}
+.brand{font-size:21px;font-weight:900}.brand span{color:#e00000}.header-actions{display:flex;align-items:center;gap:12px;color:#ccc;font-size:13px}
+button{border:0;border-radius:9px;background:#c90000;color:#fff;font-weight:700;padding:11px 15px;cursor:pointer}button:hover{background:#a90000}button:disabled{opacity:.55;cursor:wait}.secondary{background:#222}.secondary:hover{background:#444}
+main{max-width:1200px;margin:28px auto;padding:0 18px 50px}
+h1{font-size:28px;margin:5px 0}.muted{color:#777;font-size:13px;line-height:1.5}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#c00000;font-weight:800}
+.panel{background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:20px;margin:14px 0;box-shadow:0 5px 18px rgba(0,0,0,.035)}
+.login{max-width:430px;margin:70px auto}.login label,.campaign-form label{display:block;font-size:12px;font-weight:700;margin:13px 0 6px}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid #d8d8d8;border-radius:8px;font:inherit;background:#fff}
+textarea{min-height:75px;resize:vertical}
+#app{display:none}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.campaign{border:1px solid #e6e6e6;border-radius:13px;padding:17px;margin:12px 0;background:#fff}
+.campaign-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.campaign h2{font-size:17px;margin:0 0 5px}.pill{display:inline-block;padding:4px 9px;border-radius:999px;background:#eee;font-size:10px;font-weight:800}
+.pill.active,.pill.completed{background:#e5f5ea;color:#176b35}.pill.pending-review,.pill.awaiting-payment,.pill.scheduled{background:#fff1d7;color:#875700}.pill.declined{background:#fdeaea;color:#a00000}
+.details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.details div{background:#f7f7f7;border-radius:8px;padding:10px;font-size:12px;overflow-wrap:anywhere}.details strong{display:block;font-size:10px;color:#777;text-transform:uppercase;margin-bottom:4px}
+.campaign-form{border-top:1px solid #eee;padding-top:14px;margin-top:14px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.notice{font-size:12px;line-height:1.5;margin-top:10px}
+.hidden{display:none!important}
+@media(max-width:650px){main{padding:0 12px 35px}.panel{padding:15px}.details,.form-grid{grid-template-columns:1fr}.header-actions{font-size:11px}.brand{font-size:18px}}
+</style>
+</head>
+<body>
+<header><div class="brand">POUND<span>TECH</span> <span style="color:#aaa;font-size:12px">/ CAMPAIGNS</span></div><div class="header-actions"><span id="admin-email"></span><button id="logout" class="secondary hidden" type="button">Sign out</button></div></header>
+<section id="login-view" class="login panel">
+<div class="eyebrow">Restricted access</div><h1>Admin sign in</h1><p class="muted">Use your existing PoundTech administrator account.</p>
+<form id="login-form"><label for="email">Email address</label><input id="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button id="login-btn" style="width:100%;margin-top:16px">Sign in</button><p id="login-msg" class="notice" role="status"></p></form>
+</section>
+<main id="app">
+<div class="topline"><div><div class="eyebrow">Growth &amp; visibility</div><h1>Service partner campaigns</h1><p class="muted">Review campaign requests, confirm payment and schedule approved promotions.</p></div><button id="refresh" class="secondary" type="button">Refresh</button></div>
+<div id="stats" class="muted"></div>
+<div id="campaign-list"><div class="panel">Loading campaign requests…</div></div>
+<p id="global-msg" class="notice" role="status"></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY="sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let campaigns=[];
+const $=id=>document.getElementById(id);
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function localInput(v){if(!v)return"";const d=new Date(v);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);}
+function isoInput(v){return v?new Date(v).toISOString():null;}
+function money(v){return "R"+Number(v||0).toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pill(status){return String(status||"").toLowerCase().replace(/[^a-z]+/g,"-");}
+async function verifyAdmin(){
+ const {data:{user},error}=await db.auth.getUser();
+ if(error||!user){$("login-view").classList.remove("hidden");$("app").style.display="none";$("logout").classList.add("hidden");return false;}
+ const {data,error:checkError}=await db.rpc("get_admin_service_partner_campaigns");
+ if(checkError){$("login-view").classList.remove("hidden");$("app").style.display="none";$("logout").classList.add("hidden");$("login-msg").textContent="This account does not have PoundTech admin access.";return false;}
+ $("login-view").classList.add("hidden");$("app").style.display="block";$("logout").classList.remove("hidden");$("admin-email").textContent=user.email||"Admin";campaigns=data||[];render();return true;
+}
+async function loadCampaigns(){
+ $("refresh").disabled=true;$("global-msg").textContent="Refreshing…";
+ const {data,error}=await db.rpc("get_admin_service_partner_campaigns");
+ $("refresh").disabled=false;
+ if(error){$("global-msg").textContent=error.message;return;}
+ campaigns=data||[];render();$("global-msg").textContent="Campaign requests updated.";
+}
+function render(){
+ const pending=campaigns.filter(c=>["Pending review","Awaiting payment"].includes(c.status)).length;
+ const live=campaigns.filter(c=>c.status==="Active").length;
+ $("stats").textContent=campaigns.length+" total · "+pending+" awaiting action · "+live+" live";
+ $("campaign-list").innerHTML=campaigns.length?campaigns.map(c=>`
+ <article class="campaign">
+  <div class="campaign-head"><div><h2>${esc(c.campaign_name)}</h2><div class="muted">${esc(c.business_name)} · ${esc(c.submitted_by_email)} · ${esc(new Date(c.created_at).toLocaleString("en-ZA"))}</div></div><span class="pill ${pill(c.status)}">${esc(c.status)}</span></div>
+  <div class="details">
+   <div><strong>Headline</strong>${esc(c.headline)}</div><div><strong>Target</strong>${esc(c.target_area)}</div><div><strong>Proposed budget</strong>${money(c.proposed_budget)}</div>
+   <div><strong>Duration</strong>${esc(c.duration_days)} days</div><div><strong>Campaign clicks</strong>${Number(c.click_count||0)}</div><div><strong>Current quote</strong>${c.quoted_amount==null?"Not set":money(c.quoted_amount)}</div>
+  </div>
+  <p style="white-space:pre-wrap;line-height:1.5;font-size:13px;margin:10px 0">${esc(c.body_text)}</p>
+  <p class="muted">CTA: ${esc(c.cta_label)} · ${esc(c.cta_url)}</p>
+  <form class="campaign-form" data-campaign-id="${esc(c.id)}">
+   <div class="form-grid">
+    <div><label>Status</label><select name="status">
+     ${["Pending review","Awaiting payment","Scheduled","Active","Paused","Completed","Declined"].map(v=>'<option '+(v===c.status?'selected':'')+'>'+v+'</option>').join("")}
+    </select></div>
+    <div><label>Payment status</label><select name="payment_status">
+     ${["Unpaid","Paid","Waived"].map(v=>'<option '+(v===c.payment_status?'selected':'')+'>'+v+'</option>').join("")}
+    </select></div>
+    <div><label>Quoted amount (R)</label><input name="quoted_amount" type="number" min="0" step="0.01" value="${c.quoted_amount==null?"":esc(c.quoted_amount)}" placeholder="Final agreed amount"></div>
+    <div><label>Payment reference</label><input name="payment_reference" maxlength="120" value="${esc(c.payment_reference||"")}" placeholder="EFT / payment reference"></div>
+    <div><label>Start date and time</label><input name="starts_at" type="datetime-local" value="${localInput(c.starts_at)}"></div>
+    <div><label>End date and time</label><input name="ends_at" type="datetime-local" value="${localInput(c.ends_at)}"></div>
+   </div>
+   <div class="actions"><span class="muted">Only Paid or Waived campaigns can be scheduled or activated.</span><button type="submit">Save campaign</button></div>
+   <p class="notice" role="status"></p>
+  </form>
+ </article>`).join(""):'<div class="panel muted">No service partner campaign requests yet.</div>';
+ document.querySelectorAll(".campaign-form").forEach(form=>form.addEventListener("submit",saveCampaign));
+}
+async function saveCampaign(event){
+ event.preventDefault();
+ const form=event.currentTarget,button=form.querySelector("button[type=submit]"),notice=form.querySelector(".notice");
+ const v=new FormData(form);
+ const quoted=String(v.get("quoted_amount")||"").trim();
+ const args={
+  p_campaign_id:form.dataset.campaignId,
+  p_status:String(v.get("status")),
+  p_payment_status:String(v.get("payment_status")),
+  p_payment_reference:String(v.get("payment_reference")||"").trim()||null,
+  p_quoted_amount:quoted===""?null:Number(quoted),
+  p_starts_at:isoInput(v.get("starts_at")),
+  p_ends_at:isoInput(v.get("ends_at"))
+ };
+ button.disabled=true;button.textContent="Saving…";notice.textContent="";
+ const {error}=await db.rpc("admin_update_service_partner_campaign",args);
+ if(error){notice.textContent=error.message;notice.style.color="#a00000";button.disabled=false;button.textContent="Save campaign";return;}
+ notice.textContent="Campaign updated.";notice.style.color="#176b35";
+ await loadCampaigns();
+}
+$("login-form").addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("login-btn");btn.disabled=true;btn.textContent="Signing in…";
+ const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+ if(error){$("login-msg").textContent=error.message;btn.disabled=false;btn.textContent="Sign in";return;}
+ await verifyAdmin();btn.disabled=false;btn.textContent="Sign in";
+});
+$("logout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
+$("refresh").addEventListener("click",loadCampaigns);
+verifyAdmin();
+</script>
+</body>
+</html>
