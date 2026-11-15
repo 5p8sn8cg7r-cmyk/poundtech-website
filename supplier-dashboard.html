@@ -521,6 +521,18 @@ Add Product
             <input type="url" id="edit-product-youtube-demo" class="pt-field" placeholder="https://www.youtube.com/watch?v=...">
             <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:10px;"><input type="checkbox" id="edit-remove-product-video" style="width:auto;"> Remove current advert preview</label>
         </div>
+        <div class="pt-edit-section-title"><span>03</span><div><strong>Product specifications</strong><small>Optional fields; only add details you can verify.</small></div></div>
+        <div class="pt-edit-grid">
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-brand">Brand</label><input id="edit-product-spec-brand" class="pt-field" maxlength="100" placeholder="e.g. Castrol"></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-part_number">Part number / SKU</label><input id="edit-product-spec-part_number" class="pt-field" maxlength="100" placeholder="Manufacturer part number"></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-condition">Condition</label><input id="edit-product-spec-condition" class="pt-field" maxlength="80" placeholder="New, used or refurbished"></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-material">Material</label><input id="edit-product-spec-material" class="pt-field" maxlength="120" placeholder="e.g. Aluminium"></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-dimensions">Dimensions</label><input id="edit-product-spec-dimensions" class="pt-field" maxlength="120" placeholder="e.g. 300 × 200 mm"></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-volume">Volume</label><input id="edit-product-spec-volume" class="pt-field" maxlength="60" placeholder="e.g. 5 L or 500 ml"><p class="pt-field-help">For oils, fluids, coolants and other liquids, include the unit.</p></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-capacity">Capacity</label><input id="edit-product-spec-capacity" class="pt-field" maxlength="60" placeholder="e.g. 60 Ah"></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-warranty">Warranty</label><input id="edit-product-spec-warranty" class="pt-field" maxlength="120" placeholder="Only if confirmed"></div>
+        </div>
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-package_contents">What's included</label><input id="edit-product-spec-package_contents" class="pt-field" maxlength="250" placeholder="Items included in the package"></div>
         <div class="pt-info-panel pt-edit-tip">A clear title, accurate stock count and helpful compatibility details make it easier for customers to buy with confidence.</div>
         <p id="edit-product-error" role="alert" style="color:#b80000;font-size:13px;min-height:18px;margin:12px 0 0;"></p>
     </div>
@@ -719,6 +731,22 @@ Add Product
         style="display:block; margin-bottom:5px; padding:10px; width:100%;"
     >
     <p style="color:#666;font-size:12px;line-height:1.5;margin:0 0 12px;">List make, model, year range, engine, trim or part number where known. If genuinely universal, enter “Universal”. If fitment has not been confirmed, say so clearly instead of guessing.</p>
+
+    <div style="border:1px solid #e5e5e5;border-radius:10px;padding:14px;margin:14px 0;background:#fafafa;">
+        <strong style="display:block;margin-bottom:5px;">Product specifications <span style="font-weight:400;color:#777;">(optional where not applicable)</span></strong>
+        <p style="color:#666;font-size:12px;line-height:1.5;margin:0 0 10px;">Add verified details customers can compare. For liquids, enter the exact volume and unit, such as 500 ml, 1 L or 5 L. Leave fields blank when they do not apply.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;">
+            <input id="product-spec-brand" type="text" maxlength="100" placeholder="Brand" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-part_number" type="text" maxlength="100" placeholder="Part number / SKU" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-condition" type="text" maxlength="80" placeholder="Condition (new / used / refurbished)" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-material" type="text" maxlength="120" placeholder="Material" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-dimensions" type="text" maxlength="120" placeholder="Dimensions (e.g. 300 × 200 mm)" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-volume" type="text" maxlength="60" placeholder="Volume (e.g. 5 L / 500 ml)" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-capacity" type="text" maxlength="60" placeholder="Capacity (e.g. 60 Ah)" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-warranty" type="text" maxlength="120" placeholder="Warranty (if confirmed)" style="padding:10px;width:100%;box-sizing:border-box;">
+            <input id="product-spec-package_contents" type="text" maxlength="250" placeholder="What's included" style="padding:10px;width:100%;box-sizing:border-box;">
+        </div>
+    </div>
 
     <div class="row-actions">
         <button onclick="addProduct()">
@@ -1399,6 +1427,17 @@ function hideAddProductForm() {
     document.getElementById("add-product-form").style.display = "none";
 }
 
+function readProductSpecifications(prefix) {
+    const keys = ["brand","part_number","condition","material","dimensions","volume","capacity","warranty","package_contents"];
+    const result = {};
+    keys.forEach(function (key) {
+        const input = document.getElementById(prefix + "-" + key);
+        const value = input ? input.value.trim() : "";
+        if (value) result[key] = value;
+    });
+    return result;
+}
+
 let savingProduct = false;
 
 // Stops a double tap from saving the same product twice while a photo uploads.
@@ -1510,6 +1549,7 @@ async function addProductInner() {
         return;
     }
     const vehicle_compatibility = document.getElementById("vehicle-compatibility").value;
+    const specifications = readProductSpecifications("product-spec");
     const videoFile = document.getElementById("product-video-preview").files[0] || null;
     const youtubeInput = document.getElementById("product-youtube-demo").value.trim();
     const youtubeDemoUrl = youtubeInput ? normaliseYouTubeUrl(youtubeInput) : null;
@@ -1609,6 +1649,7 @@ async function addProductInner() {
             video_preview_url: uploadedVideoUrl,
             youtube_demo_url: youtubeDemoUrl,
             vehicle_compatibility: vehicle_compatibility,
+            specifications: specifications,
             sale_price: special.sale_price,
             sale_starts_at: special.sale_starts_at,
             sale_ends_at: special.sale_ends_at,
@@ -1645,6 +1686,7 @@ async function addProductInner() {
         img.removeAttribute("src");
     });
     document.getElementById("vehicle-compatibility").value = "";
+    document.querySelectorAll("[id^='product-spec-']").forEach(function (input) { input.value = ""; });
     document.getElementById("product-video-preview").value = "";
     document.getElementById("product-youtube-demo").value = "";
     const previewPlayer = document.getElementById("product-video-preview-player");
@@ -2260,6 +2302,11 @@ async function editProduct(productId) {
     document.getElementById("edit-product-stock").value = product.stock == null ? 0 : product.stock;
     document.getElementById("edit-product-description").value = product.description || "";
     document.getElementById("edit-product-compatibility").value = product.vehicle_compatibility || "";
+    const existingSpecs = product.specifications && typeof product.specifications === "object" ? product.specifications : {};
+    ["brand","part_number","condition","material","dimensions","volume","capacity","warranty","package_contents"].forEach(function (key) {
+        const field = document.getElementById("edit-product-spec-" + key);
+        if (field) field.value = existingSpecs[key] || "";
+    });
     document.getElementById("edit-product-error").textContent = "";
     const editImage = document.getElementById("edit-product-image");
     const editPlaceholder = document.getElementById("edit-product-image-placeholder");
@@ -2308,7 +2355,8 @@ document.getElementById("edit-product-save").addEventListener("click", async () 
     const productChanges = {
         name, price, stock,
         description: document.getElementById("edit-product-description").value.trim(),
-        vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim()
+        vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim(),
+        specifications: readProductSpecifications("edit-product-spec")
     };
     if (hasActivePremiumVideoPlan()) {
         productChanges.video_preview_url = nextVideoUrl;
