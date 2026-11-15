@@ -213,6 +213,12 @@ summary {
     .grid { grid-template-columns: 1fr; }
 }
 
+
+.featured-section{margin:22px 0 28px;padding:18px;border:1px solid #ead9b5;border-radius:14px;background:#fffaf0}
+.featured-section h2{font-size:20px;margin:0 0 6px}
+.featured-section>p{font-size:13px;color:#6f5a32;line-height:1.5;margin:0 0 14px}
+.featured-section .grid{margin:0}
+
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
@@ -252,6 +258,12 @@ summary {
         </div>
 
     </div>
+
+    <section id="featured-service-partners" class="featured-section" hidden>
+        <h2>Featured service partners</h2>
+        <p>Selected Professional and Enterprise businesses with enhanced visibility on PoundTech.</p>
+        <div id="featured-service-partners-container" class="grid"></div>
+    </section>
 
     <div id="mechanics-container" class="grid">
         <div class="empty">Loading…</div>
@@ -298,6 +310,7 @@ const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 let allMechanics = [];
+let featuredServicePartners = [];
 let servicesByBusiness = {};
 let hoursByBusiness = {};
 let ratingsByBusiness = {};
@@ -406,14 +419,19 @@ async function loadMechanics() {
         .select("mechanic_id, storage_path, sort_order")
         .order("sort_order", { ascending: true });
 
-    const [mechanicsRes, servicesRes, hoursRes, reviewsRes, photosRes] =
-        await Promise.all([mechanicsQuery, servicesQuery, hoursQuery, reviewsQuery, photosQuery]);
+    const featuredQuery = supabaseClient.rpc("get_featured_service_partners");
+
+    const [mechanicsRes, servicesRes, hoursRes, reviewsRes, photosRes, featuredRes] =
+        await Promise.all([mechanicsQuery, servicesQuery, hoursQuery, reviewsQuery, photosQuery, featuredQuery]);
 
     if (mechanicsRes.error) {
         console.error(mechanicsRes.error);
         container.innerHTML = '<div class="empty">We couldn\'t load businesses right now. Please try again shortly.</div>';
         return;
     }
+
+    if (featuredRes.error) console.error("Featured service partners could not be loaded:", featuredRes.error);
+    featuredServicePartners = featuredRes.data || [];
 
     [servicesRes, hoursRes, reviewsRes, photosRes].forEach(res => {
         if (res.error) { console.error(res.error); }
@@ -439,6 +457,7 @@ async function loadMechanics() {
         ratingsByBusiness[review.mechanic_id] = entry;
     });
 
+    renderFeaturedServicePartners();
     applyFilters();
 }
 
@@ -629,6 +648,15 @@ function displayMechanics(list) {
 }
 
 
+
+function renderFeaturedServicePartners() {
+    const section = document.getElementById("featured-service-partners");
+    const container = document.getElementById("featured-service-partners-container");
+    container.innerHTML = featuredServicePartners.length
+        ? featuredServicePartners.map(businessCard).join("")
+        : "";
+}
+
 /* ---------- search & filter ---------- */
 
 function applyFilters() {
@@ -663,7 +691,14 @@ function applyFilters() {
         return haystack.includes(search);
     });
 
-    displayMechanics(filtered);
+    const showFeatured = !search && currentType === "all" && featuredServicePartners.length > 0;
+    document.getElementById("featured-service-partners").hidden = !showFeatured;
+    if (showFeatured) {
+        const featuredIds = new Set(featuredServicePartners.map(item => item.id));
+        displayMechanics(filtered.filter(item => !featuredIds.has(item.id)));
+    } else {
+        displayMechanics(filtered);
+    }
 }
 
 
