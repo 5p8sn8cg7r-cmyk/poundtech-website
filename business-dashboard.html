@@ -24,6 +24,14 @@
 .business-photo-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .business-photo-actions input{display:none}
 .business-photo-note{font-size:13px;color:#777;line-height:1.5}
+.branch-list{margin:16px 0}
+.branch-item{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border:1px solid #eee;border-radius:10px;padding:14px;margin-bottom:10px}
+.branch-item-main{min-width:0}.branch-item-main strong{display:block}
+.branch-item-meta{font-size:13px;color:#666;margin-top:5px;line-height:1.5}
+.branch-item-actions{display:flex;gap:8px;flex-wrap:wrap}
+.branch-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.branch-form-grid .full{grid-column:1/-1}
+@media(max-width:600px){.branch-item{flex-direction:column}.branch-item-actions{width:100%}.branch-item-actions .btn{flex:1}.branch-form-grid{grid-template-columns:1fr}.branch-form-grid .full{grid-column:auto}}
 
 .membership-options {
     display: grid;
@@ -331,6 +339,30 @@ html{scroll-behavior:smooth}
             <div id="business-photo-msg" role="status" aria-live="polite"></div>
         </section>
 
+        <!-- Branch locations -->
+        <section class="card" id="branches">
+            <h2>Branch locations</h2>
+            <p class="lead">Manage the locations where customers can visit your business. Services, opening hours and booking rules are shared across branches; booking capacity is tracked separately at each location.</p>
+            <p id="branch-limit" class="business-photo-limit" aria-live="polite">Loading your branch allowance…</p>
+            <div id="branch-list" class="branch-list"></div>
+            <button class="btn" id="branch-add-btn" type="button">Add branch location</button>
+            <div id="branch-form" hidden style="margin-top:18px;padding-top:18px;border-top:1px solid #eee;">
+                <h3 id="branch-form-title" style="font-size:17px;margin:0 0 12px;">Add a branch</h3>
+                <div class="branch-form-grid">
+                    <div class="full"><label for="branch-name">Branch name</label><input id="branch-name" maxlength="80" placeholder="e.g. Sandton branch"></div>
+                    <div class="full"><label for="branch-address">Street address</label><input id="branch-address" maxlength="250" placeholder="Street number, street, building or complex"></div>
+                    <div><label for="branch-area">Suburb / area</label><input id="branch-area" maxlength="160" placeholder="e.g. Sandton"></div>
+                    <div><label for="branch-phone">Contact phone</label><input id="branch-phone" maxlength="30" placeholder="e.g. 011 123 4567"></div>
+                    <div class="full"><label for="branch-email">Branch email (optional)</label><input id="branch-email" type="email" maxlength="254" placeholder="branch@business.co.za"></div>
+                </div>
+                <div class="btn-row" style="margin-top:14px;">
+                    <button class="btn" id="branch-save-btn" type="button">Save branch</button>
+                    <button class="btn btn-dark" id="branch-cancel-btn" type="button">Cancel</button>
+                </div>
+            </div>
+            <div id="branch-msg" role="status"></div>
+        </section>
+
         <!-- Business specialities -->
         <section class="card" id="specialties">
             <h2>Business specialities</h2>
@@ -405,7 +437,7 @@ html{scroll-behavior:smooth}
         <!-- Hours -->
         <div class="card" id="hours">
             <h2>Opening hours</h2>
-            <p class="lead">Customers can only book inside these hours.</p>
+            <p class="lead">Customers can only book inside these hours. These opening hours apply across all your branch locations.</p>
 
             <div id="hours-list"></div>
 
@@ -418,7 +450,7 @@ html{scroll-behavior:smooth}
         <!-- Booking settings -->
         <div class="card" id="booking-settings">
             <h2>Booking settings</h2>
-            <p class="lead">Control how many customers you can take at once and how far ahead they can book.</p>
+            <p class="lead">Control how many customers each branch can take at once and how far ahead they can book. The same booking rules apply across branches, with capacity tracked separately at each location.</p>
 
             <div class="grid-2">
                 <div>
@@ -687,6 +719,7 @@ async function init() {
 
     await Promise.all([loadMembership(), loadServices(), loadHours(), loadSettings()]);
     await loadBusinessPhotos();
+    await loadBranches();
 }
 
 
@@ -742,7 +775,7 @@ async function loadMembership() {
             .maybeSingle(),
         supabaseClient
             .from("service_partner_plans")
-            .select("code, display_name, monthly_price, commission_rate, business_photo_limit")
+            .select("code, display_name, monthly_price, commission_rate, business_photo_limit, branch_limit")
             .eq("is_active", true)
             .order("monthly_price", { ascending: true })
     ]);
@@ -790,6 +823,7 @@ async function loadMembership() {
     el("membership-professional-btn").disabled = effectiveCode === "professional";
     el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Subscribe · R499/month";
     renderBusinessPhotoAllowance();
+    renderBranchAllowance();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("membership") === "success") {
@@ -1050,6 +1084,139 @@ el("business-photo-grid").addEventListener("click", event => {
     const removeButton = event.target.closest("[data-remove-business-photo]");
     if (removeButton) removeBusinessPhoto(removeButton.dataset.removeBusinessPhoto);
     if (event.target.closest("[data-remove-legacy-business-photo]")) removeLegacyBusinessPhoto();
+});
+
+/* ---------- BRANCH LOCATIONS ---------- */
+
+let businessBranchRows = [];
+let branchLimit = 1;
+let editingBranchId = null;
+
+function renderBranchAllowance() {
+    const plan = currentServicePlan();
+    const custom = plan && plan.code === "enterprise" && plan.branch_limit == null;
+    branchLimit = plan && plan.branch_limit != null ? Number(plan.branch_limit) : 1;
+    const activeCount = businessBranchRows.filter(branch => branch.is_active).length;
+    el("branch-limit").textContent = custom
+        ? activeCount + " active branch" + (activeCount === 1 ? "" : "es") + ". Your Enterprise allowance is customised; contact PoundTech to configure it."
+        : activeCount + " of " + branchLimit + " active branch locations used on " + (plan?.display_name || "your plan") + ".";
+    el("branch-add-btn").disabled = custom || activeCount >= branchLimit;
+    el("branch-add-btn").textContent = custom ? "Contact PoundTech" :
+        activeCount >= branchLimit ? "Branch limit reached" : "Add branch location";
+}
+
+function renderBranches() {
+    const list = el("branch-list");
+    if (!businessBranchRows.length) {
+        list.innerHTML = '<p class="empty-note">No branch locations found. Refresh the page to reload your main branch.</p>';
+        renderBranchAllowance();
+        return;
+    }
+    list.innerHTML = businessBranchRows.map(branch => {
+        const address = [branch.address, branch.service_area].filter(Boolean).join(" · ");
+        const status = branch.is_active ? "Active" : "Inactive";
+        return '<div class="branch-item"><div class="branch-item-main"><strong>' + esc(branch.name) +
+            (branch.is_primary ? ' <span class="tag">Primary</span>' : '') +
+            '<span class="tag ' + (branch.is_active ? 'instant' : 'off') + '">' + status + '</span></strong>' +
+            '<div class="branch-item-meta">' + esc(address) +
+            (branch.phone ? '<br>' + esc(branch.phone) : '') +
+            (branch.email ? '<br>' + esc(branch.email) : '') +
+            '</div></div><div class="branch-item-actions"><button type="button" class="btn btn-dark btn-small" data-edit-branch="' + esc(branch.id) + '">Edit</button>' +
+            (branch.is_primary ? '' :
+                '<button type="button" class="btn btn-small" data-toggle-branch="' + esc(branch.id) + '">' +
+                (branch.is_active ? 'Deactivate' : 'Reactivate') + '</button>') +
+            '</div></div>';
+    }).join("");
+    renderBranchAllowance();
+}
+
+async function loadBranches() {
+    const { data, error } = await supabaseClient
+        .from("service_partner_branches")
+        .select("id, mechanic_id, name, phone, email, address, service_area, is_primary, is_active, created_at")
+        .eq("mechanic_id", business.id)
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true });
+    if (error) {
+        console.error("Branch load error:", error);
+        msg("branch-msg", "We couldn't load your branch locations. Please refresh the page.", "error");
+        return;
+    }
+    businessBranchRows = data || [];
+    renderBranches();
+}
+
+function openBranchForm(branchId) {
+    editingBranchId = branchId || null;
+    const branch = branchId ? businessBranchRows.find(item => item.id === branchId) : null;
+    el("branch-form-title").textContent = branch ? "Edit branch" : "Add a branch";
+    el("branch-name").value = branch?.name || "";
+    el("branch-address").value = branch?.address || "";
+    el("branch-area").value = branch?.service_area || "";
+    el("branch-phone").value = branch?.phone || "";
+    el("branch-email").value = branch?.email || "";
+    el("branch-save-btn").textContent = branch ? "Save changes" : "Save branch";
+    show("branch-form", true);
+    el("branch-form").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeBranchForm() {
+    editingBranchId = null;
+    el("branch-form").reset?.();
+    ["branch-name","branch-address","branch-area","branch-phone","branch-email"].forEach(id => { el(id).value = ""; });
+    show("branch-form", false);
+}
+
+async function saveBranch() {
+    const name = el("branch-name").value.trim();
+    const address = el("branch-address").value.trim();
+    const serviceArea = el("branch-area").value.trim();
+    const phone = el("branch-phone").value.trim();
+    const email = el("branch-email").value.trim().toLowerCase();
+    if (name.length < 2 || name.length > 80) { msg("branch-msg", "Enter a branch name (2 to 80 characters).", "error"); return; }
+    if (address.length < 5 || address.length > 250) { msg("branch-msg", "Enter the branch street address.", "error"); return; }
+    if (serviceArea.length < 2 || serviceArea.length > 160) { msg("branch-msg", "Enter the suburb or area.", "error"); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg("branch-msg", "Enter a valid branch email address.", "error"); return; }
+    const fields = { name, address, service_area: serviceArea, phone: phone || null, email: email || null };
+    el("branch-save-btn").disabled = true;
+    const result = editingBranchId
+        ? await supabaseClient.from("service_partner_branches").update(fields).eq("id", editingBranchId).eq("mechanic_id", business.id)
+        : await supabaseClient.from("service_partner_branches").insert({ ...fields, mechanic_id: business.id, is_primary: false, is_active: true });
+    el("branch-save-btn").disabled = false;
+    if (result.error) {
+        console.error(result.error);
+        msg("branch-msg", result.error.message || "We couldn't save that branch.", "error");
+        return;
+    }
+    closeBranchForm();
+    msg("branch-msg", editingBranchId ? "Branch updated." : "Branch added.", "success");
+    await loadBranches();
+}
+
+async function toggleBranch(branchId) {
+    const branch = businessBranchRows.find(item => item.id === branchId);
+    if (!branch || branch.is_primary) return;
+    const nextActive = !branch.is_active;
+    if (!confirm((nextActive ? "Reactivate " : "Deactivate ") + branch.name + "?")) return;
+    const { error } = await supabaseClient.from("service_partner_branches")
+        .update({ is_active: nextActive }).eq("id", branchId).eq("mechanic_id", business.id);
+    if (error) {
+        console.error(error);
+        msg("branch-msg", error.message || "We couldn't update that branch.", "error");
+        return;
+    }
+    msg("branch-msg", nextActive ? "Branch reactivated." : "Branch deactivated.", "success");
+    await loadBranches();
+}
+
+el("branch-add-btn").addEventListener("click", () => openBranchForm());
+el("branch-save-btn").addEventListener("click", saveBranch);
+el("branch-cancel-btn").addEventListener("click", closeBranchForm);
+el("branch-list").addEventListener("click", event => {
+    const edit = event.target.closest("[data-edit-branch]");
+    const toggle = event.target.closest("[data-toggle-branch]");
+    if (edit) openBranchForm(edit.dataset.editBranch);
+    if (toggle) toggleBranch(toggle.dataset.toggleBranch);
 });
 
 /* ---------- BUSINESS TYPE ---------- */
