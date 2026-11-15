@@ -1295,8 +1295,16 @@ async function submitServicePartnerCampaign(event) {
     el("service-campaign-cta").value = "View offer";
     el("service-campaign-duration").value = "7";
     el("service-campaign-url").value = "/mechanic-profile.html?id=" + encodeURIComponent(business.id);
-    el("service-campaign-msg").textContent = "Your campaign request has been sent to PoundTech. We'll review it and contact you with a quote and payment instructions.";
+    el("service-campaign-msg").textContent = "Your campaign request has been saved. Notifying PoundTech…";
+    const { data: notification, error: notificationError } = await supabaseClient.functions.invoke("service-partner-campaign-notify", {
+        body: { campaign_id: data }
+    });
     await loadMyServicePartnerCampaigns();
+    if (notificationError || !notification || !notification.notified) {
+        el("service-campaign-msg").textContent = "Your campaign request is saved. PoundTech will review it; the email notification could not be confirmed.";
+    } else {
+        el("service-campaign-msg").textContent = "Your campaign request has been sent to PoundTech. We'll review it and contact you with a quote and payment instructions.";
+    }
     button.disabled = false;
     button.textContent = "Request campaign";
 }
