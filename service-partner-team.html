@@ -113,8 +113,8 @@ async function loadTeam(){
   ?"Your Enterprise staff allowance is customised. Contact PoundTech to configure your agreed limit."
   :staffLimit===0
    ?"Your current plan includes the owner login only. Upgrade to Growth Partner to add staff accounts."
-   ? "Your current plan includes the owner login only. Upgrade to Growth Partner to add staff accounts."
    :"Your plan includes "+staffLimit+" additional staff account"+(staffLimit===1?"":"s")+".";
+
  const disabled=custom||staffLimit<1||used>=staffLimit;
  $("invite-button").disabled=disabled;
  $("invite-button").textContent=custom?"Contact PoundTech":staffLimit<1?"Upgrade to add staff":used>=staffLimit?"Staff limit reached":"Send invitation";
