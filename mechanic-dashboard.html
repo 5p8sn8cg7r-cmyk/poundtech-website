@@ -246,6 +246,8 @@ const supabaseClient =
 
 let currentMechanic = null;
 let currentTeamMember = null;
+let branchNamesById = {};
+let primaryBranchName = "Main branch";
 let messageTimer = null;
 
 
@@ -452,6 +454,7 @@ function bookingCard(booking) {
             <div class="when">${esc(formatWhen(booking))}</div>
 
             <div class="details">
+                <div><strong>Branch:</strong> ${esc(booking.branch_id ? (branchNamesById[booking.branch_id] || "Branch location") : primaryBranchName)}</div>
                 <div><strong>Service:</strong> ${esc(booking.service_required)}</div>
                 <div><strong>Price:</strong> ${esc(money(booking.agreed_price))}</div>
                 <div><strong>Vehicle:</strong> ${esc(booking.vehicle)}</div>
@@ -480,6 +483,16 @@ async function loadBookings() {
         container.innerHTML = '<p class="empty">We couldn\'t load your bookings. Please refresh the page.</p>';
         return;
     }
+
+    const { data: branches, error: branchesError } = await supabaseClient
+        .from("service_partner_branches")
+        .select("id,name,is_primary")
+        .eq("mechanic_id", currentMechanic.id);
+    if (branchesError) console.error("Unable to load booking branch labels:", branchesError);
+    branchNamesById = {};
+    (branches || []).forEach(branch => { branchNamesById[branch.id] = branch.name; });
+    const primaryBranch = (branches || []).find(branch => branch.is_primary);
+    primaryBranchName = primaryBranch?.name || "Main branch";
 
     MD_BOOKINGS = bookings || [];
     renderMechanicDashboard();
