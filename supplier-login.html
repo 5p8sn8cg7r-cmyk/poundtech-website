@@ -89,12 +89,18 @@ function showMessage(text, type) {
 
 // Links this login to the supplier's approved application, then routes them.
 async function routeAfterLogin() {
+    // Preserve the selected supplier-plan destination after authentication.
+    // Only allow a local supplier-dashboard path to prevent open redirects.
+    const requestedNext = new URLSearchParams(window.location.search).get("next") || "";
+    const dashboardTarget = /^supplier-dashboard\.html(?:\?.*)?$/.test(requestedNext)
+        ? requestedNext
+        : "supplier-dashboard.html";
 
     // Existing team members already belong to a supplier; route them before
     // the legacy owner-account claiming flow runs.
     const { data: teamSupplierId, error: teamAccessError } = await supabaseClient.rpc("get_my_supplier_id");
     if (!teamAccessError && teamSupplierId) {
-        window.location.href = "supplier-dashboard.html";
+        window.location.href = dashboardTarget;
         return true;
     }
 
@@ -108,7 +114,7 @@ async function routeAfterLogin() {
     }
 
     if (result === "linked") {
-        window.location.href = "supplier-dashboard.html";
+        window.location.href = dashboardTarget;
         return true;
     }
 
