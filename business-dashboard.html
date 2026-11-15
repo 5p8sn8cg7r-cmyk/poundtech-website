@@ -16,6 +16,14 @@
 
 
 .card { margin-bottom: 22px; }
+.business-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin:16px 0}
+.business-photo-item{position:relative;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;background:#f7f7f7}
+.business-photo-item img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.business-photo-item button{width:100%;border:0;border-top:1px solid #e5e5e5;background:#fff;color:#b00000;padding:9px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.business-photo-limit{font-size:13px;color:#666;margin:8px 0}
+.business-photo-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.business-photo-actions input{display:none}
+.business-photo-note{font-size:13px;color:#777;line-height:1.5}
 
 .membership-options {
     display: grid;
@@ -307,6 +315,20 @@ html{scroll-behavior:smooth}
             <div id="type-msg" role="status"></div>
         </div>
 
+
+        <!-- Business photo gallery -->
+        <section class="card" id="business-photos">
+            <h2>Business photos</h2>
+            <p class="lead">Show customers your workshop, team, equipment and the quality of your work. These photos appear on your public PoundTech business profile.</p>
+            <p id="business-photo-limit" class="business-photo-limit" aria-live="polite">Loading your photo allowance…</p>
+            <div id="business-photo-grid" class="business-photo-grid"></div>
+            <div class="business-photo-actions">
+                <button class="btn" id="business-photo-add" type="button">Add photos</button>
+                <input type="file" id="business-photo-input" accept="image/jpeg,image/png,image/webp" multiple>
+            </div>
+            <p class="business-photo-note">JPG, PNG or WebP. Images are automatically resized for faster loading. Maximum original file size: 15 MB each.</p>
+            <div id="business-photo-msg" role="status" aria-live="polite"></div>
+        </section>
 
         <!-- Business specialities -->
         <section class="card" id="specialties">
@@ -631,7 +653,7 @@ async function init() {
 
     const { data, error } = await supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, specialties, status")
+        .select("id, business_name, business_type, specialties, status, business_photo_url")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: true })
         .limit(1);
@@ -663,6 +685,7 @@ async function init() {
     show("app", true);
 
     await Promise.all([loadMembership(), loadServices(), loadHours(), loadSettings()]);
+    await loadBusinessPhotos();
 }
 
 
@@ -718,7 +741,7 @@ async function loadMembership() {
             .maybeSingle(),
         supabaseClient
             .from("service_partner_plans")
-            .select("code, display_name, monthly_price, commission_rate")
+            .select("code, display_name, monthly_price, commission_rate, business_photo_limit")
             .eq("is_active", true)
             .order("monthly_price", { ascending: true })
     ]);
@@ -765,6 +788,7 @@ async function loadMembership() {
     el("membership-growth-btn").textContent = effectiveCode === "growth" ? "Current plan" : "Subscribe · R199/month";
     el("membership-professional-btn").disabled = effectiveCode === "professional";
     el("membership-professional-btn").textContent = effectiveCode === "professional" ? "Current plan" : "Subscribe · R499/month";
+    renderBusinessPhotoAllowance();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("membership") === "success") {
@@ -811,6 +835,221 @@ async function chooseMembershipPlan(planCode) {
         professionalButton.disabled = membership?.status === "active" && membership?.plan_code === "professional";
     }
 }
+
+/* ---------- BUSINESS PHOTO GALLERY ---------- */
+
+let businessPhotoRows = [];
+let businessPhotoLimit = 0;
+let legacyBusinessPhotoUrl = null;
+
+function currentServicePlan() {
+    const expired = !!(membership?.current_period_end &&
+        new Date(membership.current_period_end).getTime() <= Date.now());
+    const code = membership?.status === "active" && !expired
+        ? (membership.plan_code || "free") : "free";
+    return membershipPlans.find(plan => plan.code === code) ||
+        membershipPlans.find(plan => plan.code === "free");
+}
+
+function renderBusinessPhotoAllowance() {
+    const plan = currentServicePlan();
+    businessPhotoLimit = plan && plan.business_photo_limit != null
+        ? Number(plan.business_photo_limit) : 0;
+    const isEnterpriseCustom = plan && plan.code === "enterprise" &&
+        plan.business_photo_limit == null;
+    const count = businessPhotoRows.length + (legacyBusinessPhotoUrl ? 1 : 0);
+    const limitText = isEnterpriseCustom
+        ? "Enterprise photo allowance is customised. Contact PoundTech to activate your agreed gallery limit."
+        : businessPhotoLimit > 0
+            ? count + " of " + businessPhotoLimit + " photos used on " + (plan.display_name || "your plan") + "."
+            : "Business photo galleries are available from Growth Partner. Free Partner includes no business photos.";
+    el("business-photo-limit").textContent = limitText;
+    el("business-photo-add").disabled = businessPhotoLimit < 1 || count >= businessPhotoLimit;
+    el("business-photo-add").textContent = count >= businessPhotoLimit && businessPhotoLimit > 0
+        ? "Photo limit reached" : "Add photos";
+}
+
+function businessPhotoUrl(row) {
+    if (row.storage_path && row.storage_path.indexOf("legacy-url:") === 0) {
+        return row.storage_path.slice("legacy-url:".length);
+    }
+    return supabaseClient.storage.from("service-partner-photos").getPublicUrl(row.storage_path).data.publicUrl;
+}
+
+function renderBusinessPhotoGrid() {
+    const grid = el("business-photo-grid");
+    const rows = businessPhotoRows.slice().sort((a,b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+    let html = rows.map(row => {
+        const url = businessPhotoUrl(row);
+        return '<div class="business-photo-item"><img src="' + esc(url) + '" alt="Business photo" loading="lazy">' +
+            '<button type="button" data-remove-business-photo="' + esc(row.id) + '">Remove photo</button></div>';
+    }).join("");
+    if (legacyBusinessPhotoUrl && !rows.some(row => row.storage_path.indexOf("legacy-url:") === 0)) {
+        html += '<div class="business-photo-item"><img src="' + esc(legacyBusinessPhotoUrl) + '" alt="Current business photo" loading="lazy">' +
+            '<button type="button" data-remove-legacy-business-photo="true">Remove photo</button></div>';
+    }
+    grid.innerHTML = html || '<p class="empty-note">No business photos uploaded yet.</p>';
+    renderBusinessPhotoAllowance();
+}
+
+async function loadBusinessPhotos() {
+    legacyBusinessPhotoUrl = business.business_photo_url || null;
+    const { data, error } = await supabaseClient
+        .from("mechanic_business_photos")
+        .select("id, mechanic_id, storage_path, sort_order, created_at")
+        .eq("mechanic_id", business.id)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+    if (error) {
+        console.error("Business photo load error:", error);
+        msg("business-photo-msg", "We couldn't load your business photos. Please refresh the page.", "error");
+        return;
+    }
+    businessPhotoRows = data || [];
+    renderBusinessPhotoGrid();
+}
+
+async function compressBusinessPhoto(file) {
+    const image = new Image();
+    const sourceUrl = URL.createObjectURL(file);
+    try {
+        await new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = () => reject(new Error("This image could not be opened."));
+            image.src = sourceUrl;
+        });
+        const scale = Math.min(1, 1600 / image.width, 1600 / image.height);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Image resizing is not supported by this browser.");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.82));
+        if (!blob) throw new Error("This image could not be prepared for upload.");
+        return blob;
+    } finally {
+        URL.revokeObjectURL(sourceUrl);
+    }
+}
+
+async function uploadBusinessPhotos(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    const remaining = Math.max(0, businessPhotoLimit - businessPhotoRows.length - (legacyBusinessPhotoUrl ? 1 : 0));
+    if (businessPhotoLimit < 1) {
+        msg("business-photo-msg", "Upgrade to Growth Partner or higher to add business photos.", "error");
+        return;
+    }
+    if (files.length > remaining) {
+        msg("business-photo-msg", "You can add " + remaining + " more photo" + (remaining === 1 ? "" : "s") + " on your current plan.", "error");
+        return;
+    }
+    const input = el("business-photo-input");
+    const button = el("business-photo-add");
+    button.disabled = true;
+    let added = 0;
+    try {
+        const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+        if (authError || !authData?.user) throw new Error("Please sign in again.");
+        for (const file of files) {
+            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                throw new Error("Please choose JPG, PNG or WebP images only.");
+            }
+            if (file.size > 15 * 1024 * 1024) throw new Error(file.name + " is larger than 15 MB.");
+            const blob = await compressBusinessPhoto(file);
+            const path = authData.user.id + "/" + business.id + "/" + crypto.randomUUID() + ".jpg";
+            const { data: reservation, error: reserveError } = await supabaseClient
+                .from("mechanic_business_photos")
+                .insert({ mechanic_id: business.id, storage_path: path, sort_order: businessPhotoRows.length })
+                .select("id, mechanic_id, storage_path, sort_order, created_at")
+                .single();
+            if (reserveError) throw reserveError;
+            const { error: uploadError } = await supabaseClient.storage
+                .from("service-partner-photos")
+                .upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000", upsert: false });
+            if (uploadError) {
+                await supabaseClient.from("mechanic_business_photos").delete().eq("id", reservation.id);
+                throw uploadError;
+            }
+            businessPhotoRows.push(reservation);
+            added += 1;
+            renderBusinessPhotoGrid();
+        }
+        msg("business-photo-msg", added + " photo" + (added === 1 ? "" : "s") + " added to your public business profile.", "success");
+    } catch (error) {
+        console.error("Business photo upload error:", error);
+        msg("business-photo-msg", error.message || "We couldn't upload your photos. Please try again.", "error");
+    } finally {
+        input.value = "";
+        renderBusinessPhotoGrid();
+    }
+}
+
+async function removeBusinessPhoto(photoId) {
+    const row = businessPhotoRows.find(item => item.id === photoId);
+    if (!row) return;
+    const button = document.querySelector('[data-remove-business-photo="' + photoId + '"]');
+    if (button) button.disabled = true;
+    const { error: storageError } = await supabaseClient.storage
+        .from("service-partner-photos").remove([row.storage_path]);
+    if (storageError) {
+        console.error(storageError);
+        msg("business-photo-msg", "The photo could not be removed from storage. Please try again.", "error");
+        renderBusinessPhotoGrid();
+        return;
+    }
+    const { error } = await supabaseClient.from("mechanic_business_photos").delete().eq("id", photoId);
+    if (error) {
+        console.error(error);
+        msg("business-photo-msg", "The image file was removed, but its gallery entry could not be updated. Refresh and try again.", "error");
+        await loadBusinessPhotos();
+        return;
+    }
+    businessPhotoRows = businessPhotoRows.filter(item => item.id !== photoId);
+    renderBusinessPhotoGrid();
+    msg("business-photo-msg", "Photo removed from your public profile.", "success");
+}
+
+async function removeLegacyBusinessPhoto() {
+    if (!legacyBusinessPhotoUrl) return;
+    let path = "";
+    try {
+        const url = new URL(legacyBusinessPhotoUrl);
+        const marker = "/storage/v1/object/public/business-photos/";
+        const index = url.pathname.indexOf(marker);
+        if (index < 0) throw new Error("The existing photo path could not be identified.");
+        path = decodeURIComponent(url.pathname.slice(index + marker.length));
+    } catch (error) {
+        msg("business-photo-msg", error.message || "The existing photo could not be identified.", "error");
+        return;
+    }
+    const { error: storageError } = await supabaseClient.storage.from("business-photos").remove([path]);
+    if (storageError) {
+        console.error(storageError);
+        msg("business-photo-msg", "The existing photo could not be removed. Please try again.", "error");
+        return;
+    }
+    const { error } = await supabaseClient.from("mechanics")
+        .update({ business_photo_url: null }).eq("id", business.id);
+    if (error) {
+        console.error(error);
+        msg("business-photo-msg", "The photo file was removed, but the profile could not be updated. Refresh the page.", "error");
+        return;
+    }
+    business.business_photo_url = null;
+    legacyBusinessPhotoUrl = null;
+    renderBusinessPhotoGrid();
+    msg("business-photo-msg", "Photo removed from your public profile.", "success");
+}
+
+el("business-photo-add").addEventListener("click", () => el("business-photo-input").click());
+el("business-photo-input").addEventListener("change", event => uploadBusinessPhotos(event.target.files));
+el("business-photo-grid").addEventListener("click", event => {
+    const removeButton = event.target.closest("[data-remove-business-photo]");
+    if (removeButton) removeBusinessPhoto(removeButton.dataset.removeBusinessPhoto);
+    if (event.target.closest("[data-remove-legacy-business-photo]")) removeLegacyBusinessPhoto();
+});
 
 /* ---------- BUSINESS TYPE ---------- */
 
