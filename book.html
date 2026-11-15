@@ -182,6 +182,11 @@
                 <h2>Pick a date and time</h2>
             </div>
 
+            <div id="branch-picker-wrap" hidden style="margin-bottom:16px;">
+                <label for="booking-branch">Choose a branch</label>
+                <select id="booking-branch"></select>
+                <p class="hint" style="margin:7px 0 0;">Opening hours and booking rules are shared across this business's locations.</p>
+            </div>
             <label for="booking-date">Date</label>
             <input type="date" id="booking-date">
 
@@ -264,6 +269,8 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 let business = null;
 let service = null;
+let branches = [];
+let selectedBranchId = null;
 let selectedSlot = null;     // { start: ISO string, end: ISO string }
 let slotRequestId = 0;       // ignores out-of-date slot responses
 
@@ -369,7 +376,7 @@ async function start() {
         return;
     }
 
-    const [bizRes, svcRes, setRes] = await Promise.all([
+    const [bizRes, svcRes, setRes, branchRes] = await Promise.all([
         supabaseClient
             .from("mechanics")
             .select("id, business_name, business_type, service_area")
@@ -387,7 +394,14 @@ async function start() {
             .from("business_settings")
             .select("max_advance_days")
             .eq("mechanic_id", mechanicId)
-            .maybeSingle()
+            .maybeSingle(),
+        supabaseClient
+            .from("service_partner_branches")
+            .select("id,name,address,service_area,is_primary")
+            .eq("mechanic_id", mechanicId)
+            .eq("is_active", true)
+            .order("is_primary", { ascending: false })
+            .order("created_at", { ascending: true })
     ]);
 
     if (bizRes.error || svcRes.error) {
@@ -403,6 +417,20 @@ async function start() {
 
     business = bizRes.data;
     service = svcRes.data;
+    branches = branchRes.error ? [] : (branchRes.data || []);
+    if (branchRes.error) console.error("Unable to load branch locations:", branchRes.error);
+    selectedBranchId = branches.length
+        ? (branches.find(branch => branch.is_primary)?.id || branches[0].id)
+        : null;
+
+    if (branches.length > 1) {
+        $("branch-picker-wrap").hidden = false;
+        $("booking-branch").innerHTML = branches.map(branch =>
+            '<option value="' + esc(branch.id) + '">' + esc(branch.name) +
+            (branch.service_area ? ' · ' + esc(branch.service_area) : '') + '</option>'
+        ).join("");
+        $("booking-branch").value = selectedBranchId;
+    }
 
     const maxAdvance = (setRes.data && setRes.data.max_advance_days) || 60;
     const today = todayInSA();
@@ -417,11 +445,17 @@ async function start() {
 
     const instant = service.booking_mode === "instant";
 
+    const initialBranch = branches.find(branch => branch.id === selectedBranchId);
+    const branchSummary = initialBranch
+        ? '<div class="biz-name" style="margin-top:5px;">' + esc(initialBranch.name) + ' · ' + esc(initialBranch.address) + '</div>'
+        : "";
+
     $("service-card").innerHTML = `
         <div class="summary-top">
             <div>
                 <h2>${esc(service.name)}</h2>
                 <div class="biz-name">${esc(business.business_name)}${business.service_area ? " &middot; " + esc(business.service_area) : ""}</div>
+                ${branchSummary}
             </div>
             <div class="price">${esc(money(service.price))}</div>
         </div>
@@ -455,11 +489,18 @@ async function loadSlots() {
 
     setMessage("slots-message", "Checking available times…", "info");
 
-    const { data, error } = await supabaseClient.rpc("get_available_slots", {
-        p_mechanic_id: business.id,
-        p_service_id: service.id,
-        p_date: date
-    });
+    const { data, error } = selectedBranchId
+        ? await supabaseClient.rpc("get_available_slots_for_branch", {
+            p_mechanic_id: business.id,
+            p_branch_id: selectedBranchId,
+            p_service_id: service.id,
+            p_date: date
+        })
+        : await supabaseClient.rpc("get_available_slots", {
+            p_mechanic_id: business.id,
+            p_service_id: service.id,
+            p_date: date
+        });
 
     if (myRequest !== slotRequestId) { return; }   // a newer date was picked
 
@@ -541,7 +582,7 @@ async function submitBooking() {
     button.disabled = true;
     setMessage("form-message", "Confirming your booking…", "info");
 
-    const { data, error } = await supabaseClient.rpc("create_booking", {
+    const bookingArgs = {
         p_mechanic_id: business.id,
         p_service_id: service.id,
         p_start: selectedSlot.start,
@@ -550,7 +591,13 @@ async function submitBooking() {
         p_customer_email: email,
         p_vehicle: vehicle,
         p_notes: notes || null
-    });
+    };
+    const { data, error } = selectedBranchId
+        ? await supabaseClient.rpc("create_booking_for_branch", {
+            ...bookingArgs,
+            p_branch_id: selectedBranchId
+        })
+        : await supabaseClient.rpc("create_booking", bookingArgs);
 
     button.disabled = false;
 
@@ -604,6 +651,7 @@ function showDone(booking) {
             <div>${esc(dayLabel(booking.start_time))}</div>
             <div>${esc(timeLabel(booking.start_time))} &ndash; ${esc(timeLabel(booking.end_time))}</div>
             <div>${esc(booking.business_name)}</div>
+            ${booking.branch_name ? '<div><strong>Location:</strong> ' + esc(booking.branch_name) + (booking.branch_address ? ' · ' + esc(booking.branch_address) : '') + '</div>' : ''}
         </div>
         <div class="btn-row">
             <a class="btn pt-back-marketplace" href="/index.html">Back to marketplace</a>
@@ -619,6 +667,15 @@ function showDone(booking) {
 /* ---------- wiring ---------- */
 
 $("booking-date").addEventListener("change", loadSlots);
+
+$("booking-branch").addEventListener("change", () => {
+    selectedBranchId = $("booking-branch").value || null;
+    selectedSlot = null;
+    $("details-card").hidden = true;
+    $("slots").innerHTML = "";
+    setMessage("slots-message", "");
+    if ($("booking-date").value) loadSlots();
+});
 
 $("slots").addEventListener("click", e => {
 
