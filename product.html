@@ -120,6 +120,14 @@
 
 .desc { color: #333; margin-bottom: 16px; }
 
+.product-specifications { margin:22px 0 16px; padding:18px; border:1px solid #e7e7e7; border-radius:10px; background:#fff; }
+.product-specifications h2 { margin:0 0 12px; font-size:19px; }
+.product-spec-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }
+.product-spec-row { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-top:1px solid #eee; font-size:14px; }
+.product-spec-row strong { color:#555; flex:0 0 42%; }
+.product-spec-row span { text-align:right; overflow-wrap:anywhere; }
+@media(max-width:520px) { .product-spec-list { grid-template-columns:1fr; } .product-spec-row strong { flex-basis:40%; } }
+
 .meta-row { font-size: 15px; margin-bottom: 8px; }
 .meta-row strong { color: #555; }
 
@@ -1106,6 +1114,23 @@ function openLightbox(product, photos, start) {
 }
 
 
+function productSpecificationsHtml(product) {
+    const specs = product && product.specifications && typeof product.specifications === "object"
+        ? product.specifications : {};
+    const labels = [
+        ["brand","Brand"],["part_number","Part number / SKU"],["condition","Condition"],
+        ["material","Material"],["dimensions","Dimensions"],["volume","Volume"],
+        ["capacity","Capacity"],["warranty","Warranty"],["package_contents","What's included"]
+    ];
+    const rows = labels.filter(function (entry) {
+        return specs[entry[0]] != null && String(specs[entry[0]]).trim() !== "";
+    }).map(function (entry) {
+        return '<div class="product-spec-row"><strong>' + esc(entry[1]) + '</strong><span>' + esc(String(specs[entry[0]])) + '</span></div>';
+    }).join("");
+    return rows ? '<section class="product-specifications"><h2>Product specifications</h2><div class="product-spec-list">' + rows + '</div></section>' : "";
+}
+
+
 function renderProduct(product) {
 
     currentProduct = product;
@@ -1150,6 +1175,8 @@ function renderProduct(product) {
                     <strong>Vehicle compatibility:</strong>
                     ${esc(product.vehicle_compatibility || "Not specified")}
                 </div>
+
+                ${productSpecificationsHtml(product)}
 
                 <div id="fit-badges"></div>
 
