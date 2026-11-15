@@ -255,6 +255,7 @@ Logout
         <button type="button" data-supplier-tab="supplier-products-panel" onclick="showSupplierSection('supplier-products-panel', this)">Products</button>
         <button type="button" id="supplier-branches-tab" data-supplier-tab="supplier-branches-panel" onclick="showSupplierSection('supplier-branches-panel', this)">Branches</button>
         <button type="button" data-supplier-tab="supplier-earnings-panel" onclick="showSupplierSection('supplier-earnings-panel', this)">Payments &amp; Earnings</button>
+        <button type="button" id="supplier-plans-tab" data-supplier-tab="supplier-plans-panel" style="display:none" onclick="showSupplierSection('supplier-plans-panel', this)">Plans &amp; Subscriptions</button>
         <button type="button" data-supplier-tab="supplier-help-panel" onclick="showSupplierSection('supplier-help-panel', this)">Help &amp; Guides</button>
         <button type="button" id="supplier-support-tab" data-supplier-tab="supplier-support-panel" style="display:none" onclick="showSupplierSection('supplier-support-panel', this)">Priority Support</button>
         <button type="button" id="supplier-team-tab" style="display:none" onclick="window.location.href='supplier-team.html'">Team</button>
@@ -291,7 +292,7 @@ Logout
     </div>
     <div id="advanced-analytics-content" style="margin-top:18px;"><p style="color:#777;">Loading analytics...</p></div>
 </section>
-<div id="plan-box"></div>
+
 
 <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;">
 
@@ -301,6 +302,14 @@ Logout
     Loading payouts...
 </div>
         
+</div>
+</section>
+
+<section class="supplier-panel" id="supplier-plans-panel">
+<div class="card">
+    <h2>Plans &amp; Subscriptions</h2>
+    <p style="color:#666;line-height:1.5;">Manage your PoundTech supplier subscription here. Compare plans and activate the benefits available to your business.</p>
+    <div id="plan-box"><p style="color:#777;">Loading your supplier plan...</p></div>
 </div>
 </section>
 
@@ -2742,10 +2751,9 @@ function planBoxHTML(st) {
 
     let proOffer = "";
 
-    if (!st.plan_active && st.break_even_sales) {
+    if (!st.plan_active) {
         proOffer = `<div style="margin-top:12px;padding:14px;background:#f5f5f5;border-radius:8px;">
-                   <p style="margin:0 0 8px;"><strong>Pro plan:</strong> ${esc(st.pro_rate)}% commission for R${esc(st.pro_price)}/month.
-                   Worth it once you sell roughly R${esc(st.break_even_sales)} a month.</p>
+                   <p style="margin:0 0 8px;"><strong>Pro plan:</strong> ${esc(st.pro_rate)}% commission for R${esc(st.pro_price)}/month.${st.break_even_sales ? " Worth it once you sell roughly R" + esc(st.break_even_sales) + " a month." : ""}</p>
                    <ul style="margin:0 0 10px; padding-left:18px; color:#444; font-size:14px;">
                        <li>Up to 3 named user accounts, including the owner</li>
                        <li>New listings go live instantly &mdash; no waiting for review</li>
@@ -2804,14 +2812,17 @@ async function loadPlanBox() {
     window.POUNDTECH_SUPPLIER_ROLE = role || "sales";
 
     const box = document.getElementById("plan-box");
+    const tab = document.getElementById("supplier-plans-tab");
     if (role !== "owner") {
+        if (tab) tab.style.display = "none";
         if (box) box.style.display = "none";
         return;
     }
 
+    if (tab) tab.style.display = "";
     await loadSellerStatus();
 
-    if (box) { box.style.display = ""; box.innerHTML = planBoxHTML(SELLER_STATUS); }
+    if (box) { box.style.display = ""; box.innerHTML = planBoxHTML(SELLER_STATUS) || '<p style="color:#777;">Your plan details are temporarily unavailable. Please refresh the page.</p>'; }
 }
 
 async function loadAdvancedAnalytics() {
@@ -3304,9 +3315,9 @@ function showSupplierSection(sectionId, button) {
     if (sectionId === "supplier-earnings-panel") {
         loadSupplierEarnings();
         loadSupplierPayouts();
-        loadPlanBox();
         loadAdvancedAnalytics();
     }
+    if (sectionId === "supplier-plans-panel") { loadPlanBox(); }
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
         
