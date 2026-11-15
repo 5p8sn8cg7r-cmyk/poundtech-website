@@ -415,7 +415,7 @@ async function loadMechanics() {
         return;
     }
 
-    [servicesRes, hoursRes, reviewsRes].forEach(res => {
+    [servicesRes, hoursRes, reviewsRes, photosRes].forEach(res => {
         if (res.error) { console.error(res.error); }
     });
 
