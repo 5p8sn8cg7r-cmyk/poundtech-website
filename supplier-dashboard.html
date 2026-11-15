@@ -2807,22 +2807,36 @@ async function requestProPlan() {
 }
 
 async function loadPlanBox() {
-
-    const { data: role } = await supabaseClient.rpc("get_my_supplier_role");
-    window.POUNDTECH_SUPPLIER_ROLE = role || "sales";
-
     const box = document.getElementById("plan-box");
     const tab = document.getElementById("supplier-plans-tab");
-    if (role !== "owner") {
-        if (tab) tab.style.display = "none";
-        if (box) box.style.display = "none";
+    if (!box || !tab) return;
+
+    // Wait until Supabase has restored and confirmed the signed-in session.
+    // Running the role RPC before auth restoration can incorrectly hide this tab.
+    const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !authData || !authData.user) {
+        console.warn("Supplier subscription tab waiting for an authenticated session.", authError);
         return;
     }
 
-    if (tab) tab.style.display = "";
-    await loadSellerStatus();
+    const { data: role, error: roleError } = await supabaseClient.rpc("get_my_supplier_role");
+    if (roleError || !role) {
+        console.error("SUPPLIER SUBSCRIPTION ROLE CHECK ERROR:", roleError || "No role returned.");
+        box.innerHTML = '<p style="color:#777;">Your subscription access is still loading. Please refresh the page.</p>';
+        return;
+    }
 
-    if (box) { box.style.display = ""; box.innerHTML = planBoxHTML(SELLER_STATUS) || '<p style="color:#777;">Your plan details are temporarily unavailable. Please refresh the page.</p>'; }
+    window.POUNDTECH_SUPPLIER_ROLE = role;
+    if (role !== "owner") {
+        tab.style.display = "none";
+        box.style.display = "none";
+        return;
+    }
+
+    tab.style.display = "";
+    box.style.display = "";
+    await loadSellerStatus();
+    box.innerHTML = planBoxHTML(SELLER_STATUS) || '<p style="color:#777;">Your plan details are temporarily unavailable. Please refresh the page.</p>';
 }
 
 async function loadAdvancedAnalytics() {
