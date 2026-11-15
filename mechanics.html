@@ -74,6 +74,8 @@
     flex-direction: column;
 }
 
+.biz-photo{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:9px;margin:0 0 16px;background:#f1f1f1}
+.biz-photo-link{display:block}
 .biz-top {
     display: flex;
     gap: 8px;
@@ -299,6 +301,7 @@ let allMechanics = [];
 let servicesByBusiness = {};
 let hoursByBusiness = {};
 let ratingsByBusiness = {};
+let photosByBusiness = {};
 let currentType = "all";
 
 
@@ -379,7 +382,7 @@ async function loadMechanics() {
     // Only the fields customers need to see. Contact details are not loaded here.
     const mechanicsQuery = supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, specialties, service_area, services, description, created_at, verified")
+        .select("id, business_name, business_type, specialties, service_area, services, description, created_at, verified, business_photo_url")
         .eq("status", "Approved")
         .order("created_at", { ascending: false });
 
@@ -398,8 +401,13 @@ async function loadMechanics() {
         .from("mechanic_reviews")
         .select("mechanic_id, rating");
 
-    const [mechanicsRes, servicesRes, hoursRes, reviewsRes] =
-        await Promise.all([mechanicsQuery, servicesQuery, hoursQuery, reviewsQuery]);
+    const photosQuery = supabaseClient
+        .from("mechanic_business_photos")
+        .select("mechanic_id, storage_path, sort_order")
+        .order("sort_order", { ascending: true });
+
+    const [mechanicsRes, servicesRes, hoursRes, reviewsRes, photosRes] =
+        await Promise.all([mechanicsQuery, servicesQuery, hoursQuery, reviewsQuery, photosQuery]);
 
     if (mechanicsRes.error) {
         console.error(mechanicsRes.error);
@@ -414,6 +422,13 @@ async function loadMechanics() {
     allMechanics = mechanicsRes.data || [];
     servicesByBusiness = group(servicesRes.data, "mechanic_id");
     hoursByBusiness = group(hoursRes.data, "mechanic_id");
+
+    photosByBusiness = {};
+    (photosRes.data || []).forEach(photo => {
+        const list = photosByBusiness[photo.mechanic_id] || [];
+        list.push(photo);
+        photosByBusiness[photo.mechanic_id] = list;
+    });
 
     ratingsByBusiness = {};
 
@@ -512,6 +527,21 @@ function businessCard(mechanic) {
           rating.count + ' review' + (rating.count === 1 ? "" : "s") + ')'
         : "No ratings yet";
 
+    const businessPhotos = photosByBusiness[mechanic.id] || [];
+    let coverPhoto = null;
+    if (businessPhotos.length) {
+        const firstPhoto = businessPhotos[0];
+        coverPhoto = firstPhoto.storage_path.indexOf("legacy-url:") === 0
+            ? firstPhoto.storage_path.slice("legacy-url:".length)
+            : supabaseClient.storage.from("service-partner-photos").getPublicUrl(firstPhoto.storage_path).data.publicUrl;
+    } else {
+        coverPhoto = mechanic.business_photo_url || null;
+    }
+    const photoHtml = coverPhoto
+        ? '<a class="biz-photo-link" href="mechanic-profile.html?id=' + encodeURIComponent(mechanic.id) + '">' +
+          '<img class="biz-photo" src="' + esc(coverPhoto) + '" alt="' + esc(mechanic.business_name) + ' business photo" loading="lazy"></a>'
+        : "";
+
     let servicesHtml;
 
     if (services.length > 0) {
@@ -555,6 +585,7 @@ function businessCard(mechanic) {
 
     return `
         <div class="biz">
+            ${photoHtml}
 
             <div class="biz-top">
                 <span class="tag">${esc(TYPE_LABELS[mechanic.business_type] || "Mechanic")}</span>
