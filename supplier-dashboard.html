@@ -1344,7 +1344,22 @@ window.location.href =
 
 
 
-loadSupplier();
+loadSupplier().then(async function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("open") === "plans" || params.has("upgrade")) {
+        const plansTab = document.getElementById("supplier-plans-tab");
+        showSupplierSection("supplier-plans-panel", plansTab);
+        await loadPlanBox();
+    }
+    const requestedUpgrade = params.get("upgrade");
+    if (requestedUpgrade === "pro" || requestedUpgrade === "business") {
+        if (window.POUNDTECH_SUPPLIER_ROLE !== "owner") {
+            alert("Only the business owner can start a paid supplier subscription. Please ask the owner to complete checkout.");
+            return;
+        }
+        await requestSupplierPlan(requestedUpgrade);
+    }
+});
 
 
 function showAddProductForm() {
@@ -2733,60 +2748,69 @@ function supplierOrderHTML(o) {
         
 loadSupplierOrders();
 function planBoxHTML(st, canSubscribe) {
-
-    if (!st) { return ""; }
-
-    const rate = Number(st.commission_rate).toFixed(1).replace(/\.0$/, "");
-
+    if (!st) return "";
+    const rate = Number(st.commission_rate).toFixed(1).replace(/\\.0$/, "");
+    const currentPlan = String(st.plan || "standard").toLowerCase();
+    const active = !!st.plan_active;
+    const prettyPlan = currentPlan === "business" ? "Business" : currentPlan === "pro" ? "Pro" : "Standard";
     let banner = "";
-
     if (st.launch_ends_at) {
         const days = Math.max(0, Math.ceil((new Date(st.launch_ends_at) - Date.now()) / 86400000));
-        banner = `<p style="margin:8px 0 0;color:#16803c;font-weight:bold;">
-                      Launch rate: ${esc(st.launch_rate)}% for ${days} more day${days === 1 ? "" : "s"}.</p>`;
-    } else if (st.plan_active) {
-        const activePlanName = String(st.plan || "paid").replace(/_/g," ").replace(/\b\w/g, ch => ch.toUpperCase());
-        banner = `<p style="margin:8px 0 0;color:#16803c;font-weight:bold;">
-                      ${esc(activePlanName)} plan active until ${esc(new Date(st.plan_ends_at).toLocaleDateString())}.</p>`;
+        banner = `<p style="margin:8px 0 0;color:#16803c;font-weight:bold;">Launch rate: ${esc(st.launch_rate)}% for ${days} more day${days === 1 ? "" : "s"}.</p>`;
+    }
+    if (active) {
+        banner += `<p style="margin:8px 0 0;color:#16803c;font-weight:bold;">Your ${prettyPlan} plan is active until ${esc(new Date(st.plan_ends_at).toLocaleDateString())}.</p>`;
+    } else {
+        banner += `<p style="margin:8px 0 0;color:#666;">Your current plan: <strong>${prettyPlan}</strong>.</p>`;
     }
 
-    let proOffer = "";
-
-    if (!st.plan_active && canSubscribe) {
-        proOffer = `<div style="margin-top:12px;padding:14px;background:#f5f5f5;border-radius:8px;">
-                   <p style="margin:0 0 8px;"><strong>Pro plan:</strong> ${esc(st.pro_rate)}% commission for R${esc(st.pro_price)}/month.${st.break_even_sales ? " Worth it once you sell roughly R" + esc(st.break_even_sales) + " a month." : ""}</p>
-                   <ul style="margin:0 0 10px; padding-left:18px; color:#444; font-size:14px;">
-                       <li>Up to 3 named user accounts, including the owner</li>
-                       <li>New listings go live instantly &mdash; no waiting for review</li>
-                       <li>No payout holds, however new your account is</li>
-                       <li>No cap on how many active listings you can run</li>
-                   </ul>
-                   <button id="supplier-pro-subscribe-btn" onclick="requestProPlan()">Subscribe to Pro · R299/month</button>
-                   <p style="margin:8px 0 0;color:#777;font-size:12px;">Monthly recurring card payment. Cancel through PoundTech support.</p>
-               </div>`;
+    let actions = "";
+    if (canSubscribe) {
+        if (!active || currentPlan === "standard") {
+            actions += '<div style="margin-top:14px;padding:14px;background:#f7f7f7;border-radius:9px;">' +
+                '<strong>Upgrade your supplier account</strong>' +
+                '<p style="margin:7px 0 12px;color:#666;font-size:13px;">Choose a paid plan below. Checkout opens securely through PayFast.</p>' +
+                '<button id="supplier-pro-subscribe-btn" onclick="requestSupplierPlan(\'pro\')" style="margin:4px 6px 4px 0;">Subscribe to Pro · R299/month</button>' +
+                '<button id="supplier-business-subscribe-btn" onclick="requestSupplierPlan(\'business\')" style="margin:4px 0;">Upgrade to Business · R999/month</button>' +
+                '</div>';
+        } else if (currentPlan === "pro") {
+            actions += '<div style="margin-top:14px;padding:14px;background:#f7f7f7;border-radius:9px;">' +
+                '<strong>Ready for the next level?</strong><p style="margin:7px 0 12px;color:#666;font-size:13px;">Upgrade to Business for multi-branch tools and larger team management.</p>' +
+                '<button id="supplier-business-subscribe-btn" onclick="requestSupplierPlan(\'business\')">Upgrade to Business · R999/month</button></div>';
+        } else if (currentPlan === "business") {
+            actions += '<div style="margin-top:14px;padding:14px;background:#f7f7f7;border-radius:9px;">' +
+                '<strong>Need a tailored Enterprise setup?</strong><p style="margin:7px 0 12px;color:#666;font-size:13px;">Enterprise pricing and integrations are tailored to your operation. Request a proposal from PoundTech.</p>' +
+                '<a href="/business-enquiry.html?plan=enterprise" style="display:inline-block;background:#171717;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;font-weight:700;">Contact Enterprise sales</a></div>';
+        }
+    } else {
+        actions = '<p style="margin-top:12px;color:#777;font-size:13px;">Only the business owner can start or change a paid supplier subscription.</p>';
     }
 
-    return `<div style="background:#fff; border:1px solid #ddd; border-radius:10px; padding:18px 20px; margin-top:20px;">
-                <p style="margin:0;color:#666;">Your current PoundTech commission</p>
-                <p style="margin:6px 0 0;font-size:13px;"><a href="/supplier-plans.html" style="color:#c00000;font-weight:700;text-decoration:none;">Compare all supplier plans &amp; benefits →</a></p>
-                <h3 style="margin:6px 0 0;">${rate}%</h3>
-                ${banner}
-                ${proOffer}
-            </div>`;
+    return `<div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:18px 20px;margin-top:20px;">
+        <p style="margin:0;color:#666;">Your current supplier plan</p>
+        <h3 style="margin:6px 0 0;">${prettyPlan}</h3>
+        <p style="margin:6px 0 0;font-size:13px;color:#666;">Current commission: <strong>${rate}%</strong></p>
+        ${banner}
+        <p style="margin:12px 0 0;font-size:13px;"><a href="/supplier-plans.html" style="color:#c00000;font-weight:700;text-decoration:none;">Compare all supplier plans &amp; benefits →</a></p>
+        ${actions}
+    </div>`;
 }
 
-async function requestProPlan() {
-    const button = document.getElementById("supplier-pro-subscribe-btn");
+async function requestSupplierPlan(planCode) {
+    if (!["pro", "business"].includes(planCode)) {
+        alert("Please choose a valid supplier plan.");
+        return;
+    }
+    const button = document.getElementById(planCode === "business" ? "supplier-business-subscribe-btn" : "supplier-pro-subscribe-btn");
+    const originalText = button ? button.textContent : "";
     if (button) { button.disabled = true; button.textContent = "Preparing secure checkout…"; }
-
     try {
         const { data, error } = await supabaseClient.functions.invoke("create-payfast-subscription", {
-            body: { business_type: "supplier", plan_code: "pro" }
+            body: { business_type: "supplier", plan_code: planCode }
         });
         if (error || !data || !data.action || !data.fields) {
             throw new Error(data?.error || error?.message || "Could not start PayFast checkout.");
         }
-
         const form = document.createElement("form");
         form.method = "POST";
         form.action = data.action;
@@ -2803,8 +2827,12 @@ async function requestProPlan() {
     } catch (error) {
         console.error("PayFast supplier checkout error:", error);
         alert(error.message || "We couldn't start checkout. Please try again.");
-        if (button) { button.disabled = false; button.textContent = "Subscribe to Pro · R299/month"; }
+        if (button) { button.disabled = false; button.textContent = originalText; }
     }
+}
+
+async function requestProPlan() {
+    return requestSupplierPlan("pro");
 }
 
 async function loadPlanBox() {
