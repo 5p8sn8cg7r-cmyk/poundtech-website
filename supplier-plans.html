@@ -165,7 +165,7 @@ document.querySelectorAll("[data-plan-choice]").forEach(function(button) {
         window.location.href = target;
         return;
       }
-      window.location.href = "/supplier-login.html?next=" + encodeURIComponent(target.replace(/^\\//, ""));
+      window.location.href = "/supplier-login.html?next=" + encodeURIComponent(target.startsWith("/") ? target.slice(1) : target);
     } catch (error) {
       console.error("Could not check supplier sign-in:", error);
       window.location.href = "/supplier-login.html?next=" + encodeURIComponent("supplier-dashboard.html?open=plans&upgrade=" + choice);
