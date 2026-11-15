@@ -1177,6 +1177,7 @@ async function saveBranch() {
     if (address.length < 5 || address.length > 250) { msg("branch-msg", "Enter the branch street address.", "error"); return; }
     if (serviceArea.length < 2 || serviceArea.length > 160) { msg("branch-msg", "Enter the suburb or area.", "error"); return; }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg("branch-msg", "Enter a valid branch email address.", "error"); return; }
+    const wasEditing = !!editingBranchId;
     const fields = { name, address, service_area: serviceArea, phone: phone || null, email: email || null };
     el("branch-save-btn").disabled = true;
     const result = editingBranchId
@@ -1189,7 +1190,7 @@ async function saveBranch() {
         return;
     }
     closeBranchForm();
-    msg("branch-msg", editingBranchId ? "Branch updated." : "Branch added.", "success");
+    msg("branch-msg", wasEditing ? "Branch updated." : "Branch added.", "success");
     await loadBranches();
 }
 
