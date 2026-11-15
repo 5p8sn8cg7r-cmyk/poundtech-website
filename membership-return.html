@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101010">
+<title>Membership update | PoundTech</title>
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=10">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png?v=10">
+<style>
+:root{color-scheme:dark;--red:#e00000;--bg:#090909;--panel:#141414;--muted:#a3a3a3}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#321010 0%,#111 38%,var(--bg) 75%);color:#fff;font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:24px}
+.wrap{width:100%;max-width:560px}
+.brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:28px;font-size:23px;font-weight:900;letter-spacing:-.8px}
+.brand-mark{width:38px;height:38px;border:2px solid var(--red);border-radius:10px;display:grid;place-items:center;font-size:17px;letter-spacing:-2px}
+.brand .pound{color:var(--red)}.brand .tech{color:#fff}
+.panel{background:linear-gradient(145deg,#191919,#101010);border:1px solid #303030;border-radius:22px;padding:38px 34px;text-align:center;box-shadow:0 24px 80px #0009}
+.status-icon{width:68px;height:68px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;background:#18251d;border:1px solid #31583e;color:#70d995;font-size:32px;font-weight:700}
+.status-icon.cancel{background:#2a2115;border-color:#65502b;color:#e8bd70}
+.kicker{font-size:11px;letter-spacing:2.3px;text-transform:uppercase;font-weight:800;color:#ff5555;margin-bottom:12px}
+h1{font-size:clamp(27px,6vw,36px);line-height:1.12;letter-spacing:-1px;margin:0 0 14px}
+p{font-size:15px;line-height:1.7;color:#bdbdbd;margin:0 auto 14px;max-width:430px}
+.plan-pill{display:inline-block;margin:8px 0 22px;padding:9px 14px;border:1px solid #4a2929;background:#241313;border-radius:999px;color:#fff;font-size:13px;font-weight:700}
+.note{border-top:1px solid #2d2d2d;margin-top:10px;padding-top:18px;font-size:12px;color:#858585;line-height:1.6}
+.action{display:inline-flex;justify-content:center;align-items:center;min-height:48px;padding:0 22px;margin-top:22px;border-radius:9px;background:var(--red);color:#fff;text-decoration:none;font-size:14px;font-weight:800;transition:background .2s,transform .2s}
+.action:hover{background:#bd0000;transform:translateY(-1px)}
+.footer{text-align:center;color:#656565;font-size:11px;margin-top:22px;letter-spacing:.4px}
+@media(max-width:480px){body{padding:18px}.panel{padding:32px 22px;border-radius:18px}.brand{margin-bottom:22px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand" aria-label="PoundTech"><span class="brand-mark">PT</span><span><span class="pound">Pound</span><span class="tech">Tech</span></span></div>
+  <section class="panel" aria-live="polite">
+    <div class="status-icon" id="status-icon">✓</div>
+    <div class="kicker">Membership update</div>
+    <h1 id="headline">You're back at PoundTech.</h1>
+    <p id="message">We're checking the payment confirmation from your payment provider.</p>
+    <div class="plan-pill" id="plan-pill" hidden></div>
+    <p id="detail">Your membership dashboard will show the latest status once the payment confirmation has been verified.</p>
+    <a class="action" id="dashboard-link" href="/supplier-dashboard.html?open=plans">Return to dashboard</a>
+    <div class="note" id="note">Secure payments powered by PayFast. Your subscription status is updated only after PoundTech verifies the payment notification.</div>
+  </section>
+  <div class="footer">POWERED BY POUNDTECH · SOUTH AFRICA</div>
+</main>
+<script>
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const state=params.get("membership");
+  const type=params.get("business_type");
+  const plan=(params.get("plan")||"").toLowerCase();
+  const supplier=type==="supplier";
+  const labels={pro:"Supplier Pro",business:"Supplier Business",growth:"Growth Partner",professional:"Professional Partner"};
+  const label=labels[plan]||"PoundTech membership";
+  const link=document.getElementById("dashboard-link");
+  const pill=document.getElementById("plan-pill");
+  if(["pro","business","growth","professional"].includes(plan)){pill.textContent=label;pill.hidden=false;}
+  link.href=supplier?"/supplier-dashboard.html?open=plans":"/business-dashboard.html#membership";
+  if(state==="success"){
+    document.getElementById("headline").textContent="Thanks for choosing PoundTech.";
+    document.getElementById("message").textContent="You've returned from PayFast. We're confirming your subscription securely.";
+    document.getElementById("detail").textContent="Your plan will appear in your dashboard as soon as PayFast's payment notification has been verified. You can safely head back to your account.";
+  }else if(state==="cancelled"){
+    document.getElementById("status-icon").textContent="×";
+    document.getElementById("status-icon").classList.add("cancel");
+    document.getElementById("headline").textContent="Checkout cancelled.";
+    document.getElementById("message").textContent="No new subscription has been activated from this checkout.";
+    document.getElementById("detail").textContent="Your existing membership remains unchanged. You can return to your dashboard whenever you're ready.";
+    document.getElementById("note").textContent="If you believe this cancellation was a mistake, start checkout again from your PoundTech membership page.";
+  }else{
+    document.getElementById("headline").textContent="Membership update";
+    document.getElementById("message").textContent="We couldn't identify the checkout status.";
+    document.getElementById("detail").textContent="Please return to your dashboard to check your current membership.";
+  }
+})();
+</script>
+</body>
+</html>
