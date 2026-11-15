@@ -308,17 +308,19 @@ html{scroll-behavior:smooth}
                     <h3>Growth Partner</h3>
                     <p class="membership-price">R199 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>10% commission on completed bookings.</p>
-                    <p class="hint">Paid membership upgrades are currently unavailable. Your existing membership and booking terms remain in effect.</p>
+                    <button class="btn" id="membership-growth-btn" type="button">Choose Growth · R199/month</button>
+                    <p class="hint">Recurring billing is processed through PayFast. Sandbox checkout is disabled for service partners.</p>
                 </div>
                 <div class="membership-plan">
                     <h3>Professional Partner</h3>
                     <p class="membership-price">R499 <span style="font-size:13px;font-weight:500;">/ month</span></p>
                     <p>8,4% commission on completed bookings.</p>
-                    <p class="hint">For membership enquiries, contact <a href="mailto:info@poundtech.co.za">PoundTech</a>.</p>
+                    <button class="btn" id="membership-professional-btn" type="button">Choose Professional · R499/month</button>
+                    <p class="hint">Existing paid memberships must be changed through PoundTech to avoid duplicate recurring charges.</p>
                 </div>
             </div>
 
-            <p class="hint">Free Partner remains available at R0 per month with 10% commission. Enterprise Partner starts from R999 per month, with an individually agreed commission rate below 8,4%.</p>
+            <p class="hint">Free Partner remains available at R0 per month with 10% commission. Enterprise Partner starts from R999 per month, with an individually agreed commission rate below 8,4%. Existing paid plans and Enterprise changes are arranged through PoundTech.</p>
             <p><a href="/service-partner-plans.html" style="color:#d60000;font-weight:700;">View the full membership comparison →</a></p>
         </section>
 
@@ -926,6 +928,17 @@ async function loadMembership() {
         el("membership-current").innerHTML = summary;
     }
 
+
+    const growthButton = el("membership-growth-btn");
+    const professionalButton = el("membership-professional-btn");
+    const canStartPaidMembership = effectiveCode === "free";
+    growthButton.disabled = !canStartPaidMembership;
+    professionalButton.disabled = !canStartPaidMembership;
+    growthButton.textContent = effectiveCode === "growth" ? "Current plan" :
+        canStartPaidMembership ? "Choose Growth · R199/month" : "Contact PoundTech to change plan";
+    professionalButton.textContent = effectiveCode === "professional" ? "Current plan" :
+        canStartPaidMembership ? "Choose Professional · R499/month" : "Contact PoundTech to change plan";
+
     renderBusinessPhotoAllowance();
     renderBranchAllowance();
 
@@ -939,6 +952,46 @@ async function loadMembership() {
     }
 }
 
+
+
+async function chooseMembershipPlan(planCode) {
+    const plan = currentServicePlan();
+    if (!plan || plan.code !== "free") {
+        msg("membership-msg", "Your paid membership is already active. Contact PoundTech to change plans safely.", "info");
+        return;
+    }
+    const button = el(planCode === "growth" ? "membership-growth-btn" : "membership-professional-btn");
+    const other = el(planCode === "growth" ? "membership-professional-btn" : "membership-growth-btn");
+    button.disabled = true;
+    other.disabled = true;
+    button.textContent = "Preparing secure checkout…";
+    msg("membership-msg", "Connecting to PayFast…", "info");
+
+    const { data, error } = await supabaseClient.functions.invoke("create-payfast-subscription", {
+        body: { business_type: "service_partner", plan_code: planCode }
+    });
+    if (error || !data || !data.action || !data.fields) {
+        const message = data?.error || error?.message || "We couldn't start membership checkout. Please try again or contact PoundTech.";
+        msg("membership-msg", message, "error");
+        button.disabled = false;
+        other.disabled = false;
+        button.textContent = planCode === "growth" ? "Choose Growth · R199/month" : "Choose Professional · R499/month";
+        return;
+    }
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = data.action;
+    Object.entries(data.fields).forEach(([name, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = String(value);
+        form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+}
 
 /* ---------- SERVICE PARTNER ANALYTICS ---------- */
 
@@ -2115,6 +2168,8 @@ el("cancel-edit-btn").addEventListener("click", () => {
 });
 el("save-hours-btn").addEventListener("click", saveHours);
 el("save-settings-btn").addEventListener("click", saveSettings);
+el("membership-growth-btn").addEventListener("click", () => chooseMembershipPlan("growth"));
+el("membership-professional-btn").addEventListener("click", () => chooseMembershipPlan("professional"));
 el("analytics-refresh").addEventListener("click", loadServicePartnerAnalytics);
 el("analytics-export").addEventListener("click", exportEnterpriseReport);
 el("service-support-form").addEventListener("submit", submitServicePartnerSupport);
