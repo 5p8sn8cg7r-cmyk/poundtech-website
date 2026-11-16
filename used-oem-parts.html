@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Find used genuine OEM automotive parts from South African suppliers on PoundTech. Search by part number, vehicle and category.">
+<link rel="canonical" href="https://poundtech.co.za/used-oem-parts.html">
+<title>Used OEM Parts | PoundTech</title>
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=10">
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/back-button.css?v=20261111">
+<style>
+.oem-hero{background:linear-gradient(135deg,#090b0e,#242830);color:#fff;padding:48px 20px 42px;text-align:center}
+.oem-hero .eyebrow{color:#ff7777;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.oem-hero h1{margin:10px 0;font-size:clamp(29px,5vw,42px);letter-spacing:-.03em}
+.oem-hero h1 span{color:#e00000}
+.oem-hero p{max-width:680px;margin:0 auto;color:#c9cbd0;line-height:1.6;font-size:15px}
+.oem-shell{max-width:1180px;margin:0 auto;padding:26px 20px 58px}
+.oem-note{background:#fff7e6;border:1px solid #f0dfb9;border-left:4px solid #d49a24;border-radius:9px;padding:13px 15px;color:#654d1d;font-size:13px;line-height:1.55;margin-bottom:20px}
+.oem-tools{display:grid;grid-template-columns:minmax(220px,1fr) minmax(160px,220px) minmax(160px,200px);gap:10px;margin:0 0 12px}
+.oem-tools input,.oem-tools select{width:100%;min-width:0;padding:12px 13px;border:1px solid #d8dbe0;border-radius:8px;background:#fff;font:inherit;font-size:14px}
+.oem-count{color:#777;font-size:13px;margin:0 0 17px}
+.oem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:17px}
+.oem-card{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid #e4e6e9;border-radius:12px;overflow:hidden;text-decoration:none;color:#171717;box-shadow:0 3px 12px rgba(0,0,0,.045);transition:transform .18s ease,box-shadow .18s ease}
+.oem-card:hover{transform:translateY(-3px);box-shadow:0 9px 24px rgba(0,0,0,.1)}
+.oem-photo{height:178px;background:#f1f2f4;display:grid;place-items:center;overflow:hidden}
+.oem-photo img{width:100%;height:100%;object-fit:contain}
+.oem-photo span{color:#888;font-size:12px;font-weight:700;letter-spacing:.08em}
+.oem-card-body{display:flex;flex:1;flex-direction:column;padding:14px}
+.oem-badge{align-self:flex-start;border-radius:999px;background:#fce9e9;color:#a90000;padding:4px 8px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.oem-card h2{font-size:15px;line-height:1.4;margin:10px 0 7px}
+.oem-price{font-size:20px;font-weight:850;margin-top:auto;padding-top:10px}
+.oem-meta{font-size:12px;color:#626873;line-height:1.55;margin-top:5px;overflow-wrap:anywhere}
+.oem-empty{grid-column:1/-1;text-align:center;background:#fff;border:1px dashed #cfd2d8;border-radius:12px;padding:42px 20px;color:#666;line-height:1.6}
+.oem-empty strong{display:block;color:#222;font-size:17px;margin-bottom:6px}
+.oem-supplier-cta{margin-top:30px;padding:22px;border-radius:12px;background:#111;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.oem-supplier-cta p{color:#c9c9c9;font-size:13px;line-height:1.5;margin-top:5px}
+.oem-supplier-cta a{display:inline-block;padding:11px 15px;border-radius:7px;background:#e00000;color:#fff;text-decoration:none;font-weight:800;white-space:nowrap}
+@media(max-width:700px){.oem-tools{grid-template-columns:1fr 1fr}.oem-tools input{grid-column:1/-1}.oem-shell{padding:20px 14px 42px}.oem-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.oem-photo{height:130px}.oem-card-body{padding:11px}.oem-card h2{font-size:13px}.oem-price{font-size:17px}}
+@media(max-width:360px){.oem-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="site-header">
+<a class="logo" href="/index.html">POUND<span>TECH</span></a>
+<a class="back pt-back-market" href="/index.html">&larr; Back to marketplace</a>
+</header>
+<section class="oem-hero">
+<div class="eyebrow">PoundTech · Specialist parts marketplace</div>
+<h1>Used <span>OEM</span> Parts</h1>
+<p>Find original-equipment parts recovered from donor vehicles and listed by automotive suppliers across South Africa. Search by part number, vehicle or component.</p>
+</section>
+<main class="oem-shell">
+<div class="oem-note"><strong>Important:</strong> OEM origin, condition and vehicle compatibility are supplied by the seller. Check the manufacturer's part number, photos, condition and exact fitment with the supplier before ordering. PoundTech does not independently authenticate every OEM claim.</div>
+<div class="oem-tools">
+<input id="oem-search" type="search" placeholder="Search part name, part number or vehicle…" aria-label="Search used OEM parts">
+<select id="oem-category" aria-label="Filter by category"><option value="">All categories</option></select>
+<select id="oem-sort" aria-label="Sort listings"><option value="newest">Newest first</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select>
+</div>
+<p class="oem-count" id="oem-count" aria-live="polite">Loading available parts…</p>
+<div class="oem-grid" id="oem-grid"><div class="oem-empty">Loading used OEM listings…</div></div>
+<section class="oem-supplier-cta">
+<div><strong>Are you an automotive parts business?</strong><p>List your used OEM inventory on PoundTech and reach customers searching for hard-to-find parts.</p></div>
+<a href="/supplier.html">Become a supplier</a>
+</section>
+</main>
+<footer class="site-footer">
+<nav><a href="/terms.html">Terms &amp; Conditions</a><a href="/refunds.html">Refund &amp; Returns</a><a href="/privacy.html">Privacy Policy</a><a href="/delivery.html">Delivery Policy</a></nav>
+<p>&copy; 2026 PoundTech. All rights reserved.</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://uezacbssvvvtlosnaroh.supabase.co";
+const SUPABASE_KEY="sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let oemListings=[];
+function esc(value){return String(value==null?"":value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+function money(value){return "R"+(Number(value)||0).toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2});}
+async function loadOemListings(){
+ const grid=document.getElementById("oem-grid");
+ const {data,error}=await supabaseClient.from("products")
+  .select("id,name,category,description,price,stock,image_url,vehicle_compatibility,specifications,created_at")
+  .eq("status","Active").eq("listing_review","approved")
+  .contains("specifications",{condition:"Used",part_origin:"OEM"})
+  .order("created_at",{ascending:false}).limit(200);
+ if(error){console.error("Used OEM listings:",error);grid.innerHTML='<div class="oem-empty"><strong>Listings are temporarily unavailable.</strong>Please try again shortly.</div>';document.getElementById("oem-count").textContent="";return;}
+ oemListings=data||[];
+ const categories=[...new Set(oemListings.map(p=>p.category).filter(Boolean))].sort();
+ document.getElementById("oem-category").innerHTML='<option value="">All categories</option>'+categories.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
+ renderOemListings();
+}
+function renderOemListings(){
+ const search=document.getElementById("oem-search").value.trim().toLowerCase();
+ const category=document.getElementById("oem-category").value;
+ const sort=document.getElementById("oem-sort").value;
+ let rows=oemListings.filter(p=>{
+  const s=p.specifications||{};
+  const hay=[p.name,p.category,p.description,p.vehicle_compatibility,s.part_number,s.brand,s.donor_vehicle].join(" ").toLowerCase();
+  return (!category||p.category===category)&&(!search||hay.includes(search));
+ });
+ if(sort==="low")rows.sort((a,b)=>Number(a.price)-Number(b.price));
+ else if(sort==="high")rows.sort((a,b)=>Number(b.price)-Number(a.price));
+ else rows.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+ document.getElementById("oem-count").textContent=rows.length+" used OEM "+(rows.length===1?"part":"parts")+" available";
+ const grid=document.getElementById("oem-grid");
+ if(!rows.length){grid.innerHTML='<div class="oem-empty"><strong>No used OEM parts listed yet.</strong>Suppliers will appear here as they add verified listing details. Try another search or check back soon.</div>';return;}
+ grid.innerHTML=rows.map(p=>{
+  const s=p.specifications||{};
+  const fit=p.vehicle_compatibility||"Fitment not confirmed";
+  const part=s.part_number?"Part no. "+s.part_number:"Part number not supplied";
+  return '<a class="oem-card" href="/product.html?id='+encodeURIComponent(p.id)+'"><div class="oem-photo">'+(p.image_url?'<img loading="lazy" src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'">':'<span>USED OEM PART</span>')+'</div><div class="oem-card-body"><span class="oem-badge">Used · OEM</span><h2>'+esc(p.name)+'</h2><div class="oem-meta">'+esc(p.category)+'<br>'+esc(part)+'<br>'+esc(fit)+'</div><div class="oem-price">'+money(p.price)+'</div></div></a>';
+ }).join("");
+}
+["oem-search","oem-category","oem-sort"].forEach(id=>document.getElementById(id).addEventListener(id==="oem-search"?"input":"change",renderOemListings));
+loadOemListings();
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>
