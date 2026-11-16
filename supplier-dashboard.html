@@ -525,7 +525,9 @@ Add Product
         <div class="pt-edit-grid">
             <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-brand">Brand</label><input id="edit-product-spec-brand" class="pt-field" maxlength="100" placeholder="e.g. Castrol"></div>
             <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-part_number">Part number / SKU</label><input id="edit-product-spec-part_number" class="pt-field" maxlength="100" placeholder="Manufacturer part number"></div>
-            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-condition">Condition</label><input id="edit-product-spec-condition" class="pt-field" maxlength="80" placeholder="New, used or refurbished"></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-condition">Condition</label><select id="edit-product-spec-condition" class="pt-field"><option value="">Not specified</option><option value="New">New</option><option value="Used">Used</option><option value="Refurbished">Refurbished</option><option value="For parts">For parts</option></select></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-part_origin">Part origin</label><select id="edit-product-spec-part_origin" class="pt-field"><option value="">Not specified</option><option value="OEM">OEM / Genuine</option><option value="Aftermarket">Aftermarket</option><option value="Unknown">Not confirmed</option></select></div>
+            <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-donor_vehicle">Donor vehicle</label><input id="edit-product-spec-donor_vehicle" class="pt-field" maxlength="160" placeholder="Vehicle the part was removed from"></div>
             <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-material">Material</label><input id="edit-product-spec-material" class="pt-field" maxlength="120" placeholder="e.g. Aluminium"></div>
             <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-dimensions">Dimensions</label><input id="edit-product-spec-dimensions" class="pt-field" maxlength="120" placeholder="e.g. 300 × 200 mm"></div>
             <div class="pt-field-group"><label class="pt-field-label" for="edit-product-spec-volume">Volume</label><input id="edit-product-spec-volume" class="pt-field" maxlength="60" placeholder="e.g. 5 L or 500 ml"><p class="pt-field-help">For oils, fluids, coolants and other liquids, include the unit.</p></div>
@@ -738,7 +740,9 @@ Add Product
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;">
             <input id="product-spec-brand" type="text" maxlength="100" placeholder="Brand" style="padding:10px;width:100%;box-sizing:border-box;">
             <input id="product-spec-part_number" type="text" maxlength="100" placeholder="Part number / SKU" style="padding:10px;width:100%;box-sizing:border-box;">
-            <input id="product-spec-condition" type="text" maxlength="80" placeholder="Condition (new / used / refurbished)" style="padding:10px;width:100%;box-sizing:border-box;">
+            <select id="product-spec-condition" style="padding:10px;width:100%;box-sizing:border-box;"><option value="">Condition</option><option value="New">New</option><option value="Used">Used</option><option value="Refurbished">Refurbished</option><option value="For parts">For parts</option></select>
+            <select id="product-spec-part_origin" style="padding:10px;width:100%;box-sizing:border-box;"><option value="">Part origin</option><option value="OEM">OEM / Genuine</option><option value="Aftermarket">Aftermarket</option><option value="Unknown">Not confirmed</option></select>
+            <input id="product-spec-donor_vehicle" type="text" maxlength="160" placeholder="Donor vehicle (used parts)" style="padding:10px;width:100%;box-sizing:border-box;">
             <input id="product-spec-material" type="text" maxlength="120" placeholder="Material" style="padding:10px;width:100%;box-sizing:border-box;">
             <input id="product-spec-dimensions" type="text" maxlength="120" placeholder="Dimensions (e.g. 300 × 200 mm)" style="padding:10px;width:100%;box-sizing:border-box;">
             <input id="product-spec-volume" type="text" maxlength="60" placeholder="Volume (e.g. 5 L / 500 ml)" style="padding:10px;width:100%;box-sizing:border-box;">
@@ -1428,7 +1432,7 @@ function hideAddProductForm() {
 }
 
 function readProductSpecifications(prefix) {
-    const keys = ["brand","part_number","condition","material","dimensions","volume","capacity","warranty","package_contents"];
+    const keys = ["brand","part_number","condition","part_origin","donor_vehicle","material","dimensions","volume","capacity","warranty","package_contents"];
     const result = {};
     keys.forEach(function (key) {
         const input = document.getElementById(prefix + "-" + key);
@@ -1574,6 +1578,11 @@ async function addProductInner() {
     if (!vehicle_compatibility.trim()) {
         message.textContent = "Please add vehicle fitment details, enter “Universal”, or state that compatibility has not yet been confirmed.";
         document.getElementById("vehicle-compatibility").focus();
+        return;
+    }
+    if (specifications.condition === "Used" && specifications.part_origin === "OEM" && !String(specifications.part_number || "").trim()) {
+        message.textContent = "Used OEM listings must include the manufacturer part number. If it is not known, do not label the part as confirmed OEM."; 
+        document.getElementById("product-spec-part_number").focus();
         return;
     }
     if (imageFiles.length < 1) {
@@ -2303,7 +2312,7 @@ async function editProduct(productId) {
     document.getElementById("edit-product-description").value = product.description || "";
     document.getElementById("edit-product-compatibility").value = product.vehicle_compatibility || "";
     const existingSpecs = product.specifications && typeof product.specifications === "object" ? product.specifications : {};
-    ["brand","part_number","condition","material","dimensions","volume","capacity","warranty","package_contents"].forEach(function (key) {
+    ["brand","part_number","condition","part_origin","donor_vehicle","material","dimensions","volume","capacity","warranty","package_contents"].forEach(function (key) {
         const field = document.getElementById("edit-product-spec-" + key);
         if (field) field.value = existingSpecs[key] || "";
     });
@@ -2336,6 +2345,10 @@ document.getElementById("edit-product-save").addEventListener("click", async () 
     if (!name) { errorBox.textContent = "Please enter a product name."; return; }
     if (!priceText || !Number.isFinite(price) || price <= 0) { errorBox.textContent = "Enter a selling price greater than R0."; return; }
     if (!stockText || !Number.isInteger(stock) || stock < 0) { errorBox.textContent = "Enter a whole stock quantity of 0 or more."; return; }
+    const updatedSpecifications = readProductSpecifications("edit-product-spec");
+    if (updatedSpecifications.condition === "Used" && updatedSpecifications.part_origin === "OEM" && !String(updatedSpecifications.part_number || "").trim()) {
+        errorBox.textContent = "Used OEM listings must include the manufacturer part number. If it is not known, do not label the part as confirmed OEM."; return;
+    }
 
     const saveButton = document.getElementById("edit-product-save");
     saveButton.disabled = true;
@@ -2356,7 +2369,7 @@ document.getElementById("edit-product-save").addEventListener("click", async () 
         name, price, stock,
         description: document.getElementById("edit-product-description").value.trim(),
         vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim(),
-        specifications: readProductSpecifications("edit-product-spec")
+        specifications: updatedSpecifications
     };
     if (hasActivePremiumVideoPlan()) {
         productChanges.video_preview_url = nextVideoUrl;
