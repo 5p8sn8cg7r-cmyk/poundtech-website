@@ -290,6 +290,7 @@ async function submitSellerApplication(user, fullName, phone, file) {
             user_id: user.id,
             full_name: fullName,
             phone: phone,
+            email: user.email || null,
             id_document_path: path,
             terms_accepted_at: new Date().toISOString()
         }]);
