@@ -8,6 +8,10 @@
 <link rel="stylesheet" href="/site.css">
 <style>
 *{box-sizing:border-box}
+.dash-nav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 20px;padding:6px;background:#fff;border:1.5px solid #888;border-radius:12px}
+.dash-nav a{padding:10px 16px;border:1px solid #999;border-radius:8px;color:#111;text-decoration:none;font-size:14px;font-weight:600;transition:background .15s,color .15s,border-color .15s}
+.dash-nav a:hover{background:#f1f1f1;border-color:#555}
+.dash-nav a.on{background:#111;color:#fff;border-color:#111}
 .team-wrap{max-width:900px;margin:30px auto;padding:0 18px}
 .team-card{background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:22px;margin-bottom:16px}
 .team-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -37,6 +41,17 @@
   <a class="back pt-back-marketplace" href="/mechanic-dashboard.html">← Back to bookings</a>
 </header>
 <main class="team-wrap">
+  <nav class="dash-nav" aria-label="Dashboard sections">
+    <a href="mechanic-dashboard.html">Bookings &amp; quotes</a>
+    <a href="business-dashboard.html#services">Services &amp; prices</a>
+    <a href="business-dashboard.html#hours">Opening hours</a>
+    <a href="business-dashboard.html#booking-settings">Booking settings</a>
+    <a href="business-dashboard.html#business-photos">Business photos</a>
+    <a href="business-dashboard.html#branches">Branches</a>
+    <a href="service-partner-team.html" class="on" aria-current="page">Manage team</a>
+    <a href="business-dashboard.html#service-support">Priority support</a>
+    <a href="business-dashboard.html#service-campaigns">Promotions</a>
+  </nav>
   <section class="team-card">
     <h1>Manage your service team</h1>
     <p class="team-muted" id="business-name">Loading your business…</p>
