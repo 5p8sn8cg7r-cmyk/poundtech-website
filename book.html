@@ -185,7 +185,7 @@
             <div id="branch-picker-wrap" hidden style="margin-bottom:16px;">
                 <label for="booking-branch">Choose a branch</label>
                 <select id="booking-branch"></select>
-                <p class="hint" style="margin:7px 0 0;">Opening hours and booking rules are shared across this business's locations.</p>
+                <p class="hint" style="margin:7px 0 0;">Each branch has its own opening hours and booking capacity.</p>
             </div>
             <label for="booking-date">Date</label>
             <input type="date" id="booking-date">
@@ -415,10 +415,15 @@ async function start() {
         return;
     }
 
+    if (branchRes.error) {
+        console.error("Unable to load branch locations:", branchRes.error);
+        fatal("We couldn't load this business's locations. Please refresh the page or try again shortly.");
+        return;
+    }
+
     business = bizRes.data;
     service = svcRes.data;
-    branches = branchRes.error ? [] : (branchRes.data || []);
-    if (branchRes.error) console.error("Unable to load branch locations:", branchRes.error);
+    branches = branchRes.data || [];
     selectedBranchId = branches.length
         ? (branches.find(branch => branch.is_primary)?.id || branches[0].id)
         : null;
