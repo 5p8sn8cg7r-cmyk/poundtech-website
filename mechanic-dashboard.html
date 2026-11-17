@@ -102,11 +102,41 @@
 .details strong { color: #666; font-weight: bold; }
 
 .when {
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 14px;
 }
-
+.when-date {
+    color: #222;
+    font-size: 15px;
+    font-weight: 750;
+}
+.when-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    background: #fff1f1;
+    border: 1px solid #e00000;
+    color: #b00000;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+.when-time::before {
+    content: "TIME";
+    font-size: 9px;
+    letter-spacing: .7px;
+    opacity: .75;
+}
+.when-tbc {
+    color: #777;
+    font-size: 13px;
+    font-weight: 600;
+}
 .actions {
     display: flex;
     gap: 10px;
@@ -114,12 +144,35 @@
     align-items: center;
     margin-top: 14px;
 }
-
 .actions select {
     width: auto;
+    min-width: 170px;
     margin: 0;
-    padding: 9px 12px;
+    padding: 10px 38px 10px 13px;
+    border: 1.5px solid #222;
+    border-left: 4px solid #e00000;
+    border-radius: 8px;
+    background-color: #171717;
+    color: #fff;
+    font-family: inherit;
     font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+.actions select:hover { border-color: #e00000; }
+.actions select:focus {
+    outline: 2px solid rgba(224,0,0,.2);
+    outline-offset: 2px;
+    border-color: #e00000;
+}
+.actions select option {
+    background: #171717;
+    color: #fff;
 }
 
 .actions .btn { width: auto; }
@@ -322,28 +375,34 @@ function pillClass(status) {
 function formatWhen(booking) {
 
     if (booking.start_time) {
-        return new Date(booking.start_time).toLocaleString("en-ZA", {
+        const start = new Date(booking.start_time);
+        const date = start.toLocaleDateString("en-ZA", {
             timeZone: "Africa/Johannesburg",
-            weekday: "short",
+            weekday: "long",
             day: "numeric",
-            month: "short",
-            year: "numeric",
+            month: "long",
+            year: "numeric"
+        });
+        const time = start.toLocaleTimeString("en-ZA", {
+            timeZone: "Africa/Johannesburg",
             hour: "2-digit",
             minute: "2-digit",
             hour12: false
         });
+        return '<span class="when-date">' + esc(date) + '</span><span class="when-time">' + esc(time) + '</span>';
     }
 
     if (booking.booking_date) {
-        return new Date(booking.booking_date + "T00:00:00").toLocaleDateString("en-ZA", {
-            weekday: "short",
+        const date = new Date(booking.booking_date + "T00:00:00").toLocaleDateString("en-ZA", {
+            weekday: "long",
             day: "numeric",
-            month: "short",
+            month: "long",
             year: "numeric"
         });
+        return '<span class="when-date">' + esc(date) + '</span><span class="when-tbc">Time to be confirmed</span>';
     }
 
-    return "Date not selected";
+    return '<span class="when-tbc">Date and time not selected</span>';
 }
 
 function whenValue(booking) {
@@ -549,7 +608,7 @@ function bookingCard(booking) {
                 </span>
             </div>
 
-            <div class="when">${esc(formatWhen(booking))}</div>
+            <div class="when">${formatWhen(booking)}</div>
 
             <div class="details">
                 <div><strong>Branch:</strong> ${esc(booking.branch_id ? (branchNamesById[booking.branch_id] || "Branch location") : primaryBranchName)}</div>
