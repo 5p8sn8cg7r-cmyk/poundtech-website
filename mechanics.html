@@ -231,6 +231,8 @@ summary {
 .sponsored-campaign-card .sponsored-business{font-size:12px;font-weight:700;color:#333;margin-bottom:8px}
 .sponsored-campaign-card .sponsored-cta{display:inline-block;background:#d60000;color:#fff;text-decoration:none;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:800}
 
+.tag-demo{background:#fff2e8;color:#8a3b00;border:1px solid #f1c9aa}
+.demo-note{display:block;padding:10px 12px;border:1px dashed #d8a47f;border-radius:8px;background:#fff8f2;color:#75401f;font-size:12px;line-height:1.45}
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
@@ -418,7 +420,7 @@ async function loadMechanics() {
     // Only the fields customers need to see. Contact details are not loaded here.
     const mechanicsQuery = supabaseClient
         .from("mechanics")
-        .select("id, business_name, business_type, specialties, service_area, services, description, created_at, verified, business_photo_url")
+        .select("id, business_name, business_type, specialties, service_area, services, description, created_at, verified, business_photo_url, is_demo")
         .eq("status", "Approved")
         .order("created_at", { ascending: false });
 
@@ -635,6 +637,7 @@ function businessCard(mechanic) {
 
             <div class="biz-top">
                 <span class="tag">${esc(TYPE_LABELS[mechanic.business_type] || "Mechanic")}</span>
+                ${mechanic.is_demo ? '<span class="tag tag-demo">Demo profile</span>' : ""}
                 ${mechanic.verified ? '<span class="tag tag-ok">Verified by PoundTech</span>' : ""}
                 ${hasInstant ? '<span class="tag tag-ok">Instant booking</span>' : ""}
             </div>
@@ -656,7 +659,7 @@ function businessCard(mechanic) {
             ${hoursHtml}
 
             <div class="biz-actions">
-                <button class="btn" data-action="quote" data-id="${esc(mechanic.id)}">Request a Quote</button>
+                ${mechanic.is_demo ? '<span class="demo-note">Demonstration listing — enquiries are disabled.</span>' : '<button class="btn" data-action="quote" data-id="' + esc(mechanic.id) + '">Request a Quote</button>'}
             </div>
 
         </div>`;
