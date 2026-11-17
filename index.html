@@ -1583,10 +1583,26 @@ body.pt-search-active .search-results-bar button:hover {
         -webkit-overflow-scrolling: touch;
     }
     .hero-pathway {
-        flex: 0 0 min(78vw, 270px);
-        min-height: 72px;
+        box-sizing: border-box;
+        flex: 0 0 min(82vw, 300px);
+        min-width: 0;
+        min-height: 78px;
         padding: 12px;
+        gap: 10px;
+        overflow: hidden;
         scroll-snap-align: start;
+    }
+    .hero-pathway-copy {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+    .hero-pathway-copy strong,
+    .hero-pathway-copy small {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: normal;
     }
 }
 @media (prefers-reduced-motion: reduce) {
