@@ -92,7 +92,9 @@ function esc(value) {
         .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-const orderNumber = new URLSearchParams(location.search).get("order") || "";
+const params = new URLSearchParams(location.search);
+const orderNumber = params.get("order") || "";
+const checkoutToken = params.get("token") || "";
 const card = document.getElementById("card");
 
 function show(html) { card.innerHTML = html; }
@@ -102,14 +104,21 @@ function orderBox() {
 }
 
 async function status() {
-    const { data, error } = await supabaseClient.rpc("get_order_payment_status", { p_order_number: orderNumber });
-    return error ? null : data;
+    const { data, error } = await supabaseClient.rpc("get_order_payment_status", {
+        p_order_number: orderNumber,
+        p_checkout_token: checkoutToken
+    });
+    if (error) {
+        console.error("PAYMENT STATUS LOOKUP ERROR:", error);
+        return null;
+    }
+    return data;
 }
 
 async function check() {
 
-    if (!orderNumber) {
-        show('<h1>Order not found</h1><p>We could not find that order.</p><a class="btn pt-back-marketplace" href="/index.html">Back to marketplace</a>');
+    if (!orderNumber || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(checkoutToken)) {
+        show('<h1>Payment reference missing</h1><p>We could not securely verify this payment return. Please use the link from your latest Yoco checkout or contact PoundTech.</p><a class="btn pt-back-marketplace" href="/index.html">Back to marketplace</a>');
         return;
     }
 
