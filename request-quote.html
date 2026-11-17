@@ -303,7 +303,11 @@ document
             "<p>Sending your request...</p>";
 
 
+        const quoteReference = crypto.randomUUID();
+
         const quoteRequest = {
+
+            id: quoteReference,
 
             mechanic_id: mechanicId,
 
@@ -423,6 +427,11 @@ document
                     your request and respond with
                     a quote.
                 </p>
+
+                <p><strong>Your quote reference (save this):</strong></p>
+                <p style="font-weight:bold;word-break:break-all;">${quoteReference}</p>
+                <p>You'll need this reference together with your email address to view or respond to this quote.</p>
+                <p><a href="quote-status.html">Check your quote status</a></p>
 
             </div>
 
