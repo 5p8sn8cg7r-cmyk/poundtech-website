@@ -397,8 +397,8 @@ async function loadMechanicProfile() {
                 '</p></div>' +
                 '<div class="profile-service-side"><div class="profile-service-price">' +
                 escapeHtml(formatPrice(service.price)) + '</div>' +
-                '<a class="profile-book" href="' + bookingUrl + '">' +
-                actionLabel + '</a></div></div>';
+                '<a class="profile-book" ' + (mechanic.is_demo ? 'aria-disabled="true" tabindex="-1" style="opacity:.45;pointer-events:none"' : 'href="' + bookingUrl + '"') + '>' +
+                (mechanic.is_demo ? 'Demo only' : actionLabel) + '</a></div></div>';
         }).join("")
         : '<p>Contact this business for available services and pricing.</p>';
 
@@ -444,9 +444,10 @@ async function loadMechanicProfile() {
 
     profileContainer.innerHTML = `
 
-        <span class="status">
-            Approved
+        <span class="status" style="${mechanic.is_demo ? 'background:#fff2e8;color:#8a3b00;' : ''}">
+            ${mechanic.is_demo ? "Demo profile" : "Approved"}
         </span>
+        ${mechanic.is_demo ? '<div style="padding:12px 14px;margin:0 0 18px;border:1px dashed #d8a47f;border-radius:9px;background:#fff8f2;color:#75401f;font-size:13px;line-height:1.5;">This is a PoundTech demonstration profile. Services and prices are illustrative; enquiries and bookings are disabled.</div>' : ""}
 
         <div class="business-type">
             ${escapeHtml(businessType)}
