@@ -213,10 +213,10 @@ input[type="checkbox"] {
 }
 
 
-.dash-nav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 20px;padding:6px;background:#fff;border:1px solid #e3e3e3;border-radius:12px}
-.dash-nav a{padding:10px 16px;border-radius:8px;color:#111;text-decoration:none;font-size:14px;font-weight:600}
-.dash-nav a:hover{background:#f1f1f1}
-.dash-nav a.on{background:#111;color:#fff}
+.dash-nav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 20px;padding:6px;background:#fff;border:1.5px solid #888;border-radius:12px}
+.dash-nav a{padding:10px 16px;border:1px solid #999;border-radius:8px;color:#111;text-decoration:none;font-size:14px;font-weight:600;transition:background .15s,color .15s,border-color .15s}
+.dash-nav a:hover{background:#f1f1f1;border-color:#555}
+.dash-nav a.on{background:#111;color:#fff;border-color:#111}
 .od-cards button,.od-tabs button{font-family:inherit}
 html{scroll-behavior:smooth}
 #services,#hours,#booking-settings{scroll-margin-top:16px}
@@ -282,12 +282,14 @@ html{scroll-behavior:smooth}
 
     <nav class="dash-nav" aria-label="Dashboard sections">
         <a href="mechanic-dashboard.html">Bookings &amp; quotes</a>
-        <a href="business-dashboard.html#services">Services &amp; prices</a>
-        <a href="business-dashboard.html#hours">Opening hours</a>
-        <a href="business-dashboard.html#booking-settings">Booking settings</a>
-        <a href="business-dashboard.html#business-photos">Business photos</a>
-        <a href="business-dashboard.html#service-support">Priority support</a>
-        <a href="business-dashboard.html#service-campaigns">Promotions</a>
+        <a href="business-dashboard.html#services" data-dashboard-section="services">Services &amp; prices</a>
+        <a href="business-dashboard.html#hours" data-dashboard-section="hours">Opening hours</a>
+        <a href="business-dashboard.html#booking-settings" data-dashboard-section="booking-settings">Booking settings</a>
+        <a href="business-dashboard.html#business-photos" data-dashboard-section="business-photos">Business photos</a>
+        <a href="business-dashboard.html#branches" data-dashboard-section="branches">Branches</a>
+        <a href="service-partner-team.html">Manage team</a>
+        <a href="business-dashboard.html#service-support" data-dashboard-section="service-support">Priority support</a>
+        <a href="business-dashboard.html#service-campaigns" data-dashboard-section="service-campaigns">Promotions</a>
     </nav>
 
 
@@ -2167,6 +2169,19 @@ async function saveSettings() {
     msg("settings-msg", "Booking settings saved.", "success");
 }
 
+
+/* ---------- DASHBOARD NAVIGATION ---------- */
+function syncDashboardNav() {
+    const current = (location.hash || "#services").slice(1);
+    document.querySelectorAll(".dash-nav a[data-dashboard-section]").forEach(link => {
+        const active = link.dataset.dashboardSection === current;
+        link.classList.toggle("on", active);
+        if (active) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+    });
+}
+window.addEventListener("hashchange", syncDashboardNav);
+syncDashboardNav();
 
 /* ---------- WIRING ---------- */
 
