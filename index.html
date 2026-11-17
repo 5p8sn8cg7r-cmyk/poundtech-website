@@ -2111,12 +2111,7 @@ Discover parts and accessories, book trusted automotive services, and connect wi
 
 </div>
 
-<div style="display:flex;justify-content:center;margin:24px 0 8px;">
-    <button type="button" id="products-load-more" onclick="loadMoreProducts()" hidden
-        style="min-height:44px;padding:0 22px;border:1px solid #e00000;border-radius:8px;background:#e00000;color:#fff;font-weight:750;cursor:pointer;">
-        Load more products
-    </button>
-</div>
+<div id="products-scroll-sentinel" aria-live="polite" style="min-height:28px;margin:18px 0;text-align:center;color:#888;font-size:12px;"></div>
 </section>
 
 
@@ -3898,16 +3893,29 @@ async function enrichProductSupplierDetails(products) {
 }
 
 function updateLoadMoreButton() {
-    const button = document.getElementById("products-load-more");
-    if (!button) return;
-    button.hidden = !PRODUCT_HAS_MORE;
-    button.disabled = PRODUCT_LOADING;
-    button.textContent = PRODUCT_LOADING ? "Loading products..." : "Load more products";
+    const sentinel = document.getElementById("products-scroll-sentinel");
+    if (!sentinel) return;
+    sentinel.textContent = PRODUCT_LOADING && PRODUCT_HAS_MORE ? "Loading more products..." : "";
 }
 
 function loadMoreProducts() {
     return loadProducts(true);
 }
+
+let productScrollObserver = null;
+function setupProductInfiniteScroll() {
+    const sentinel = document.getElementById("products-scroll-sentinel");
+    if (!sentinel || !("IntersectionObserver" in window)) return;
+    if (productScrollObserver) productScrollObserver.disconnect();
+    productScrollObserver = new IntersectionObserver(function(entries) {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting && PRODUCT_HAS_MORE && !PRODUCT_LOADING && !productSearchActive) {
+            loadProducts(true);
+        }
+    }, { root: null, rootMargin: "700px 0px", threshold: 0 });
+    productScrollObserver.observe(sentinel);
+}
+setupProductInfiniteScroll();
 let sortMode = "recommended";
 let onlyDeals = false;
 let onlyInStock = false;
