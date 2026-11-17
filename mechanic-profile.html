@@ -161,10 +161,19 @@
         }
 
         @media (max-width: 520px) {
-            .container { margin: 15px auto; padding: 12px; }
-            .profile-card, .reviews-card { padding: 20px; }
-            .profile-service { align-items: flex-start; }
-            .profile-service-side { min-width: 105px; }
+            header { padding:14px 16px; }
+            header h1 { font-size:23px; margin:0; }
+            .container { width:auto; max-width:100%; box-sizing:border-box; margin:12px auto; padding:10px; }
+            .profile-card, .reviews-card { padding:17px; border-radius:13px; }
+            .profile-card h1 { font-size:25px; line-height:1.2; overflow-wrap:anywhere; }
+            .profile-gallery { grid-template-columns:1fr; gap:8px; }
+            .profile-gallery img { aspect-ratio:16/9; }
+            .profile-service { align-items:flex-start; gap:10px; }
+            .profile-service > div:first-child { min-width:0; }
+            .profile-service-side { min-width:96px; }
+            .profile-book { padding:9px 11px; font-size:13px; }
+            .quote-button { width:100%; box-sizing:border-box; }
+            .profile-location { padding:12px; }
         }
 
         .profile-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 22px}
@@ -338,9 +347,19 @@ async function loadMechanicProfile() {
         ? row.storage_path.slice("legacy-url:".length)
         : supabaseClient.storage.from("service-partner-photos").getPublicUrl(row.storage_path).data.publicUrl);
     if (!galleryUrls.length && mechanic.business_photo_url) galleryUrls = [mechanic.business_photo_url];
+    if (!galleryUrls.length && mechanic.is_demo) {
+        const demoGalleryByType = {
+            mechanic: "https://images.unsplash.com/photo-1727893119356-1702fe921cf9?auto=format&fit=crop&w=1200&q=75",
+            car_wash: "https://images.unsplash.com/photo-1754296577887-955581147486?auto=format&fit=crop&w=1200&q=75",
+            detailer: "https://images.unsplash.com/photo-1769641156620-48f014424c4f?auto=format&fit=crop&w=1200&q=75",
+            panel_beater: "https://images.unsplash.com/photo-1769021955466-ed4372792114?auto=format&fit=crop&w=1200&q=75",
+            truck_fleet: "https://images.unsplash.com/photo-1727893119356-1702fe921cf9?auto=format&fit=crop&w=1200&q=75"
+        };
+        if (demoGalleryByType[mechanic.business_type]) galleryUrls = [demoGalleryByType[mechanic.business_type]];
+    }
     const galleryHtml = galleryUrls.length
         ? '<div class="profile-gallery" aria-label="Business photos">' + galleryUrls.map((url,index) =>
-            '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(mechanic.business_name) + ' photo ' + (index + 1) + '" loading="lazy">'
+            '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(mechanic.business_name) + (mechanic.is_demo ? ' illustrative' : '') + ' photo ' + (index + 1) + '" loading="lazy" onerror="this.style.display=\'none\'">'
           ).join("") + '</div>'
         : "";
 
