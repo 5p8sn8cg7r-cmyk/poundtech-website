@@ -405,7 +405,7 @@ async function loadMechanicProfile() {
     const { data: reviews, error: reviewsError } =
         await supabaseClient
         .from("mechanic_reviews")
-        .select("*")
+        .select("mechanic_id, customer_name, rating, review, created_at")
         .eq("mechanic_id", mechanicId)
         .order("created_at", {
             ascending: false
