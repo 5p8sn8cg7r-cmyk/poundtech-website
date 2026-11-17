@@ -93,7 +93,7 @@
     <h2>Track Your Booking</h2>
 
     <p>
-        Enter the email address you used when requesting your mechanic quote.
+        Enter the email address you used when making your service booking.
     </p>
 
     <input
@@ -128,6 +128,28 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
+
+function escapeHtml(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function bookingStatusMessage(status) {
+    const messages = {
+        "Pending Approval": "Your request has been received. The business will review it and confirm whether it can take the appointment.",
+        "Accepted": "The business has accepted your booking request.",
+        "Scheduled": "Your booking is confirmed. Please arrive at the scheduled time.",
+        "In Progress": "Your vehicle is currently being worked on.",
+        "Completed": "Your service has been completed. Thank you for choosing PoundTech.",
+        "Declined": "The business cannot accept this booking request. Please contact the business if you need help arranging another time.",
+        "Cancelled": "This booking has been cancelled. Please contact the business if you need to arrange another appointment."
+    };
+    return messages[status] || "Your booking status has been updated.";
+}
 
 async function findBooking() {
 
@@ -195,65 +217,15 @@ async function findBooking() {
 
 
     result.innerHTML = `
-
-        <h2>${booking.business_name}</h2>
-
-        <p>
-            <strong>Customer:</strong>
-            ${booking.customer_name}
-        </p>
-
-        <p>
-            <strong>Vehicle:</strong>
-            ${booking.vehicle}
-        </p>
-
-        <p>
-            <strong>Service:</strong>
-            ${booking.service_required}
-        </p>
-
-        <div class="price">
-            R${Number(booking.agreed_price).toLocaleString()}
-        </div>
-
-        <p class="status">
-            Status: ${booking.status}
-        </p>
-
-        <p>
-            <strong>Booking Date:</strong>
-            ${booking.booking_date || "Not scheduled yet"}
-        </p>
-
-        <div class="message">
-
-            ${
-                booking.status === "Accepted"
-                ? "Your booking has been accepted by the mechanic."
-                : ""
-            }
-
-            ${
-                booking.status === "Scheduled"
-                ? "Your booking has been scheduled."
-                : ""
-            }
-
-            ${
-                booking.status === "In Progress"
-                ? "Your vehicle is currently being worked on."
-                : ""
-            }
-
-            ${
-                booking.status === "Completed"
-                ? "Your service has been completed."
-                : ""
-            }
-
-        </div>
-
+        <h2>${escapeHtml(booking.business_name)}</h2>
+        <p><strong>Booking reference:</strong> ${escapeHtml(String(booking.id).slice(0, 8).toUpperCase())}</p>
+        <p><strong>Customer:</strong> ${escapeHtml(booking.customer_name)}</p>
+        <p><strong>Vehicle:</strong> ${escapeHtml(booking.vehicle)}</p>
+        <p><strong>Service:</strong> ${escapeHtml(booking.service_required)}</p>
+        <div class="price">R${Number(booking.agreed_price).toLocaleString("en-ZA", {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <p class="status">Status: ${escapeHtml(booking.status)}</p>
+        <p><strong>Booking date:</strong> ${escapeHtml(booking.booking_date || "Not scheduled yet")}</p>
+        <div class="message">${escapeHtml(bookingStatusMessage(booking.status))}</div>
     `;
 
 
