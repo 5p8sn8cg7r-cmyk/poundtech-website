@@ -898,6 +898,8 @@ footer {
     box-shadow:0 0 0 3px rgba(224,0,0,.16);
 }
 .product-filter-note { margin-top:11px; color:#9299a5; font-size:11px; line-height:1.5; }
+.pt-no-filter-results { padding:18px; border:1px dashed #d6d8dd; border-radius:10px; background:#fff; color:#555; text-align:center; line-height:1.6; }
+.pt-no-filter-results button { border:0; background:none; color:#d00000; font:inherit; font-weight:800; text-decoration:underline; cursor:pointer; }
 @media (max-width:700px) {
     .product-filter-panel { padding:13px; }
     .product-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
@@ -4057,9 +4059,14 @@ async function renderLoaded() {
 
     if (displayedProducts.length === 0) {
         document.getElementById("result-count").textContent = "";
-        container.innerHTML = activeFilter
-            ? "<p>No compatible products found in <strong>" + esc(activeFilter.title) + "</strong> for this vehicle.</p>"
-            : "<p>No compatible products found for this vehicle.</p>";
+        const hasRefineFilters = !!(selectedProductBrand || selectedProductCondition || selectedProductVolume || selectedProductFitment);
+        if (hasRefineFilters) {
+            container.innerHTML = "<p class=\"pt-no-filter-results\">No products match those filters yet. Try a different value or <button type=\"button\" onclick=\"clearProductFilters()\">clear your filters</button>.</p>";
+        } else {
+            container.innerHTML = activeFilter
+                ? "<p>No compatible products found in <strong>" + esc(activeFilter.title) + "</strong> for this vehicle.</p>"
+                : "<p>No compatible products found for this vehicle.</p>";
+        }
         return;
     }
 
