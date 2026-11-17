@@ -259,6 +259,7 @@ Logout
         <button type="button" data-supplier-tab="supplier-help-panel" onclick="showSupplierSection('supplier-help-panel', this)">Help &amp; Guides</button>
         <button type="button" id="supplier-support-tab" data-supplier-tab="supplier-support-panel" style="display:none" onclick="showSupplierSection('supplier-support-panel', this)">Priority Support</button>
         <button type="button" id="supplier-team-tab" style="display:none" onclick="window.location.href='supplier-team.html'">Team</button>
+        <button type="button" id="supplier-referrals-link" style="display:none" onclick="window.location.href='refer-a-business.html'">Refer a Business</button>
     </nav>
 
     <section class="supplier-panel" id="supplier-earnings-panel">
@@ -1295,6 +1296,8 @@ const roleLabel = (supplierRole || "sales").replace(/_/g," ").replace(/\b\w/g, c
 document.getElementById("welcome").textContent = "Logged in as " + user.email + " · " + (supplierRole === "owner" ? "Business Owner" : roleLabel + " Team Member");
 const teamTab = document.getElementById("supplier-team-tab");
 if (teamTab) teamTab.style.display = supplierRole === "owner" ? "" : "none";
+const referralsLink = document.getElementById("supplier-referrals-link");
+if (referralsLink) referralsLink.style.display = supplierRole === "owner" ? "" : "none";
 const branchesTab = document.getElementById("supplier-branches-tab");
 if (branchesTab) branchesTab.style.display = supplierRole === "owner" ? "" : "none";
 
