@@ -176,6 +176,12 @@
 .dash-nav a:hover{background:#f1f1f1}
 .dash-nav a.on{background:#111;color:#fff}
 .od-cards button,.od-tabs button{font-family:inherit}
+.realtime-status{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#666}
+.realtime-status:before{content:"";width:8px;height:8px;border-radius:50%;background:#d99b22;display:inline-block}
+.realtime-status.live{color:#16803c}
+.realtime-status.live:before{background:#16803c}
+.realtime-status.offline{color:#a11}
+.realtime-status.offline:before{background:#e00000}
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
@@ -206,7 +212,10 @@
 
     <div class="top-bar">
         <p id="today-line" style="margin:0;color:#666;"></p>
-        <button class="btn btn-small btn-outline" id="logout-btn">Log out</button>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span id="realtime-status" class="realtime-status" role="status" aria-live="polite">Connecting to live updates…</span>
+            <button class="btn btn-small btn-outline" id="logout-btn">Log out</button>
+        </div>
     </div>
 
     <div id="message" role="status"></div>
@@ -251,6 +260,8 @@ let currentTeamMember = null;
 let branchNamesById = {};
 let primaryBranchName = "Main branch";
 let messageTimer = null;
+let servicePartnerRealtimeChannel = null;
+let realtimeRefreshTimer = null;
 
 
 /* ---------- helpers ---------- */
@@ -412,9 +423,91 @@ async function loadMechanic() {
     $("branches-nav-link").style.display = currentTeamMember ? "none" : "";
     $("team-nav-link").style.display = currentTeamMember ? "none" : "";
 
-    loadBookings();
-    loadQuoteRequests();
+    await Promise.all([loadBookings(), loadQuoteRequests()]);
+    setupServicePartnerRealtime();
 }
+
+
+/* ---------- real-time updates ---------- */
+
+function setRealtimeStatus(state, message) {
+    const el = $("realtime-status");
+    if (!el) return;
+    el.className = "realtime-status" + (state === "live" ? " live" : state === "offline" ? " offline" : "");
+    el.textContent = message;
+}
+
+function queueRealtimeRefresh(target) {
+    clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = setTimeout(() => {
+        if (target === "bookings") loadBookings();
+        else if (target === "quotes") loadQuoteRequests();
+        else {
+            loadBookings();
+            loadQuoteRequests();
+        }
+    }, 300);
+}
+
+function setupServicePartnerRealtime() {
+    if (!currentMechanic) return;
+
+    if (servicePartnerRealtimeChannel) {
+        supabaseClient.removeChannel(servicePartnerRealtimeChannel);
+        servicePartnerRealtimeChannel = null;
+    }
+
+    setRealtimeStatus("connecting", "Connecting to live updates…");
+
+    servicePartnerRealtimeChannel = supabaseClient
+        .channel("service-partner-dashboard-" + currentMechanic.id)
+        .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "mechanic_bookings",
+            filter: "mechanic_id=eq." + currentMechanic.id
+        }, () => queueRealtimeRefresh("bookings"))
+        .on("postgres_changes", {
+            event: "UPDATE",
+            schema: "public",
+            table: "mechanic_bookings",
+            filter: "mechanic_id=eq." + currentMechanic.id
+        }, () => queueRealtimeRefresh("bookings"))
+        .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "mechanic_quote_requests",
+            filter: "mechanic_id=eq." + currentMechanic.id
+        }, () => queueRealtimeRefresh("quotes"))
+        .on("postgres_changes", {
+            event: "UPDATE",
+            schema: "public",
+            table: "mechanic_quote_requests",
+            filter: "mechanic_id=eq." + currentMechanic.id
+        }, () => queueRealtimeRefresh("quotes"))
+        .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+                setRealtimeStatus("live", "Live updates connected");
+                // Reconcile anything that may have changed while the page was connecting.
+                queueRealtimeRefresh("all");
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+                setRealtimeStatus("offline", "Live updates disconnected · refresh to sync");
+            } else {
+                setRealtimeStatus("connecting", "Connecting to live updates…");
+            }
+        });
+}
+
+window.addEventListener("online", () => {
+    if (currentMechanic) setupServicePartnerRealtime();
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && currentMechanic) {
+        if (!servicePartnerRealtimeChannel) setupServicePartnerRealtime();
+        queueRealtimeRefresh("all");
+    }
+});
 
 
 /* ---------- bookings ---------- */
