@@ -297,29 +297,27 @@ async function acceptQuote() {
 
     if (!currentQuote) return;
 
-const { data: bookingId, error } =
-    await supabaseClient.rpc(
-        "accept_mechanic_quote",
-        {
-            p_quote_request_id: currentQuote.id,
-            p_customer_email: document.getElementById("customer-email").value.trim()
-        }
-    );
+const { data, error } =
+        await supabaseClient.rpc(
+            "accept_mechanic_quote",
+            {
+                p_quote_request_id: currentQuote.id,
+                p_customer_email: document.getElementById("customer-email").value.trim()
+            }
+        );
 
-if (error) {
+    if (error) {
+        console.error(error);
+        alert("Unable to accept quote: " + error.message);
+        return;
+    }
 
-    console.log("BOOKING ERROR:", error);
-    alert("BOOKING ERROR: " + error.message);
+    if (!data || !data.success) {
+        alert(data?.message || "Unable to accept this quote.");
+        return;
+    }
 
-    return;
-}
-
-console.log("BOOKING CREATED:", bookingId);
-alert("Booking created! ID: " + bookingId);
-
-
-    alert("Quote accepted!");
-
+    alert(data.message + (data.booking_id ? " Booking reference: " + data.booking_id : ""));
     findQuote();
 }
 
