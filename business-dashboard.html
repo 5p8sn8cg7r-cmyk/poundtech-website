@@ -1690,6 +1690,7 @@ async function saveBranch() {
     closeBranchForm();
     msg("branch-msg", wasEditing ? "Branch updated." : "Branch added.", "success");
     await loadBranches();
+    await loadHours();
 }
 
 async function toggleBranch(branchId) {
