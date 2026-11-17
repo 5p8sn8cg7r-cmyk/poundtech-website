@@ -3813,8 +3813,12 @@ async function loadProducts(append) {
         query = query.in("category", activeFilter.categories);
     }
 
+    const productOrder = sortMode === "newest"
+        ? { column: "created_at", ascending: false }
+        : { column: "id", ascending: true };
+
     const { data: products, error } = await query
-        .order("created_at", { ascending: false })
+        .order(productOrder.column, { ascending: productOrder.ascending })
         .range(PRODUCT_OFFSET, PRODUCT_OFFSET + PRODUCT_PAGE_SIZE - 1);
 
     if (productSearchActive) {
@@ -3971,6 +3975,54 @@ document.getElementById("filter-fitment").addEventListener("input", function(e) 
 });
 document.getElementById("clear-product-filters").addEventListener("click", clearProductFilters);
 
+// Recommended order: rotate categories evenly, with a daily seeded shuffle
+// inside each category. This avoids a new bulk upload dominating the first rows.
+function ptProductHash(value) {
+    let hash = 2166136261;
+    const input = String(value || "");
+    for (let i = 0; i < input.length; i++) {
+        hash ^= input.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+}
+
+function ptDiversifyProducts(items) {
+    const dayKey = new Date().toISOString().slice(0, 10);
+    const groups = new Map();
+
+    (items || []).forEach(function(item) {
+        const category = String(item.product.category || "Other");
+        if (!groups.has(category)) groups.set(category, []);
+        groups.get(category).push(item);
+    });
+
+    const categories = Array.from(groups.keys()).sort(function(a, b) {
+        return ptProductHash(dayKey + "|" + a) - ptProductHash(dayKey + "|" + b);
+    });
+
+    categories.forEach(function(category) {
+        groups.get(category).sort(function(a, b) {
+            return ptProductHash(dayKey + "|" + a.product.id) -
+                   ptProductHash(dayKey + "|" + b.product.id);
+        });
+    });
+
+    const mixed = [];
+    let remaining = true;
+    while (remaining) {
+        remaining = false;
+        categories.forEach(function(category) {
+            const group = groups.get(category);
+            if (group.length) {
+                mixed.push(group.shift());
+                remaining = true;
+            }
+        });
+    }
+    return mixed;
+}
+
 // Applies the garage vehicle, sort and filters to the products already loaded.
 async function renderLoaded() {
 
@@ -4053,7 +4105,9 @@ async function renderLoaded() {
     const price = function (item) { return PT.sale(item.product).now; };
     const rating = function (item) { return PT.ratings[item.product.id] || { avg: 0, count: 0 }; };
 
-    if (sortMode === "newest") {
+    if (sortMode === "recommended") {
+        displayedProducts = ptDiversifyProducts(displayedProducts);
+    } else if (sortMode === "newest") {
         displayedProducts = displayedProducts.slice().sort(function (a, b) {
             return String(b.product.created_at).localeCompare(String(a.product.created_at));
         });
@@ -4124,7 +4178,7 @@ function resetViewOptions() {
 
 document.getElementById("sort-select").addEventListener("change", function (e) {
     sortMode = e.target.value;
-    renderLoaded();
+    loadProducts();
 });
 
 document.getElementById("chip-deals").addEventListener("click", function (e) {
