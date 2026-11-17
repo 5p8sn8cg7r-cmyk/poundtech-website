@@ -310,11 +310,20 @@ document.getElementById("logout-button").addEventListener("click", async functio
         showMessage(error.message, "error");
         return;
     }
+    currentAuthUser = null;
     signedInPanel.classList.add("hidden");
     registerForm.classList.remove("hidden");
     loginForm.classList.add("hidden");
     registerTab.classList.add("active");
     loginTab.classList.remove("active");
+    document.getElementById("register-email").readOnly = false;
+    document.getElementById("register-email").value = "";
+    const passwordInput = document.getElementById("register-password");
+    passwordInput.style.display = "";
+    passwordInput.required = true;
+    const passwordLabel = registerForm.querySelector('label[for="register-password"]');
+    if (passwordLabel) passwordLabel.style.display = "";
+    document.getElementById("register-button").textContent = "Create account and submit application";
     showMessage("You have logged out.", "success");
 });
 
