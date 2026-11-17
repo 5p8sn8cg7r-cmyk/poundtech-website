@@ -958,16 +958,30 @@ footer {
 
     .ha-count.is-zero { display: none; }
 
-    nav {
-        justify-content: space-between;
-        gap: 0;
-        padding: 0;
+    header > nav {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 22px;
+        padding: 0 0 2px;
         overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
     }
 
-    nav a {
-        padding: 13px 0;
-        font-size: 14px;
+    header > nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    header > nav a {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        padding: 14px 0;
+        font-size: 13px;
+        line-height: 1.2;
         white-space: nowrap;
     }
 }
