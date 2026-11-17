@@ -4173,7 +4173,7 @@ function resetViewOptions() {
     document.getElementById("sort-select").value = "recommended";
     document.getElementById("chip-deals").classList.remove("active");
     document.getElementById("chip-stock").classList.remove("active");
-    renderLoaded();
+    loadProducts();
 }
 
 document.getElementById("sort-select").addEventListener("change", function (e) {
