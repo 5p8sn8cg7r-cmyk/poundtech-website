@@ -2087,19 +2087,22 @@ Discover parts and accessories, book trusted automotive services, and connect wi
     </div>
     <div class="product-filter-grid">
         <label>Brand
-            <input id="filter-brand" type="search" list="filter-brand-options" placeholder="Any brand" autocomplete="off">
-            <datalist id="filter-brand-options"></datalist>
+            <select id="filter-brand">
+                <option value="">All brands</option>
+            </select>
         </label>
         <label>Vehicle compatibility
             <input id="filter-fitment" type="search" placeholder="e.g. VW Polo, BMW 3 Series" autocomplete="off">
         </label>
         <label>Condition
-            <input id="filter-condition" type="search" list="filter-condition-options" placeholder="Any condition" autocomplete="off">
-            <datalist id="filter-condition-options"></datalist>
+            <select id="filter-condition">
+                <option value="">Any condition</option>
+            </select>
         </label>
         <label>Volume
-            <input id="filter-volume" type="search" list="filter-volume-options" placeholder="e.g. 5 L, 500 ml" autocomplete="off">
-            <datalist id="filter-volume-options"></datalist>
+            <select id="filter-volume">
+                <option value="">Any volume</option>
+            </select>
         </label>
     </div>
     <p class="product-filter-note">Filter options appear as suppliers add verified product specifications.</p>
@@ -3924,31 +3927,24 @@ function productSpecValue(product, key) {
 
 function updateProductFilterOptions() {
     const definitions = [
-        { id: "filter-brand", list: "filter-brand-options", key: "brand", selected: selectedProductBrand },
-        { id: "filter-condition", list: "filter-condition-options", key: "condition", selected: selectedProductCondition },
-        { id: "filter-volume", list: "filter-volume-options", key: "volume", selected: selectedProductVolume }
+        { id: "filter-brand", key: "brand", selected: selectedProductBrand, placeholder: "All brands" },
+        { id: "filter-condition", key: "condition", selected: selectedProductCondition, placeholder: "Any condition" },
+        { id: "filter-volume", key: "volume", selected: selectedProductVolume, placeholder: "Any volume" }
     ];
     definitions.forEach(function(def) {
-        const input = document.getElementById(def.id);
-        const datalist = document.getElementById(def.list);
-        if (!input || !datalist) return;
+        const select = document.getElementById(def.id);
+        if (!select) return;
         const values = [...new Set(loadedProducts.map(function(p){ return productSpecValue(p, def.key); }).filter(Boolean))];
         values.sort(function(a,b){ return a.localeCompare(b, undefined, {numeric:true, sensitivity:"base"}); });
-        datalist.innerHTML = values.map(function(value){ return '<option value="' + esc(value) + '"></option>'; }).join("");
-        if (input.value !== def.selected) input.value = def.selected;
-        input.placeholder = values.length ? "Search or choose (" + values.length + ")" : "No listed values yet";
+        select.innerHTML = '<option value="">' + def.placeholder + '</option>' +
+            values.map(function(value){ return '<option value="' + esc(value) + '">' + esc(value) + '</option>'; }).join("");
+        select.value = values.includes(def.selected) ? def.selected : "";
     });
     const note = document.querySelector(".product-filter-note");
     if (note) {
-        const hasSpecs = loadedProducts.some(function(p) {
-            return productSpecValue(p,"brand") || productSpecValue(p,"condition") || productSpecValue(p,"volume");
-        });
-        note.textContent = hasSpecs
-            ? "Type to filter or choose a suggestion. Options update as more products are loaded."
-            : "These filters are ready to use as listings are added. Sellers need to provide brand, condition and volume in their product specifications before those options can appear.";
+        note.textContent = "Choose from the available options. More choices appear automatically as additional products load.";
     }
 }
-
 function clearProductFilters() {
     selectedProductBrand = "";
     selectedProductCondition = "";
@@ -3961,13 +3957,13 @@ function clearProductFilters() {
     renderLoaded();
 }
 
-document.getElementById("filter-brand").addEventListener("input", function(e) {
+document.getElementById("filter-brand").addEventListener("change", function(e) {
     selectedProductBrand = e.target.value.trim(); renderLoaded();
 });
-document.getElementById("filter-condition").addEventListener("input", function(e) {
+document.getElementById("filter-condition").addEventListener("change", function(e) {
     selectedProductCondition = e.target.value.trim(); renderLoaded();
 });
-document.getElementById("filter-volume").addEventListener("input", function(e) {
+document.getElementById("filter-volume").addEventListener("change", function(e) {
     selectedProductVolume = e.target.value.trim(); renderLoaded();
 });
 document.getElementById("filter-fitment").addEventListener("input", function(e) {
