@@ -505,12 +505,9 @@ async function loadMechanicProfile() {
             ${servicesHtml}
         </section>
 
-        <button
-            class="quote-button"
-            onclick="requestQuote()"
-        >
-            Request a Quote
-        </button>
+        ${mechanic.is_demo
+            ? '<div class="demo-note" style="margin-top:18px;padding:12px;border:1px dashed #d8a47f;border-radius:9px;background:#fff8f2;color:#75401f;font-size:13px;">Demo profile — quote requests are disabled.</div>'
+            : '<button class="quote-button" onclick="requestQuote()">Request a Quote</button>'}
 
     `;
 
@@ -526,7 +523,7 @@ async function loadMechanicProfile() {
                 </h2>
 
                 <p>
-                    No reviews yet.
+                    ${mechanic.is_demo ? "Demo profile — customer reviews are not displayed." : "No reviews yet."}
                 </p>
 
             </div>
