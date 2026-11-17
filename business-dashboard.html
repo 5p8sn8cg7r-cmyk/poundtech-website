@@ -903,10 +903,10 @@ async function loadMembership() {
     membership = subResult.data;
     membershipPlans = planResult.data || [];
 
-    const expired = !!(
-        membership?.current_period_end &&
-        new Date(membership.current_period_end).getTime() <= Date.now()
-    );
+    const paidPlan = !!membership?.plan_code && membership.plan_code !== "free";
+    const periodEnd = membership?.current_period_end
+        ? new Date(membership.current_period_end).getTime() : NaN;
+    const expired = paidPlan && (!Number.isFinite(periodEnd) || periodEnd <= Date.now());
     const effectiveCode = membership?.status === "active" && !expired
         ? (membership.plan_code || "free")
         : "free";
@@ -923,11 +923,13 @@ async function loadMembership() {
         } else {
             summary += " · Individually agreed commission";
         }
-        if (membership?.current_period_end && !expired && effectiveCode !== "free") {
-            summary += "<br><span style='font-size:13px;color:#666;'>Paid through " +
-                esc(new Date(membership.current_period_end).toLocaleDateString("en-ZA")) + "</span>";
+        if (effectiveCode !== "free" && membership?.current_period_end) {
+            const endDate = esc(new Date(membership.current_period_end).toLocaleDateString("en-ZA"));
+            summary += membership.cancel_at_period_end
+                ? "<br><span style='font-size:13px;color:#8a1111;'>Cancellation scheduled. Your paid access remains active until " + endDate + ".</span>"
+                : "<br><span style='font-size:13px;color:#666;'>Paid through " + endDate + "</span>";
         } else if (expired) {
-            summary += "<br><span style='font-size:13px;color:#8a1111;'>Your paid membership period has ended. Your account is on Free Partner.</span>";
+            summary += "<br><span style='font-size:13px;color:#8a1111;'>Your paid membership period has ended or could not be verified. Your account is on Free Partner.</span>";
         }
         el("membership-current").innerHTML = summary;
     }
@@ -1373,8 +1375,10 @@ let businessPhotoLimit = 0;
 let legacyBusinessPhotoUrl = null;
 
 function currentServicePlan() {
-    const expired = !!(membership?.current_period_end &&
-        new Date(membership.current_period_end).getTime() <= Date.now());
+    const paidPlan = !!membership?.plan_code && membership.plan_code !== "free";
+    const periodEnd = membership?.current_period_end
+        ? new Date(membership.current_period_end).getTime() : NaN;
+    const expired = paidPlan && (!Number.isFinite(periodEnd) || periodEnd <= Date.now());
     const code = membership?.status === "active" && !expired
         ? (membership.plan_code || "free") : "free";
     return membershipPlans.find(plan => plan.code === code) ||
