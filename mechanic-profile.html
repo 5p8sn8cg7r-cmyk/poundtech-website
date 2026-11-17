@@ -423,7 +423,7 @@ async function loadMechanicProfile() {
         reviews || [];
 
     const reviewCount =
-        mechanicReviews.length;
+        mechanic.is_demo ? 0 : mechanicReviews.length;
 
 
     const averageRating =
@@ -447,7 +447,7 @@ async function loadMechanicProfile() {
         <span class="status" style="${mechanic.is_demo ? 'background:#fff2e8;color:#8a3b00;' : ''}">
             ${mechanic.is_demo ? "Demo profile" : "Approved"}
         </span>
-        ${mechanic.is_demo ? '<div style="padding:12px 14px;margin:0 0 18px;border:1px dashed #d8a47f;border-radius:9px;background:#fff8f2;color:#75401f;font-size:13px;line-height:1.5;">This is a PoundTech demonstration profile. Services and prices are illustrative; enquiries and bookings are disabled.</div>' : ""}
+        ${mechanic.is_demo ? '<div style="padding:12px 14px;margin:0 0 18px;border:1px dashed #d8a47f;border-radius:9px;background:#fff8f2;color:#75401f;font-size:13px;line-height:1.5;">This is a PoundTech demonstration profile. All profile content is illustrative; ratings, enquiries and bookings are disabled.</div>' : ""}
 
         <div class="business-type">
             ${escapeHtml(businessType)}
