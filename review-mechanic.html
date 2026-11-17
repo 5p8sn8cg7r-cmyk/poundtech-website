@@ -28,7 +28,7 @@
 <div class="card">
 
     <h2>Leave a Review</h2>
-    <p class="lead">Enter the email address you used for your booking to find your completed service.</p>
+    <p class="lead">Enter your booking email address and full booking reference from your confirmation email.</p>
 
     <label for="customer-email">Email address</label>
     <input
@@ -37,6 +37,9 @@
         placeholder="you@example.com"
         autocomplete="email"
     >
+
+    <label for="booking-reference">Full booking reference</label>
+    <input type="text" id="booking-reference" placeholder="Full reference from your confirmation email" autocomplete="off" spellcheck="false">
 
     <button class="btn btn-dark" onclick="findBooking()">
         Find My Booking
@@ -132,12 +135,18 @@ async function findBooking() {
     const email =
         document.getElementById("customer-email").value.trim();
 
+    const reference = document.getElementById("booking-reference").value.trim();
     const reviewForm = document.getElementById("review-form");
 
     reviewForm.style.display = "none";
 
-    if (!email) {
-        showMessage("Please enter the email address you used for your booking.", "error");
+    if (!email || !reference) {
+        showMessage("Please enter both your booking email and full booking reference.", "error");
+        return;
+    }
+
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reference)) {
+        showMessage("Please enter the full booking reference from your confirmation email.", "error");
         return;
     }
 
@@ -145,7 +154,7 @@ async function findBooking() {
 
     const { data, error } = await supabaseClient.rpc(
         "find_booking_to_review",
-        { customer_email_input: email }
+        { customer_email_input: email, booking_reference_input: reference }
     );
 
     if (error) {
