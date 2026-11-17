@@ -604,7 +604,7 @@ function bookingCard(booking) {
                 <h3>${esc(booking.customer_name)}</h3>
                 <span>
                     <span class="${pillClass(booking.status)}">${esc(booking.status)}</span>
-                    ${booking.payment_status === "Paid" ? '<span class="pill pill-ok">Paid</span>' : ""}
+                    ${booking.payment_status === "Paid" ? '<span class="pill pill-ok">Paid</span>' : '<span class="pill">Pay at business</span>'}
                 </span>
             </div>
 
