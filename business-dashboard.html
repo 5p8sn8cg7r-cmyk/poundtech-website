@@ -832,7 +832,6 @@ async function init() {
     await loadServicePartnerSupport();
     await loadServicePartnerCampaigns();
     await loadBusinessPhotos();
-    await loadBranches();
 }
 
 
@@ -1969,6 +1968,7 @@ async function deleteService(id) {
 
 async function loadHours() {
     const selector = el("branch-hours-select");
+    const previousBranchId = selector.value;
     const activeBranches = businessBranchRows.filter(branch => branch.is_active);
     selector.innerHTML = activeBranches.map(branch =>
         '<option value="' + esc(branch.id) + '">' + esc(branch.name) + (branch.is_primary ? ' (Primary)' : '') + '</option>'
@@ -1977,7 +1977,9 @@ async function loadHours() {
         el("hours-list").innerHTML = '<p class="empty-note">Add or reactivate a branch to configure its hours.</p>';
         return;
     }
-    if (!activeBranches.some(branch => branch.id === selector.value)) {
+    if (activeBranches.some(branch => branch.id === previousBranchId)) {
+        selector.value = previousBranchId;
+    } else {
         selector.value = (activeBranches.find(branch => branch.is_primary) || activeBranches[0]).id;
     }
     const selectedBranch = activeBranches.find(branch => branch.id === selector.value);
