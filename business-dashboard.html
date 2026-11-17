@@ -449,7 +449,7 @@ html{scroll-behavior:smooth}
         <!-- Branch locations -->
         <section class="card" id="branches">
             <h2>Branch locations</h2>
-            <p class="lead">Manage the locations where customers can visit your business. Services, opening hours and booking rules are shared across branches; booking capacity is tracked separately at each location.</p>
+            <p class="lead">Manage each location independently. Set its own booking capacity and weekly opening hours so customers only see appointments that this branch can actually handle.</p>
             <p id="branch-limit" class="business-photo-limit" aria-live="polite">Loading your branch allowance…</p>
             <div id="branch-list" class="branch-list"></div>
             <button class="btn" id="branch-add-btn" type="button">Add branch location</button>
@@ -461,6 +461,7 @@ html{scroll-behavior:smooth}
                     <div><label for="branch-area">Suburb / area</label><input id="branch-area" maxlength="160" placeholder="e.g. Sandton"></div>
                     <div><label for="branch-phone">Contact phone</label><input id="branch-phone" maxlength="30" placeholder="e.g. 011 123 4567"></div>
                     <div class="full"><label for="branch-email">Branch email (optional)</label><input id="branch-email" type="email" maxlength="254" placeholder="branch@business.co.za"></div>
+                    <div class="full"><label for="branch-capacity">Booking capacity at this branch</label><input id="branch-capacity" type="number" min="1" max="20" step="1" value="1"><p class="hint">Maximum number of overlapping bookings this location can handle at once (bays, technicians or teams).</p></div>
                 </div>
                 <div class="btn-row" style="margin-top:14px;">
                     <button class="btn" id="branch-save-btn" type="button">Save branch</button>
@@ -544,8 +545,9 @@ html{scroll-behavior:smooth}
         <!-- Hours -->
         <div class="card" id="hours">
             <h2>Opening hours</h2>
-            <p class="lead">Customers can only book inside these hours. These opening hours apply across all your branch locations.</p>
-
+            <p class="lead">Set the weekly opening hours for each location. Customers will only be offered appointment times while their selected branch is open.</p>
+            <label for="branch-hours-select">Branch location</label>
+            <select id="branch-hours-select"></select>
             <div id="hours-list"></div>
 
             <div style="margin-top:20px;">
@@ -824,7 +826,8 @@ async function init() {
 
     show("app", true);
 
-    await Promise.all([loadMembership(), loadServices(), loadHours(), loadSettings()]);
+    await Promise.all([loadMembership(), loadServices(), loadSettings(), loadBranches()]);
+    await loadHours();
     await loadServicePartnerAnalytics();
     await loadServicePartnerSupport();
     await loadServicePartnerCampaigns();
@@ -1605,6 +1608,7 @@ function renderBranches() {
     }
     list.innerHTML = businessBranchRows.map(branch => {
         const address = [branch.address, branch.service_area].filter(Boolean).join(" · ");
+        const capacity = Number(branch.booking_capacity || 1);
         const status = branch.is_active ? "Active" : "Inactive";
         return '<div class="branch-item"><div class="branch-item-main"><strong>' + esc(branch.name) +
             (branch.is_primary ? ' <span class="tag">Primary</span>' : '') +
@@ -1612,6 +1616,7 @@ function renderBranches() {
             '<div class="branch-item-meta">' + esc(address) +
             (branch.phone ? '<br>' + esc(branch.phone) : '') +
             (branch.email ? '<br>' + esc(branch.email) : '') +
+            '<br><strong>' + capacity + '</strong> simultaneous booking' + (capacity === 1 ? '' : 's') +
             '</div></div><div class="branch-item-actions"><button type="button" class="btn btn-dark btn-small" data-edit-branch="' + esc(branch.id) + '">Edit</button>' +
             (branch.is_primary ? '' :
                 '<button type="button" class="btn btn-small" data-toggle-branch="' + esc(branch.id) + '">' +
@@ -1624,7 +1629,7 @@ function renderBranches() {
 async function loadBranches() {
     const { data, error } = await supabaseClient
         .from("service_partner_branches")
-        .select("id, mechanic_id, name, phone, email, address, service_area, is_primary, is_active, created_at")
+        .select("id, mechanic_id, name, phone, email, address, service_area, booking_capacity, is_primary, is_active, created_at")
         .eq("mechanic_id", business.id)
         .order("is_primary", { ascending: false })
         .order("created_at", { ascending: true });
@@ -1646,6 +1651,7 @@ function openBranchForm(branchId) {
     el("branch-area").value = branch?.service_area || "";
     el("branch-phone").value = branch?.phone || "";
     el("branch-email").value = branch?.email || "";
+    el("branch-capacity").value = String(branch?.booking_capacity || 1);
     el("branch-save-btn").textContent = branch ? "Save changes" : "Save branch";
     show("branch-form", true);
     el("branch-form").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1664,12 +1670,14 @@ async function saveBranch() {
     const serviceArea = el("branch-area").value.trim();
     const phone = el("branch-phone").value.trim();
     const email = el("branch-email").value.trim().toLowerCase();
+    const capacity = whole(el("branch-capacity").value);
+    if (!capacity || capacity < 1 || capacity > 20) { msg("branch-msg", "Booking capacity must be a whole number from 1 to 20.", "error"); return; }
     if (name.length < 2 || name.length > 80) { msg("branch-msg", "Enter a branch name (2 to 80 characters).", "error"); return; }
     if (address.length < 5 || address.length > 250) { msg("branch-msg", "Enter the branch street address.", "error"); return; }
     if (serviceArea.length < 2 || serviceArea.length > 160) { msg("branch-msg", "Enter the suburb or area.", "error"); return; }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg("branch-msg", "Enter a valid branch email address.", "error"); return; }
     const wasEditing = !!editingBranchId;
-    const fields = { name, address, service_area: serviceArea, phone: phone || null, email: email || null };
+    const fields = { name, address, service_area: serviceArea, phone: phone || null, email: email || null, booking_capacity: capacity };
     el("branch-save-btn").disabled = true;
     const result = editingBranchId
         ? await supabaseClient.from("service_partner_branches").update(fields).eq("id", editingBranchId).eq("mechanic_id", business.id)
@@ -1960,11 +1968,25 @@ async function deleteService(id) {
 /* ---------- OPENING HOURS ---------- */
 
 async function loadHours() {
+    const selector = el("branch-hours-select");
+    const activeBranches = businessBranchRows.filter(branch => branch.is_active);
+    selector.innerHTML = activeBranches.map(branch =>
+        '<option value="' + esc(branch.id) + '">' + esc(branch.name) + (branch.is_primary ? ' (Primary)' : '') + '</option>'
+    ).join("");
+    if (!activeBranches.length) {
+        el("hours-list").innerHTML = '<p class="empty-note">Add or reactivate a branch to configure its hours.</p>';
+        return;
+    }
+    if (!activeBranches.some(branch => branch.id === selector.value)) {
+        selector.value = (activeBranches.find(branch => branch.is_primary) || activeBranches[0]).id;
+    }
+    const selectedBranch = activeBranches.find(branch => branch.id === selector.value);
 
     const { data, error } = await supabaseClient
-        .from("business_hours")
+        .from("service_partner_branch_hours")
         .select("*")
-        .eq("mechanic_id", business.id);
+        .eq("mechanic_id", business.id)
+        .eq("branch_id", selector.value);
 
     if (error) {
         console.error(error);
@@ -2035,9 +2057,13 @@ async function saveHours() {
 
     el("save-hours-btn").disabled = true;
 
+    const branchId = el("branch-hours-select").value;
+    const selectedBranch = businessBranchRows.find(branch => branch.id === branchId);
+    const branchRows = rows.map(row => ({ ...row, branch_id: branchId }));
+
     const { error } = await supabaseClient
-        .from("business_hours")
-        .upsert(rows, { onConflict: "mechanic_id,day_of_week" });
+        .from("service_partner_branch_hours")
+        .upsert(branchRows, { onConflict: "branch_id,day_of_week" });
 
     el("save-hours-btn").disabled = false;
 
@@ -2047,7 +2073,17 @@ async function saveHours() {
         return;
     }
 
-    msg("hours-msg", "Opening hours saved.", "success");
+    if (selectedBranch?.is_primary) {
+        const legacyResult = await supabaseClient
+            .from("business_hours")
+            .upsert(rows, { onConflict: "mechanic_id,day_of_week" });
+        if (legacyResult.error) {
+            console.error(legacyResult.error);
+            msg("hours-msg", "Branch hours saved, but legacy business hours could not be synchronised: " + legacyResult.error.message, "error");
+            return;
+        }
+    }
+    msg("hours-msg", "Opening hours saved for " + (selectedBranch?.name || "this branch") + ".", "success");
 }
 
 
@@ -2156,6 +2192,7 @@ el("specialty-groups").addEventListener("click", e => {
     renderSpecialties();
     msg("specialties-msg", "Selection changed. Remember to save your specialities.", "info");
 });
+el("branch-hours-select").addEventListener("change", loadHours);
 el("save-service-btn").addEventListener("click", saveService);
 el("service-suggestion-list").addEventListener("click", e => {
     const button = e.target.closest("button[data-suggestion-index]");
