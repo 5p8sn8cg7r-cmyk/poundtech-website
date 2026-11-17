@@ -225,30 +225,19 @@ summary {
 .biz .area { margin-top:12px; }
 @media (max-width: 700px) {
     .page-main { width:100%; padding:0 12px; box-sizing:border-box; }
-    .grid { grid-template-columns:minmax(0,1fr); gap:15px; }
+    .grid { grid-template-columns:1fr; gap:14px; }
     .search-card { padding:16px; margin-bottom:18px; }
     .search-card input { width:100%; box-sizing:border-box; font-size:16px; }
     .chips { display:flex; flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-x:contain; padding:2px 0 8px; margin-right:-4px; scrollbar-width:thin; }
     .chip { flex:0 0 auto; min-height:40px; padding:9px 14px; }
-
-    /* Mobile business cards: photo-led, scannable and action-focused. */
-    .biz { border-radius:15px; padding:0 0 15px; border-color:#e7e8eb; box-shadow:0 4px 15px rgba(15,23,42,.07); }
+    /* Restore the original mobile business-card proportions. */
+    .biz { border-radius:14px; padding-bottom:18px; }
     .biz > :not(.biz-photo-link) { margin-left:16px; margin-right:16px; }
     .biz-photo { aspect-ratio:16/9; }
-    .biz-top { gap:6px; margin-top:13px; margin-bottom:9px; }
-    .tag { font-size:10px; padding:4px 9px; }
-    .biz h2 { font-size:19px; line-height:1.22; margin-bottom:5px; }
-    .rating { font-size:13px; margin-bottom:3px; }
-    .biz .area { margin-top:10px; padding:9px 10px; font-size:13px; }
-    .biz .desc { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:13px; line-height:1.45; margin-top:10px; }
-    .specialty-tags { max-height:54px; overflow:hidden; }
-    /* Full service menus and opening hours live on the profile page, keeping directory cards quick to scan. */
-    .biz .services, .biz .hours { display:none; }
-    .biz-actions { display:flex; flex-direction:column; gap:9px; margin:13px 16px 0; padding:0; }
-    .biz-actions .btn, .biz-view-link { display:flex; width:100%; min-height:44px; box-sizing:border-box; align-items:center; justify-content:center; border-radius:9px; font-size:13px; font-weight:800; }
-    .biz-actions .btn { margin:0; }
-    .biz-view-link { display:flex; padding:10px 14px; border:1px solid #d9dce2; background:#fff; color:#20232a; text-decoration:none; }
-    .demo-note { margin:0; }
+    .biz-top { gap:6px; margin-top:14px; }
+    .tag { font-size:11px; }
+    .biz h2 { font-size:19px; }
+    .biz-view-link { display:inline-block; margin:0 0 8px; color:#d00000; font-size:13px; font-weight:800; text-decoration:none; }
     .svc { align-items:flex-start; gap:8px; }
     .svc-side { min-width:88px; }
     .svc-book { padding:7px 12px; }
