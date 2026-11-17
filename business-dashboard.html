@@ -559,7 +559,7 @@ html{scroll-behavior:smooth}
         <!-- Booking settings -->
         <div class="card" id="booking-settings">
             <h2>Booking settings</h2>
-            <p class="lead">Control how many customers each branch can take at once and how far ahead they can book. The same booking rules apply across branches, with capacity tracked separately at each location.</p>
+            <p class="lead">Set the shared booking rules for all locations. Each branch has its own opening hours and booking capacity in the Branch locations section above.</p>
 
             <div class="grid-2">
                 <div>
@@ -571,11 +571,11 @@ html{scroll-behavior:smooth}
                     </select>
                 </div>
                 <div>
-                    <label for="set-capacity">Cars at the same time</label>
+                    <label for="set-capacity">Fallback capacity for older bookings</label>
                     <input type="number" id="set-capacity" min="1" max="20" step="1" inputmode="numeric">
                 </div>
             </div>
-            <p class="hint">Number of bays or staff working at once at each branch. Each location tracks its own capacity.</p>
+            <p class="hint">New branch bookings use the capacity configured on that branch. This setting is retained for older bookings and bookings without a branch assignment.</p>
 
             <div class="grid-2">
                 <div>
