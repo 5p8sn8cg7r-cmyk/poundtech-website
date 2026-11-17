@@ -109,13 +109,13 @@
 
     <h2>Check Your Quote</h2>
 
-    <p>Enter the email address you used when requesting the quote.</p>
+    <p>Enter the email address you used and the full quote reference shown after submitting your request.</p>
 
-    <input
-        type="email"
-        id="customer-email"
-        placeholder="Your email address"
-    >
+    <label for="customer-email">Email address</label>
+    <input type="email" id="customer-email" placeholder="Your email address" autocomplete="email" required>
+
+    <label for="quote-reference">Full quote reference</label>
+    <input type="text" id="quote-reference" placeholder="Full reference" autocomplete="off" spellcheck="false" required>
 
     <button onclick="findQuote()">View Quote</button>
 
@@ -143,6 +143,14 @@ const supabaseClient =
 
 let currentQuote = null;
 
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[char]));
+}
+
+
+
 
 async function findQuote() {
 
@@ -155,9 +163,15 @@ async function findQuote() {
     const result =
         document.getElementById("quote-result");
 
-    if (!email) {
-        message.innerHTML =
-            "<p>Please enter your email address.</p>";
+    const reference = document.getElementById("quote-reference").value.trim();
+
+    if (!email || !reference) {
+        message.innerHTML = "<p>Please enter both your email and quote reference.</p>";
+        return;
+    }
+
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reference)) {
+        message.innerHTML = "<p>Please enter the full quote reference.</p>";
         return;
     }
 
@@ -169,7 +183,8 @@ async function findQuote() {
         await supabaseClient.rpc(
             "track_mechanic_quote",
             {
-                lookup_email: email
+                lookup_email: email,
+                lookup_reference: reference
             }
         );
 
@@ -188,7 +203,7 @@ async function findQuote() {
     if (!data || data.length === 0) {
 
         message.innerHTML =
-            "<p>No quote was found for this email address.</p>";
+            "<p>No quote matched those details. Check your email and full quote reference.</p>";
 
         return;
     }
@@ -218,16 +233,18 @@ function displayQuote(quote) {
 
     result.innerHTML = `
 
-        <h2>${quote.business_name}</h2>
+        <h2>${escapeHtml(quote.business_name)}</h2>
+
+        <p><strong>Quote reference:</strong> ${escapeHtml(String(quote.id).toUpperCase())}</p>
 
         <p>
             <strong>Vehicle:</strong>
-            ${quote.vehicle}
+            ${escapeHtml(quote.vehicle)}
         </p>
 
         <p>
             <strong>Service:</strong>
-            ${quote.service_required}
+            ${escapeHtml(quote.service_required)}
         </p>
 
         <div class="price">
@@ -235,7 +252,7 @@ function displayQuote(quote) {
         </div>
 
         <p class="status">
-            Status: ${quote.status}
+            Status: ${escapeHtml(quote.status)}
         </p>
 
         <div class="message">
@@ -243,7 +260,7 @@ function displayQuote(quote) {
             <strong>Mechanic's Response</strong>
 
             <p>
-                ${quote.mechanic_response || "No response yet."}
+                ${escapeHtml(quote.mechanic_response || "No response yet.")}
             </p>
 
         </div>
@@ -284,9 +301,8 @@ const { data: bookingId, error } =
     await supabaseClient.rpc(
         "accept_mechanic_quote",
         {
-            quote_id_input: currentQuote.id,
-            customer_email_input:
-                currentQuote.customer_email
+            p_quote_request_id: currentQuote.id,
+            p_customer_email: document.getElementById("customer-email").value.trim()
         }
     );
 
@@ -317,8 +333,7 @@ async function declineQuote() {
             "respond_to_mechanic_quote",
             {
                 quote_id_input: currentQuote.id,
-                customer_email_input:
-                    currentQuote.customer_email,
+                customer_email_input: document.getElementById("customer-email").value.trim(),
                 response_input: "Declined"
             }
         );
