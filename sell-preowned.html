@@ -255,8 +255,9 @@ button.secondary:hover { background: #ddd; }
             <label for="l-description">Description</label>
             <textarea id="l-description" rows="4" placeholder="Condition, why you're selling, any flaws..."></textarea>
 
-            <label for="l-photo">Photo</label>
-            <input id="l-photo" type="file" accept="image/*">
+            <label for="l-photo">Product photos</label>
+            <input id="l-photo" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+            <p style="font-size:12px;color:#777;margin-top:-8px;">Add up to 5 photos. The first photo will be the main listing image.</p>
 
             <div class="hp" aria-hidden="true">
                 <label for="l-website">Leave this empty</label>
@@ -565,7 +566,7 @@ async function createListing() {
     const price = Number(document.getElementById("l-price").value);
     const compat = document.getElementById("l-compat").value.trim();
     const description = document.getElementById("l-description").value.trim();
-    const photoFile = document.getElementById("l-photo").files[0];
+    const photoFiles = Array.from(document.getElementById("l-photo").files || []);
 
     const msg = document.getElementById("listing-message");
     const button = document.getElementById("save-listing-btn");
@@ -575,20 +576,27 @@ async function createListing() {
         return;
     }
 
-    if (!photoFile) {
-        msg.innerHTML = '<p style="color:#c62828;">Please add a photo.</p>';
+    if (!photoFiles.length) {
+        msg.innerHTML = '<p style="color:#c62828;">Please add at least one photo.</p>';
+        return;
+    }
+
+    if (photoFiles.length > 5) {
+        msg.innerHTML = '<p style="color:#c62828;">Please choose no more than 5 photos.</p>';
         return;
     }
 
     button.disabled = true;
     msg.innerHTML = '<p>Uploading photo and publishing your listing&hellip;</p>';
 
-    let imageUrl;
+    let imageUrls = [];
     try {
-        imageUrl = await uploadListingImage(photoFile, currentSeller.id);
+        for (const file of photoFiles) {
+            imageUrls.push(await uploadListingImage(file, currentSeller.id));
+        }
     } catch (e) {
         button.disabled = false;
-        msg.innerHTML = '<p style="color:#c62828;">' + esc(e.message || "Could not upload that photo.") + '</p>';
+        msg.innerHTML = '<p style="color:#c62828;">' + esc(e.message || "Could not upload the selected photos.") + '</p>';
         return;
     }
 
@@ -599,7 +607,8 @@ async function createListing() {
         category: category,
         condition: condition,
         price: price,
-        image_url: imageUrl,
+        image_url: imageUrls[0],
+        extra_images: imageUrls.slice(1),
         vehicle_compatibility: compat || null,
         status: "Active"
     }]);
