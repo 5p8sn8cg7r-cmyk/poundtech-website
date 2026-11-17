@@ -150,7 +150,7 @@
         var rows = s.rows.filter(function (r) {
             if (s.tab !== "all" && group(r) !== s.tab) { return false; }
             if (!q) { return true; }
-            return [r.business_name, r.contact_name, r.email, r.phone].join(" ").toLowerCase().indexOf(q) !== -1;
+            return [r.business_name, r.full_name, r.contact_name, r.email, r.phone].join(" ").toLowerCase().indexOf(q) !== -1;
         });
 
         // Oldest waiting first, so no application is forgotten.
@@ -207,9 +207,19 @@
         var details = kind === "suppliers"
             ? '<p><strong>Business type:</strong> ' + esc(r.business_type) + '</p>'
             : kind === "private_sellers"
-            ? ''
+            ? '<p><strong>Account type:</strong> Private seller</p>'
             : '<p><strong>Service area:</strong> ' + esc(r.service_area || "Not provided") + '</p>' +
               '<p><strong>Services:</strong> ' + esc(r.services || "Not provided") + '</p>';
+
+        var contactDetails = kind === "private_sellers"
+            ? '<p><strong>Seller:</strong> ' + esc(r.full_name) + '</p>' +
+              '<p><strong>Phone:</strong> ' + esc(r.phone) + '</p>' +
+              '<p><strong>Email:</strong> ' + esc(r.email || "Not available") + '</p>'
+            : '<p><strong>Contact:</strong> ' + esc(displayContact) + '</p>' +
+              '<p><strong>Phone:</strong> ' + esc(r.phone) + '</p>' +
+              '<p><strong>Email:</strong> ' + esc(r.email) + '</p>' +
+              '<p><strong>Address:</strong> ' + esc(r.address || "Not provided") + '</p>' +
+              '<p><strong>Registration no.:</strong> ' + esc(r.registration_number || "None given") + '</p>';
 
         var about = kind === "mechanics" && r.description
             ? '<p style="font-size:14px;margin:6px 0 0;"><strong>About:</strong> ' + esc(r.description) + '</p>' : "";
@@ -246,13 +256,7 @@
             '<span style="flex:1"></span><span style="color:#777;font-size:13px;">Applied ' +
             esc(new Date(r.created_at).toLocaleDateString()) + '</span></div>' +
 
-            '<div class="rv-grid">' +
-            '<p><strong>Contact:</strong> ' + esc(displayContact) + '</p>' +
-            '<p><strong>Phone:</strong> ' + esc(r.phone) + '</p>' +
-            '<p><strong>Email:</strong> ' + esc(r.email) + '</p>' +
-            '<p><strong>Address:</strong> ' + esc(r.address || "Not provided") + '</p>' +
-            '<p><strong>Registration no.:</strong> ' + esc(r.registration_number || "None given") + '</p>' +
-            details + '</div>' + about +
+            '<div class="rv-grid">' + contactDetails + details + '</div>' + about +
 
             '<div class="rv-sec">Documents</div>' +
             (docButtons ? '<div class="rv-docs">' + docButtons + '</div>' : '<p style="font-size:14px;color:#777;margin:0;">No documents uploaded (applied before document checks started).</p>') +
@@ -299,7 +303,7 @@
         if (action === "approve") {
             var all = CHECKS[kind].every(function (c) { return form.checks[c[0]]; });
             if (!all && !confirm("Not every check is ticked. Approve anyway?")) { return; }
-            if (all && !confirm("Approve this " + (kind === "suppliers" ? "supplier" : "business") + " and mark them Verified?")) { return; }
+            if (all && !confirm("Approve this " + (kind === "suppliers" ? "supplier" : kind === "private_sellers" ? "private seller" : "business") + " and mark them Verified?")) { return; }
             update.status = "Approved"; update.verified = all; update.verified_at = all ? new Date().toISOString() : null;
             update.info_requested_at = null;
         } else if (action === "reject") {
