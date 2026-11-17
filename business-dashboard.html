@@ -904,6 +904,7 @@ async function loadMembership() {
     membershipPlans = planResult.data || [];
 
     const paidPlan = !!membership?.plan_code && membership.plan_code !== "free";
+    const missingPeriodEnd = paidPlan && !membership?.current_period_end;
     const periodEnd = membership?.current_period_end
         ? new Date(membership.current_period_end).getTime() : NaN;
     const expired = paidPlan && (!Number.isFinite(periodEnd) || periodEnd <= Date.now());
@@ -937,12 +938,14 @@ async function loadMembership() {
 
     const growthButton = el("membership-growth-btn");
     const professionalButton = el("membership-professional-btn");
-    const canStartPaidMembership = effectiveCode === "free";
+    const canStartPaidMembership = effectiveCode === "free" && !missingPeriodEnd;
     growthButton.disabled = !canStartPaidMembership;
     professionalButton.disabled = !canStartPaidMembership;
     growthButton.textContent = effectiveCode === "growth" ? "Current plan" :
+        missingPeriodEnd ? "Contact PoundTech to verify membership" :
         canStartPaidMembership ? "Choose Growth · R199/month" : "Contact PoundTech to change plan";
     professionalButton.textContent = effectiveCode === "professional" ? "Current plan" :
+        missingPeriodEnd ? "Contact PoundTech to verify membership" :
         canStartPaidMembership ? "Choose Professional · R499/month" : "Contact PoundTech to change plan";
 
     renderBusinessPhotoAllowance();
