@@ -223,6 +223,8 @@ button.secondary:hover { background: #ddd; }
             </div>
         </div>
 
+        <div id="promotion-return-message" class="notice-box" style="display:none;margin-bottom:16px;"></div>
+
         <div id="pending-notice" class="notice-box" style="display:none;">
             Your application is still being reviewed. You'll be able to list items once PoundTech approves it.
         </div>
@@ -529,7 +531,7 @@ function updatePromotionPrice(listingId) {
 async function startListingPromotion(listingId) {
     const type = document.getElementById("promo-type-" + listingId)?.value || "boost";
     const days = Number(document.getElementById("promo-days-" + listingId)?.value || 7);
-    const button = document.querySelector('[onclick="startListingPromotion(\\'' + listingId + '\\')"]');
+    const button = document.getElementById("promo-button-" + listingId);
     if (button) { button.disabled = true; button.textContent = "Preparing payment…"; }
     try {
         const { data: created, error: createError } = await supabaseClient.rpc("create_preowned_listing_promotion", {
@@ -608,7 +610,7 @@ async function loadListings() {
                       <option value="7">7 days</option><option value="14">14 days</option><option value="30">30 days</option>
                     </select>
                     <small id="promo-price-${l.id}" style="color:#555;">R49.00 · 7 days</small>
-                    <button type="button" onclick="startListingPromotion('${l.id}')">Promote listing</button>
+                    <button type="button" id="promo-button-${l.id}" onclick="startListingPromotion('${l.id}')">Promote listing</button>
                   </div>
                 ` : ""}
                 ${l.status === "Active" ? `<button class="secondary" onclick="removeListing('${l.id}')">Remove</button>` : ""}
@@ -755,6 +757,23 @@ async function loadSales() {
 
 
 // ---------- Session restore ----------
+
+(function showPromotionReturnMessage() {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("promotion");
+    const box = document.getElementById("promotion-return-message");
+    if (!status || !box) return;
+    box.style.display = "block";
+    if (status === "success") {
+        box.textContent = "Thank you. Your payment was submitted to Yoco. Your promotion will appear once PoundTech receives and confirms the payment notification.";
+        box.style.borderLeft = "4px solid #16803c";
+    } else if (status === "cancelled") {
+        box.textContent = "Your payment was cancelled. No promotion has been activated, and you can try again whenever you're ready.";
+    } else {
+        box.textContent = "We couldn't complete that payment. Please check your payment status or try again.";
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+})();
 
 (async function restoreSession() {
 
