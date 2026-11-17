@@ -60,6 +60,8 @@
     margin: 6px 0 14px;
 }
 
+.promo-badge{display:inline-block;margin:0 0 12px;padding:5px 10px;border-radius:20px;background:#fff0f0;border:1px solid #ffd0d0;color:#b00000;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+
 .condition-tag {
     display: inline-block;
     padding: 4px 10px;
@@ -282,6 +284,7 @@ async function loadListing() {
             </div>
             <div>
                 <h1>${esc(listing.title)}</h1>
+                ${listing.promotion_expires_at && new Date(listing.promotion_expires_at) > new Date() && listing.promotion_type !== "none" ? `<div class="promo-badge">${listing.promotion_type === "category" ? "Top of Category" : listing.promotion_type === "featured" ? "Featured Listing" : "Boosted Listing"}</div>` : ""}
                 <div class="price-tag">${money(listing.price)}</div>
                 <span class="condition-tag">${esc(listing.condition)}</span>
                 <span class="condition-tag">${esc(listing.category)}</span>
