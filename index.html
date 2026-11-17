@@ -821,57 +821,83 @@ footer {
 
 /* PRODUCT SPECIFICATION FILTERS */
 .product-filter-panel {
+    position:relative;
     margin: -5px 0 22px;
-    padding: 16px;
-    border: 1px solid #e3e4e8;
-    border-radius: 10px;
-    background: rgba(255,255,255,.94);
+    padding: 17px;
+    border: 1px solid #242830;
+    border-top: 3px solid #e00000;
+    border-radius: 12px;
+    background: linear-gradient(145deg,#111419 0%,#090b0e 100%);
+    box-shadow: 0 10px 28px rgba(0,0,0,.12);
 }
 .product-filter-heading {
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    margin-bottom:12px;
-    color:#222;
+    margin-bottom:14px;
+    color:#fff;
     font-size:14px;
 }
+.product-filter-heading strong { display:flex; align-items:center; gap:9px; }
+.product-filter-heading strong:before {
+    content:"";
+    display:block;
+    width:4px;
+    height:17px;
+    border-radius:3px;
+    background:#e00000;
+}
 .product-filter-heading button {
-    border:0;
-    background:transparent;
-    color:#d00000;
+    border:1px solid rgba(224,0,0,.45);
+    border-radius:7px;
+    padding:7px 10px;
+    background:rgba(224,0,0,.10);
+    color:#ff6666;
     font-size:12px;
     font-weight:800;
     cursor:pointer;
 }
+.product-filter-heading button:hover { background:#e00000; color:#fff; }
 .product-filter-grid {
     display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:10px;
+    gap:11px;
 }
 .product-filter-grid label {
     display:flex;
     flex-direction:column;
-    gap:6px;
+    gap:7px;
     min-width:0;
-    color:#555;
-    font-size:12px;
-    font-weight:700;
+    color:#c5c9d0;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.035em;
+    text-transform:uppercase;
 }
-.product-filter-grid select,
 .product-filter-grid input {
     width:100%;
     min-width:0;
-    min-height:42px;
-    padding:9px 10px;
-    border:1px solid #dfe1e5;
-    border-radius:7px;
-    background:#fff;
-    color:#222;
+    min-height:44px;
+    box-sizing:border-box;
+    padding:10px 12px;
+    border:1px solid #343943;
+    border-radius:8px;
+    background:#1a1e25;
+    color:#fff;
     font:inherit;
     font-size:13px;
+    font-weight:500;
+    letter-spacing:normal;
+    text-transform:none;
+    outline:none;
 }
-.product-filter-note { margin-top:10px; color:#888; font-size:11px; }
+.product-filter-grid input::placeholder { color:#858b96; }
+.product-filter-grid input:focus {
+    border-color:#e00000;
+    box-shadow:0 0 0 3px rgba(224,0,0,.16);
+}
+.product-filter-note { margin-top:11px; color:#9299a5; font-size:11px; line-height:1.5; }
 @media (max-width:700px) {
     .product-filter-panel { padding:13px; }
     .product-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
@@ -2085,16 +2111,19 @@ Discover parts and accessories, book trusted automotive services, and connect wi
     </div>
     <div class="product-filter-grid">
         <label>Brand
-            <select id="filter-brand"><option value="">All brands</option></select>
+            <input id="filter-brand" type="search" list="filter-brand-options" placeholder="Any brand" autocomplete="off">
+            <datalist id="filter-brand-options"></datalist>
         </label>
         <label>Vehicle compatibility
-            <input id="filter-fitment" type="search" placeholder="e.g. VW Polo, BMW 3 Series">
+            <input id="filter-fitment" type="search" placeholder="e.g. VW Polo, BMW 3 Series" autocomplete="off">
         </label>
         <label>Condition
-            <select id="filter-condition"><option value="">All conditions</option></select>
+            <input id="filter-condition" type="search" list="filter-condition-options" placeholder="Any condition" autocomplete="off">
+            <datalist id="filter-condition-options"></datalist>
         </label>
         <label>Volume
-            <select id="filter-volume"><option value="">All volumes</option></select>
+            <input id="filter-volume" type="search" list="filter-volume-options" placeholder="e.g. 5 L, 500 ml" autocomplete="off">
+            <datalist id="filter-volume-options"></datalist>
         </label>
     </div>
     <p class="product-filter-note">Filter options appear as suppliers add verified product specifications.</p>
@@ -3914,33 +3943,35 @@ let selectedProductFitment = "";
 function productSpecValue(product, key) {
     const specs = product && product.specifications && typeof product.specifications === "object"
         ? product.specifications : {};
-    return String(specs[key] || "").trim();
+    const wanted = String(key || "").toLowerCase();
+    const actualKey = Object.keys(specs).find(function(k){ return String(k).toLowerCase() === wanted; });
+    return actualKey ? String(specs[actualKey] || "").trim() : "";
 }
 
 function updateProductFilterOptions() {
     const definitions = [
-        { id: "filter-brand", key: "Brand", selected: selectedProductBrand, empty: "All brands", setter: function(v){ selectedProductBrand = v; } },
-        { id: "filter-condition", key: "Condition", selected: selectedProductCondition, empty: "All conditions", setter: function(v){ selectedProductCondition = v; } },
-        { id: "filter-volume", key: "Volume", selected: selectedProductVolume, empty: "All volumes", setter: function(v){ selectedProductVolume = v; } }
+        { id: "filter-brand", list: "filter-brand-options", key: "brand", selected: selectedProductBrand },
+        { id: "filter-condition", list: "filter-condition-options", key: "condition", selected: selectedProductCondition },
+        { id: "filter-volume", list: "filter-volume-options", key: "volume", selected: selectedProductVolume }
     ];
     definitions.forEach(function(def) {
-        const select = document.getElementById(def.id);
-        if (!select) return;
+        const input = document.getElementById(def.id);
+        const datalist = document.getElementById(def.list);
+        if (!input || !datalist) return;
         const values = [...new Set(loadedProducts.map(function(p){ return productSpecValue(p, def.key); }).filter(Boolean))];
-        if (def.selected && !values.includes(def.selected)) values.push(def.selected);
         values.sort(function(a,b){ return a.localeCompare(b, undefined, {numeric:true, sensitivity:"base"}); });
-        select.innerHTML = '<option value="">' + esc(def.empty) + '</option>' +
-            values.map(function(value){ return '<option value="' + esc(value) + '">' + esc(value) + '</option>'; }).join("");
-        select.value = def.selected;
+        datalist.innerHTML = values.map(function(value){ return '<option value="' + esc(value) + '"></option>'; }).join("");
+        if (input.value !== def.selected) input.value = def.selected;
+        input.placeholder = values.length ? "Search or choose (" + values.length + ")" : "No listed values yet";
     });
     const note = document.querySelector(".product-filter-note");
     if (note) {
         const hasSpecs = loadedProducts.some(function(p) {
-            return productSpecValue(p,"Brand") || productSpecValue(p,"Condition") || productSpecValue(p,"Volume");
+            return productSpecValue(p,"brand") || productSpecValue(p,"condition") || productSpecValue(p,"volume");
         });
         note.textContent = hasSpecs
-            ? "Choose one or more filters to narrow the products shown."
-            : "Filter options will appear as suppliers add verified brand, condition and volume specifications.";
+            ? "Type to filter or choose a suggestion. Options update as more products are loaded."
+            : "These filters are ready to use as listings are added. Sellers need to provide brand, condition and volume in their product specifications before those options can appear.";
     }
 }
 
@@ -3956,14 +3987,14 @@ function clearProductFilters() {
     renderLoaded();
 }
 
-document.getElementById("filter-brand").addEventListener("change", function(e) {
-    selectedProductBrand = e.target.value; renderLoaded();
+document.getElementById("filter-brand").addEventListener("input", function(e) {
+    selectedProductBrand = e.target.value.trim(); renderLoaded();
 });
-document.getElementById("filter-condition").addEventListener("change", function(e) {
-    selectedProductCondition = e.target.value; renderLoaded();
+document.getElementById("filter-condition").addEventListener("input", function(e) {
+    selectedProductCondition = e.target.value.trim(); renderLoaded();
 });
-document.getElementById("filter-volume").addEventListener("change", function(e) {
-    selectedProductVolume = e.target.value; renderLoaded();
+document.getElementById("filter-volume").addEventListener("input", function(e) {
+    selectedProductVolume = e.target.value.trim(); renderLoaded();
 });
 document.getElementById("filter-fitment").addEventListener("input", function(e) {
     selectedProductFitment = e.target.value.trim().toLowerCase(); renderLoaded();
@@ -4005,17 +4036,17 @@ async function renderLoaded() {
 
     if (selectedProductBrand) {
         displayedProducts = displayedProducts.filter(function(item) {
-            return productSpecValue(item.product, "Brand").toLowerCase() === selectedProductBrand.toLowerCase();
+            return productSpecValue(item.product, "brand").toLowerCase().includes(selectedProductBrand.toLowerCase());
         });
     }
     if (selectedProductCondition) {
         displayedProducts = displayedProducts.filter(function(item) {
-            return productSpecValue(item.product, "Condition").toLowerCase() === selectedProductCondition.toLowerCase();
+            return productSpecValue(item.product, "condition").toLowerCase().includes(selectedProductCondition.toLowerCase());
         });
     }
     if (selectedProductVolume) {
         displayedProducts = displayedProducts.filter(function(item) {
-            return productSpecValue(item.product, "Volume").toLowerCase() === selectedProductVolume.toLowerCase();
+            return productSpecValue(item.product, "volume").toLowerCase().includes(selectedProductVolume.toLowerCase());
         });
     }
     if (selectedProductFitment) {
