@@ -3793,12 +3793,6 @@ async function loadProducts(append) {
     PRODUCT_LOADING = true;
 
     const container = document.getElementById("products-container");
-    const loadMoreButton = document.getElementById("products-load-more");
-    if (loadMoreButton) {
-        loadMoreButton.disabled = true;
-        loadMoreButton.textContent = "Loading products...";
-    }
-
     if (!append) {
         PRODUCT_OFFSET = 0;
         PRODUCT_HAS_MORE = true;
@@ -3896,10 +3890,6 @@ function updateLoadMoreButton() {
     const sentinel = document.getElementById("products-scroll-sentinel");
     if (!sentinel) return;
     sentinel.textContent = PRODUCT_LOADING && PRODUCT_HAS_MORE ? "Loading more products..." : "";
-}
-
-function loadMoreProducts() {
-    return loadProducts(true);
 }
 
 let productScrollObserver = null;
