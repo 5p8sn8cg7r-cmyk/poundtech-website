@@ -118,6 +118,7 @@
 const SUPABASE_URL = "https://uezacbssvvvtlosnaroh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentAuthUser = null;
 
 const registerForm = document.getElementById("register-form");
 const loginForm = document.getElementById("login-form");
@@ -152,6 +153,7 @@ registerTab.addEventListener("click", () => showTab("register"));
 loginTab.addEventListener("click", () => showTab("login"));
 
 async function showApplication(user) {
+    currentAuthUser = user;
     registerForm.classList.add("hidden");
     loginForm.classList.add("hidden");
     signedInPanel.classList.remove("hidden");
@@ -174,12 +176,24 @@ async function showApplication(user) {
     if (data) {
         let text = "Welcome, " + data.full_name + ". Your application status: " + data.status + ".";
         if (data.review_notes) text += " Reviewer note: " + data.review_notes;
-        if (data.status === "Approved") text += " Your seller application is approved. Listing tools will be available once the seller dashboard is launched.";
+        if (data.status === "Approved") text += " Your seller application is approved. You can now log in to your seller dashboard at sell-preowned.html.";
         document.getElementById("account-status").textContent = text;
     } else {
-        document.getElementById("account-status").textContent =
-            "You are signed in. Complete the registration form to submit your private seller application.";
-        showMessage("Your account is ready. To submit an application, log out and return to Create account.", "success");
+        signedInPanel.classList.add("hidden");
+        registerForm.classList.remove("hidden");
+        loginForm.classList.add("hidden");
+        registerTab.classList.add("active");
+        loginTab.classList.remove("active");
+        document.getElementById("register-email").value = user.email || "";
+        document.getElementById("register-email").readOnly = true;
+        const passwordInput = document.getElementById("register-password");
+        passwordInput.required = false;
+        passwordInput.value = "";
+        passwordInput.style.display = "none";
+        const passwordLabel = registerForm.querySelector('label[for="register-password"]');
+        if (passwordLabel) passwordLabel.style.display = "none";
+        document.getElementById("register-button").textContent = "Submit private seller application";
+        showMessage("Your email is confirmed. Complete your name and phone number, upload your ID document and submit your application.", "success");
     }
 }
 
@@ -209,9 +223,13 @@ registerForm.addEventListener("submit", async function(event) {
     }
 
     button.disabled = true;
-    showMessage("Creating your account...", "");
+    showMessage(currentAuthUser ? "Submitting your application..." : "Creating your account...", "");
 
     try {
+        if (currentAuthUser) {
+            await submitSellerApplication(currentAuthUser, fullName, phone, file);
+            return;
+        }
         const redirectTo = window.location.origin + window.location.pathname;
         const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
             email,
@@ -250,6 +268,7 @@ loginForm.addEventListener("submit", async function(event) {
         showMessage(error.message, "error");
         return;
     }
+    currentAuthUser = data.user;
     await showApplication(data.user);
 });
 
