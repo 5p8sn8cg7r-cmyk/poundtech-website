@@ -262,6 +262,7 @@
         <a id="photos-nav-link" href="business-dashboard.html#business-photos">Business photos</a>
         <a id="branches-nav-link" href="business-dashboard.html#branches">Branches</a>
         <a id="team-nav-link" href="service-partner-team.html" style="display:none;">Manage team</a>
+        <a id="referral-nav-link" href="refer-a-business.html" style="display:none;">Refer a Business</a>
     </nav>
 
     <div class="top-bar">
@@ -482,6 +483,7 @@ async function loadMechanic() {
     $("photos-nav-link").style.display = currentTeamMember ? "none" : "";
     $("branches-nav-link").style.display = currentTeamMember ? "none" : "";
     $("team-nav-link").style.display = currentTeamMember ? "none" : "";
+    $("referral-nav-link").style.display = currentTeamMember ? "none" : "";
 
     await Promise.all([loadBookings(), loadQuoteRequests()]);
     setupServicePartnerRealtime();
