@@ -208,7 +208,7 @@ registerForm.addEventListener("submit", async function(event) {
     const password = document.getElementById("register-password").value;
     const file = document.getElementById("id-document").files[0];
 
-    if (!fullName || !phone || !email || password.length < 8 || !file ||
+    if (!fullName || !phone || !email || (!currentAuthUser && password.length < 8) || !file ||
         !document.getElementById("seller-terms").checked) {
         showMessage("Please complete all fields, upload your ID document and accept the terms.", "error");
         return;
