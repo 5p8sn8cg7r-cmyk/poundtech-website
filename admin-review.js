@@ -74,7 +74,10 @@
     var state = {};   // per kind: { tab, query, rows, container, reload }
 
     function checklistOf(row) { return (row.checklist && typeof row.checklist === "object") ? row.checklist : {}; }
-    function docsOf(row) { return Array.isArray(row.documents) ? row.documents : []; }
+    function docsOf(row) {
+        if (row && row.id_document_path) return [{ type: "id", path: row.id_document_path, name: "ID document" }];
+        return Array.isArray(row.documents) ? row.documents : [];
+    }
 
     function group(row) {
         if (row.status === "Approved") { return "approved"; }
@@ -185,6 +188,8 @@
         var docs = docsOf(r);
         var checks = checklistOf(r);
         var id = esc(r.id);
+        var displayName = kind === "private_sellers" ? r.full_name : r.business_name;
+        var displayContact = kind === "private_sellers" ? r.full_name : r.contact_name;
 
         var docButtons = docs.map(function (d) {
             return '<button type="button" data-act="doc" data-id="' + id + '" data-path="' + esc(d.path) + '">' +
@@ -235,14 +240,14 @@
         }
 
         return '<div class="rv-card" id="rv-' + id + '">' +
-            '<div class="rv-head"><h2>' + esc(r.business_name) + '</h2>' + statusPill(r) +
+            '<div class="rv-head"><h2>' + esc(displayName) + '</h2>' + statusPill(r) +
             (r.verified ? '<span class="rv-pill dark">Verified</span>' : "") +
             (r.trusted ? '<span class="rv-pill green">Trusted</span>' : "") +
             '<span style="flex:1"></span><span style="color:#777;font-size:13px;">Applied ' +
             esc(new Date(r.created_at).toLocaleDateString()) + '</span></div>' +
 
             '<div class="rv-grid">' +
-            '<p><strong>Contact:</strong> ' + esc(r.contact_name) + '</p>' +
+            '<p><strong>Contact:</strong> ' + esc(displayContact) + '</p>' +
             '<p><strong>Phone:</strong> ' + esc(r.phone) + '</p>' +
             '<p><strong>Email:</strong> ' + esc(r.email) + '</p>' +
             '<p><strong>Address:</strong> ' + esc(r.address || "Not provided") + '</p>' +
@@ -277,7 +282,8 @@
         var s = state[kind];
 
         if (action === "doc") {
-            var res = await supabaseClient.storage.from(BUCKET).createSignedUrl(path, 120);
+            var documentBucket = kind === "private_sellers" ? "private-seller-documents" : BUCKET;
+            var res = await supabaseClient.storage.from(documentBucket).createSignedUrl(path, 120);
             if (res.error || !res.data) {
                 alert("Could not open that document: " + (res.error ? res.error.message : "not found"));
                 return;
