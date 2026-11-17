@@ -175,6 +175,15 @@ button.secondary:hover { background: #ddd; }
 
 .hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
 
+.promo-panel{margin-top:12px;padding:12px;background:#fafafa;border:1px solid #e7e7e7;border-radius:9px;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:560px}
+.promo-panel strong,.promo-panel small{grid-column:1/-1}
+.promo-panel select{margin:0;min-width:0}
+.promo-panel button{grid-column:1/-1;width:100%}
+.promo-current{font-size:12px;color:#a00000;font-weight:bold;margin-top:5px}
+.promo-label{display:inline-block;background:#fff0f0;color:#b00000;border:1px solid #ffd0d0;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:bold;margin-top:5px}
+@media(max-width:620px){.listing-row{flex-wrap:wrap}.promo-panel{grid-template-columns:1fr}.promo-panel strong,.promo-panel small,.promo-panel button{grid-column:1}}
+
+
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
@@ -222,7 +231,7 @@ button.secondary:hover { background: #ddd; }
             <strong>0% sales commission for private sellers</strong>
             <p style="margin:7px 0 0;color:#555;font-size:14px;line-height:1.5;">
                 There is no PoundTech sales commission on your private-seller sales. Optional paid promotional upgrades,
-                such as boosted or featured placement, may be offered separately when available. Your standard listing remains free.
+                including Boost, Featured and Top of Category placement. Choose an upgrade only when you want extra exposure; your standard listing remains free.
             </p>
         </div>
 
@@ -499,6 +508,49 @@ function listingLabel(status, review) {
     return "Live";
 }
 
+function promotionLabel(type) {
+    return type === "category" ? "Top of Category" : type === "featured" ? "Featured" : "Boosted";
+}
+function promotionPrice(type, days) {
+    const prices = {
+        boost: {7:49,14:89,30:149},
+        featured: {7:99,14:179,30:299},
+        category: {7:149,14:269,30:449}
+    };
+    return prices[type]?.[days] || 0;
+}
+function updatePromotionPrice(listingId) {
+    const type = document.getElementById("promo-type-" + listingId)?.value || "boost";
+    const days = Number(document.getElementById("promo-days-" + listingId)?.value || 7);
+    const price = promotionPrice(type, days);
+    const label = document.getElementById("promo-price-" + listingId);
+    if (label) label.textContent = "R" + price.toFixed(2) + " · " + days + " days";
+}
+async function startListingPromotion(listingId) {
+    const type = document.getElementById("promo-type-" + listingId)?.value || "boost";
+    const days = Number(document.getElementById("promo-days-" + listingId)?.value || 7);
+    const button = document.querySelector('[onclick="startListingPromotion(\\'' + listingId + '\\')"]');
+    if (button) { button.disabled = true; button.textContent = "Preparing payment…"; }
+    try {
+        const { data: created, error: createError } = await supabaseClient.rpc("create_preowned_listing_promotion", {
+            p_listing_id: listingId, p_package_key: type, p_duration_days: days
+        });
+        if (createError) throw createError;
+        const { data, error } = await supabaseClient.functions.invoke("create-yoco-checkout", {
+            body: { promotion_id: created.promotion_id }
+        });
+        if (error || !data?.redirectUrl) {
+            let detail = "We couldn't start the promotion payment. Please try again.";
+            try { const body = await error.context.json(); if (body?.error) detail = body.error; } catch (_) {}
+            throw new Error(detail);
+        }
+        window.location.href = data.redirectUrl;
+    } catch (e) {
+        alert(e.message || "We couldn't start the promotion payment.");
+        if (button) { button.disabled = false; button.textContent = "Promote listing"; }
+    }
+}
+
 async function loadListings() {
 
     const { data: listings, error } = await supabaseClient
@@ -540,11 +592,38 @@ async function loadListings() {
                     <div class="meta">${esc(l.category)} &middot; ${esc(l.condition)} &middot; ${money(l.price)}</div>
                     <div class="meta" aria-label="Listing performance"><span aria-hidden="true">&#128065;</span> ${views} views &middot; ${orders} orders</div>
                 </div>
-                <span class="pill ${listingPillClass(l.status, l.listing_review)}">${listingLabel(l.status, l.listing_review)}</span>
+                <div>
+                    <span class="pill ${listingPillClass(l.status, l.listing_review)}">${listingLabel(l.status, l.listing_review)}</span>
+                    ${l.promotion_type && l.promotion_type !== "none" && l.promotion_expires_at && new Date(l.promotion_expires_at) > new Date() ? `<div class="promo-current">${esc(promotionLabel(l.promotion_type))} until ${esc(new Date(l.promotion_expires_at).toLocaleDateString("en-ZA"))}</div>` : ""}
+                </div>
+                ${l.status === "Active" && l.listing_review === "approved" ? `
+                  <div class="promo-panel">
+                    <strong>Give this listing a visibility boost</strong>
+                    <select id="promo-type-${l.id}" aria-label="Promotion type">
+                      <option value="boost">Boost listing</option>
+                      <option value="featured">Featured listing</option>
+                      <option value="category">Top of category</option>
+                    </select>
+                    <select id="promo-days-${l.id}" aria-label="Promotion duration">
+                      <option value="7">7 days</option><option value="14">14 days</option><option value="30">30 days</option>
+                    </select>
+                    <small id="promo-price-${l.id}" style="color:#555;">R49.00 · 7 days</small>
+                    <button type="button" onclick="startListingPromotion('${l.id}')">Promote listing</button>
+                  </div>
+                ` : ""}
                 ${l.status === "Active" ? `<button class="secondary" onclick="removeListing('${l.id}')">Remove</button>` : ""}
             </div>
         `;
     }).join("");
+
+    listings.forEach(function (l) {
+        if (l.status === "Active" && l.listing_review === "approved") {
+            ["promo-type-" + l.id, "promo-days-" + l.id].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener("change", function () { updatePromotionPrice(l.id); });
+            });
+        }
+    });
 }
 
 async function removeListing(id) {
