@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Refer a Business | PoundTech</title>
+<meta name="description" content="Invite an automotive business to join PoundTech and earn R100 in PoundTech account credit when their profile is approved and published.">
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<style>
+:root{--red:#e00000;--ink:#151515;--muted:#666;--line:#e6e6e6;--soft:#f6f6f6}
+*{box-sizing:border-box}
+body{margin:0;background:#f7f7f7;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header{height:68px;background:#111;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100% - 1120px)/2));gap:16px}
+.logo{color:#fff;text-decoration:none;font-weight:900;letter-spacing:.04em;font-size:21px}.logo span{color:var(--red)}
+.header-link{color:#fff;text-decoration:none;font-size:13px;border:1px solid #555;border-radius:7px;padding:9px 12px}
+main{max-width:1000px;margin:34px auto;padding:0 18px 50px}
+.hero{background:linear-gradient(125deg,#171717,#292929);color:#fff;padding:30px;border-radius:16px;margin-bottom:22px}
+.eyebrow{color:#ff5b5b;text-transform:uppercase;font-size:11px;font-weight:800;letter-spacing:.12em}
+h1{font-size:clamp(27px,5vw,40px);line-height:1.12;margin:9px 0 10px}
+.hero p{color:#ddd;line-height:1.6;margin:0;max-width:680px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:18px;box-shadow:0 4px 18px rgba(0,0,0,.035)}
+h2{font-size:21px;margin:0 0 8px}.sub{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+label{display:block;font-size:13px;font-weight:700;color:#333}
+input,select{width:100%;height:46px;border:1px solid #d8d8d8;border-radius:8px;padding:0 12px;margin-top:7px;font:inherit;font-size:15px;background:#fff}
+input:focus,select:focus{outline:2px solid rgba(224,0,0,.15);border-color:var(--red)}
+.btn{border:0;border-radius:8px;background:var(--red);color:#fff;font-weight:800;font-size:14px;padding:13px 18px;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:wait}.btn.secondary{background:#171717}.btn.light{background:#f0f0f0;color:#222;border:1px solid #ddd}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.notice{padding:13px 15px;background:#fff5f5;border-left:4px solid var(--red);border-radius:7px;color:#444;font-size:13px;line-height:1.55;margin-top:16px}
+.message{font-size:14px;line-height:1.5;margin-top:14px}.error{color:#b00020}.success{color:#16783a}
+.hidden{display:none!important}
+.linkbox{display:flex;gap:10px;align-items:center}.linkbox input{margin:0;flex:1;min-width:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.stat{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:17px}
+.stat span{display:block;color:#666;font-size:12px;margin-bottom:7px}.stat strong{font-size:25px}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #eee}th{color:#666;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.pill{display:inline-block;background:#f0f0f0;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700}.pill.good{background:#e8f6ed;color:#176b35}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.step{background:#242424;border:1px solid #444;border-radius:10px;padding:14px}.step b{display:block;color:#fff;font-size:13px;margin-bottom:5px}.step span{color:#ccc;font-size:12px;line-height:1.5}
+footer{text-align:center;color:#777;font-size:12px;padding:0 16px 28px}
+@media(max-width:640px){header{height:60px;padding:0 16px}.logo{font-size:18px}main{margin:18px auto;padding:0 12px 34px}.hero{padding:23px 19px;border-radius:12px}.card{padding:18px}.grid,.stats{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.linkbox{align-items:stretch;flex-direction:column}.linkbox .btn{width:100%}}
+</style>
+</head>
+<body>
+<header><a class="logo" href="/index.html">POUND<span>TECH</span></a><a class="header-link" href="/index.html">Back to marketplace</a></header>
+<main>
+<section class="hero">
+ <div class="eyebrow">PoundTech Partner Programme</div>
+ <h1 id="hero-title">Good businesses know good businesses.</h1>
+ <p id="hero-copy">Refer an automotive business to PoundTech. When their business profile is approved and published, you earn R100 in PoundTech account credit.</p>
+ <div class="steps" id="steps">
+  <div class="step"><b>1. Share your link</b><span>Invite a mechanic, workshop or parts supplier.</span></div>
+  <div class="step"><b>2. They join PoundTech</b><span>They submit their business details and complete our normal review.</span></div>
+  <div class="step"><b>3. Earn R100 credit</b><span>Your reward is recorded once their profile is approved and published.</span></div>
+ </div>
+</section>
+
+<section class="card hidden" id="invite-panel">
+ <h2>Join PoundTech through a referral</h2>
+ <p class="sub">Tell us about your business and our team will help you get started. Your details will only be used to follow up about your PoundTech application.</p>
+ <form id="invite-form">
+  <div class="grid">
+   <label>Business name *<input id="business-name" required maxlength="140" autocomplete="organization" placeholder="Your business name"></label>
+   <label>Contact person *<input id="contact-name" required maxlength="120" autocomplete="name" placeholder="Your name"></label>
+   <label>Business email *<input id="email" type="email" required maxlength="180" autocomplete="email" placeholder="name@business.co.za"></label>
+   <label>Contact number *<input id="phone" type="tel" required maxlength="30" autocomplete="tel" placeholder="e.g. 071 234 5678"></label>
+   <label>What best describes your business? *
+    <select id="business-type" required><option value="">Choose one</option><option value="service_provider">Mechanic or service provider</option><option value="supplier">Parts supplier</option><option value="both">Both services and parts</option></select>
+   </label>
+   <label>City or area<input id="city" maxlength="100" placeholder="e.g. Johannesburg"></label>
+  </div>
+  <div class="actions"><button class="btn" id="submit-invite" type="submit">Send my details</button></div>
+  <div id="invite-message" class="message" role="status" aria-live="polite"></div>
+ </form>
+</section>
+
+<section class="card hidden" id="dashboard-panel">
+ <h2>Your business referral link</h2>
+ <p class="sub">Share this link with an automotive business you'd like to introduce to PoundTech. The referral is credited to you when their profile is approved and published.</p>
+ <div class="linkbox"><input id="referral-link" readonly aria-label="Your referral link"><button class="btn" id="copy-link" type="button">Copy link</button></div>
+ <div class="actions"><button class="btn secondary" id="share-whatsapp" type="button">Share on WhatsApp</button></div>
+ <div class="stats">
+  <div class="stat"><span>Businesses referred</span><strong id="total-referrals">0</strong></div>
+  <div class="stat"><span>Profiles published</span><strong id="published-referrals">0</strong></div>
+  <div class="stat"><span>Available PoundTech credit</span><strong id="available-credit">R0</strong></div>
+ </div>
+ <div class="notice">Reward: R100 in PoundTech account credit for each eligible business that is approved and published. Credits are recorded in your account and applied by PoundTech to eligible partner fees; they are not cash withdrawals.</div>
+</section>
+
+<section class="card hidden" id="referrals-panel">
+ <h2>Your referrals</h2>
+ <p class="sub">Track each business you've introduced to PoundTech.</p>
+ <div class="table-wrap"><table><thead><tr><th>Business</th><th>Type</th><th>Area</th><th>Status</th><th>Reward</th></tr></thead><tbody id="referrals-body"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+</section>
+
+<section class="card hidden" id="login-panel">
+ <h2>Partner access required</h2>
+ <p class="sub">Sign in using the owner account for your approved PoundTech business to get your unique referral link.</p>
+ <div class="actions"><a class="btn" href="/mechanic-login.html">Service partner login</a><a class="btn secondary" href="/supplier-login.html">Supplier login</a></div>
+ <div id="login-message" class="message"></div>
+</section>
+</main>
+<footer>© 2026 PoundTech. All rights reserved.</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+ "use strict";
+ const SUPABASE_URL="https://uezacbssvvvtlosnaroh.supabase.co";
+ const SUPABASE_KEY="sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ";
+ const client=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+ const params=new URLSearchParams(window.location.search);
+ const code=(params.get("code")||"").trim().toUpperCase();
+ const $=id=>document.getElementById(id);
+ const money=value=>"R"+Number(value||0).toLocaleString("en-ZA",{maximumFractionDigits:0});
+ function show(id){$(id).classList.remove("hidden")}
+ function esc(value){return String(value==null?"":value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+
+ if(code){
+  $("hero-title").textContent="Bring your automotive business to PoundTech.";
+  $("hero-copy").textContent="You've been referred by a PoundTech partner. Tell us a little about your business and we'll help you get listed.";
+  $("steps").classList.add("hidden");
+  show("invite-panel");
+  $("invite-form").addEventListener("submit",async function(event){
+   event.preventDefault();
+   const button=$("submit-invite"),message=$("invite-message");
+   button.disabled=true;button.textContent="Sending…";message.className="message";message.textContent="Submitting your details…";
+   const {data,error}=await client.rpc("submit_business_referral",{
+    p_referral_code:code,
+    p_business_name:$("business-name").value.trim(),
+    p_contact_name:$("contact-name").value.trim(),
+    p_email:$("email").value.trim(),
+    p_phone:$("phone").value.trim(),
+    p_business_type:$("business-type").value,
+    p_city:$("city").value.trim()||null
+   });
+   button.disabled=false;button.textContent="Send my details";
+   if(error){message.className="message error";message.textContent="We couldn't submit your details just yet. Please try again or contact PoundTech.";return;}
+   const result=data&&data.result;
+   if(data&&data.success){
+    $("invite-form").classList.add("hidden");
+    message.className="message success";
+    message.textContent="Thank you! Your details have been sent to PoundTech. Our team will be in touch to help you get started.";
+   }else{
+    const messages={
+     invalid_details:"Please check your details and try again.",
+     invalid_referral_code:"This referral link is not valid. Please ask the person who shared it for an updated link.",
+     self_referral:"You cannot refer your own business.",
+     already_registered:"It looks like this business is already registered with PoundTech. Please contact our team if you need help.",
+     duplicate_referral:"This business has already been referred to PoundTech."
+    };
+    message.className="message error";message.textContent=messages[result]||"We couldn't submit this referral. Please check your details and try again.";
+   }
+  });
+  return;
+ }
+
+ async function loadDashboard(){
+  const {data:{user},error:userError}=await client.auth.getUser();
+  if(userError||!user){show("login-panel");return;}
+  const {data,error}=await client.rpc("get_my_business_referral_dashboard");
+  if(error||!data){
+   show("login-panel");
+   $("login-message").className="message error";
+   $("login-message").textContent=error&&error.message?error.message:"Your account must be the owner of an approved PoundTech supplier or service partner business.";
+   return;
+  }
+  show("dashboard-panel");show("referrals-panel");
+  $("referral-link").value=data.referral_url||"";
+  $("total-referrals").textContent=data.total_referrals||0;
+  $("published-referrals").textContent=data.published_referrals||0;
+  $("available-credit").textContent=money(data.available_credit);
+  const rows=Array.isArray(data.referrals)?data.referrals:[];
+  $("referrals-body").innerHTML=rows.length?rows.map(row=>'<tr><td><strong>'+esc(row.business_name)+'</strong></td><td>'+esc(row.business_type==="service_provider"?"Service provider":row.business_type==="supplier"?"Parts supplier":"Services & parts")+'</td><td>'+esc(row.city||"—")+'</td><td><span class="pill '+(row.status==="Published"?"good":"")+'">'+esc(row.status)+'</span></td><td>'+esc(row.reward_status==="Credited"?money(row.reward_amount)+" credit":"Pending")+'</td></tr>').join(""):'<tr><td colspan="5">No referrals yet. Share your link to get started.</td></tr>';
+ }
+ $("copy-link").addEventListener("click",async function(){
+  const value=$("referral-link").value;
+  try{await navigator.clipboard.writeText(value);$("copy-link").textContent="Copied!";}catch(e){$("referral-link").select();document.execCommand("copy");$("copy-link").textContent="Copied!";}
+ });
+ $("share-whatsapp").addEventListener("click",function(){
+  const link=$("referral-link").value;
+  const message="Hi! I'd like to introduce you to PoundTech, a South African automotive marketplace where motorists can discover parts suppliers and service providers. You can tell them about your business here: "+link;
+  window.open("https://wa.me/?text="+encodeURIComponent(message),"_blank","noopener");
+ });
+ loadDashboard();
+})();
+</script>
+</body>
+</html>
