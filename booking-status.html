@@ -93,13 +93,26 @@
     <h2>Track Your Booking</h2>
 
     <p>
-        Enter the email address you used when making your service booking.
+        Enter the email address used for the booking and the full booking reference from your confirmation email.
     </p>
 
+    <label for="customer-email">Email address</label>
     <input
         type="email"
         id="customer-email"
         placeholder="Your email address"
+        autocomplete="email"
+        required
+    >
+
+    <label for="booking-reference">Booking reference</label>
+    <input
+        type="text"
+        id="booking-reference"
+        placeholder="Full reference from your email"
+        autocomplete="off"
+        spellcheck="false"
+        required
     >
 
     <button onclick="findBooking()">
@@ -166,11 +179,18 @@ async function findBooking() {
         document.getElementById("booking-result");
 
 
-    if (!email) {
+    const reference =
+        document.getElementById("booking-reference").value.trim();
 
+    if (!email || !reference) {
         message.innerHTML =
-            "<p>Please enter your email address.</p>";
+            "<p>Please enter both your email address and booking reference.</p>";
+        return;
+    }
 
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reference)) {
+        message.innerHTML =
+            "<p>Please enter the full booking reference from your confirmation email.</p>";
         return;
     }
 
@@ -185,7 +205,8 @@ async function findBooking() {
         await supabaseClient.rpc(
             "track_mechanic_booking",
             {
-                lookup_email: email
+                lookup_email: email,
+                lookup_reference: reference
             }
         );
 
@@ -204,7 +225,7 @@ async function findBooking() {
     if (!data || data.length === 0) {
 
         message.innerHTML =
-            "<p>No booking was found for this email address.</p>";
+            "<p>No booking matched those details. Check your email address and full booking reference.</p>";
 
         return;
     }
@@ -218,7 +239,7 @@ async function findBooking() {
 
     result.innerHTML = `
         <h2>${escapeHtml(booking.business_name)}</h2>
-        <p><strong>Booking reference:</strong> ${escapeHtml(String(booking.id).slice(0, 8).toUpperCase())}</p>
+        <p><strong>Booking reference:</strong> ${escapeHtml(String(booking.id).toUpperCase())}</p>
         <p><strong>Customer:</strong> ${escapeHtml(booking.customer_name)}</p>
         <p><strong>Vehicle:</strong> ${escapeHtml(booking.vehicle)}</p>
         <p><strong>Service:</strong> ${escapeHtml(booking.service_required)}</p>
