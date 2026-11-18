@@ -56,6 +56,13 @@
 }
 
 .filters input { flex: 1; min-width: 160px; }
+.filters select { min-width: 145px; background: #fff; cursor: pointer; }
+.filters button { padding: 9px 14px; border: 0; border-radius: 6px; background: #e00000; color: #fff; font-weight: 700; cursor: pointer; }
+.filters button:hover { background: #b90000; }
+.filter-results { max-width: 1100px; margin: 8px auto 14px; padding: 0 20px; color: #666; font-size: 13px; }
+.condition-label { margin-top: 8px; font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.condition-tag { display: inline-block; font-weight: 700; }
+
 
 .grid {
     max-width: 1100px;
@@ -193,19 +200,35 @@
     <a href="preowned-seller.html">Have something to sell? Become a private seller &rarr;</a>
 </div>
 
-<div class="filters">
-    <input id="search-box" type="text" placeholder="Search pre-owned parts..." oninput="renderListings()">
-    <select id="category-filter" onchange="renderListings()">
+<div class="filters" aria-label="Filter pre-owned listings">
+    <input id="search-box" type="search" placeholder="Search pre-owned parts..." oninput="renderListings()" aria-label="Search pre-owned parts">
+    <select id="category-filter" onchange="renderListings()" aria-label="Category">
         <option value="">All categories</option>
     </select>
-    <select id="condition-filter" onchange="renderListings()">
-        <option value="">Any condition</option>
-        <option>Like New</option>
-        <option>Good</option>
-        <option>Fair</option>
-        <option>For Parts</option>
+    <select id="make-filter" onchange="updateModelOptions(); renderListings()" aria-label="Vehicle make">
+        <option value="">All makes</option>
     </select>
+    <select id="model-filter" onchange="renderListings()" aria-label="Vehicle model" disabled>
+        <option value="">All models</option>
+    </select>
+    <select id="year-filter" onchange="renderListings()" aria-label="Vehicle year">
+        <option value="">All years</option>
+    </select>
+    <select id="condition-filter" onchange="renderListings()" aria-label="Condition">
+        <option value="">Any condition</option>
+    </select>
+    <input id="min-price-filter" type="number" min="0" step="1" placeholder="Min price (R)" oninput="renderListings()" aria-label="Minimum price">
+    <input id="max-price-filter" type="number" min="0" step="1" placeholder="Max price (R)" oninput="renderListings()" aria-label="Maximum price">
+    <select id="sort-filter" onchange="renderListings()" aria-label="Sort listings">
+        <option value="recommended">Recommended</option>
+        <option value="price-asc">Cheapest first</option>
+        <option value="price-desc">Most expensive first</option>
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+    </select>
+    <button type="button" id="clear-filters" onclick="clearPreownedFilters()">Clear filters</button>
 </div>
+<div class="filter-results" id="filter-results" aria-live="polite"></div>
 
 <div class="grid" id="grid">
     <div class="empty-state">Loading listings&hellip;</div>
@@ -253,7 +276,6 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allListings = [];
 
-
 function esc(value) {
     return String(value == null ? "" : value)
         .replace(/&/g, "&amp;")
@@ -267,18 +289,73 @@ function money(value) {
     return "R" + n.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Vehicle details are currently stored in vehicle_compatibility as free text.
+// Parse common formats such as "2007 Volvo S80 D5 | Engine code: ...".
+function vehicleDetails(listing) {
+    const raw = String(listing.vehicle_compatibility || "");
+    const match = raw.match(/(?:^|\\b)(19\\d{2}|20\\d{2})\\s+([A-Za-z][A-Za-z-]*)\\s+([^|,;]+)/);
+    if (!match) return { year: "", make: "", model: "" };
+    return {
+        year: match[1],
+        make: match[2].trim(),
+        model: match[3].trim()
+    };
+}
+
+function uniqueSorted(values) {
+    return [...new Set(values.filter(Boolean).map(function(v){ return String(v).trim(); }).filter(Boolean))]
+        .sort(function(a,b){ return a.localeCompare(b, "en", {numeric:true, sensitivity:"base"}); });
+}
+
+function setSelectOptions(selectId, placeholder, values) {
+    const select = document.getElementById(selectId);
+    const previous = select.value;
+    select.innerHTML = '<option value="">' + esc(placeholder) + '</option>' +
+        values.map(function(v){ return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join("");
+    if (values.includes(previous)) select.value = previous;
+}
+
+function updateModelOptions() {
+    const make = document.getElementById("make-filter").value;
+    const models = uniqueSorted(allListings.filter(function(l){
+        const v = vehicleDetails(l);
+        return !make || v.make.toLowerCase() === make.toLowerCase();
+    }).map(function(l){ return vehicleDetails(l).model; }));
+    const modelSelect = document.getElementById("model-filter");
+    const previous = modelSelect.value;
+    setSelectOptions("model-filter", "All models", models);
+    modelSelect.disabled = models.length === 0;
+    if (models.includes(previous)) modelSelect.value = previous;
+}
+
+function populateFilters() {
+    setSelectOptions("category-filter", "All categories", uniqueSorted(allListings.map(function(l){ return l.category; })));
+    setSelectOptions("make-filter", "All makes", uniqueSorted(allListings.map(function(l){ return vehicleDetails(l).make; })));
+    setSelectOptions("year-filter", "All years", uniqueSorted(allListings.map(function(l){ return vehicleDetails(l).year; })).sort(function(a,b){ return Number(b)-Number(a); }));
+    // Always include the agreed condition vocabulary, alongside any legacy values already in listings.
+    const conditionOptions = uniqueSorted(allListings.map(function(l){ return l.condition; }).concat(["Like New","Excellent","Good","Fair","Needs Repair","For Parts"]));
+    setSelectOptions("condition-filter", "Any condition", conditionOptions);
+    updateModelOptions();
+}
+
+function clearPreownedFilters() {
+    ["search-box","category-filter","make-filter","model-filter","year-filter","condition-filter","min-price-filter","max-price-filter"].forEach(function(id){
+        document.getElementById(id).value = "";
+    });
+    document.getElementById("sort-filter").value = "recommended";
+    updateModelOptions();
+    renderListings();
+}
 
 async function loadListings() {
-
     const { data, error } = await supabaseClient
         .from("preowned_listings")
-        .select("id, title, price, category, condition, image_url, status, listing_review, promotion_type, promotion_expires_at, created_at")
+        .select("id, title, price, category, condition, image_url, vehicle_compatibility, status, listing_review, promotion_type, promotion_expires_at, created_at")
         .eq("status", "Active")
         .eq("listing_review", "approved")
         .order("created_at", { ascending: false });
 
     const grid = document.getElementById("grid");
-
     if (error) {
         grid.innerHTML = '<div class="empty-state">Could not load listings right now.</div>';
         console.log("SUPABASE ERROR:", error.message);
@@ -293,43 +370,63 @@ async function loadListings() {
         return rank(b) - rank(a) || new Date(b.created_at) - new Date(a.created_at);
     });
 
-    const categories = [...new Set(allListings.map(function (l) { return l.category; }))].sort();
-    const select = document.getElementById("category-filter");
-    select.innerHTML = '<option value="">All categories</option>' +
-        categories.map(function (c) { return `<option>${esc(c)}</option>`; }).join("");
-
+    populateFilters();
     renderListings();
 }
 
 function renderListings() {
-
     const grid = document.getElementById("grid");
     const search = document.getElementById("search-box").value.trim().toLowerCase();
     const category = document.getElementById("category-filter").value;
+    const make = document.getElementById("make-filter").value;
+    const model = document.getElementById("model-filter").value;
+    const year = document.getElementById("year-filter").value;
     const condition = document.getElementById("condition-filter").value;
+    const minPrice = document.getElementById("min-price-filter").value;
+    const maxPrice = document.getElementById("max-price-filter").value;
+    const sort = document.getElementById("sort-filter").value;
 
-    const filtered = allListings.filter(function (l) {
-        if (category && l.category !== category) { return false; }
-        if (condition && l.condition !== condition) { return false; }
-        if (search && l.title.toLowerCase().indexOf(search) === -1) { return false; }
+    let filtered = allListings.filter(function (l) {
+        const vehicle = vehicleDetails(l);
+        const searchable = [l.title, l.category, l.condition, l.vehicle_compatibility].join(" ").toLowerCase();
+        if (category && l.category !== category) return false;
+        if (make && vehicle.make.toLowerCase() !== make.toLowerCase()) return false;
+        if (model && vehicle.model.toLowerCase() !== model.toLowerCase()) return false;
+        if (year && vehicle.year !== year) return false;
+        if (condition && String(l.condition || "").toLowerCase() !== condition.toLowerCase()) return false;
+        if (minPrice !== "" && Number(l.price) < Number(minPrice)) return false;
+        if (maxPrice !== "" && Number(l.price) > Number(maxPrice)) return false;
+        if (search && !searchable.includes(search)) return false;
         return true;
     });
 
+    if (sort === "price-asc") filtered.sort(function(a,b){ return Number(a.price)-Number(b.price); });
+    else if (sort === "price-desc") filtered.sort(function(a,b){ return Number(b.price)-Number(a.price); });
+    else if (sort === "newest") filtered.sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); });
+    else if (sort === "oldest") filtered.sort(function(a,b){ return new Date(a.created_at)-new Date(b.created_at); });
+
+    const results = document.getElementById("filter-results");
+    if (results) results.textContent = filtered.length + (filtered.length === 1 ? " listing found" : " listings found");
+
     if (filtered.length === 0) {
-        grid.innerHTML = '<div class="empty-state">There are no approved pre-owned listings available yet. New listings will appear here as private sellers join PoundTech. Please check back soon.</div>';
+        grid.innerHTML = '<div class="empty-state">No listings match these filters. Try changing your search or clear the filters to see all available parts.</div>';
         return;
     }
 
     grid.innerHTML = filtered.map(function (l) {
+        const activePromotion = l.promotion_expires_at && new Date(l.promotion_expires_at) > new Date();
+        const promoClass = activePromotion && l.promotion_type === "featured" ? "promo-featured" : activePromotion && l.promotion_type === "category" ? "promo-category" : "";
+        const vehicle = vehicleDetails(l);
         return `
-            <a class="po-card ${l.promotion_type === "featured" && l.promotion_expires_at && new Date(l.promotion_expires_at) > new Date() ? "promo-featured" : l.promotion_type === "category" && l.promotion_expires_at && new Date(l.promotion_expires_at) > new Date() ? "promo-category" : ""}" href="preowned-listing.html?id=${esc(l.id)}">
+            <a class="po-card ${promoClass}" href="preowned-listing.html?id=${esc(l.id)}">
                 <img src="${esc(l.image_url || '')}" alt="${esc(l.title)}">
                 <div class="body">
-                    ${l.promotion_expires_at && new Date(l.promotion_expires_at) > new Date() && l.promotion_type !== "none" ? `<span class="promo-badge">${l.promotion_type === "category" ? "Top of Category" : l.promotion_type === "featured" ? "Featured" : "Boosted"}</span>` : ""}
+                    ${activePromotion && l.promotion_type !== "none" ? `<span class="promo-badge">${l.promotion_type === "category" ? "Top of Category" : l.promotion_type === "featured" ? "Featured" : "Boosted"}</span>` : ""}
                     <h3>${esc(l.title)}</h3>
                     <div class="price">${money(l.price)}</div>
                     <div class="meta">${esc(l.category)}</div>
-                    <span class="condition-tag">${esc(l.condition)}</span>
+                    <div class="condition-label">Condition: <span class="condition-tag">${esc(l.condition || "Not specified")}</span></div>
+                    ${vehicle.make ? `<div class="meta">${esc([vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" "))}</div>` : ""}
                 </div>
             </a>
         `;
