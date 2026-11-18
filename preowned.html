@@ -211,14 +211,15 @@
     <select id="model-filter" onchange="renderListings()" aria-label="Vehicle model" disabled>
         <option value="">All models</option>
     </select>
-    <select id="year-filter" onchange="renderListings()" aria-label="Vehicle year">
+    <select id="year-filter" onchange="renderListings()" aria-label="Vehicle year range">
         <option value="">All years</option>
     </select>
     <select id="condition-filter" onchange="renderListings()" aria-label="Condition">
         <option value="">Any condition</option>
     </select>
-    <input id="min-price-filter" type="number" min="0" step="1" placeholder="Min price (R)" oninput="renderListings()" aria-label="Minimum price">
-    <input id="max-price-filter" type="number" min="0" step="1" placeholder="Max price (R)" oninput="renderListings()" aria-label="Maximum price">
+    <select id="price-filter" onchange="renderListings()" aria-label="Price range">
+        <option value="">Any price</option>
+    </select>
     <select id="sort-filter" onchange="renderListings()" aria-label="Sort listings">
         <option value="recommended">Recommended</option>
         <option value="price-asc">Cheapest first</option>
@@ -328,10 +329,57 @@ function updateModelOptions() {
     if (models.includes(previous)) modelSelect.value = previous;
 }
 
+function yearRangeOptions() {
+    const years = allListings.map(function(l){ return Number(vehicleDetails(l).year); }).filter(function(y){ return Number.isFinite(y) && y > 0; });
+    if (!years.length) return [];
+    const options = [];
+    const present = new Set(years);
+    if ([...present].some(function(y){ return y < 2000; })) options.push({ label: "Before 2000", min: null, max: 1999 });
+    for (let start = 2000; start <= 2024; start += 2) {
+        if ([...present].some(function(y){ return y >= start && y <= start + 1; })) {
+            options.push({ label: start + "–" + (start + 1), min: start, max: start + 1 });
+        }
+    }
+    if ([...present].some(function(y){ return y >= 2026; })) options.push({ label: "2026 or newer", min: 2026, max: null });
+    return options;
+}
+
+function priceRangeOptions() {
+    const prices = allListings.map(function(l){ return Number(l.price); }).filter(function(p){ return Number.isFinite(p) && p >= 0; });
+    if (!prices.length) return [];
+    const step = 1000;
+    const options = [];
+    const min = Math.min.apply(null, prices);
+    const max = Math.max.apply(null, prices);
+    if (min < step) options.push({ label: "Under R1,000", min: 0, max: step - 1 });
+    const first = Math.max(1, Math.floor(min / step));
+    const last = Math.floor(Math.min(max, 9999) / step);
+    for (let bucket = first; bucket <= last; bucket++) {
+        const low = bucket * step;
+        const high = low + step - 1;
+        if (prices.some(function(p){ return p >= low && p <= high; })) {
+            options.push({ label: "R" + low.toLocaleString("en-ZA") + "–R" + high.toLocaleString("en-ZA"), min: low, max: high });
+        }
+    }
+    if (max >= 10000) options.push({ label: "R10,000 or more", min: 10000, max: null });
+    return options;
+}
+
+function setRangeOptions(selectId, placeholder, ranges) {
+    const select = document.getElementById(selectId);
+    const previous = select.value;
+    select.innerHTML = '<option value="">' + esc(placeholder) + '</option>' +
+        ranges.map(function(r){
+            return '<option value="' + r.min + ':' + (r.max == null ? "" : r.max) + '">' + esc(r.label) + '</option>';
+        }).join("");
+    if (Array.from(select.options).some(function(o){ return o.value === previous; })) select.value = previous;
+}
+
 function populateFilters() {
     setSelectOptions("category-filter", "All categories", uniqueSorted(allListings.map(function(l){ return l.category; })));
     setSelectOptions("make-filter", "All makes", uniqueSorted(allListings.map(function(l){ return vehicleDetails(l).make; })));
-    setSelectOptions("year-filter", "All years", uniqueSorted(allListings.map(function(l){ return vehicleDetails(l).year; })).sort(function(a,b){ return Number(b)-Number(a); }));
+    setRangeOptions("year-filter", "All years", yearRangeOptions());
+    setRangeOptions("price-filter", "Any price", priceRangeOptions());
     // Always include the agreed condition vocabulary, alongside any legacy values already in listings.
     const conditionOptions = uniqueSorted(allListings.map(function(l){ return l.condition; }).concat(["Like New","Excellent","Good","Fair","Needs Repair","For Parts"]));
     setSelectOptions("condition-filter", "Any condition", conditionOptions);
@@ -339,7 +387,7 @@ function populateFilters() {
 }
 
 function clearPreownedFilters() {
-    ["search-box","category-filter","make-filter","model-filter","year-filter","condition-filter","min-price-filter","max-price-filter"].forEach(function(id){
+    ["search-box","category-filter","make-filter","model-filter","year-filter","condition-filter","price-filter"].forEach(function(id){
         document.getElementById(id).value = "";
     });
     document.getElementById("sort-filter").value = "recommended";
@@ -382,8 +430,7 @@ function renderListings() {
     const model = document.getElementById("model-filter").value;
     const year = document.getElementById("year-filter").value;
     const condition = document.getElementById("condition-filter").value;
-    const minPrice = document.getElementById("min-price-filter").value;
-    const maxPrice = document.getElementById("max-price-filter").value;
+    const priceRange = document.getElementById("price-filter").value;
     const sort = document.getElementById("sort-filter").value;
 
     let filtered = allListings.filter(function (l) {
@@ -392,10 +439,9 @@ function renderListings() {
         if (category && l.category !== category) return false;
         if (make && vehicle.make.toLowerCase() !== make.toLowerCase()) return false;
         if (model && vehicle.model.toLowerCase() !== model.toLowerCase()) return false;
-        if (year && vehicle.year !== year) return false;
+        if (year) {\n            const parts = year.split(":");\n            const yearMin = Number(parts[0]);\n            const yearMax = parts[1] === "" ? null : Number(parts[1]);\n            const listingYear = Number(vehicle.year);\n            if (!vehicle.year || listingYear < yearMin || (yearMax !== null && listingYear > yearMax)) return false;\n        }
         if (condition && String(l.condition || "").toLowerCase() !== condition.toLowerCase()) return false;
-        if (minPrice !== "" && Number(l.price) < Number(minPrice)) return false;
-        if (maxPrice !== "" && Number(l.price) > Number(maxPrice)) return false;
+        if (priceRange) {\n            const parts = priceRange.split(":");\n            const priceMin = Number(parts[0]);\n            const priceMax = parts[1] === "" ? null : Number(parts[1]);\n            const listingPrice = Number(l.price);\n            if (!Number.isFinite(listingPrice) || listingPrice < priceMin || (priceMax !== null && listingPrice > priceMax)) return false;\n        }
         if (search && !searchable.includes(search)) return false;
         return true;
     });
