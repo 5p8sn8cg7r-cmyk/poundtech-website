@@ -246,6 +246,7 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-se
     <button type="button" class="pt-nav-btn" data-section="applications" onclick="setAdminSection('applications')">Applications <span id="applications-nav-count" class="pt-nav-count" hidden>0</span></button>
     <button type="button" class="pt-nav-btn" data-section="support" onclick="setAdminSection('support')">Support <span id="support-nav-count" class="pt-nav-count" hidden>0</span></button>
     <button type="button" class="pt-nav-btn" data-section="marketplace" onclick="setAdminSection('marketplace')">Marketplace</button>
+    <button type="button" class="pt-nav-btn" data-section="preowned" onclick="setAdminSection('preowned')">Pre-Owned Listings <span id="preowned-nav-count" class="pt-nav-count" hidden>0</span></button>
     <button type="button" class="pt-nav-btn" data-section="finance" onclick="setAdminSection('finance')">Finance</button>
     <button type="button" class="pt-nav-btn" data-section="referrals" onclick="setAdminSection('referrals')">Referrals</button>
     <button type="button" class="pt-nav-btn" data-section="settings" onclick="setAdminSection('settings')">Settings</button>
@@ -305,8 +306,15 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-se
     <section class="admin-panel" data-admin-panel="marketplace" id="panel-marketplace">
       <div class="section-heading"><div><span class="section-kicker">Marketplace quality</span><h2>Marketplace management</h2><p>Review listings, manage promotions and keep the catalogue healthy.</p></div></div>
       <div id="listings-admin"></div>
-      <div id="preowned-listings-admin"></div>
       <div id="sponsor-admin"></div>
+    </section>
+
+    <section class="admin-panel" data-admin-panel="preowned" id="panel-preowned">
+      <div class="section-heading">
+        <div><span class="section-kicker">Private marketplace</span><h2>Pre-Owned Listings</h2><p>Review private-seller listings, inspect every photo and manage listing approvals.</p></div>
+        <button type="button" class="pt-refresh" onclick="loadPreownedListingsAdmin()">Refresh listings</button>
+      </div>
+      <div id="preowned-listings-admin"><div class="od-empty">Loading private listings…</div></div>
     </section>
 
     <section class="admin-panel" data-admin-panel="finance" id="panel-finance">
@@ -834,55 +842,138 @@ async function reviewListing(id, approve) {
 }
 
 
-// ---------- Pre-owned listings waiting for review ----------
+// ---------- Dedicated private / pre-owned listing review ----------
+var ADMIN_PREOWNED_LISTINGS = [];
+var ADMIN_PREOWNED_FILTER = "pending";
+var ADMIN_PREOWNED_QUERY = "";
+
+function preownedStatusLabel(value) {
+    var v = String(value || "pending").toLowerCase();
+    return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
 async function loadPreownedListingsAdmin() {
-
     const box = document.getElementById("preowned-listings-admin");
+    if (!box) return;
+    box.innerHTML = '<div class="od-empty">Loading private listings…</div>';
 
-    const { data, error } = await supabaseClient.rpc("get_pending_preowned_listings");
-
+    const { data, error } = await supabaseClient.rpc("get_admin_preowned_listings");
     if (error) {
-        box.innerHTML = '<div class="empty"><h2>Pre-owned review unavailable</h2><p>' + esc(error.message) +
-            '</p><p>Run 19_migration18_preowned.sql in Supabase.</p></div>';
+        box.innerHTML = '<div class="od-empty"><strong>Pre-owned listings unavailable.</strong><br>' + esc(error.message) + '</div>';
         return;
     }
 
-    const rows = data || [];
+    ADMIN_PREOWNED_LISTINGS = Array.isArray(data) ? data : [];
+    const pendingCount = ADMIN_PREOWNED_LISTINGS.filter(function(l) {
+        return String(l.listing_review || "").toLowerCase() === "pending";
+    }).length;
+    const badge = document.getElementById("preowned-nav-count");
+    if (badge) {
+        badge.textContent = pendingCount > 99 ? "99+" : String(pendingCount);
+        badge.hidden = pendingCount === 0;
+        badge.title = pendingCount + " private listing(s) awaiting review";
+    }
+    renderPreownedListingsAdmin();
+}
 
-    box.innerHTML = '<h2 class="rev-title">Pre-owned listings to review (' + rows.length + ')</h2>' +
-        (rows.length === 0
-            ? '<div class="od-empty">No private-seller listings waiting. Every new pre-owned listing appears here before going live.</div>'
-            : rows.map(function(l) {
-                return `<div class="od-item"><div style="padding:14px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;">
-                    <div style="width:96px;height:96px;border-radius:8px;background:#eee;overflow:hidden;flex-shrink:0;">
-                        ${l.image_url ? '<img src="' + esc(l.image_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;">' : ""}
-                    </div>
-                    <div style="flex:1;min-width:220px;">
-                        <div class="no">${esc(l.title)}</div>
-                        <div class="meta">${esc(l.seller)} &middot; ${esc(l.category || "")} &middot; ${esc(l.condition || "")}</div>
-                        <div class="tot" style="margin:4px 0;">${esc(money(l.price))}</div>
-                        <div style="font-size:14px;color:#333;">${esc((l.description || "").slice(0, 300))}</div>
-                        <div style="margin-top:10px;">
-                            <button type="button" onclick="reviewPreownedListing('${esc(l.id)}', true)">Approve</button>
-                            <button type="button" style="background:#555;" onclick="reviewPreownedListing('${esc(l.id)}', false)">Reject</button>
-                        </div>
-                    </div>
-                </div></div>`;
-            }).join("")) +
-        '<p class="rev-note">These are private sales, not supplier stock. Check the photo is a real photo of the actual item, the description and condition are honest, and the price is reasonable, then approve or reject.</p>';
+function renderPreownedListingsAdmin() {
+    const box = document.getElementById("preowned-listings-admin");
+    if (!box) return;
+    const counts = {
+        pending: ADMIN_PREOWNED_LISTINGS.filter(function(l){return String(l.listing_review).toLowerCase()==="pending";}).length,
+        approved: ADMIN_PREOWNED_LISTINGS.filter(function(l){return String(l.listing_review).toLowerCase()==="approved";}).length,
+        rejected: ADMIN_PREOWNED_LISTINGS.filter(function(l){return String(l.listing_review).toLowerCase()==="rejected";}).length,
+        all: ADMIN_PREOWNED_LISTINGS.length
+    };
+    const q = ADMIN_PREOWNED_QUERY.trim().toLowerCase();
+    const rows = ADMIN_PREOWNED_LISTINGS.filter(function(l) {
+        const status = String(l.listing_review || "pending").toLowerCase();
+        if (ADMIN_PREOWNED_FILTER !== "all" && status !== ADMIN_PREOWNED_FILTER) return false;
+        if (!q) return true;
+        return [l.title,l.seller,l.seller_phone,l.seller_email,l.category,l.condition,l.vehicle_compatibility,l.description]
+            .join(" ").toLowerCase().includes(q);
+    });
+
+    const tabs = [
+        ["pending","Pending"],["approved","Approved"],["rejected","Rejected"],["all","All listings"]
+    ];
+    const tabHTML = tabs.map(function(t) {
+        return '<button type="button" class="od-tab ' + (ADMIN_PREOWNED_FILTER===t[0]?'on':'') +
+            '" data-preowned-filter="' + t[0] + '">' + t[1] +
+            '<span class="c">' + counts[t[0]] + '</span></button>';
+    }).join("");
+
+    box.innerHTML =
+        '<div class="od-cards">' +
+          '<div class="rev-card accent"><small>Awaiting review</small><b>' + counts.pending + '</b></div>' +
+          '<div class="rev-card"><small>Approved</small><b>' + counts.approved + '</b></div>' +
+          '<div class="rev-card"><small>Rejected</small><b>' + counts.rejected + '</b></div>' +
+          '<div class="rev-card"><small>Total listings</small><b>' + counts.all + '</b></div>' +
+        '</div>' +
+        '<div class="od-tabs">' + tabHTML + '</div>' +
+        '<input class="od-search" id="preowned-admin-search" type="search" placeholder="Search listing, seller, phone, email or vehicle…" value="' + esc(ADMIN_PREOWNED_QUERY) + '">' +
+        (rows.length ? rows.map(function(l) {
+            const images = [l.image_url].concat(Array.isArray(l.extra_images) ? l.extra_images : []).filter(function(u) {
+                return typeof u === "string" && /^https?:\/\//i.test(u);
+            });
+            const status = String(l.listing_review || "pending").toLowerCase();
+            const statusClass = status === "approved" ? "green" : status === "rejected" ? "dark" : "amber";
+            const gallery = images.length ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:9px;margin:14px 0;">' +
+                images.map(function(url,i) {
+                    return '<a href="' + esc(url) + '" target="_blank" rel="noopener" style="display:block;aspect-ratio:1;background:#f1f1f1;border-radius:9px;overflow:hidden;">' +
+                        '<img src="' + esc(url) + '" alt="' + esc(l.title) + ' photo ' + (i+1) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display=\'none\'"></a>';
+                }).join("") + '</div>' : '<p class="rev-note">No listing photos attached.</p>';
+            const actions = status === "pending"
+                ? '<div class="od-actions"><button type="button" onclick="reviewPreownedListing(\'' + esc(l.id) + '\',true)">Approve listing</button><button type="button" style="background:#555" onclick="reviewPreownedListing(\'' + esc(l.id) + '\',false)">Reject listing</button></div>'
+                : '';
+            return '<article class="od-item"><div class="od-body" style="padding:16px;border-top:0;">' +
+                '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><strong class="no">' + esc(l.title) + '</strong><span class="od-pill ' + statusClass + '">' + esc(preownedStatusLabel(status)) + '</span><span class="sp"></span><strong class="tot">' + esc(money(l.price)) + '</strong></div>' +
+                '<p class="meta" style="margin-top:7px;">' + esc(l.category || "Uncategorised") + ' · ' + esc(l.condition || "Condition not set") + ' · Submitted ' + esc(new Date(l.created_at).toLocaleString("en-ZA")) + '</p>' +
+                gallery +
+                '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 20px;">' +
+                  '<p><strong>Seller:</strong> ' + esc(l.seller || "Private seller") + '</p>' +
+                  '<p><strong>Phone:</strong> ' + esc(l.seller_phone || "Not supplied") + '</p>' +
+                  '<p><strong>Email:</strong> ' + esc(l.seller_email || "Not supplied") + '</p>' +
+                  '<p><strong>Vehicle fitment:</strong> ' + esc(l.vehicle_compatibility || "Not specified") + '</p>' +
+                  '<p><strong>Promotion:</strong> ' + esc(l.promotion_type || "None") + '</p>' +
+                '</div>' +
+                '<p style="white-space:pre-wrap;line-height:1.55;">' + esc(l.description || "No description provided.") + '</p>' +
+                actions + '</div></article>';
+        }).join("") : '<div class="od-empty">' + (q ? 'No listings match your search.' : 'No listings in this filter.') + '</div>') +
+        '<p class="rev-note">Review the actual item photos, seller details, vehicle fitment, condition and description before approving. Rejected listings remain hidden from buyers.</p>';
+
+    box.querySelectorAll("[data-preowned-filter]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            ADMIN_PREOWNED_FILTER = btn.getAttribute("data-preowned-filter");
+            renderPreownedListingsAdmin();
+        });
+    });
+    const search = document.getElementById("preowned-admin-search");
+    if (search) search.addEventListener("input", function() {
+        ADMIN_PREOWNED_QUERY = this.value;
+        const pos = this.selectionStart;
+        renderPreownedListingsAdmin();
+        const next = document.getElementById("preowned-admin-search");
+        next.focus();
+        next.setSelectionRange(pos,pos);
+    });
 }
 
 async function reviewPreownedListing(id, approve) {
-
-    if (!approve && !confirm("Reject this listing? It will stay hidden from buyers.")) { return; }
-
+    const listing = ADMIN_PREOWNED_LISTINGS.find(function(l){return l.id===id;});
+    if (!listing) return;
+    if (approve) {
+        if (!confirm("Approve this private listing and make it visible to buyers?")) return;
+    } else {
+        if (!confirm("Reject this listing? It will remain hidden from buyers.")) return;
+    }
     const { error } = await supabaseClient.rpc("review_preowned_listing", { p_listing_id: id, p_approve: approve });
-
-    if (error) { alert("Could not save: " + error.message); }
-
-    loadPreownedListingsAdmin();
+    if (error) {
+        alert("Could not save: " + error.message);
+        return;
+    }
+    await loadPreownedListingsAdmin();
 }
-
 
 // ---------- Pre-owned seller payouts ----------
 async function loadPreownedPayoutsAdmin() {
@@ -1500,6 +1591,7 @@ function setAdminSection(section) {
     if (section === "applications") {
         loadAdminApplications(document.getElementById("application-kind").value);
     }
+    if (section === "preowned") loadPreownedListingsAdmin();
     if (section === "support") loadAdminSupportTickets();
     if (section === "referrals") loadReferralAdmin();
 }
