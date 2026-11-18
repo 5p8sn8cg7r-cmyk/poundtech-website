@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Part Requests | PoundTech Supplier Portal</title><link rel="stylesheet" href="/site.css">
+<style>
+body{margin:0;background:#f4f5f7;color:#171717;font-family:Arial,sans-serif}
+header{background:#08090b;color:#fff;padding:17px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font-size:22px;font-weight:900;color:#fff;text-decoration:none}.brand span{color:#e00000}
+header a:last-child{color:#fff;text-decoration:none;border:1px solid #555;padding:9px 12px;border-radius:8px;font-size:13px}
+main{max-width:1000px;margin:30px auto;padding:0 16px 50px}
+.intro,.request{background:#fff;border:1px solid #e5e5e5;border-radius:13px;padding:22px;margin-bottom:14px}
+h1{font-size:27px;margin:0 0 8px}.muted{color:#666;line-height:1.55;font-size:14px}
+.request{border-left:4px solid #d00000}.request-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.code{font-size:11px;color:#777;font-weight:800;letter-spacing:.06em}
+.pill{display:inline-block;padding:4px 9px;border-radius:30px;background:#eee;font-size:11px;font-weight:800}.pill.green{background:#e4f5ea;color:#176b35}
+.request h2{font-size:19px;margin:10px 0}.details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin:12px 0}.details p{margin:0;font-size:13px;line-height:1.5;color:#555}
+form{border-top:1px solid #eee;margin-top:14px;padding-top:14px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+label{display:block;font-size:12px;font-weight:700}input,select,textarea{display:block;width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccc;border-radius:8px;margin-top:5px;font:inherit;font-size:14px}
+.check{display:flex;align-items:center;gap:8px;margin:12px 0}.check input{width:17px;margin:0}
+button{border:0;border-radius:8px;background:#d00000;color:#fff;padding:12px 16px;font-weight:800;cursor:pointer;margin-top:12px}button:disabled{opacity:.6}
+.status{font-size:12px;color:#176b35;margin-left:10px}
+@media(max-width:600px){header{padding:14px}.brand{font-size:19px}main{margin:18px auto;padding:0 12px 35px}.details,.fields{grid-template-columns:1fr}.intro,.request{padding:17px}}
+</style></head><body>
+<header><a class="brand" href="/supplier-dashboard.html">POUND<span>TECH</span> <small style="font-size:11px;color:#bbb">SUPPLIER</small></a><a href="/supplier-dashboard.html">Back to dashboard</a></header>
+<main>
+<section class="intro"><h1>Customer part requests</h1><p class="muted">View requests matched to your product catalogue. If you can supply or source a requested part, send the customer a quotation. Your contact details stay private until the customer selects your offer.</p><p id="page-status" class="muted">Checking your supplier access...</p></section>
+<div id="requests"><p class="muted">Loading requests...</p></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db=supabase.createClient("https://uezacbssvvvtlosnaroh.supabase.co","sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ");
+function esc(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+async function loadRequests(){
+ const status=document.getElementById("page-status"),box=document.getElementById("requests");
+ const {data:sessionData}=await db.auth.getSession();
+ if(!sessionData.session){status.innerHTML='Please <a href="/supplier-login.html">sign in</a> to view requests.';box.innerHTML="";return}
+ const {data,error}=await db.rpc("get_my_part_request_opportunities");
+ if(error){status.textContent="We couldn't load your matched requests. "+error.message;box.innerHTML="";return}
+ status.textContent=(data||[]).length+" matching open request(s)";
+ if(!data||!data.length){box.innerHTML='<section class="intro"><h2>No matching requests yet</h2><p class="muted">When a customer requests a part matching your approved product catalogue, it will appear here. Keep product names and vehicle compatibility details accurate to improve matching.</p></section>';return}
+ box.innerHTML=data.map(r=>{
+ const budget=(r.budget_min!=null||r.budget_max!=null)?("Budget: "+(r.budget_min!=null?"R"+Number(r.budget_min).toLocaleString("en-ZA"):"—")+" to "+(r.budget_max!=null?"R"+Number(r.budget_max).toLocaleString("en-ZA"):"—")):"No budget provided";
+ return '<article class="request"><div class="request-head"><span class="code">'+esc(r.request_code)+'</span>'+(r.my_quote_id?'<span class="pill green">Quotation submitted</span>':'<span class="pill">Awaiting your response</span>')+'</div>'+
+ '<h2>'+esc(r.part_name)+'</h2><div class="details"><p><b>Vehicle:</b> '+esc(r.vehicle_make+" "+r.vehicle_model+(r.vehicle_year?" "+r.vehicle_year:""))+(r.engine_details?" · "+esc(r.engine_details):"")+'</p><p><b>Category:</b> '+esc(r.part_category)+'</p><p><b>Condition wanted:</b> '+esc(r.condition_preference)+'</p><p><b>Location:</b> '+esc(r.city+", "+r.province)+'</p><p><b>'+esc(budget)+'</b></p>'+(r.part_number?'<p><b>Part number:</b> '+esc(r.part_number)+'</p>':'')+'</div>'+
+ (r.description?'<p class="muted">'+esc(r.description)+'</p>':'')+
+ '<form onsubmit="sendQuote(event,\''+esc(r.id)+'\')"><b>Send your quotation</b><div class="fields" style="margin-top:10px">'+
+ '<label>Price (R)<input name="price" type="number" min="0" step="0.01" required></label>'+
+ '<label>Condition<select name="condition"><option>New</option><option>Used</option><option>Refurbished</option></select></label>'+
+ '<label>Availability<select name="availability"><option>In stock</option><option>Can source</option><option>Limited availability</option></select></label>'+
+ '<label>Delivery fee (R)<input name="delivery_fee" type="number" min="0" step="0.01" placeholder="Optional"></label>'+
+ '<label>Estimated fulfilment<input name="estimated_fulfilment" maxlength="100" placeholder="e.g. 2–3 working days"></label></div>'+
+ '<label class="check"><input name="delivery_available" type="checkbox"> Delivery can be arranged</label>'+
+ '<label>Message to customer<textarea name="message" maxlength="1000" rows="3" placeholder="Compatibility details, warranty, collection or delivery information"></textarea></label>'+
+ '<button type="submit">'+(r.my_quote_id?"Update quotation":"Send quotation")+'</button><span class="status" role="status"></span></form></article>';
+ }).join("");
+}
+async function sendQuote(event,id){
+ event.preventDefault();const form=event.currentTarget,button=form.querySelector("button"),status=form.querySelector(".status"),fd=new FormData(form);
+ button.disabled=true;button.textContent="Sending...";
+ const payload={request_id:id,price:fd.get("price"),condition:fd.get("condition"),availability:fd.get("availability"),delivery_available:fd.get("delivery_available")==="on",delivery_fee:fd.get("delivery_fee"),estimated_fulfilment:fd.get("estimated_fulfilment"),message:fd.get("message")};
+ const {data,error}=await db.rpc("submit_part_request_quote",{p_payload:payload});
+ if(error||!data||!data.success){status.style.color="#a00000";status.textContent=error?error.message:(data&&data.message?data.message:"Could not send quotation.");button.disabled=false;button.textContent="Send quotation";return}
+ status.textContent="Quotation sent to the customer.";await loadRequests();
+}
+loadRequests();
+</script></body></html>
