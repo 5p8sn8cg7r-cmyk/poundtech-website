@@ -439,9 +439,21 @@ function renderListings() {
         if (category && l.category !== category) return false;
         if (make && vehicle.make.toLowerCase() !== make.toLowerCase()) return false;
         if (model && vehicle.model.toLowerCase() !== model.toLowerCase()) return false;
-        if (year) {\n            const parts = year.split(":");\n            const yearMin = Number(parts[0]);\n            const yearMax = parts[1] === "" ? null : Number(parts[1]);\n            const listingYear = Number(vehicle.year);\n            if (!vehicle.year || listingYear < yearMin || (yearMax !== null && listingYear > yearMax)) return false;\n        }
+        if (year) {
+            const parts = year.split(":");
+            const yearMin = Number(parts[0]);
+            const yearMax = parts[1] === "" ? null : Number(parts[1]);
+            const listingYear = Number(vehicle.year);
+            if (!vehicle.year || listingYear < yearMin || (yearMax !== null && listingYear > yearMax)) return false;
+        }
         if (condition && String(l.condition || "").toLowerCase() !== condition.toLowerCase()) return false;
-        if (priceRange) {\n            const parts = priceRange.split(":");\n            const priceMin = Number(parts[0]);\n            const priceMax = parts[1] === "" ? null : Number(parts[1]);\n            const listingPrice = Number(l.price);\n            if (!Number.isFinite(listingPrice) || listingPrice < priceMin || (priceMax !== null && listingPrice > priceMax)) return false;\n        }
+        if (priceRange) {
+            const parts = priceRange.split(":");
+            const priceMin = Number(parts[0]);
+            const priceMax = parts[1] === "" ? null : Number(parts[1]);
+            const listingPrice = Number(l.price);
+            if (!Number.isFinite(listingPrice) || listingPrice < priceMin || (priceMax !== null && listingPrice > priceMax)) return false;
+        }
         if (search && !searchable.includes(search)) return false;
         return true;
     });
