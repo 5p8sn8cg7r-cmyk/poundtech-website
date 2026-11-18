@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080808">
+<meta name="description" content="Can't find the car part you need? Send a request to PoundTech and get connected with automotive suppliers across South Africa.">
+<title>Request a Part | PoundTech</title>
+<link rel="stylesheet" href="/site.css">
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<style>
+:root{--red:#d00000;--ink:#090a0c;--muted:#686868}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f5f7;color:#171717;font-family:Arial,Helvetica,sans-serif}
+header{background:#08090b;color:#fff;padding:16px clamp(16px,5vw,60px);display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{color:#fff;text-decoration:none;font-size:23px;font-weight:900;letter-spacing:.04em}.brand span{color:#e00000}
+.head-link{color:#fff;text-decoration:none;border:1px solid #555;border-radius:999px;padding:9px 13px;font-size:13px;font-weight:700}
+.hero{background:radial-gradient(ellipse at 50% 0%,#292929,#080808 72%);color:#fff;text-align:center;padding:48px 20px 62px}
+.eyebrow{color:#ff5656;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.hero h1{font-size:clamp(31px,5.5vw,48px);line-height:1.08;letter-spacing:-.04em;margin:13px auto;max-width:760px}
+.hero h1 span{color:#ff2929}.hero p{max-width:640px;margin:0 auto;color:#ccc;line-height:1.65;font-size:15px}
+.wrap{max-width:900px;margin:-25px auto 0;padding:0 16px 55px;position:relative}
+.tabs{display:flex;gap:8px;margin-bottom:14px;background:#fff;border:1px solid #e5e5e5;border-radius:13px;padding:7px}
+.tabs button{flex:1;border:0;border-radius:9px;background:#fff;color:#444;padding:12px;font-weight:800;cursor:pointer}
+.tabs button.active{background:#171717;color:#fff}
+.panel{display:none}.panel.active{display:block}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:16px;padding:clamp(18px,4vw,30px);box-shadow:0 10px 30px rgba(0,0,0,.055)}
+.card h2{margin:0 0 7px;font-size:23px;letter-spacing:-.02em}.sub{margin:0 0 22px;color:#666;font-size:14px;line-height:1.55}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.field{min-width:0}.field.full{grid-column:1/-1}
+label{display:block;font-size:13px;font-weight:750;margin:0 0 7px}
+input,select,textarea{display:block;width:100%;min-height:46px;padding:11px 12px;border:1px solid #d7d7d7;border-radius:9px;background:#fff;color:#171717;font:inherit;font-size:15px}
+textarea{min-height:100px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(208,0,0,.09)}
+.help{font-size:11px;color:#777;line-height:1.45;margin:6px 0 0}
+.submit{width:100%;border:0;border-radius:9px;background:var(--red);color:#fff;font-weight:800;font-size:15px;padding:15px;cursor:pointer;margin-top:20px}
+.submit:hover{background:#b90000}.submit:disabled{opacity:.6;cursor:wait}
+.notice{display:none;margin-top:16px;padding:14px;border-radius:10px;background:#f3f8f4;border:1px solid #cfe6d4;color:#215c32;line-height:1.55;font-size:14px;overflow-wrap:anywhere}
+.notice.error{background:#fff5f5;border-color:#f0cccc;color:#8a1717}
+.request-code{display:inline-block;background:#fff;border:1px dashed #888;border-radius:7px;padding:7px 11px;font-weight:900;letter-spacing:.08em;color:#111;margin:7px 0}
+.track-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.track-btn,.quote-accept{border:0;border-radius:8px;background:#171717;color:#fff;padding:12px 15px;font-weight:800;cursor:pointer}
+.track-result{margin-top:18px}.quote{border:1px solid #e5e5e5;border-radius:12px;padding:15px;margin-top:11px}.quote h3{margin:0 0 6px;font-size:16px}.quote p{margin:5px 0;color:#555;font-size:13px;line-height:1.5}.quote-price{font-size:22px;font-weight:900;margin:8px 0}.status{display:inline-block;padding:4px 9px;background:#f0f0f0;border-radius:30px;font-size:11px;font-weight:800}
+@media(max-width:620px){header{padding:13px 14px}.brand{font-size:19px}.hero{padding:39px 17px 53px}.wrap{padding:0 12px 35px}.grid,.track-row{grid-template-columns:1fr}.field.full{grid-column:auto}.tabs button{font-size:13px;padding:11px 7px}.card{border-radius:13px}}
+</style>
+</head>
+<body>
+<header><a class="brand" href="/">POUND<span>TECH</span></a><a class="head-link" href="/">Back to marketplace</a></header>
+<section class="hero">
+<div class="eyebrow">Parts sourcing made easier</div>
+<h1>Can't find the part you need? <span>We'll help you find it.</span></h1>
+<p>Send one request and let relevant automotive suppliers across South Africa respond with availability, pricing and delivery options.</p>
+</section>
+<main class="wrap">
+<div class="tabs" role="tablist">
+<button type="button" class="active" id="tab-create" onclick="showTab('create')">Request a part</button>
+<button type="button" id="tab-track" onclick="showTab('track')">Track my request</button>
+</div>
+<section class="panel active" id="panel-create">
+<div class="card">
+<h2>Tell us what you're looking for</h2>
+<p class="sub">The more detail you provide, the easier it is for suppliers to identify the correct part. Submitting a request is free.</p>
+<form id="request-form">
+<div class="grid">
+<div class="field full"><label for="part-name">What part do you need? *</label><input id="part-name" required maxlength="150" placeholder="e.g. Isuzu KB 300 gearbox, BMW F30 fuel pump"></div>
+<div class="field"><label for="part-category">Part category *</label><select id="part-category" required><option value="">Choose category</option><option>Engine & Mechanical</option><option>Transmission & Driveline</option><option>Electrical & Electronics</option><option>Body & Exterior</option><option>Interior</option><option>Suspension & Steering</option><option>Brakes</option><option>Wheels & Tyres</option><option>Accessories</option><option>Other</option></select></div>
+<div class="field"><label for="condition">Preferred condition *</label><select id="condition" required><option>Any</option><option>New</option><option>Used</option><option>Refurbished</option></select></div>
+<div class="field"><label for="make">Vehicle make *</label><input id="make" required maxlength="80" placeholder="e.g. Isuzu"></div>
+<div class="field"><label for="model">Vehicle model *</label><input id="model" required maxlength="100" placeholder="e.g. KB 300 D-Teq"></div>
+<div class="field"><label for="year">Vehicle year</label><input id="year" type="number" min="1900" max="2028" placeholder="e.g. 2018"></div>
+<div class="field"><label for="engine">Engine size / code</label><input id="engine" maxlength="100" placeholder="e.g. 3.0 D-Teq"></div>
+<div class="field"><label for="part-number">OEM / part number</label><input id="part-number" maxlength="100" placeholder="If known"></div>
+<div class="field"><label for="city">Your city / town *</label><input id="city" required maxlength="100" placeholder="e.g. Pretoria"></div>
+<div class="field"><label for="province">Province *</label><select id="province" required><option value="">Choose province</option><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>Northern Cape</option><option>North West</option><option>Western Cape</option></select></div>
+<div class="field"><label for="budget-min">Minimum budget (R)</label><input id="budget-min" type="number" min="0" step="0.01" placeholder="Optional"></div>
+<div class="field"><label for="budget-max">Maximum budget (R)</label><input id="budget-max" type="number" min="0" step="0.01" placeholder="Optional"></div>
+<div class="field full"><label for="description">Extra details</label><textarea id="description" maxlength="1500" placeholder="Tell suppliers about the exact part, specifications, side (left/right), gearbox type, or anything else that will help identify it."></textarea></div>
+<div class="field"><label for="customer-name">Your name *</label><input id="customer-name" required maxlength="100" autocomplete="name"></div>
+<div class="field"><label for="customer-phone">Phone / WhatsApp *</label><input id="customer-phone" required maxlength="30" autocomplete="tel"></div>
+<div class="field full"><label for="customer-email">Email address *</label><input id="customer-email" type="email" required maxlength="254" autocomplete="email"><p class="help">We'll use your email and request reference to let you track quotations. Your contact details are not shown to suppliers unless you select a supplier.</p></div>
+</div>
+<button class="submit" id="submit-request" type="submit">Submit part request</button>
+</form>
+<div class="notice" id="request-success" role="status" aria-live="polite"></div>
+<div class="notice error" id="request-error" role="alert"></div>
+</div>
+</section>
+<section class="panel" id="panel-track">
+<div class="card">
+<h2>Track your part request</h2>
+<p class="sub">Enter the email address used when submitting your request and the reference shown after submission.</p>
+<form id="track-form">
+<div class="track-row">
+<div class="field"><label for="track-email">Email address</label><input id="track-email" type="email" required></div>
+<div class="field"><label for="track-code">Request reference</label><input id="track-code" required placeholder="PT-XXXXXXXX"></div>
+</div>
+<button class="submit" type="submit" id="track-submit">Find my request</button>
+</form>
+<div id="track-result" class="track-result" aria-live="polite"></div>
+</div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient = supabase.createClient(
+  "https://uezacbssvvvtlosnaroh.supabase.co",
+  "sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ"
+);
+function esc(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+function showTab(name){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("active",b.id==="tab-"+name));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="panel-"+name));
+}
+document.getElementById("request-form").addEventListener("submit",async function(e){
+  e.preventDefault();
+  const button=document.getElementById("submit-request"),success=document.getElementById("request-success"),errorBox=document.getElementById("request-error");
+  success.style.display="none";errorBox.style.display="none";button.disabled=true;button.textContent="Submitting request...";
+  const value=id=>document.getElementById(id).value.trim();
+  const payload={
+    customer_name:value("customer-name"),customer_email:value("customer-email"),customer_phone:value("customer-phone"),
+    part_name:value("part-name"),part_category:value("part-category"),condition_preference:value("condition"),
+    vehicle_make:value("make"),vehicle_model:value("model"),vehicle_year:value("year"),engine_details:value("engine"),
+    part_number:value("part-number"),city:value("city"),province:value("province"),
+    budget_min:value("budget-min"),budget_max:value("budget-max"),description:value("description")
+  };
+  try{
+    const {data,error}=await supabaseClient.rpc("create_part_request",{p_payload:payload});
+    if(error)throw error;
+    if(!data||!data.success)throw new Error(data&&data.message?data.message:"We couldn't submit your request.");
+    success.innerHTML="<strong>Your request has been submitted.</strong><br>"+esc(data.message)+"<br><span>Your reference:</span><br><span class='request-code'>"+esc(data.request_code)+"</span><br>Save this reference. You can use it with your email address under Track my request.";
+    success.style.display="block";document.getElementById("track-email").value=payload.customer_email;document.getElementById("track-code").value=data.request_code;
+    document.getElementById("request-form").reset();
+  }catch(err){errorBox.textContent=err.message||"Something went wrong. Please try again.";errorBox.style.display="block"}
+  finally{button.disabled=false;button.textContent="Submit part request"}
+});
+document.getElementById("track-form").addEventListener("submit",async function(e){
+  e.preventDefault();const button=document.getElementById("track-submit"),out=document.getElementById("track-result");
+  button.disabled=true;button.textContent="Checking...";out.innerHTML="";
+  try{
+    const {data,error}=await supabaseClient.rpc("get_customer_part_request",{p_email:document.getElementById("track-email").value.trim(),p_request_code:document.getElementById("track-code").value.trim()});
+    if(error)throw error;
+    if(!data||!data.request){out.innerHTML="<p class='sub'>"+esc(data&&data.message?data.message:"Request not found. Check your details.")+"</p>";return}
+    const r=data.request,quotes=data.quotes||[];
+    out.innerHTML="<div class='quote'><h3>"+esc(r.part_name)+"</h3><p><b>Reference:</b> "+esc(r.request_code)+" · <b>Status:</b> "+esc(r.status)+"</p><p>"+esc(r.vehicle_make+" "+r.vehicle_model+(r.vehicle_year?" "+r.vehicle_year:""))+" · "+esc(r.city)+", "+esc(r.province)+"</p><p>"+quotes.length+" quotation(s) received</p></div>"+
+      (quotes.length?quotes.map(q=>"<article class='quote'><h3>"+esc(q.supplier_name)+"</h3><div class='quote-price'>R"+Number(q.price).toLocaleString("en-ZA",{minimumFractionDigits:2})+"</div><p>"+esc(q.condition)+" · "+esc(q.availability)+"</p><p>"+(q.delivery_available?"Delivery available"+(q.delivery_fee!=null?" · R"+Number(q.delivery_fee).toFixed(2):""):"Collection / delivery to be discussed")+"</p><p>"+esc(q.estimated_fulfilment||"Fulfilment time to be confirmed")+"</p><p>"+esc(q.message||"")+"</p>"+(r.status==="Open"||r.status==="Quotes received"?"<button class='quote-accept' type='button' onclick=\"acceptQuote('"+esc(q.id)+"')\">Select this supplier</button>":"<span class='status'>"+esc(q.status)+"</span>")+"</article>").join(""):"<p class='sub'>No quotations yet. We'll show them here when suppliers respond.</p>");
+    window.currentPartRequest={email:document.getElementById("track-email").value.trim(),code:r.request_code};
+  }catch(err){out.innerHTML="<p class='sub'>"+esc(err.message||"Unable to retrieve your request.")+"</p>"}
+  finally{button.disabled=false;button.textContent="Find my request"}
+});
+async function acceptQuote(id){
+  if(!window.currentPartRequest)return;
+  if(!confirm("Select this supplier? This will share your contact details with them so you can arrange the purchase."))return;
+  const {data,error}=await supabaseClient.rpc("accept_part_request_quote",{p_email:window.currentPartRequest.email,p_request_code:window.currentPartRequest.code,p_quote_id:id});
+  if(error){alert(error.message);return}
+  alert(data&&data.message?data.message:"Your selection has been recorded.");
+  document.getElementById("track-form").requestSubmit();
+}
+</script>
+</body>
+</html>
