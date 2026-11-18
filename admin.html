@@ -243,7 +243,7 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-se
   <nav class="pt-nav" aria-label="Admin sections">
     <button type="button" class="pt-nav-btn active" data-section="overview" onclick="setAdminSection('overview')">Overview</button>
     <button type="button" class="pt-nav-btn" data-section="orders" onclick="setAdminSection('orders')">Orders</button>
-    <button type="button" class="pt-nav-btn" data-section="applications" onclick="setAdminSection('applications')">Applications</button>
+    <button type="button" class="pt-nav-btn" data-section="applications" onclick="setAdminSection('applications')">Applications <span id="applications-nav-count" class="pt-nav-count" hidden>0</span></button>
     <button type="button" class="pt-nav-btn" data-section="support" onclick="setAdminSection('support')">Support <span id="support-nav-count" class="pt-nav-count" hidden>0</span></button>
     <button type="button" class="pt-nav-btn" data-section="marketplace" onclick="setAdminSection('marketplace')">Marketplace</button>
     <button type="button" class="pt-nav-btn" data-section="finance" onclick="setAdminSection('finance')">Finance</button>
@@ -385,6 +385,8 @@ function showDashboard() {
     document.getElementById("admin-user-label").textContent = "PoundTech admin";
     document.getElementById("admin-signout").style.display = "inline-block";
     setAdminSection("overview");
+    loadApplicationReviewCounts();
+    subscribeAdminApplicationChanges();
     loadRevenue();
     loadPayoutsAdmin();
     loadListingsAdmin();
@@ -404,6 +406,10 @@ async function adminLogout() {
     document.getElementById("login").style.display = "block";
     document.getElementById("admin-nav").style.display = "none";
     document.getElementById("admin-signout").style.display = "none";
+    if (ADMIN_APPLICATION_CHANNEL) {
+        supabaseClient.removeChannel(ADMIN_APPLICATION_CHANNEL);
+        ADMIN_APPLICATION_CHANNEL = null;
+    }
     document.querySelectorAll("[data-admin-panel]").forEach(function(panel){ panel.classList.remove("active"); });
     document.querySelectorAll(".pt-nav-btn").forEach(function(btn){ btn.classList.remove("active"); });
 }
@@ -1604,6 +1610,56 @@ function copyReferralLink(link) {
 }
 document.getElementById("referral-create-form").addEventListener("submit",createReferralPartner);
 document.getElementById("ref-reward-filter").addEventListener("change",renderReferralRewards);
+
+// ---------- Live application-review notifications ----------
+var ADMIN_APPLICATION_CHANNEL = null;
+var ADMIN_APPLICATION_COUNT = 0;
+
+async function loadApplicationReviewCounts() {
+    var badge = document.getElementById("applications-nav-count");
+    if (!badge) return;
+
+    var specs = [
+        { table: "suppliers", query: function(q) { return q.eq("status", "Pending").is("info_requested_at", null); } },
+        { table: "mechanics", query: function(q) { return q.eq("status", "Pending").is("info_requested_at", null).eq("is_demo", false); } },
+        { table: "private_sellers", query: function(q) { return q.eq("status", "Pending").is("info_requested_at", null); } }
+    ];
+
+    var results = await Promise.all(specs.map(function(spec) {
+        var q = supabaseClient.from(spec.table).select("id", { count: "exact", head: true });
+        return spec.query(q);
+    }));
+
+    var failed = results.find(function(r) { return r.error; });
+    if (failed) {
+        console.warn("Application notification count could not refresh:", failed.error.message);
+        return;
+    }
+
+    ADMIN_APPLICATION_COUNT = results.reduce(function(total, r) { return total + (r.count || 0); }, 0);
+    badge.textContent = ADMIN_APPLICATION_COUNT > 99 ? "99+" : String(ADMIN_APPLICATION_COUNT);
+    badge.hidden = ADMIN_APPLICATION_COUNT === 0;
+    badge.setAttribute("aria-label", ADMIN_APPLICATION_COUNT + " applications awaiting review");
+    badge.title = ADMIN_APPLICATION_COUNT + " application(s) awaiting review";
+}
+
+function subscribeAdminApplicationChanges() {
+    if (ADMIN_APPLICATION_CHANNEL) {
+        supabaseClient.removeChannel(ADMIN_APPLICATION_CHANNEL);
+        ADMIN_APPLICATION_CHANNEL = null;
+    }
+
+    ADMIN_APPLICATION_CHANNEL = supabaseClient.channel("admin-application-review-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "suppliers" }, loadApplicationReviewCounts)
+        .on("postgres_changes", { event: "*", schema: "public", table: "mechanics" }, loadApplicationReviewCounts)
+        .on("postgres_changes", { event: "*", schema: "public", table: "private_sellers" }, loadApplicationReviewCounts)
+        .subscribe(function(status) {
+            if (status === "SUBSCRIBED") loadApplicationReviewCounts();
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                console.warn("Application notification realtime connection:", status);
+            }
+        });
+}
 
 // ---------- Unified application review ----------
 async function loadAdminApplications(kind) {
