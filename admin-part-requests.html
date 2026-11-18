@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Part Requests | PoundTech Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#171717;font-family:Arial,sans-serif}
+header{background:#090a0c;color:#fff;padding:17px 4%;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:3px solid #d00000}
+.brand{font-size:21px;font-weight:900}.brand span{color:#e00000}header a{color:#fff;text-decoration:none;font-size:13px;border:1px solid #555;padding:9px 12px;border-radius:8px}
+main{max-width:1250px;margin:25px auto;padding:0 15px 50px}h1{margin:0 0 7px;font-size:27px}.muted{color:#666;font-size:13px;line-height:1.5}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{background:#fff;border:1px solid #e5e5e5;border-radius:11px;padding:16px}.stat b{font-size:25px;display:block}.stat span{color:#777;font-size:12px}
+.item{background:#fff;border:1px solid #e5e5e5;border-radius:12px;margin-bottom:12px;padding:18px}.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.code{font-size:11px;font-weight:800;color:#777;letter-spacing:.06em}.pill{display:inline-block;padding:4px 9px;border-radius:30px;background:#eee;font-size:11px;font-weight:800}
+.item h2{font-size:18px;margin:9px 0}.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.meta div{background:#f7f7f7;padding:10px;border-radius:8px;min-width:0}.meta small{display:block;color:#777;font-size:10px;text-transform:uppercase;margin-bottom:4px}.meta strong{font-size:13px;overflow-wrap:anywhere}
+.match{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid #eee;padding-top:12px;margin-top:12px}.match select{flex:1;min-width:200px;padding:10px;border:1px solid #ccc;border-radius:8px;background:#fff}
+button{border:0;background:#d00000;color:#fff;font-weight:800;padding:11px 14px;border-radius:8px;cursor:pointer}button:disabled{opacity:.6}
+.empty{background:#fff;padding:30px;border:1px dashed #ccc;border-radius:12px;text-align:center;color:#666}
+@media(max-width:650px){header{padding:14px}.brand{font-size:18px}.cards{grid-template-columns:repeat(3,1fr);gap:7px}.stat{padding:12px}.stat b{font-size:20px}.meta{grid-template-columns:repeat(2,minmax(0,1fr))}.item{padding:14px}}
+</style></head><body>
+<header><div class="brand">POUND<span>TECH</span> <small style="font-size:11px;color:#aaa">ADMIN</small></div><a href="/admin.html">Back to admin dashboard</a></header>
+<main><h1>Customer part requests</h1><p class="muted">Review customer requests, see supplier response counts and manually match additional approved suppliers when needed. Customer contact details are visible only in this restricted admin workspace.</p>
+<div class="cards"><div class="stat"><b id="total">—</b><span>Total requests</span></div><div class="stat"><b id="open">—</b><span>Open requests</span></div><div class="stat"><b id="quotes">—</b><span>Quotations received</span></div></div>
+<p id="status" class="muted">Checking admin access...</p><div id="list"></div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db=supabase.createClient("https://uezacbssvvvtlosnaroh.supabase.co","sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ");
+function esc(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+let suppliers=[];
+async function init(){
+ const {data:session}=await db.auth.getSession();
+ if(!session.session){location.href="/admin.html";return}
+ const {data:admin,error}=await db.rpc("is_admin");
+ if(error||!admin){document.getElementById("status").textContent="Admin access required.";document.getElementById("list").innerHTML="";return}
+ const s=await db.from("suppliers").select("id,business_name").eq("status","Approved").order("business_name");
+ if(!s.error)suppliers=s.data||[];
+ await load();
+}
+async function load(){
+ const status=document.getElementById("status"),box=document.getElementById("list");
+ status.textContent="Loading requests...";
+ const {data,error}=await db.rpc("admin_list_part_requests");
+ if(error){status.textContent="Could not load requests: "+error.message;return}
+ const rows=data||[];
+ document.getElementById("total").textContent=rows.length;
+ document.getElementById("open").textContent=rows.filter(r=>["Open","Quotes received"].includes(r.status)).length;
+ document.getElementById("quotes").textContent=rows.reduce((n,r)=>n+Number(r.quote_count||0),0);
+ status.textContent=rows.length+" request(s)";
+ if(!rows.length){box.innerHTML='<div class="empty">No part requests have been submitted yet.</div>';return}
+ box.innerHTML=rows.map(r=>'<article class="item"><div class="top"><span class="code">'+esc(r.request_code)+'</span><span class="pill">'+esc(r.status)+'</span></div>'+
+ '<h2>'+esc(r.part_name)+' · '+esc(r.vehicle_make+" "+r.vehicle_model+(r.vehicle_year?" "+r.vehicle_year:""))+'</h2>'+
+ '<div class="meta"><div><small>Customer</small><strong>'+esc(r.customer_name)+'</strong></div><div><small>Contact</small><strong>'+esc(r.customer_phone)+'<br>'+esc(r.customer_email)+'</strong></div><div><small>Location</small><strong>'+esc(r.city+", "+r.province)+'</strong></div><div><small>Suppliers matched</small><strong>'+Number(r.matched_supplier_count)+'</strong></div><div><small>Quotes received</small><strong>'+Number(r.quote_count)+'</strong></div><div><small>Submitted</small><strong>'+new Date(r.created_at).toLocaleString("en-ZA")+'</strong></div></div>'+
+ '<div class="match"><select id="supplier-'+esc(r.id)+'"><option value="">Match another approved supplier...</option>'+suppliers.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.business_name)+'</option>').join("")+'</select><button type="button" onclick="matchSupplier(\''+esc(r.id)+'\')">Add supplier match</button></div></article>').join("");
+}
+async function matchSupplier(id){
+ const select=document.getElementById("supplier-"+id),supplierId=select.value;
+ if(!supplierId){alert("Choose a supplier first.");return}
+ const {data,error}=await db.rpc("admin_match_part_request",{p_request_id:id,p_supplier_id:supplierId,p_reason:"Manually matched by PoundTech admin"});
+ if(error){alert(error.message);return}
+ alert("Supplier matched. They can now view and quote on this request.");
+ await load();
+}
+init();
+</script></body></html>
