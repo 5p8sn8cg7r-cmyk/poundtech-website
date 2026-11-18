@@ -258,12 +258,15 @@ button.secondary:hover { background: #ddd; }
             </select>
 
             <label for="l-condition">Condition</label>
-            <select id="l-condition">
-                <option>Like New</option>
-                <option selected>Good</option>
-                <option>Fair</option>
-                <option>For Parts</option>
+            <select id="l-condition" required>
+                <option value="" selected disabled>Select the part's condition</option>
+                <option value="Excellent">Excellent — very little wear, fully functional</option>
+                <option value="Good">Good — working, with minor signs of use</option>
+                <option value="Fair">Fair — working, but with noticeable wear</option>
+                <option value="Needs Repair">Needs Repair — damaged or requires repair before normal use</option>
+                <option value="For Parts">For Parts — intended for spares or dismantling</option>
             </select>
+            <p class="field-help" style="font-size:12px;color:#777;margin-top:-8px;">Choose the condition honestly and mention any damage, faults or missing pieces in the description. If the item is not working correctly, choose “Needs Repair” or “For Parts”.</p>
 
             <label for="l-price">Price (R)</label>
             <input id="l-price" type="number" min="1" step="1" placeholder="e.g. 450">
@@ -667,8 +670,8 @@ async function createListing() {
     const msg = document.getElementById("listing-message");
     const button = document.getElementById("save-listing-btn");
 
-    if (!title || !description || !price || price <= 0) {
-        msg.innerHTML = '<p style="color:#c62828;">Please fill in a title, description and a valid price.</p>';
+    if (!title || !description || !price || price <= 0 || !condition) {
+        msg.innerHTML = '<p style="color:#c62828;">Please complete the title, condition, description and a valid price.</p>';
         return;
     }
 
@@ -718,7 +721,7 @@ async function createListing() {
     }
 
     msg.innerHTML = '<p style="color:#16803c;">Listing submitted. PoundTech will review it before it goes live.</p>';
-    document.getElementById("l-title").value = "";
+    document.getElementById("l-title").value = "";\n    document.getElementById("l-condition").value = "";
     document.getElementById("l-price").value = "";
     document.getElementById("l-compat").value = "";
     document.getElementById("l-description").value = "";
