@@ -204,13 +204,25 @@
     PT.img = function (url, alt) {
         var thumb = PT.thumb(url);
         return '<img src="' + esc(thumb) + '" data-full="' + esc(url) + '" alt="' + esc(alt) +
-               '" loading="lazy" decoding="async" onerror="PT.imgFallback(this)" ' +
-               'style="width:100%;height:100%;object-fit:cover;">';
+               '" loading="lazy" decoding="async" referrerpolicy="no-referrer" ' +
+               'onerror="PT.imgFallback(this)" style="width:100%;height:100%;object-fit:cover;">';
     };
 
     PT.imgFallback = function (img) {
         var full = img.getAttribute("data-full");
-        if (full && img.src !== full) { img.removeAttribute("onerror"); img.src = full; }
+        if (full && img.src !== full) {
+            img.removeAttribute("onerror");
+            img.src = full;
+            return;
+        }
+        img.onerror = null;
+        var placeholder = document.createElement("div");
+        placeholder.className = "pt-image-unavailable";
+        placeholder.setAttribute("role", "img");
+        placeholder.setAttribute("aria-label", "Product image unavailable");
+        placeholder.textContent = "Image temporarily unavailable";
+        placeholder.style.cssText = "width:100%;height:100%;min-height:120px;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;background:#f1f1f1;color:#666;text-align:center;font:12px Arial,sans-serif;";
+        img.replaceWith(placeholder);
     };
 
     // Remember the product you tapped so the product page can show it straight away.
