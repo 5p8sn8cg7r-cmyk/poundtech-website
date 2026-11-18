@@ -293,7 +293,7 @@ function money(value) {
 // Parse common formats such as "2007 Volvo S80 D5 | Engine code: ...".
 function vehicleDetails(listing) {
     const raw = String(listing.vehicle_compatibility || "");
-    const match = raw.match(/(?:^|\\b)(19\\d{2}|20\\d{2})\\s+([A-Za-z][A-Za-z-]*)\\s+([^|,;]+)/);
+    const match = raw.match(/(?:^|\b)(19\d{2}|20\d{2})\s+([A-Za-z][A-Za-z-]*)\s+([^|,;]+)/);
     if (!match) return { year: "", make: "", model: "" };
     return {
         year: match[1],
