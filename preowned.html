@@ -176,6 +176,89 @@
 
 .guide-inner a:hover { text-decoration: underline; }
 
+
+/* Refined pre-owned marketplace layout */
+body { background:#f5f5f6; }
+.preowned-hero {
+    position:relative; overflow:hidden;
+    padding:54px 20px 48px;
+    background:radial-gradient(ellipse at 50% -35%, #3b1111 0%, #171717 48%, #101010 100%);
+}
+.preowned-hero:after {
+    content:""; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+    width:min(180px,35%); height:3px; background:#e00000; border-radius:3px 3px 0 0;
+}
+.preowned-hero h1 { font-size:clamp(29px,4vw,42px); letter-spacing:-1.2px; }
+.preowned-hero p { font-size:15px; line-height:1.65; }
+.disclaimer-strip { background:#fff7e6; border-bottom:1px solid #f0dfb8; font-weight:600; }
+.cta-sell { padding-top:20px; }
+.cta-sell a { display:inline-flex; align-items:center; gap:7px; padding:10px 15px; background:#fff; border:1px solid #f0caca; border-radius:9px; box-shadow:0 2px 8px rgba(0,0,0,.035); }
+.cta-sell a:hover { background:#fff5f5; border-color:#e00000; }
+.filters {
+    box-sizing:border-box; max-width:1100px; margin:12px auto 0; padding:18px;
+    gap:11px; background:#fff; border:1px solid #e9e9eb; border-radius:14px;
+    box-shadow:0 5px 22px rgba(20,20,20,.055);
+}
+.filters input, .filters select {
+    box-sizing:border-box; min-height:44px; padding:10px 36px 10px 12px;
+    border:1px solid #dedee2; border-radius:9px; background-color:#fff;
+    color:#262626; font:500 13px/1.3 inherit; outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.filters input { flex:1 1 220px; min-width:190px; padding-right:12px; background:#fafafa; }
+.filters select { flex:1 1 145px; min-width:135px; cursor:pointer; }
+.filters select:focus, .filters input:focus {
+    border-color:#e00000; box-shadow:0 0 0 3px rgba(224,0,0,.09); background:#fff;
+}
+.filters select:disabled { opacity:.48; cursor:not-allowed; background:#f3f3f3; }
+.filters button {
+    min-height:44px; padding:10px 17px; border-radius:9px; white-space:nowrap;
+    background:#e00000; box-shadow:0 3px 8px rgba(224,0,0,.16);
+    transition:background .15s ease, transform .15s ease;
+}
+.filters button:hover { background:#bd0000; transform:translateY(-1px); }
+.filter-results {
+    box-sizing:border-box; max-width:1100px; margin:12px auto 0; padding:0 4px;
+    color:#686868; font-size:13px; font-weight:600;
+}
+.grid { margin-top:14px; gap:20px; }
+.po-card {
+    border:1px solid #e9e9eb; border-radius:13px;
+    box-shadow:0 4px 15px rgba(0,0,0,.055);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.po-card:hover { transform:translateY(-4px); border-color:#e7bcbc; box-shadow:0 10px 25px rgba(0,0,0,.10); }
+.po-card img { height:175px; background:#ededee; }
+.po-card .body { padding:14px 15px 16px; }
+.po-card h3 { font-size:15px; line-height:1.4; min-height:21px; }
+.po-card .price { margin-top:7px; font-size:18px; letter-spacing:-.25px; }
+.po-card .meta { line-height:1.5; }
+.condition-label { margin-top:10px; color:#777; font-size:11px; font-weight:600; }
+.condition-tag { margin-top:0; padding:4px 9px; border:1px solid #e8e8e8; background:#f7f7f8; border-radius:20px; color:#383838; }
+.empty-state { grid-column:1/-1; background:#fff; border:1px dashed #d8d8dc; border-radius:13px; }
+.preowned-guide { margin-top:30px; }
+@media (max-width:700px) {
+    .preowned-hero { padding:40px 18px 36px; }
+    .cta-sell { text-align:center; }
+    .filters { margin:12px 14px 0; padding:13px; gap:9px; }
+    .filters input { flex:1 1 100%; min-width:0; }
+    .filters select { flex:1 1 calc(50% - 9px); min-width:0; }
+    .filters button { flex:1 1 100%; }
+    .filter-results { padding:0 18px; }
+    .grid { padding:0 14px; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; margin-top:12px; }
+    .po-card { border-radius:11px; }
+    .po-card img { height:125px; }
+    .po-card .body { padding:10px; }
+    .po-card h3 { font-size:13px; }
+    .po-card .price { font-size:15px; }
+    .po-card .meta { font-size:11px; }
+    .condition-label { font-size:10px; gap:4px; }
+    .condition-tag { font-size:10px; padding:3px 7px; }
+}
+@media (max-width:360px) {
+    .grid { grid-template-columns:1fr; }
+}
+
 </style>
 <link rel="stylesheet" href="/back-button.css?v=20261111">
 </head>
