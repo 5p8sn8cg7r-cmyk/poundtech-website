@@ -473,7 +473,7 @@ Add Product
             <select class="pt-field" id="special-label">
                 <option value="">No tag</option>
                 <optgroup label="PoundTech promotions">
-                    <option>Black November Deal</option><option>Black Friday Drop</option><option>Payday Special</option><option>Price Drop</option>
+                    <option>Black November Deal</option><option>Black Friday</option><option>Black Friday Deal</option><option>Black Friday Drop</option><option>Payday Special</option><option>Price Drop</option>
                 </optgroup>
                 <optgroup label="Product highlights">
                     <option>Hot Deal</option><option>Best Seller</option><option>Top Pick</option><option>Limited Stock</option><option>New Arrival</option>
@@ -573,7 +573,7 @@ Add Product
 <dialog id="photos-dialog" class="pt-dialog">
     <div class="pt-dialog-head"><p class="pt-dialog-kicker">PoundTech · Product photos</p><h3 id="photos-title">Manage photos</h3></div>
     <div class="pt-dialog-body">
-        <p style="color:#666;font-size:13px;line-height:1.5;margin:0 0 14px;">Add up to 3 photos. The main photo appears on product cards; customers can swipe to see the others.</p>
+        <p style="color:#666;font-size:13px;line-height:1.5;margin:0 0 14px;">Add up to 5 photos. The main photo appears on product cards; customers can swipe to see the others.</p>
         <div id="photos-list"></div>
         <p id="photos-message" role="status" style="color:#555;min-height:20px;margin:10px 0 0;font-size:13px;"></p>
     </div>
@@ -690,7 +690,7 @@ Add Product
     <strong style="display:block; margin-bottom:4px;">Product photos</strong>
 
     <p style="color:#777; font-size:13px; margin:0 0 10px;">
-        Upload at least 1 clear photo of the actual product. Add up to 3 photos; the first is the main photo and customers can swipe through the others. Photos are resized automatically.
+        Upload at least 1 clear photo of the actual product. Add up to 5 photos; the first is the main photo and customers can swipe through the others. Photos are resized automatically.
     </p>
     <p style="color:#666;font-size:12px;line-height:1.5;margin:0 0 10px;">Use well-lit, sharp photos with the product filling the frame. Show labels, part numbers, connectors, dimensions or any wear where relevant. Avoid logos, stock images and photos of a different product.</p>
 
@@ -711,6 +711,20 @@ Add Product
 
         <div style="flex:1; min-width:160px;">
             <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Photo 3 (optional)</label>
+            <input type="file" class="new-photo" accept="image/*" style="display:block; width:100%; margin-bottom:6px;">
+            <img class="new-photo-preview" alt="Photo preview"
+                 style="display:none; width:100%; max-width:160px; height:110px; border-radius:8px; border:1px solid #ddd; object-fit:cover;">
+        </div>
+
+        <div style="flex:1; min-width:160px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Photo 4 (optional)</label>
+            <input type="file" class="new-photo" accept="image/*" style="display:block; width:100%; margin-bottom:6px;">
+            <img class="new-photo-preview" alt="Photo preview"
+                 style="display:none; width:100%; max-width:160px; height:110px; border-radius:8px; border:1px solid #ddd; object-fit:cover;">
+        </div>
+
+        <div style="flex:1; min-width:160px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">Photo 5 (optional)</label>
             <input type="file" class="new-photo" accept="image/*" style="display:block; width:100%; margin-bottom:6px;">
             <img class="new-photo-preview" alt="Photo preview"
                  style="display:none; width:100%; max-width:160px; height:110px; border-radius:8px; border:1px solid #ddd; object-fit:cover;">
@@ -2077,9 +2091,9 @@ document.getElementById("special-cancel").addEventListener("click", function () 
 });
 
 
-/* ---------- PHOTO MANAGER (up to 3 photos per product) ---------- */
+/* ---------- PHOTO MANAGER (up to 5 photos per product) ---------- */
 
-const MAX_PHOTOS = 3;
+const MAX_PHOTOS = 5;
 
 let photoProductId = null;
 let photoList = [];
