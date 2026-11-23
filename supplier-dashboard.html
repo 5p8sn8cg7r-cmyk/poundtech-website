@@ -513,6 +513,7 @@ Add Product
         <div class="pt-edit-section-title"><span>02</span><div><strong>Help customers choose</strong><small>Useful details reduce questions and returns.</small></div></div>
         <div class="pt-field-group"><label class="pt-field-label" for="edit-product-description">Product description</label><textarea id="edit-product-description" class="pt-field" rows="4" maxlength="2000" placeholder="Describe the key features, condition, what's included and any fitting information." style="resize:vertical;"></textarea><p class="pt-field-help">Be specific about what the customer receives.</p></div>
         <div class="pt-field-group" style="margin-bottom:4px;"><label class="pt-field-label" for="edit-product-compatibility">Vehicle compatibility</label><input id="edit-product-compatibility" class="pt-field" placeholder="e.g. VW Polo 2018–2022"><p class="pt-field-help">List compatible makes, models and years, or leave blank if universal.</p></div>
+        <div class="pt-field-group"><label class="pt-field-label" for="edit-product-colours">Available colours (optional)</label><input id="edit-product-colours" class="pt-field" placeholder="e.g. Black, Red, Blue"><p class="pt-field-help">Separate colours with commas. Leave blank if there is no colour choice.</p></div>
         <div id="edit-premium-video-fields" style="display:none;border:1px solid #e2d6b2;background:#fffaf0;padding:14px;border-radius:9px;margin:14px 0;">
             <strong style="display:block;margin-bottom:6px;">Premium product videos</strong>
             <p style="color:#666;font-size:13px;margin:0 0 10px;">Pro and Business suppliers can add a short MP4/WebM advert preview (25 MB maximum, 30 seconds maximum) and a YouTube demonstration.</p>
@@ -640,6 +641,9 @@ Add Product
         placeholder="Stock quantity"
         style="display:block; margin-bottom:10px; padding:10px; width:100%;"
     >
+    <label for="product-colours" style="display:block;font-weight:700;margin:12px 0 5px;">Available colours (optional)</label>
+    <input type="text" id="product-colours" placeholder="e.g. Black, Red, Blue" style="display:block;margin-bottom:5px;padding:10px;width:100%;box-sizing:border-box;">
+    <p style="color:#777;font-size:12px;margin:0 0 12px;">Separate colours with commas. Leave blank if the product has no colour choice.</p>
 
     <div class="pt-inline-special">
 
@@ -1581,6 +1585,7 @@ async function addProductInner() {
         return;
     }
     const vehicle_compatibility = document.getElementById("vehicle-compatibility").value;
+    const available_colours = document.getElementById("product-colours").value.split(",").map(function (c) { return c.trim(); }).filter(Boolean).filter(function (c, i, a) { return a.indexOf(c) === i; });
     const specifications = readProductSpecifications("product-spec");
     const videoFile = document.getElementById("product-video-preview").files[0] || null;
     const youtubeInput = document.getElementById("product-youtube-demo").value.trim();
@@ -1686,6 +1691,7 @@ async function addProductInner() {
             video_preview_url: uploadedVideoUrl,
             youtube_demo_url: youtubeDemoUrl,
             vehicle_compatibility: vehicle_compatibility,
+            available_colours: available_colours,
             specifications: specifications,
             sale_price: special.sale_price,
             sale_starts_at: special.sale_starts_at,
@@ -1713,6 +1719,7 @@ async function addProductInner() {
     document.getElementById("product-description").value = "";
     document.getElementById("product-price").value = "";
     document.getElementById("product-stock").value = "";
+    document.getElementById("product-colours").value = "";
     document.getElementById("product-sale-price").value = "";
     document.getElementById("product-sale-starts").value = "";
     document.getElementById("product-sale-ends").value = "";
@@ -2339,6 +2346,7 @@ async function editProduct(productId) {
     document.getElementById("edit-product-stock").value = product.stock == null ? 0 : product.stock;
     document.getElementById("edit-product-description").value = product.description || "";
     document.getElementById("edit-product-compatibility").value = product.vehicle_compatibility || "";
+    document.getElementById("edit-product-colours").value = Array.isArray(product.available_colours) ? product.available_colours.join(", ") : "";
     const existingSpecs = product.specifications && typeof product.specifications === "object" ? product.specifications : {};
     ["brand","part_number","condition","part_origin","donor_vehicle","material","dimensions","volume","capacity","warranty","package_contents"].forEach(function (key) {
         const field = document.getElementById("edit-product-spec-" + key);
@@ -2397,6 +2405,7 @@ document.getElementById("edit-product-save").addEventListener("click", async () 
         name, price, stock,
         description: document.getElementById("edit-product-description").value.trim(),
         vehicle_compatibility: document.getElementById("edit-product-compatibility").value.trim(),
+        available_colours: document.getElementById("edit-product-colours").value.split(",").map(function (c) { return c.trim(); }).filter(Boolean).filter(function (c, i, a) { return a.indexOf(c) === i; }),
         specifications: updatedSpecifications
     };
     if (hasActivePremiumVideoPlan()) {
