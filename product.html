@@ -120,6 +120,7 @@
 
 .desc { color: #333; margin-bottom: 16px; }
 
+.pt-colour-picker{margin:18px 0;padding:15px;border:1px solid #e5e5e5;border-radius:11px;background:#fff}.pt-colour-picker>strong{display:block;margin-bottom:10px}.pt-colour-options{display:flex;flex-wrap:wrap;gap:8px}.pt-colour-option{background:#fff;color:#222;border:1px solid #ccc;border-radius:999px;padding:9px 14px;font-size:14px;cursor:pointer}.pt-colour-option.selected{background:#171717;color:#fff;border-color:#171717;box-shadow:0 0 0 2px rgba(208,0,0,.18)}#pt-selected-colour{font-size:12px;color:#666;margin:10px 0 0}
 .product-specifications { margin:22px 0 16px; padding:18px; border:1px solid #e7e7e7; border-radius:10px; background:#fff; }
 .product-specifications h2 { margin:0 0 12px; font-size:19px; }
 .product-spec-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; }
@@ -1171,6 +1172,16 @@ function renderProduct(product) {
 
                 <p class="desc">${esc(product.description || "No description available.")}</p>
 
+                ${Array.isArray(product.available_colours) && product.available_colours.length ? `
+                    <div class="pt-colour-picker">
+                        <strong>Choose a colour</strong>
+                        <div class="pt-colour-options">
+                            ${product.available_colours.map(function (colour, index) { return '<button type="button" class="pt-colour-option' + (index === 0 ? ' selected' : '') + '" data-colour="' + esc(colour) + '">' + esc(colour) + '</button>'; }).join("")}
+                        </div>
+                        <p id="pt-selected-colour">Selected: ${esc(product.available_colours[0])}</p>
+                    </div>
+                ` : ""}
+
                 <div class="meta-row">
                     <strong>Vehicle compatibility:</strong>
                     ${esc(product.vehicle_compatibility || "Not specified")}
@@ -1231,19 +1242,33 @@ function changeQuantity(amount) {
 }
 
 
+function selectedProductColour() {
+    const selected = document.querySelector(".pt-colour-option.selected");
+    return selected ? selected.getAttribute("data-colour") : "";
+}
+
+document.addEventListener("click", function (event) {
+    const option = event.target.closest(".pt-colour-option");
+    if (!option) return;
+    document.querySelectorAll(".pt-colour-option").forEach(function (button) { button.classList.remove("selected"); });
+    option.classList.add("selected");
+    const label = document.getElementById("pt-selected-colour");
+    if (label) label.textContent = "Selected: " + option.getAttribute("data-colour");
+});
+
 function addToCart() {
-    addProductToCart(currentProduct, selectedQuantity);
+    addProductToCart(currentProduct, selectedQuantity, selectedProductColour());
 }
 
 
 // Adds the item and goes straight to checkout.
 function buyNow() {
-    addProductToCart(currentProduct, selectedQuantity);
+    addProductToCart(currentProduct, selectedQuantity, selectedProductColour());
     window.location.href = "/?checkout=1";
 }
 
 
-function addProductToCart(product, quantity) {
+function addProductToCart(product, quantity, colour) {
 
     let cart = [];
 
@@ -1253,7 +1278,7 @@ function addProductToCart(product, quantity) {
         cart = [];
     }
 
-    const existing = cart.find(function (item) { return item.product_id === product.id; });
+    const existing = cart.find(function (item) { return item.product_id === product.id && (item.colour || "") === (colour || ""); });
 
     if (existing) {
         existing.quantity = Number(existing.quantity || 1) + quantity;
@@ -1262,6 +1287,7 @@ function addProductToCart(product, quantity) {
             product_id: product.id,
             supplier_id: product.supplier_id,
             name: product.name,
+            colour: colour || "",
             price: PT.sale(product).now,
             quantity: quantity,
             image_url: product.image_url || ""
