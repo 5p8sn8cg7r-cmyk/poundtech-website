@@ -20,6 +20,15 @@
     window.fbq("track", "PageView");
   }
 
+  function schedulePixel() {
+    // Let the page finish responding to the visitor before loading third-party tracking.
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(loadPixel, { timeout: 4000 });
+    } else {
+      window.setTimeout(loadPixel, 1800);
+    }
+  }
+
   function addStyles() {
     if (document.getElementById("pt-privacy-styles")) return;
     var style = document.createElement("style");
@@ -54,7 +63,7 @@
     if (banner) banner.hidden = true;
     var settings = document.getElementById("pt-cookie-settings");
     if (settings) settings.hidden = false;
-    if (value === "accepted") loadPixel();
+    if (value === "accepted") schedulePixel();
   }
 
   function showBanner() {
@@ -91,7 +100,7 @@
     settings.addEventListener("click", showBanner);
     document.body.appendChild(settings);
     if (choice === "accepted") {
-      loadPixel();
+      schedulePixel();
     } else if (choice !== "rejected") {
       showBanner();
     }
