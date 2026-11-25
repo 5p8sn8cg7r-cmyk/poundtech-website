@@ -119,6 +119,14 @@
 }
 
 .desc { color: #333; margin: 0; line-height: 1.65; white-space: pre-wrap; }
+.pt-free-delivery-card{display:flex;align-items:center;gap:13px;margin-top:12px;padding:15px;border:1.5px solid #ef9a9a;border-radius:13px;background:linear-gradient(115deg,#fff0f0 0%,#fff 75%);box-shadow:0 4px 12px rgba(180,0,0,.08);color:#292929}
+.pt-free-delivery-icon{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:12px;background:linear-gradient(145deg,#f00000,#b90000);box-shadow:0 3px 0 #920000;color:#fff}
+.pt-free-delivery-icon svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pt-free-delivery-copy strong{display:block;color:#bd0000;font-size:15px;font-weight:900;letter-spacing:.035em}
+.pt-free-delivery-copy span{display:block;margin-top:4px;color:#6d4545;font-size:12px;line-height:1.4}
+.pt-free-delivery-card.excluded{border-color:#e1c5c5;background:#fff8f8}
+.pt-free-delivery-card.excluded .pt-free-delivery-icon{background:#777;box-shadow:0 3px 0 #555}
+.pt-free-delivery-card.excluded .pt-free-delivery-copy strong{color:#555}
 .product-description { margin:18px 0; border:1px solid #e5e5e5; border-radius:10px; background:#fff; overflow:hidden; }
 .product-description summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 16px; cursor:pointer; list-style:none; font-weight:800; color:#222; }
 .product-description summary::-webkit-details-marker { display:none; }
@@ -927,12 +935,11 @@ async function fillSupplier(product, supplier) {
             const specs = product.specifications && typeof product.specifications === "object" ? product.specifications : {};
             const rawWeight = specs.weight || specs.weight_kg || specs.Weight || "";
             const parsedWeight = Number(String(rawWeight).replace(/[^0-9.]/g, ""));
-            const note = document.createElement("div");
-            note.style.cssText = "margin-top:9px;padding-top:9px;border-top:1px solid #eee;color:#176b35;font-weight:700;";
-            note.textContent = Number.isFinite(parsedWeight) && parsedWeight >= 16
-                ? "Heavy or oversized items weighing 16 kg or more are excluded from the free-delivery offer."
-                : "Free delivery on eligible PoundTech Automotive Store orders from R1,000.";
-            deliveryBox.appendChild(note);
+            const excluded = Number.isFinite(parsedWeight) && parsedWeight >= 16;
+            const promo = document.createElement("div");
+            promo.className = "pt-free-delivery-card" + (excluded ? " excluded" : "");
+            promo.innerHTML = '<span class="pt-free-delivery-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 9h16v14H3zM19 14h6l4 5v4h-10z"/><path d="M7 23a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0ZM22 23a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Z"/><path d="M19 14v5h10"/></svg></span><span class="pt-free-delivery-copy"><strong>' + (excluded ? 'DELIVERY EXCLUSION' : 'FREE DELIVERY!') + '</strong><span>' + (excluded ? 'Heavy or oversized items weighing 16 kg or more are excluded from the free-delivery offer.' : 'Add eligible PoundTech Store products worth R1,000 or more to your basket and delivery is on us.') + '</span></span>';
+            deliveryBox.appendChild(promo);
         }
     }
 }
