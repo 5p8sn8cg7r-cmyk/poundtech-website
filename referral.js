@@ -1,6 +1,6 @@
 /* PoundTech referral-link capture.
-   First-touch attribution is stored server-side for 30 days.
-   Include this file on marketplace, service-booking and pre-owned pages. */
+   Supports both existing business/affiliate referrals and customer Refer & Earn.
+   First-touch attribution is stored server-side for 30 days. */
 (function () {
     "use strict";
 
@@ -39,23 +39,61 @@
             if (!visitorToken || !transactionId || !customerEmail) {
                 return Promise.resolve({ data: { success: true, result: "no_referral_token" }, error: null });
             }
-            return capturePromise.then(function () {
-                return client.rpc("attach_referral_attribution", {
+            return capturePromise.then(async function () {
+                var partnerResult = await client.rpc("attach_referral_attribution", {
                     p_visitor_token: visitorToken,
                     p_transaction_type: transactionType,
                     p_transaction_id: String(transactionId),
                     p_customer_email: String(customerEmail).trim().toLowerCase()
                 });
+
+                var customerResult = await client.rpc("attach_customer_referral_attribution", {
+                    p_visitor_token: visitorToken,
+                    p_order_number: String(transactionId),
+                    p_customer_email: String(customerEmail).trim().toLowerCase()
+                });
+
+                if (partnerResult.error) console.warn("PoundTech partner referral attribution:", partnerResult.error.message);
+                if (customerResult.error) console.warn("PoundTech customer referral attribution:", customerResult.error.message);
+
+                return {
+                    data: {
+                        success: !!((partnerResult.data && partnerResult.data.success) ||
+                                    (customerResult.data && customerResult.data.success)),
+                        partner: partnerResult.data || null,
+                        customer: customerResult.data || null
+                    },
+                    error: partnerResult.error && customerResult.error
+                        ? customerResult.error
+                        : null
+                };
             });
         }
     };
 
     if (!incomingCode || !/^[A-Z0-9-]{4,24}$/.test(incomingCode)) return;
 
-    capturePromise = client.rpc("capture_referral_attribution", {
-        p_referral_code: incomingCode,
-        p_visitor_token: visitorToken
-    }).then(function (result) {
+    capturePromise = (async function () {
+        var partnerResult = await client.rpc("capture_referral_attribution", {
+            p_referral_code: incomingCode,
+            p_visitor_token: visitorToken
+        });
+
+        if (!partnerResult.error && partnerResult.data && partnerResult.data.success) {
+            return partnerResult;
+        }
+
+        var customerResult = await client.rpc("capture_customer_referral_attribution", {
+            p_referral_code: incomingCode,
+            p_visitor_token: visitorToken
+        });
+
+        if (!customerResult.error && customerResult.data && customerResult.data.success) {
+            return customerResult;
+        }
+
+        return customerResult.error ? customerResult : partnerResult;
+    })().then(function (result) {
         if (result.error) {
             console.warn("PoundTech referral capture was not completed:", result.error.message);
             return;
