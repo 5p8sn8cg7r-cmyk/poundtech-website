@@ -2941,7 +2941,7 @@ function planBoxHTML(st, canSubscribe) {
     const rate = Number(st.commission_rate).toFixed(1).replace(/\.0$/, "");
     const currentPlan = String(st.plan || "standard").toLowerCase();
     const active = !!st.plan_active;
-    const prettyPlan = currentPlan === "business" ? "Business" : currentPlan === "pro" ? "Pro" : "Standard";
+    const prettyPlan = currentPlan === "business" ? "Business" : currentPlan === "pro" ? "Pro" : "Minimum";
     let banner = "";
     if (st.launch_ends_at) {
         const days = Math.max(0, Math.ceil((new Date(st.launch_ends_at) - Date.now()) / 86400000));
@@ -3079,8 +3079,9 @@ async function loadPlanBox() {
         box.innerHTML = '<p style="color:#777;">Your supplier plan status is temporarily unavailable. Please refresh the page.</p>';
         return;
     }
-    const planName = String(access.plan || "standard").replace(/_/g," ").replace(/\b\w/g, ch => ch.toUpperCase());
-    const activeLabel = access.plan_active ? "Active" : "Standard access";
+    const rawPlanName = String(access.plan || "standard").toLowerCase();
+  const planName = rawPlanName === "standard" ? "Minimum" : rawPlanName.replace(/_/g," ").replace(/\b\w/g, ch => ch.toUpperCase());
+    const activeLabel = access.plan_active ? "Active" : "Minimum access";
     box.innerHTML = '<div style="background:#fff;border:1px solid #ddd;border-radius:10px;padding:18px 20px;margin-top:20px;">' +
         '<p style="margin:0;color:#666;">Your business plan</p>' +
         '<h3 style="margin:6px 0 0;">' + esc(planName) + '</h3>' +
