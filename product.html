@@ -923,6 +923,17 @@ async function fillSupplier(product, supplier) {
         deliveryBox.querySelector(".pt-product-delivery-dates").textContent = ptProductDeliveryDateRange();
         deliveryBox.querySelector(".pt-product-dispatch").textContent =
             ptDispatchSpeedLabel(speed) + ". Estimated arrival dates are indicative and may vary by courier.";
+        if (String(supplier.business_name || "").trim().toLowerCase() === "poundtech auto parts") {
+            const specs = product.specifications && typeof product.specifications === "object" ? product.specifications : {};
+            const rawWeight = specs.weight || specs.weight_kg || specs.Weight || "";
+            const parsedWeight = Number(String(rawWeight).replace(/[^0-9.]/g, ""));
+            const note = document.createElement("div");
+            note.style.cssText = "margin-top:9px;padding-top:9px;border-top:1px solid #eee;color:#176b35;font-weight:700;";
+            note.textContent = Number.isFinite(parsedWeight) && parsedWeight >= 16
+                ? "Heavy or oversized items weighing 16 kg or more are excluded from the free-delivery offer."
+                : "Free delivery on eligible PoundTech Automotive Store orders from R1,000.";
+            deliveryBox.appendChild(note);
+        }
     }
 }
 
