@@ -3867,9 +3867,9 @@ function renderProductCard(product, status) {
                 <h3>${esc(product.name)}</h3>
                 <div class="product-supplier-meta">
                     ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
-                    \${product._ptSupplierName ? '<p class="product-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>' : ""}
+                    ${product._ptSupplierName ? '<p class="product-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>' : ""}
                 </div>
-                \${product._ptFreeDeliveryPromo ? '<div class="pt-product-free-delivery"><span class="pt-pfd-icon" aria-hidden="true">🚚</span><span><strong>FREE DELIVERY!</strong><small>On eligible R1,000+ PoundTech Store baskets</small></span></div>' : ""}
+                ${product._ptFreeDeliveryPromo ? '<div class="pt-product-free-delivery"><span class="pt-pfd-icon" aria-hidden="true">🚚</span><span><strong>FREE DELIVERY!</strong><small>On eligible R1,000+ PoundTech Store baskets</small></span></div>' : ""}
                 <span class="product-category-label">${esc(product.category || "General")}</span>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
