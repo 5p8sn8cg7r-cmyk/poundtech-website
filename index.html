@@ -3069,8 +3069,10 @@ async function loadCartDeliveryPromo(cart) {
     const threshold = Number(store.free_delivery_threshold);
     const fee = Number(store.delivery_fee || 0);
     const cap = store.free_delivery_cap == null ? fee : Number(store.free_delivery_cap);
-    const discount = Math.min(fee, cap);
-    if (subtotal >= threshold) {
+    const discount = store.free_delivery_excluded ? 0 : Math.min(fee, cap);
+    if (store.free_delivery_excluded) {
+        box.innerHTML = '<div style="padding:12px 14px;border:1px solid #e5e5e5;border-radius:9px;background:#fff;font-size:13px;color:#666;">Heavy or oversized items weighing 16 kg or more are excluded from the PoundTech free-delivery offer.</div>';
+    } else if (subtotal >= threshold) {
         const remainingFee = Math.max(0, fee - discount);
         box.innerHTML = '<div style="padding:12px 14px;border:1px solid #b7dfc2;border-radius:9px;background:#f0faf3;color:#176b35;font-size:13px;font-weight:700;">' +
             (remainingFee === 0 ? 'You’ve unlocked free delivery on your PoundTech Automotive Store items.' :
@@ -3327,7 +3329,7 @@ async function renderCheckout() {
         const baseFee = Number(item.delivery_fee || 0);
         const threshold = item.free_delivery_threshold == null ? null : Number(item.free_delivery_threshold);
         const cap = item.free_delivery_cap == null ? baseFee : Number(item.free_delivery_cap);
-        const discount = threshold !== null && supplierSubtotal >= threshold ? Math.min(baseFee, cap) : 0;
+        const discount = threshold !== null && supplierSubtotal >= threshold && !item.free_delivery_excluded ? Math.min(baseFee, cap) : 0;
         return Object.assign({}, item, {
             base_delivery_fee: baseFee,
             delivery_fee: Math.max(0, baseFee - discount),
@@ -3342,6 +3344,8 @@ async function renderCheckout() {
         const feeLabel = fee === 0 ? "Delivery — FREE" : "Delivery — " + PT.money(fee);
         const discountNote = Number(supplier.delivery_discount || 0) > 0 && fee > 0
             ? '<small style="display:block;margin:3px 0 0 26px;color:#176b35;">R' + Number(supplier.delivery_discount).toFixed(2) + ' delivery discount applied</small>' : "";
+        const eligibilityNote = supplier.free_delivery_excluded
+            ? '<small style="display:block;margin:3px 0 0 26px;color:#777;">Heavy or oversized items (16 kg or more) are excluded from the free-delivery offer.</small>' : "";
         return `
             <div style="border:1px solid #e2e2e2;border-radius:8px;padding:14px;margin-bottom:10px;">
                 <strong>${esc(supplier.business_name || "Supplier")}</strong>
@@ -3351,6 +3355,7 @@ async function renderCheckout() {
                         <span>${feeLabel}</span>
                     </label>
                     ${discountNote}
+                    ${eligibilityNote}
                     ${(supplier.collection_available || supplier.collection_branches.length) ? `
                     <label style="display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:normal;">
                         <input type="radio" name="delivery-${supplier.supplier_id}" value="collection" onchange="updateCheckoutTotals()">
