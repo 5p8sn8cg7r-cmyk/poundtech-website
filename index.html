@@ -442,6 +442,10 @@ nav a:hover {
 }
 .pt-pro-badge svg { width: 11px; height: 11px; fill: currentColor; }
 
+.pt-product-free-delivery{display:flex;align-items:center;gap:7px;width:fit-content;max-width:100%;margin:0 0 10px;padding:7px 10px;border:1px solid #f0aaaa;border-radius:8px;background:linear-gradient(110deg,#fff0f0,#fff9f9);color:#a90000;box-shadow:0 2px 0 rgba(190,0,0,.08);font-size:10px;font-weight:850;line-height:1.25;letter-spacing:.01em}
+.pt-product-free-delivery .pt-pfd-icon{display:grid;place-items:center;flex:0 0 22px;width:22px;height:22px;border-radius:6px;background:#e00000;color:#fff;font-size:13px}
+.pt-product-free-delivery strong{display:block;font-size:11px;letter-spacing:.04em}
+.pt-product-free-delivery small{display:block;margin-top:2px;color:#754040;font-size:9px;font-weight:650;letter-spacing:0}
 .product-supplier-meta { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; margin:0 0 7px; }
 .product-seller { display:block; margin:0 0 5px; color:#777; font-size:12px; line-height:1.35; overflow-wrap:anywhere; }
 
@@ -3863,8 +3867,9 @@ function renderProductCard(product, status) {
                 <h3>${esc(product.name)}</h3>
                 <div class="product-supplier-meta">
                     ${product._ptProActive ? '<span class="pt-pro-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.2l-5.8 3.4 1.5-6.5-5-4.4 6.6-.6L12 2Z"/></svg>PRO</span>' : ""}
-                    ${product._ptSupplierName ? '<p class="product-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>' : ""}
+                    \${product._ptSupplierName ? '<p class="product-seller">Sold by <strong>' + esc(product._ptSupplierName) + '</strong></p>' : ""}
                 </div>
+                \${product._ptFreeDeliveryPromo ? '<div class="pt-product-free-delivery"><span class="pt-pfd-icon" aria-hidden="true">🚚</span><span><strong>FREE DELIVERY!</strong><small>On eligible R1,000+ PoundTech Store baskets</small></span></div>' : ""}
                 <span class="product-category-label">${esc(product.category || "General")}</span>
                 <span data-rating-for="${esc(product.id)}">${PT.ratingLine(product.id)}</span>
                 ${fitmentLabel}
@@ -4046,6 +4051,7 @@ async function enrichProductSupplierDetails(products) {
         const supplier = byId.get(String(product.supplier_id));
         product._ptSupplierName = supplier ? supplier.business_name : "";
         product._ptProActive = !!(supplier && supplier.pro_active);
+        product._ptFreeDeliveryPromo = !!(supplier && String(supplier.business_name || "").trim().toLowerCase() === "poundtech auto parts");
     });
 }
 
