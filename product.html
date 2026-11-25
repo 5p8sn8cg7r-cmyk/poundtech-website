@@ -886,7 +886,21 @@ function similarSupplierMarkup(product) {
 }
 
 
-function fillSupplier(product, supplier) {
+function ptProductDeliveryDateRange() {
+    const start = new Date(); start.setHours(12, 0, 0, 0); start.setDate(start.getDate() + 7);
+    const end = new Date(); end.setHours(12, 0, 0, 0); end.setDate(end.getDate() + 14);
+    const fmt = new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "long" });
+    return fmt.format(start) + " – " + fmt.format(end);
+}
+function ptDispatchSpeedLabel(speed) {
+    return ({
+        same_day: "Usually dispatched the same business day",
+        within_48_hours: "Usually dispatched within 48 hours",
+        "3_5_business_days": "Usually dispatched within 3–5 business days",
+        "7_14_business_days": "Usually dispatched within 7–14 business days"
+    })[speed] || "Dispatch timeframe confirmed by the supplier";
+}
+async function fillSupplier(product, supplier) {
 
     const el = document.getElementById("sold-by");
 
@@ -902,6 +916,14 @@ function fillSupplier(product, supplier) {
         : "";
 
     el.innerHTML = 'Sold by <a class="supplier-store-button" href="supplier-store.html?id=' + encodeURIComponent(product.supplier_id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 5 4h14l2 6.5"/><path d="M4 10.5V20h16v-9.5M9 20v-6h6v6"/><path d="M3 10.5a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg><span>' + esc(supplier.business_name) + '</span><small>Visit store</small></a>' + proBadge;
+    const deliveryBox = document.getElementById("pt-product-delivery");
+    if (deliveryBox) {
+        const speedResult = await supabaseClient.rpc("get_public_product_dispatch_speed", { p_supplier_id: product.supplier_id });
+        const speed = speedResult.error ? null : speedResult.data;
+        deliveryBox.querySelector(".pt-product-delivery-dates").textContent = ptProductDeliveryDateRange();
+        deliveryBox.querySelector(".pt-product-dispatch").textContent =
+            ptDispatchSpeedLabel(speed) + ". Estimated arrival dates are indicative and may vary by courier.";
+    }
 }
 
 
@@ -961,7 +983,7 @@ async function loadProduct() {
 
     const supplier = await (supplierEarly || fetchSupplier(product.supplier_id));
 
-    fillSupplier(product, supplier);
+    await fillSupplier(product, supplier);
 }
 
 
@@ -1205,6 +1227,10 @@ function renderProduct(product) {
                 <div class="rating-line" id="rating-line"></div>
 
                 <div class="sold-by" id="sold-by">&nbsp;</div>
+                <div id="pt-product-delivery" style="margin:12px 0 16px;padding:13px 14px;border:1px solid #e2e2e2;border-radius:9px;background:#fff;font-size:13px;color:#444;">
+                    <strong>Estimated delivery: <span class="pt-product-delivery-dates"></span></strong>
+                    <div class="pt-product-dispatch" style="margin-top:5px;color:#666;">Delivery estimates are calculated from today.</div>
+                </div>
 
                 ${PT.price(product, { large: true })}
 
