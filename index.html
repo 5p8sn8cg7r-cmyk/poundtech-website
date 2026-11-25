@@ -3099,17 +3099,15 @@ async function loadCartDeliveryPromo(cart) {
     const cap = store.free_delivery_cap == null ? fee : Number(store.free_delivery_cap);
     const discount = store.free_delivery_excluded ? 0 : Math.min(fee, cap);
     if (store.free_delivery_excluded) {
-        box.innerHTML = '<div style="padding:12px 14px;border:1px solid #e5e5e5;border-radius:9px;background:#fff;font-size:13px;color:#666;">Heavy or oversized items weighing 16 kg or more are excluded from the PoundTech free-delivery offer.</div>';
+        box.innerHTML = '<div style="padding:12px 14px;border:1px dashed #d8a0a0;border-radius:10px;background:#fff7f7;color:#754040;font-size:13px;">🚚 <strong>PoundTech FREE DELIVERY</strong><div style="margin-top:4px;">Heavy or oversized items (16 kg or more) are excluded from this offer.</div></div>';
     } else if (subtotal >= threshold) {
         const remainingFee = Math.max(0, fee - discount);
-        box.innerHTML = '<div style="padding:12px 14px;border:1px solid #b7dfc2;border-radius:9px;background:#f0faf3;color:#176b35;font-size:13px;font-weight:700;">' +
-            (remainingFee === 0 ? 'You’ve unlocked free delivery on your PoundTech Automotive Store items.' :
-             'You’ve unlocked a R' + discount.toFixed(0) + ' delivery discount on your PoundTech Automotive Store items.') +
-            '</div>';
+        box.innerHTML = '<div style="padding:13px 14px;border:1px solid #a9d9b5;border-radius:10px;background:#f0fbf3;color:#176b35;font-size:13px;font-weight:700;">🎉 <strong>You’ve unlocked FREE DELIVERY!</strong><div style="margin-top:4px;font-weight:500;">Your eligible PoundTech Store items qualify for free delivery.</div></div>';
     } else {
-        box.innerHTML = '<div style="padding:12px 14px;border:1px solid #e5e5e5;border-radius:9px;background:#fff;font-size:13px;color:#444;">' +
-            '<strong>Free delivery from R' + threshold.toFixed(0) + '</strong><div style="margin-top:4px;color:#666;">Add ' +
-            PT.money(threshold - subtotal) + ' more in PoundTech Automotive Store products to unlock the delivery offer.</div></div>';
+        const remaining = threshold - subtotal;
+        const progress = Math.max(0, Math.min(100, subtotal / threshold * 100));
+        box.innerHTML = '<div style="padding:13px 14px;border:2px solid #e00000;border-radius:10px;background:linear-gradient(110deg,#fff5f5,#fff);color:#292929;font-size:13px;"><strong style="color:#c90000;font-size:14px;">🚚 Don’t miss out on FREE DELIVERY!</strong><div style="margin-top:5px;">Spend <strong>' +
+            PT.money(remaining) + ' more</strong> on PoundTech Store products to unlock it.</div><div style="height:7px;margin-top:9px;border-radius:99px;background:#f0dada;overflow:hidden;"><div style="height:100%;width:' + progress + '%;background:#e00000;border-radius:99px;"></div></div></div>';
     }
 }
 
