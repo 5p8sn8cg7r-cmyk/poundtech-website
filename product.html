@@ -1299,6 +1299,9 @@ function renderProduct(product) {
         ` : ""}
     `;
 
+    const initialDeliveryDates = document.querySelector("#pt-product-delivery .pt-product-delivery-dates");
+    if (initialDeliveryDates) initialDeliveryDates.textContent = ptProductDeliveryDateRange();
+
     PT.refresh();
     renderProductVideos(product);
 
