@@ -3384,7 +3384,7 @@ async function renderCheckout() {
                     ? '<div style="margin:10px 0 4px;padding:13px;border:2px solid #e00000;border-radius:10px;background:linear-gradient(110deg,#fff5f5,#fff);color:#292929;font-size:13px;"><strong style="color:#c90000;font-size:14px;">🚚 Don’t miss out on FREE DELIVERY!</strong><div style="margin-top:5px;">Spend <strong>' + PT.money(supplier.amount_to_free_delivery) + ' more</strong> on PoundTech Store products to unlock it.</div><div style="height:7px;margin-top:9px;border-radius:99px;background:#f0dada;overflow:hidden;"><div style="height:100%;width:' + Math.max(0,Math.min(100,(Number(supplier.supplier_subtotal || 0) / Number(supplier.free_delivery_threshold)) * 100)) + '%;background:#e00000;border-radius:99px;"></div></div><small style="display:block;margin-top:5px;color:#777;">You’re at ' + PT.money(supplier.supplier_subtotal || 0) + ' of ' + PT.money(supplier.free_delivery_threshold) + '</small></div>'
                     : '<div style="margin:10px 0 4px;padding:12px;border:1px solid #a9d9b5;border-radius:10px;background:#f0fbf3;color:#176b35;font-size:13px;"><strong>🎉 You’ve unlocked FREE DELIVERY!</strong><div style="margin-top:4px;">Your eligible PoundTech Store items qualify for free delivery.</div></div>'))
             : "";
-        return \`
+        return `
             <div style="border:1px solid #e2e2e2;border-radius:8px;padding:14px;margin-bottom:10px;">
                 <strong>${esc(supplier.business_name || "Supplier")}</strong>
                 ${freeDeliveryNudge}
