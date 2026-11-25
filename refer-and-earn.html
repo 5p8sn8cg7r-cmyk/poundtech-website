@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Refer & Earn | PoundTech</title>
+<meta name="description" content="Invite friends to PoundTech. Earn R50 in PoundTech credit when they make their first qualifying purchase, and give them R50 too.">
+<meta name="robots" content="noindex,follow">
+<link rel="icon" href="/favicon.ico?v=10" sizes="any">
+<style>
+:root{--red:#e00000;--ink:#151515;--muted:#686868;--line:#e7e7e7;--soft:#f6f6f6}
+*{box-sizing:border-box}body{margin:0;background:#f5f6f8;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header{height:66px;background:#101010;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(18px,calc((100% - 1060px)/2));border-bottom:3px solid var(--red);gap:14px}
+.logo{font-size:21px;font-weight:900;letter-spacing:.04em;color:#fff;text-decoration:none}.logo span{color:var(--red)}
+header a.back{color:#fff;text-decoration:none;border:1px solid #555;border-radius:8px;padding:9px 12px;font-size:13px}
+main{max-width:1000px;margin:28px auto;padding:0 16px 48px}
+.hero{background:linear-gradient(125deg,#111,#292929);border-radius:16px;padding:30px;color:#fff;overflow:hidden;position:relative}
+.eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#ff6a6a;font-weight:800}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.08;margin:10px 0}
+.hero p{max-width:650px;color:#ddd;line-height:1.6;margin:0}
+.reward-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px;max-width:520px}
+.reward{background:#242424;border:1px solid #484848;border-radius:12px;padding:15px}
+.reward span{display:block;color:#c8c8c8;font-size:12px;margin-bottom:5px}.reward strong{font-size:28px;color:#fff}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-top:18px;box-shadow:0 4px 18px #00000008}
+h2{font-size:20px;margin:0 0 7px}.muted{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 16px}
+.linkrow{display:flex;gap:9px}.linkrow input{min-width:0;flex:1;height:47px;border:1px solid #d8d8d8;border-radius:8px;padding:0 12px;font-size:14px}
+button,.btn{border:0;border-radius:8px;background:var(--red);color:#fff;font-weight:800;padding:0 17px;min-height:45px;font-size:14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button.dark,.btn.dark{background:#171717}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:16px}.stat span{display:block;color:#666;font-size:12px;margin-bottom:7px}.stat strong{font-size:25px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.step{border:1px solid var(--line);border-radius:10px;padding:15px}.step b{display:block;margin-bottom:6px;font-size:14px}.step p{font-size:13px;color:#666;line-height:1.5;margin:0}
+.notice{background:#fff8e9;border-left:4px solid #d69a21;border-radius:7px;padding:12px 14px;font-size:13px;color:#5c4a27;line-height:1.5;margin-top:15px}
+#message{font-size:14px;line-height:1.5;margin-top:12px}#message.error{color:#b00020}#message.success{color:#16783a}
+.hidden{display:none!important}
+.ref-list{margin:0;padding:0;list-style:none}.ref-list li{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #eee;padding:12px 0;font-size:13px}.ref-list small{color:#777}
+@media(max-width:620px){header{height:60px;padding:0 13px}.logo{font-size:18px}main{margin:16px auto;padding:0 12px 34px}.hero{padding:23px 19px}.card{padding:17px}.reward-row,.stats,.steps{grid-template-columns:1fr}.linkrow{flex-direction:column}.linkrow button{width:100%}.ref-list li{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><a class="logo" href="/index.html">POUND<span>TECH</span></a><a class="back" href="/index.html">Back to marketplace</a></header>
+<main>
+<section class="hero">
+ <div class="eyebrow">PoundTech customer rewards</div>
+ <h1>Good finds deserve to be shared.</h1>
+ <p>Invite a friend to shop on PoundTech. When they complete their first qualifying purchase, you earn R50 in PoundTech credit and they get R50 too.</p>
+ <div class="reward-row">
+  <div class="reward"><span>You earn</span><strong>R50</strong></div>
+  <div class="reward"><span>Your friend gets</span><strong>R50</strong></div>
+ </div>
+</section>
+
+<section class="card" id="login-panel">
+ <h2>Sign in to get your referral link</h2>
+ <p class="muted">Your personal link and referral history are available through your PoundTech customer account.</p>
+ <a class="btn" href="/customer-login.html?next=refer-and-earn.html">Customer login</a>
+ <div id="message" role="status"></div>
+</section>
+
+<section class="card hidden" id="dashboard-panel">
+ <h2>Your personal referral link</h2>
+ <p class="muted">Share your link on WhatsApp or anywhere you connect with friends.</p>
+ <div class="linkrow"><input id="referral-link" readonly aria-label="Your personal referral link"><button id="copy-link" type="button">Copy link</button></div>
+ <div class="actions"><button class="dark" id="whatsapp-share" type="button">Share on WhatsApp</button></div>
+ <div id="message" role="status"></div>
+</section>
+
+<section class="card hidden" id="stats-panel">
+ <h2>Your referral progress</h2>
+ <p class="muted">Your rewards are recorded after a referred friend's first qualifying order is successfully paid.</p>
+ <div class="stats">
+  <div class="stat"><span>Friends referred</span><strong id="referrals-count">0</strong></div>
+  <div class="stat"><span>Successful referrals</span><strong id="successful-count">0</strong></div>
+  <div class="stat"><span>Earned PoundTech credit</span><strong id="earned-credit">R0</strong></div>
+ </div>
+ <div class="notice">Referral rewards are tracked as PoundTech credit. Automatic credit redemption at checkout is a separate rollout step and is not enabled yet. Refunded qualifying orders reverse the associated rewards. Self-referrals and duplicate referrals are not eligible.</div>
+</section>
+
+<section class="card hidden" id="history-panel">
+ <h2>Recent referral rewards</h2>
+ <ul class="ref-list" id="referral-history"><li><small>No qualifying referrals yet.</small></li></ul>
+</section>
+
+<section class="card">
+ <h2>How it works</h2>
+ <div class="steps">
+  <div class="step"><b>1. Share your link</b><p>Send your unique PoundTech link to a friend.</p></div>
+  <div class="step"><b>2. They shop</b><p>Your friend visits through your link and places their first qualifying order.</p></div>
+  <div class="step"><b>3. Both earn</b><p>After successful payment, R50 credit is recorded for each of you.</p></div>
+ </div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+ "use strict";
+ const client=supabase.createClient("https://uezacbssvvvtlosnaroh.supabase.co","sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ");
+ const $=id=>document.getElementById(id);
+ const money=n=>"R"+Number(n||0).toLocaleString("en-ZA",{minimumFractionDigits:0,maximumFractionDigits:2});
+ function message(text,type){const el=$("message");el.textContent=text;el.className=type||"";}
+ function escapeText(value){return String(value==null?"":value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+ async function init(){
+  const {data:{user},error:userError}=await client.auth.getUser();
+  if(userError||!user){$("login-panel").classList.remove("hidden");return;}
+  $("login-panel").classList.add("hidden");
+  const {data:claim,error:claimError}=await client.rpc("claim_my_customer_referral_rewards");
+  if(claimError) console.warn("Referral reward claim check:",claimError.message);
+  const {data,error}=await client.rpc("get_my_customer_referral_dashboard");
+  if(error||!data){$("login-panel").classList.remove("hidden");message("We couldn't load your referral dashboard. Please refresh and try again.","error");return;}
+  $("dashboard-panel").classList.remove("hidden");
+  $("stats-panel").classList.remove("hidden");
+  $("history-panel").classList.remove("hidden");
+  $("referral-link").value=data.referral_url||"";
+  $("referrals-count").textContent=Number(data.referrals_count||0);
+  $("successful-count").textContent=Number(data.successful_referrals||0);
+  $("earned-credit").textContent=money(data.earned_credit);
+  const rows=Array.isArray(data.recent_referrals)?data.recent_referrals:[];
+  $("referral-history").innerHTML=rows.length?rows.map(r=>
+   '<li><span><strong>Order '+escapeText(r.order_number)+'</strong><br><small>'+new Date(r.created_at).toLocaleDateString("en-ZA")+'</small></span><span><strong>'+money(r.reward_amount)+'</strong><br><small>'+escapeText(r.reward_status)+'</small></span></li>'
+  ).join(""):'<li><small>No qualifying referrals yet. Share your link to get started.</small></li>';
+ }
+ $("copy-link").addEventListener("click",async function(){
+  const link=$("referral-link").value;if(!link)return;
+  try{await navigator.clipboard.writeText(link);message("Your referral link has been copied.","success");}
+  catch(e){$("referral-link").select();message("Select and copy your referral link.","");}
+ });
+ $("whatsapp-share").addEventListener("click",function(){
+  const link=$("referral-link").value;if(!link)return;
+  const text="Join me on PoundTech! Use my link and get R50 in PoundTech credit on your first qualifying purchase: "+link;
+  window.open("https://wa.me/?text="+encodeURIComponent(text),"_blank","noopener");
+ });
+ init();
+})();
+</script>
+<script src="/referral.js?v=20261125"></script>
+<script src="/nav.js"></script>
+</body>
+</html>
