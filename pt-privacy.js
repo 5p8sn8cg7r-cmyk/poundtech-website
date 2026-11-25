@@ -34,23 +34,23 @@
     var style = document.createElement("style");
     style.id = "pt-privacy-styles";
     style.textContent = [
-      "#pt-cookie-banner{position:fixed;z-index:99999;left:22px;bottom:22px;width:min(510px,calc(100vw - 28px));padding:22px 22px 18px;background:rgba(12,13,16,.97);color:#f7f7f8;border:1px solid rgba(255,255,255,.13);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.32);font-family:Arial,Helvetica,sans-serif;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}",
+      "#pt-cookie-banner{position:fixed;z-index:99999;left:22px;bottom:22px;width:min(420px,calc(100vw - 28px));padding:16px 18px 14px;background:rgba(12,13,16,.97);color:#f7f7f8;border:1px solid rgba(255,255,255,.13);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.32);font-family:Arial,Helvetica,sans-serif;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}",
       "#pt-cookie-banner[hidden]{display:none}",
-      "#pt-cookie-banner .pt-cookie-top{display:flex;align-items:center;gap:9px;margin-bottom:10px}",
+      "#pt-cookie-banner .pt-cookie-top{display:flex;align-items:center;gap:9px;margin-bottom:7px}",
       "#pt-cookie-banner .pt-cookie-mark{width:9px;height:9px;border-radius:50%;background:#e00000;box-shadow:0 0 0 5px rgba(224,0,0,.13)}",
       "#pt-cookie-banner .pt-cookie-brand{font-size:10px;font-weight:900;letter-spacing:1.7px;color:#ff5a5a;text-transform:uppercase}",
-      "#pt-cookie-banner h2{margin:0 0 8px;color:#fff;font-size:19px;line-height:1.25;font-weight:800;letter-spacing:-.3px}",
-      "#pt-cookie-banner p{margin:0;color:#c5c7cc;font-size:13px;line-height:1.55}",
+      "#pt-cookie-banner h2{margin:0 0 8px;color:#fff;font-size:17px;line-height:1.25;font-weight:800;letter-spacing:-.3px}",
+      "#pt-cookie-banner p{margin:0;color:#c5c7cc;font-size:12px;line-height:1.5}",
       "#pt-cookie-banner a{color:#fff;text-decoration:underline;text-underline-offset:3px}",
-      "#pt-cookie-banner .pt-cookie-actions{display:flex;gap:9px;margin-top:17px}",
-      "#pt-cookie-banner button,#pt-cookie-settings{min-height:42px;border-radius:8px;padding:0 15px;font-size:12px;font-weight:800;cursor:pointer}",
+      "#pt-cookie-banner .pt-cookie-actions{display:flex;gap:8px;margin-top:12px}",
+      "#pt-cookie-banner button,#pt-cookie-settings{min-height:36px;border-radius:7px;padding:0 13px;font-size:11px;font-weight:800;cursor:pointer}",
       "#pt-cookie-banner .pt-cookie-accept{background:#e00000;border:1px solid #e00000;color:#fff;flex:1}",
       "#pt-cookie-banner .pt-cookie-accept:hover{background:#bd0000}",
       "#pt-cookie-banner .pt-cookie-reject{background:transparent;border:1px solid #555;color:#f2f2f2;flex:1}",
       "#pt-cookie-banner .pt-cookie-reject:hover{background:#25272b}",
-      "#pt-cookie-settings{position:fixed;z-index:99998;left:18px;bottom:16px;min-height:34px;padding:0 12px;background:#111;color:#ddd;border:1px solid #444;border-radius:999px;font-size:10px;box-shadow:0 4px 16px rgba(0,0,0,.18)}",
-      "#pt-cookie-settings:hover{border-color:#e00000;color:#fff}",
-      "@media(max-width:560px){#pt-cookie-banner{left:10px;bottom:10px;width:calc(100vw - 20px);padding:18px;border-radius:14px}#pt-cookie-banner h2{font-size:17px}#pt-cookie-banner p{font-size:12px}#pt-cookie-banner .pt-cookie-actions{gap:7px}#pt-cookie-banner button{padding:0 9px;font-size:11px}#pt-cookie-settings{left:10px;bottom:10px}}",
+      "#pt-cookie-settings{display:inline-block;margin:8px 0 0;padding:0;background:transparent;border:0;color:#aaa;font:inherit;font-size:12px;text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer}",
+      "#pt-cookie-settings:hover{color:#fff}",
+      "@media(max-width:560px){#pt-cookie-banner{left:10px;bottom:10px;width:calc(100vw - 20px);padding:15px;border-radius:13px}#pt-cookie-banner h2{font-size:16px}#pt-cookie-banner p{font-size:11.5px}#pt-cookie-banner .pt-cookie-actions{gap:7px}#pt-cookie-banner button{padding:0 9px;font-size:10px}}",
       "@media(prefers-reduced-motion:no-preference){#pt-cookie-banner{animation:ptCookieIn .22s ease-out}@keyframes ptCookieIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}}"
     ].join("");
     document.head.appendChild(style);
@@ -98,7 +98,11 @@
     settings.textContent = "Privacy choices";
     settings.setAttribute("aria-label", "Reopen privacy and cookie choices");
     settings.addEventListener("click", showBanner);
-    document.body.appendChild(settings);
+    var legalColumn = Array.prototype.find.call(document.querySelectorAll("footer .footer-col"), function (column) {
+      return /Privacy Policy/i.test(column.textContent);
+    });
+    (legalColumn || document.querySelector("footer .footer-inner") || document.querySelector("footer") || document.body).appendChild(settings);
+    settings.hidden = !choice;
     if (choice === "accepted") {
       schedulePixel();
     } else if (choice !== "rejected") {
