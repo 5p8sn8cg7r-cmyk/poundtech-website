@@ -90,6 +90,9 @@ button.secondary { background: #333; }
         <button id="garage-button" type="button" style="display:none">
             Go to My Garage
         </button>
+        <button id="referral-button" type="button" class="secondary" style="display:none">
+            Refer & Earn
+        </button>
     </section>
 </main>
 
@@ -108,6 +111,7 @@ const loginButton = document.getElementById("login-button");
 const signupButton = document.getElementById("signup-button");
 const logoutButton = document.getElementById("logout-button");
 const garageButton = document.getElementById("garage-button");
+const referralButton = document.getElementById("referral-button");
 const forgotPasswordLink = document.getElementById("forgot-password");
 
 function showMessage(text, error = false) {
@@ -124,6 +128,7 @@ function showLoggedIn(email) {
     document.getElementById("account-form").style.display = "none";
     logoutButton.style.display = "block";
     garageButton.style.display = "block";
+    referralButton.style.display = "block";
     showMessage("Logged in as " + email);
 }
 
@@ -252,11 +257,16 @@ logoutButton.addEventListener("click", async function() {
     document.getElementById("account-form").style.display = "block";
     logoutButton.style.display = "none";
     garageButton.style.display = "none";
+    referralButton.style.display = "none";
     showMessage("You have logged out.");
 });
 
 garageButton.addEventListener("click", function() {
     window.location.href = "garage.html";
+});
+
+referralButton.addEventListener("click", function() {
+    window.location.href = "refer-and-earn.html";
 });
 
 checkSession();
