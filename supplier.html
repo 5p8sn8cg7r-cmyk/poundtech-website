@@ -273,6 +273,15 @@
             <option>Other</option>
         </select>
 
+        <label for="dispatch-speed">Typical order dispatch timeframe</label>
+        <select id="dispatch-speed">
+            <option value="same_day">Same business day</option>
+            <option value="within_48_hours">Within 48 hours</option>
+            <option value="3_5_business_days" selected>3–5 business days</option>
+            <option value="7_14_business_days">7–14 business days</option>
+        </select>
+        <p class="hint">This tells customers how quickly you usually prepare and hand orders to the courier. It is not a guaranteed delivery date.</p>
+
         <label for="address">Business address</label>
         <textarea id="address" placeholder="Business address"></textarea>
 
@@ -413,6 +422,7 @@ async function registerSupplier() {
     const phone = document.getElementById("phone").value.trim();
     const email = document.getElementById("email").value.trim().toLowerCase();
     const businessType = document.getElementById("business-type").value;
+    const dispatchSpeed = document.getElementById("dispatch-speed").value;
     const address = document.getElementById("address").value.trim();
     const regNumber = document.getElementById("reg-number").value.trim();
 
@@ -478,6 +488,7 @@ async function registerSupplier() {
             phone: phone,
             email: email,
             business_type: businessType,
+            dispatch_speed: dispatchSpeed,
             address: address,
             registration_number: regNumber || null,
             documents: documents,
