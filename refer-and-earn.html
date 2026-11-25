@@ -62,7 +62,7 @@ button.dark,.btn.dark{background:#171717}.actions{display:flex;gap:10px;flex-wra
  <p class="muted">Share your link on WhatsApp or anywhere you connect with friends.</p>
  <div class="linkrow"><input id="referral-link" readonly aria-label="Your personal referral link"><button id="copy-link" type="button">Copy link</button></div>
  <div class="actions"><button class="dark" id="whatsapp-share" type="button">Share on WhatsApp</button></div>
- <div id="message" role="status"></div>
+ <div id="dashboard-message" role="status"></div>
 </section>
 
 <section class="card hidden" id="stats-panel">
@@ -97,7 +97,7 @@ button.dark,.btn.dark{background:#171717}.actions{display:flex;gap:10px;flex-wra
  const client=supabase.createClient("https://uezacbssvvvtlosnaroh.supabase.co","sb_publishable_Abl4zMUx_hMAsk6gjk6oGw_ak7ybUJQ");
  const $=id=>document.getElementById(id);
  const money=n=>"R"+Number(n||0).toLocaleString("en-ZA",{minimumFractionDigits:0,maximumFractionDigits:2});
- function message(text,type){const el=$("message");el.textContent=text;el.className=type||"";}
+ function message(text,type){const el=$("dashboard-message");el.textContent=text;el.className=type||"";}
  function escapeText(value){return String(value==null?"":value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  async function init(){
   const {data:{user},error:userError}=await client.auth.getUser();
