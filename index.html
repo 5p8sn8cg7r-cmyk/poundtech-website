@@ -182,6 +182,15 @@ nav a:hover {
 }
 
 
+/* PoundTech free-delivery campaign sticker */
+.pt-free-delivery-sticker{position:relative;display:flex;align-items:center;gap:13px;width:fit-content;max-width:100%;margin:0 auto 20px;padding:12px 48px 12px 16px;border:2px solid #fff;border-radius:13px;background:linear-gradient(115deg,#e00000,#a90000);color:#fff;text-align:left;box-shadow:0 7px 0 rgba(0,0,0,.22),0 12px 25px rgba(0,0,0,.2);transform:rotate(-1deg)}
+.pt-free-delivery-sticker .pt-fd-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:10px;background:#fff;color:#e00000;font-size:24px}
+.pt-free-delivery-sticker strong{display:block;font-size:17px;line-height:1.1;font-weight:900;letter-spacing:.3px}
+.pt-free-delivery-sticker small{display:block;margin-top:4px;color:#ffe1e1;font-size:12px;font-weight:700}
+.pt-free-delivery-sticker .pt-fd-close{position:absolute;top:5px;right:7px;width:27px;height:27px;border:0;border-radius:50%;background:rgba(0,0,0,.22);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.pt-free-delivery-sticker .pt-fd-close:hover{background:rgba(0,0,0,.42)}
+.pt-free-delivery-sticker[hidden]{display:none}
+@media(max-width:520px){.pt-free-delivery-sticker{margin:0 auto 18px;padding:11px 42px 11px 12px}.pt-free-delivery-sticker strong{font-size:15px}.pt-free-delivery-sticker small{font-size:11px}}
 .hero h1 {
     font-size: 46px;
     max-width: 850px;
@@ -1882,6 +1891,11 @@ South Africa’s automotive world, <span>connected.</span>
 Discover parts and accessories, book trusted automotive services, and connect with businesses across South Africa — all on PoundTech.
 </p>
 
+<div class="pt-free-delivery-sticker" id="pt-free-delivery-sticker" role="note" aria-label="Free delivery on eligible PoundTech Store orders over R1000">
+    <span class="pt-fd-icon" aria-hidden="true">🚚</span>
+    <span><strong>FREE DELIVERY!</strong><small>Spend R1,000 on PoundTech Store products</small></span>
+    <button class="pt-fd-close" type="button" aria-label="Dismiss free delivery offer" onclick="dismissFreeDeliverySticker()">×</button>
+</div>
 <a href="request-part.html" class="pt-request-part-cta"><span><strong>Can't find your part?</strong><small>Send a request to suppliers across South Africa</small></span><b>Request a Part →</b></a>
 
 <div class="shop-card">
@@ -2516,6 +2530,20 @@ const supabaseClient = supabase.createClient(
 );
 
 PT.init(supabaseClient);
+
+function dismissFreeDeliverySticker() {
+    const sticker = document.getElementById("pt-free-delivery-sticker");
+    if (sticker) sticker.hidden = true;
+    try { localStorage.setItem("ptFreeDeliveryStickerDismissed", "1"); } catch (e) {}
+}
+(function initFreeDeliverySticker() {
+    try {
+        if (localStorage.getItem("ptFreeDeliveryStickerDismissed") === "1") {
+            const sticker = document.getElementById("pt-free-delivery-sticker");
+            if (sticker) sticker.hidden = true;
+        }
+    } catch (e) {}
+})();
 
 // If an older pt-share.js is still cached, keep the shop working without ratings.
 if (!PT.ratingLine) { PT.ratingLine = function () { return ""; }; }
@@ -3334,6 +3362,8 @@ async function renderCheckout() {
             base_delivery_fee: baseFee,
             delivery_fee: Math.max(0, baseFee - discount),
             delivery_discount: discount,
+            supplier_subtotal: supplierSubtotal,
+            amount_to_free_delivery: threshold === null ? null : Math.max(0, threshold - supplierSubtotal),
             collection_branches: branchesBySupplier[item.supplier_id] || []
         });
     });
@@ -3346,9 +3376,18 @@ async function renderCheckout() {
             ? '<small style="display:block;margin:3px 0 0 26px;color:#176b35;">R' + Number(supplier.delivery_discount).toFixed(2) + ' delivery discount applied</small>' : "";
         const eligibilityNote = supplier.free_delivery_excluded
             ? '<small style="display:block;margin:3px 0 0 26px;color:#777;">Heavy or oversized items (16 kg or more) are excluded from the free-delivery offer.</small>' : "";
-        return `
+        const isPoundTechStore = String(supplier.business_name || "").trim().toLowerCase() === "poundtech auto parts";
+        const freeDeliveryNudge = isPoundTechStore && supplier.free_delivery_threshold != null
+            ? (supplier.free_delivery_excluded
+                ? '<div style="margin:10px 0 4px;padding:12px;border:1px dashed #d8a0a0;border-radius:10px;background:#fff7f7;color:#754040;font-size:13px;"><strong>🚚 PoundTech FREE DELIVERY</strong><div style="margin-top:4px;">Some heavy or oversized items are excluded from this offer.</div></div>'
+                : (Number(supplier.amount_to_free_delivery || 0) > 0
+                    ? '<div style="margin:10px 0 4px;padding:13px;border:2px solid #e00000;border-radius:10px;background:linear-gradient(110deg,#fff5f5,#fff);color:#292929;font-size:13px;"><strong style="color:#c90000;font-size:14px;">🚚 Don’t miss out on FREE DELIVERY!</strong><div style="margin-top:5px;">Spend <strong>' + PT.money(supplier.amount_to_free_delivery) + ' more</strong> on PoundTech Store products to unlock it.</div><div style="height:7px;margin-top:9px;border-radius:99px;background:#f0dada;overflow:hidden;"><div style="height:100%;width:' + Math.max(0,Math.min(100,(Number(supplier.supplier_subtotal || 0) / Number(supplier.free_delivery_threshold)) * 100)) + '%;background:#e00000;border-radius:99px;"></div></div><small style="display:block;margin-top:5px;color:#777;">You’re at ' + PT.money(supplier.supplier_subtotal || 0) + ' of ' + PT.money(supplier.free_delivery_threshold) + '</small></div>'
+                    : '<div style="margin:10px 0 4px;padding:12px;border:1px solid #a9d9b5;border-radius:10px;background:#f0fbf3;color:#176b35;font-size:13px;"><strong>🎉 You’ve unlocked FREE DELIVERY!</strong><div style="margin-top:4px;">Your eligible PoundTech Store items qualify for free delivery.</div></div>'))
+            : "";
+        return \`
             <div style="border:1px solid #e2e2e2;border-radius:8px;padding:14px;margin-bottom:10px;">
                 <strong>${esc(supplier.business_name || "Supplier")}</strong>
+                ${freeDeliveryNudge}
                 <div style="margin-top:9px;">
                     <label style="display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:normal;">
                         <input type="radio" name="delivery-${supplier.supplier_id}" value="delivery" checked onchange="updateCheckoutTotals()">
