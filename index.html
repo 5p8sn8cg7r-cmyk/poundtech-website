@@ -2461,6 +2461,7 @@ Discover parts and accessories, book trusted automotive services, and connect wi
 </p>
 
     <div id="cart-items"></div>
+    <div id="cart-delivery-promo" style="margin:14px 0;"></div>
 
     <h3 id="cart-total" style="margin-top:20px;">
         Total: R0
@@ -3033,12 +3034,53 @@ function renderCart() {
             <strong style="font-size:23px;line-height:1.2;color:#111;">${PT.money(total)}</strong>
         </div>
         <div style="height:1px;background:#d8d8d8;margin:13px 0 10px;"></div>
-        <p style="margin:0;font-size:12px;color:#666;">Delivery is calculated at checkout.</p>
+        <p style="margin:0;font-size:12px;color:#666;">Estimated delivery: ${ptDeliveryDateRange()}. Final delivery options and fees are confirmed at checkout.</p>
     `;
 
     document.getElementById("cart-panel").style.display = "block";
 
     loadCartRecommendations(cart);
+    loadCartDeliveryPromo(cart);
+}
+
+function ptDeliveryDateRange() {
+    const start = new Date();
+    start.setHours(12, 0, 0, 0);
+    start.setDate(start.getDate() + 7);
+    const end = new Date();
+    end.setHours(12, 0, 0, 0);
+    end.setDate(end.getDate() + 14);
+    const fmt = new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "long" });
+    return fmt.format(start) + " – " + fmt.format(end);
+}
+
+async function loadCartDeliveryPromo(cart) {
+    const box = document.getElementById("cart-delivery-promo");
+    if (!box) return;
+    const items = Array.isArray(cart) ? cart : [];
+    if (!items.length) { box.innerHTML = ""; return; }
+    const ids = [...new Set(items.map(item => item.product_id).filter(Boolean))];
+    const { data, error } = await supabaseClient.rpc("get_checkout_delivery_options_v2", { product_ids_input: ids });
+    if (error || !Array.isArray(data)) { box.innerHTML = ""; return; }
+    const store = data.find(item => String(item.business_name || "").trim().toLowerCase() === "poundtech auto parts");
+    if (!store || store.free_delivery_threshold == null) { box.innerHTML = ""; return; }
+    const subtotal = items.filter(item => item.supplier_id === store.supplier_id)
+        .reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
+    const threshold = Number(store.free_delivery_threshold);
+    const fee = Number(store.delivery_fee || 0);
+    const cap = store.free_delivery_cap == null ? fee : Number(store.free_delivery_cap);
+    const discount = Math.min(fee, cap);
+    if (subtotal >= threshold) {
+        const remainingFee = Math.max(0, fee - discount);
+        box.innerHTML = '<div style="padding:12px 14px;border:1px solid #b7dfc2;border-radius:9px;background:#f0faf3;color:#176b35;font-size:13px;font-weight:700;">' +
+            (remainingFee === 0 ? 'You’ve unlocked free delivery on your PoundTech Automotive Store items.' :
+             'You’ve unlocked a R' + discount.toFixed(0) + ' delivery discount on your PoundTech Automotive Store items.') +
+            '</div>';
+    } else {
+        box.innerHTML = '<div style="padding:12px 14px;border:1px solid #e5e5e5;border-radius:9px;background:#fff;font-size:13px;color:#444;">' +
+            '<strong>Free delivery from R' + threshold.toFixed(0) + '</strong><div style="margin-top:4px;color:#666;">Add ' +
+            PT.money(threshold - subtotal) + ' more in PoundTech Automotive Store products to unlock the delivery offer.</div></div>';
+    }
 }
 
 let cartRecommendationRequest = 0;
@@ -3238,7 +3280,7 @@ async function renderCheckout() {
     deliveryBox.innerHTML = '<p style="color:#777;">Loading delivery options...</p>';
 
     const productIds = [...new Set(cart.map(item => item.product_id).filter(Boolean))];
-    const { data: deliveryOptions, error: deliveryError } = await supabaseClient.rpc("get_checkout_delivery_options", {
+    const { data: deliveryOptions, error: deliveryError } = await supabaseClient.rpc("get_checkout_delivery_options_v2", {
         product_ids_input: productIds
     });
 
@@ -3273,26 +3315,42 @@ async function renderCheckout() {
 
     const branchesBySupplier = {};
     (branchRows || []).forEach(function(branch) {
+        const supplier = (deliveryOptions || []).find(item => item.supplier_id === branch.supplier_id);
+        if (!supplier || !supplier.collection_available) return;
         if (!branchesBySupplier[branch.supplier_id]) branchesBySupplier[branch.supplier_id] = [];
         branchesBySupplier[branch.supplier_id].push(branch);
     });
 
     checkoutDeliveryOptions = (deliveryOptions || []).map(function(item) {
+        const supplierSubtotal = cart.filter(cartItem => cartItem.supplier_id === item.supplier_id)
+            .reduce((sum, cartItem) => sum + Number(cartItem.price || 0) * Number(cartItem.quantity || 1), 0);
+        const baseFee = Number(item.delivery_fee || 0);
+        const threshold = item.free_delivery_threshold == null ? null : Number(item.free_delivery_threshold);
+        const cap = item.free_delivery_cap == null ? baseFee : Number(item.free_delivery_cap);
+        const discount = threshold !== null && supplierSubtotal >= threshold ? Math.min(baseFee, cap) : 0;
         return Object.assign({}, item, {
+            base_delivery_fee: baseFee,
+            delivery_fee: Math.max(0, baseFee - discount),
+            delivery_discount: discount,
             collection_branches: branchesBySupplier[item.supplier_id] || []
         });
     });
 
-    deliveryBox.innerHTML = checkoutDeliveryOptions.map(function(supplier) {
+    deliveryBox.innerHTML = '<div style="padding:12px 14px;margin-bottom:12px;border:1px solid #e5e5e5;border-radius:9px;background:#fff;font-size:13px;color:#444;"><strong>Estimated delivery: ' + ptDeliveryDateRange() + '</strong><div style="margin-top:4px;color:#666;">Delivery dates are estimates and may vary by supplier and courier.</div></div>' +
+        checkoutDeliveryOptions.map(function(supplier) {
         const fee = Number(supplier.delivery_fee || 0);
+        const feeLabel = fee === 0 ? "Delivery — FREE" : "Delivery — " + PT.money(fee);
+        const discountNote = Number(supplier.delivery_discount || 0) > 0 && fee > 0
+            ? '<small style="display:block;margin:3px 0 0 26px;color:#176b35;">R' + Number(supplier.delivery_discount).toFixed(2) + ' delivery discount applied</small>' : "";
         return `
             <div style="border:1px solid #e2e2e2;border-radius:8px;padding:14px;margin-bottom:10px;">
                 <strong>${esc(supplier.business_name || "Supplier")}</strong>
                 <div style="margin-top:9px;">
                     <label style="display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:normal;">
                         <input type="radio" name="delivery-${supplier.supplier_id}" value="delivery" checked onchange="updateCheckoutTotals()">
-                        <span>Delivery — ${PT.money(fee)}</span>
+                        <span>${feeLabel}</span>
                     </label>
+                    ${discountNote}
                     ${(supplier.collection_available || supplier.collection_branches.length) ? `
                     <label style="display:flex;align-items:center;gap:8px;margin:7px 0;font-weight:normal;">
                         <input type="radio" name="delivery-${supplier.supplier_id}" value="collection" onchange="updateCheckoutTotals()">
