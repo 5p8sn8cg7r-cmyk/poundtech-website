@@ -103,6 +103,21 @@ function orderBox() {
     return '<div class="order-box"><small>Order number</small><strong>' + esc(orderNumber) + '</strong></div>';
 }
 
+async function deliveryEstimateHtml() {
+    const { data, error } = await supabaseClient.rpc("get_order_delivery_estimate", {
+        p_order_number: orderNumber,
+        p_checkout_token: checkoutToken
+    });
+    if (error || !data || !data.estimated_delivery_start || !data.estimated_delivery_end) return "";
+    function fmt(value) {
+        const date = new Date(value + "T12:00:00");
+        return new Intl.DateTimeFormat("en-ZA", { day: "numeric", month: "long" }).format(date);
+    }
+    return '<div class="order-box"><small>Estimated delivery</small><strong style="font-size:17px;">' +
+        esc(fmt(data.estimated_delivery_start) + " – " + fmt(data.estimated_delivery_end)) +
+        '</strong><p style="margin:8px 0 0;color:#666;font-size:12px;">Estimated arrival dates; courier timing may vary.</p></div>';
+}
+
 async function status() {
     const { data, error } = await supabaseClient.rpc("get_order_payment_status", {
         p_order_number: orderNumber,
@@ -129,8 +144,9 @@ async function check() {
 
         if (current === "Paid") {
             try { localStorage.removeItem("poundtechCart"); } catch (e) { /* ignore */ }
+            const estimate = await deliveryEstimateHtml();
             show('<h1>Payment received</h1><p>Thank you. Your PoundTech order is confirmed and the supplier has been notified.</p>' +
-                 orderBox() +
+                 orderBox() + estimate +
                  '<p>Keep your order number to track your order. We will use the contact details you gave us for any updates.</p>' +
                  '<a class="btn" href="track-order.html">Track your order</a>' +
                  '<a class="btn btn-dark" href="/index.html">Continue shopping</a>');
