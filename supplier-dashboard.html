@@ -254,6 +254,7 @@ Logout
         <button type="button" data-supplier-tab="supplier-orders-panel" onclick="showSupplierSection('supplier-orders-panel', this)">Orders</button>
         <button type="button" data-supplier-tab="supplier-products-panel" onclick="showSupplierSection('supplier-products-panel', this)">Products</button>
         <a href="/supplier-part-requests.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;background:#fff;color:#333;border:1px solid #d8d8d8;border-radius:9px;padding:12px 14px;font-size:14px;min-height:44px;font-weight:700;">Part Requests</a>
+        <button type="button" data-supplier-tab="supplier-delivery-panel" onclick="showSupplierSection('supplier-delivery-panel', this)">Delivery &amp; Dispatch</button>
         <button type="button" id="supplier-branches-tab" data-supplier-tab="supplier-branches-panel" onclick="showSupplierSection('supplier-branches-panel', this)">Branches</button>
         <button type="button" data-supplier-tab="supplier-earnings-panel" onclick="showSupplierSection('supplier-earnings-panel', this)">Payments &amp; Earnings</button>
         <button type="button" id="supplier-plans-tab" data-supplier-tab="supplier-plans-panel" style="display:none" onclick="showSupplierSection('supplier-plans-panel', this)">Plans &amp; Subscriptions</button>
@@ -263,7 +264,24 @@ Logout
         <button type="button" id="supplier-referrals-link" style="display:none" onclick="window.location.href='refer-a-business.html'">Refer a Business</button>
     </nav>
 
-    <section class="supplier-panel" id="supplier-earnings-panel">
+    <section class="supplier-panel" id="supplier-delivery-panel">
+<div class="card">
+    <h2>Delivery &amp; dispatch settings</h2>
+    <p style="color:#666;line-height:1.55;">Tell customers how quickly you usually prepare and hand orders to the courier. This is your dispatch timeframe, not a guaranteed courier arrival date.</p>
+    <label for="supplier-dispatch-speed" style="display:block;margin:16px 0 7px;font-weight:700;">Typical dispatch timeframe</label>
+    <select id="supplier-dispatch-speed" class="pt-field" style="max-width:440px;width:100%;">
+        <option value="same_day">Same business day</option>
+        <option value="within_48_hours">Within 48 hours</option>
+        <option value="3_5_business_days">3–5 business days</option>
+        <option value="7_14_business_days">7–14 business days</option>
+    </select>
+    <p style="font-size:12px;color:#777;margin:8px 0 14px;">Choose the timeframe you can consistently meet. Orders placed after your daily cutoff or on non-working days may be dispatched on the next business day.</p>
+    <button type="button" id="supplier-dispatch-save" onclick="saveSupplierDispatchSpeed()">Save dispatch settings</button>
+    <p id="supplier-dispatch-message" role="status" style="min-height:20px;margin-top:10px;font-size:13px;color:#555;"></p>
+</div>
+</section>
+
+<section class="supplier-panel" id="supplier-earnings-panel">
     <div class="card">
 
 <h2>Earnings</h2>
@@ -3546,6 +3564,30 @@ async function toggleSupplierBranch(id) {
     await loadSupplierBranches();
 }
 
+async function loadSupplierDeliverySettings() {
+    const select = document.getElementById("supplier-dispatch-speed");
+    const message = document.getElementById("supplier-dispatch-message");
+    if (!select || !message) return;
+    message.textContent = "Loading your dispatch settings…";
+    const { data, error } = await supabaseClient.rpc("get_my_supplier_delivery_settings");
+    if (error) { message.textContent = "Could not load settings: " + (error.message || "Please try again."); return; }
+    select.value = data && data.dispatch_speed ? data.dispatch_speed : "3_5_business_days";
+    message.textContent = "Your dispatch timeframe is up to date.";
+}
+async function saveSupplierDispatchSpeed() {
+    const select = document.getElementById("supplier-dispatch-speed");
+    const button = document.getElementById("supplier-dispatch-save");
+    const message = document.getElementById("supplier-dispatch-message");
+    if (!select || !button || !message) return;
+    button.disabled = true; button.textContent = "Saving…"; message.textContent = "";
+    const { data, error } = await supabaseClient.rpc("update_my_supplier_dispatch_speed", { p_dispatch_speed: select.value });
+    button.disabled = false; button.textContent = "Save dispatch settings";
+    if (error || !data || !data.success) {
+        message.textContent = "Could not save your dispatch timeframe. " + (error && error.message ? error.message : "Please try again.");
+        return;
+    }
+    message.textContent = "Dispatch timeframe saved.";
+}
 function showSupplierSection(sectionId, button) {
     document.querySelectorAll(".supplier-panel").forEach(function(panel) {
         panel.classList.toggle("active", panel.id === sectionId);
@@ -3558,6 +3600,7 @@ function showSupplierSection(sectionId, button) {
     if (sectionId === "supplier-orders-panel") { loadSupplierOrders(); }
     if (sectionId === "supplier-products-panel") { loadSupplierProducts(); }
     if (sectionId === "supplier-branches-panel") { loadSupplierBranches(); }
+    if (sectionId === "supplier-delivery-panel") { loadSupplierDeliverySettings(); }
     if (sectionId === "supplier-support-panel") { loadBusinessSupportTickets(); }
     if (sectionId === "supplier-earnings-panel") {
         loadSupplierEarnings();
